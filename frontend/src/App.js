@@ -1,5 +1,8 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
+
+// Layouts
 import MainLayout from './layouts/MainLayout';
 import AdminLayout from './admin/AdminLayout';
 
@@ -25,37 +28,52 @@ import Inventory from './admin/Inventory';
 import ManageContact from './admin/ManageContact';
 
 function App() {
-    return (
-        <Router>
-            <Routes>
-                {/* Public Routes */}
-                <Route element={<MainLayout />}>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/donate" element={<DonateBlood />} />
-                    <Route path="/donate/thank-you" element={<ThankYou />} />
-                    <Route path="/appointment" element={<Appointment />} />
-                    <Route path="/appointment/confirmed" element={<AppointmentConfirmed />} />
-                    <Route path="/request" element={<RequestBlood />} />
-                    <Route path="/donors" element={<DonorList />} />
-                    <Route path="/team" element={<Team />} />
-                    <Route path="/contact" element={<Contact />} />
-                    <Route path="/request/thank-you" element={<RequestThankYou />} />
-                    <Route path="/contact/thank-you" element={<ThankYouContact />} />
-                    <Route path="/about" element={<About />} />
-                </Route>
+  const [darkMode, setDarkMode] = useState(false);
 
-                {/* Admin Routes */}
-                <Route element={<AdminLayout />}>
-                    <Route path="/admin" element={<Dashboard />} />
-                    <Route path="/admin/dashboard" element={<Dashboard />} />
-                    <Route path="/admin/donors" element={<ManageDonors />} />
-                    <Route path="/admin/requests" element={<ManageRequests />} />
-                    <Route path="/admin/inventory" element={<Inventory />} />
-                    <Route path="/admin/contacts" element={<ManageContact />} />
-                </Route>
-            </Routes>
-        </Router>
-    );
+  const theme = useMemo(() =>
+    createTheme({
+      palette: {
+        mode: darkMode ? 'dark' : 'light',
+        primary: {
+          main: '#b71c1c',
+        },
+      },
+    }), [darkMode]);
+
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Router>
+        <Routes>
+          {/* Public Routes */}
+          <Route element={<MainLayout darkMode={darkMode} setDarkMode={setDarkMode} />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/donate" element={<DonateBlood />} />
+            <Route path="/donate/thank-you" element={<ThankYou />} />
+            <Route path="/appointment" element={<Appointment />} />
+            <Route path="/appointment/confirmed" element={<AppointmentConfirmed />} />
+            <Route path="/request" element={<RequestBlood />} />
+            <Route path="/donors" element={<DonorList />} />
+            <Route path="/team" element={<Team />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/request/thank-you" element={<RequestThankYou />} />
+            <Route path="/contact/thank-you" element={<ThankYouContact />} />
+            <Route path="/about" element={<About />} />
+          </Route>
+
+          {/* Admin Routes */}
+          <Route element={<AdminLayout />}>
+            <Route path="/admin" element={<Dashboard />} />
+            <Route path="/admin/dashboard" element={<Dashboard />} />
+            <Route path="/admin/donors" element={<ManageDonors />} />
+            <Route path="/admin/requests" element={<ManageRequests />} />
+            <Route path="/admin/inventory" element={<Inventory />} />
+            <Route path="/admin/contacts" element={<ManageContact />} />
+          </Route>
+        </Routes>
+      </Router>
+    </ThemeProvider>
+  );
 }
 
 export default App;
