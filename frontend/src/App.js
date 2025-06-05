@@ -1,57 +1,49 @@
-import React, { useState, useMemo } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { CustomThemeProvider } from "./ThemeContext";
+import CssBaseline from "@mui/material/CssBaseline";
 
 // Layouts
-import MainLayout from './layouts/MainLayout';
-import AdminLayout from './admin/AdminLayout';
+import MainLayout from "./layouts/MainLayout";
+import AdminLayout from "./admin/AdminLayout";
 
 // Public Pages
-import Home from './pages/Home';
-import DonateBlood from './pages/DonateBlood';
-import Contact from './pages/Contact';
-import ThankYou from './pages/ThankYou';
-import Appointment from './pages/Appointment';
-import AppointmentConfirmed from './pages/AppointmentConfirmed';
-import RequestBlood from './pages/RequestBlood';
-import DonorList from './pages/DonorList';
-import Team from './pages/Team';
-import RequestThankYou from './pages/RequestThankYou';
-import ThankYouContact from './pages/ThankYouContact';
-import About from './pages/About';
+import Home from "./pages/Home";
+import DonateBlood from "./pages/DonateBlood";
+import Contact from "./pages/Contact";
+import ThankYou from "./pages/ThankYou";
+import Appointment from "./pages/Appointment";
+import AppointmentConfirmed from "./pages/AppointmentConfirmed";
+import RequestBlood from "./pages/RequestBlood";
+import DonorList from "./pages/DonorList";
+import Team from "./pages/Team";
+import RequestThankYou from "./pages/RequestThankYou";
+import ThankYouContact from "./pages/ThankYouContact";
+import About from "./pages/About";
 
 // Admin Pages
-import Dashboard from './admin/Dashboard';
-import ManageDonors from './admin/ManageDonors';
-import ManageRequests from './admin/ManageRequests';
-import Inventory from './admin/Inventory';
-import ManageContact from './admin/ManageContact';
+import Dashboard from "./admin/Dashboard";
+import ManageDonors from "./admin/ManageDonors";
+import ManageRequests from "./admin/ManageRequests";
+import Inventory from "./admin/Inventory";
+import ManageContact from "./admin/ManageContact";
 
 function App() {
-  const [darkMode, setDarkMode] = useState(false);
-
-  const theme = useMemo(() =>
-    createTheme({
-      palette: {
-        mode: darkMode ? 'dark' : 'light',
-        primary: {
-          main: '#b71c1c',
-        },
-      },
-    }), [darkMode]);
-
   return (
-    <ThemeProvider theme={theme}>
+    <CustomThemeProvider>
       <CssBaseline />
       <Router>
         <Routes>
           {/* Public Routes */}
-          <Route element={<MainLayout darkMode={darkMode} setDarkMode={setDarkMode} />}>
+          <Route element={<MainLayout />}>
             <Route path="/" element={<Home />} />
             <Route path="/donate" element={<DonateBlood />} />
             <Route path="/donate/thank-you" element={<ThankYou />} />
             <Route path="/appointment" element={<Appointment />} />
-            <Route path="/appointment/confirmed" element={<AppointmentConfirmed />} />
+            <Route
+              path="/appointment/confirmed"
+              element={<AppointmentConfirmed />}
+            />
             <Route path="/request" element={<RequestBlood />} />
             <Route path="/donors" element={<DonorList />} />
             <Route path="/team" element={<Team />} />
@@ -72,7 +64,7 @@ function App() {
           </Route>
         </Routes>
       </Router>
-    </ThemeProvider>
+    </CustomThemeProvider>
   );
 }
 

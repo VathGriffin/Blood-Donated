@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   AppBar,
@@ -25,10 +25,12 @@ import {
   Brightness7,
 } from "@mui/icons-material";
 
-import logo from "../assets/blood-drop.png"; // ✅ Ensure this exists
+import logo from "../assets/blood-drop.png";
+import { ColorModeContext } from "../ThemeContext";
 
-const Header = ({ darkMode, setDarkMode }) => {
+const Header = () => {
   const theme = useTheme();
+  const { toggleColorMode } = useContext(ColorModeContext);
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [anchorEl, setAnchorEl] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -44,36 +46,12 @@ const Header = ({ darkMode, setDarkMode }) => {
 
   const sections = [
     { label: "Home", path: "/", icon: <Favorite sx={{ color: "#ff5252" }} /> },
-    {
-      label: "Donate",
-      path: "/donate",
-      icon: <VolunteerActivism sx={{ color: "#e53935" }} />,
-    },
-    {
-      label: "Request",
-      path: "/request",
-      icon: <LocalHospital sx={{ color: "#d81b60" }} />,
-    },
-    {
-      label: "Donors",
-      path: "/donors",
-      icon: <Group sx={{ color: "#8e24aa" }} />,
-    },
-    {
-      label: "Team",
-      path: "/team",
-      icon: <PeopleAlt sx={{ color: "#4db6ac" }} />,
-    },
-    {
-      label: "About Us",
-      path: "/about",
-      icon: <Info sx={{ color: "#64b5f6" }} />,
-    },
-    {
-      label: "Contact",
-      path: "/contact",
-      icon: <ContactMail sx={{ color: "#fbc02d" }} />,
-    },
+    { label: "Donate", path: "/donate", icon: <VolunteerActivism sx={{ color: "#e53935" }} /> },
+    { label: "Request", path: "/request", icon: <LocalHospital sx={{ color: "#d81b60" }} /> },
+    { label: "Donors", path: "/donors", icon: <Group sx={{ color: "#8e24aa" }} /> },
+    { label: "Team", path: "/team", icon: <PeopleAlt sx={{ color: "#4db6ac" }} /> },
+    { label: "About Us", path: "/about", icon: <Info sx={{ color: "#64b5f6" }} /> },
+    { label: "Contact", path: "/contact", icon: <ContactMail sx={{ color: "#fbc02d" }} /> },
   ];
 
   return (
@@ -151,10 +129,10 @@ const Header = ({ darkMode, setDarkMode }) => {
             ))}
             <Tooltip title="Toggle dark mode">
               <IconButton
-                onClick={() => setDarkMode(!darkMode)}
+                onClick={toggleColorMode}
                 sx={{ color: "white" }}
               >
-                {darkMode ? <Brightness7 /> : <Brightness4 />}
+                {theme.palette.mode === "dark" ? <Brightness7 /> : <Brightness4 />}
               </IconButton>
             </Tooltip>
           </Box>
@@ -163,10 +141,10 @@ const Header = ({ darkMode, setDarkMode }) => {
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <Tooltip title="Toggle dark mode">
                 <IconButton
-                  onClick={() => setDarkMode(!darkMode)}
+                  onClick={toggleColorMode}
                   sx={{ color: "white" }}
                 >
-                  {darkMode ? <Brightness7 /> : <Brightness4 />}
+                  {theme.palette.mode === "dark" ? <Brightness7 /> : <Brightness4 />}
                 </IconButton>
               </Tooltip>
               <IconButton onClick={toggleMenu} sx={{ color: "white" }}>

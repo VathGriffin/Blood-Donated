@@ -5,26 +5,26 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 export const ColorModeContext = createContext();
 
 export const CustomThemeProvider = ({ children }) => {
-    const [mode, setMode] = useState('light');
+  const [mode, setMode] = useState('light');
 
-    useEffect(() => {
-        const stored = localStorage.getItem('mui-theme');
-        if (stored) setMode(stored);
-    }, []);
+  useEffect(() => {
+    const stored = localStorage.getItem('mui-theme');
+    if (stored) setMode(stored);
+  }, []);
 
-    const toggleColorMode = () => {
-        const next = mode === 'light' ? 'dark' : 'light';
-        setMode(next);
-        localStorage.setItem('mui-theme', next);
-    };
+  const toggleColorMode = () => {
+    const next = mode === 'light' ? 'dark' : 'light';
+    setMode(next);
+    localStorage.setItem('mui-theme', next);
+  };
 
-    const theme = useMemo(() => createTheme({ palette: { mode } }), [mode]);
+  const theme = useMemo(() => createTheme({ palette: { mode } }), [mode]);
 
-    return (
-        <ColorModeContext.Provider value={{ toggleColorMode, mode }}>
-            <ThemeProvider theme={theme}>
-                {children}
-            </ThemeProvider>
-        </ColorModeContext.Provider>
-    );
+  return (
+    <ColorModeContext.Provider value={{ toggleColorMode, mode }}>
+      <ThemeProvider theme={theme}>
+        {children}
+      </ThemeProvider>
+    </ColorModeContext.Provider>
+  );
 };
