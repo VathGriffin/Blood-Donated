@@ -7,11 +7,12 @@ const donorSchema = new mongoose.Schema({
   bloodType: {
     type: String,
     enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'],
-    required: true
+    required: true,
   },
   location: { type: String, required: true },
-  available: { type: Boolean, default: false }, // ✅ Quan trọng!
-  createdAt: { type: Date, default: Date.now }
+  available: { type: Boolean, default: false },
+  lastDonation: { type: Date, default: null }, // ✅ new field
+  createdAt: { type: Date, default: Date.now },
 });
 
 module.exports = mongoose.model('Donor', donorSchema);

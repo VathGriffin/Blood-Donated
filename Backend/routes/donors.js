@@ -5,6 +5,7 @@ const Donor = require('../models/Donor');
 // CREATE
 router.post('/register', async (req, res) => {
   try {
+    console.log("Creating donor:", req.body); // debug
     const donor = new Donor(req.body);
     const savedDonor = await donor.save();
     res.status(201).json(savedDonor);
@@ -37,7 +38,11 @@ router.get('/:id', async (req, res) => {
 // UPDATE
 router.put('/:id', async (req, res) => {
   try {
-    const updatedDonor = await Donor.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    console.log("Updating donor:", req.body); // debug
+    const updatedDonor = await Donor.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
     res.json(updatedDonor);
   } catch (err) {
     res.status(400).json({ message: err.message });
