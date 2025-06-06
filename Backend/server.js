@@ -13,8 +13,7 @@ const contactRoutes = require("./routes/contactMessages");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const MONGO_URI =
-  process.env.MONGO_URI || "mongodb://localhost:27017/blood-donation";
+const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/blood-donation";
 
 // Middleware
 app.use(cors({ origin: "http://localhost:3000" }));
@@ -30,7 +29,7 @@ app.use("/api/donors", donorRoutes);
 app.use("/api/requests", bloodRequestRoutes);
 app.use("/api/contacts", contactRoutes);
 
-// Connect to MongoDB and start server
+// MongoDB connection
 mongoose
   .connect(MONGO_URI)
   .then(() => {

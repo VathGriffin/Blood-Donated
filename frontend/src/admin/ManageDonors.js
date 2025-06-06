@@ -20,11 +20,17 @@ import {
   useTheme,
   Tooltip,
   Chip,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import { Delete, Edit, Bloodtype, PersonAdd } from "@mui/icons-material";
 import axios from "axios";
 
 const API = "http://localhost:3001/api/donors";
+
+const bloodTypes = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
 const ManageDonors = () => {
   const theme = useTheme();
@@ -57,7 +63,15 @@ const ManageDonors = () => {
   const handleUpdate = async () => {
     if (!selectedDonor) return;
 
-    const { fullName, email, phone, bloodType, location, lastDonation, available } = selectedDonor;
+    const {
+      fullName,
+      email,
+      phone,
+      bloodType,
+      location,
+      lastDonation,
+      available,
+    } = selectedDonor;
 
     if (!fullName || !email || !phone || !bloodType || !location) {
       alert("Please fill in all fields.");
@@ -94,7 +108,7 @@ const ManageDonors = () => {
       console.error("Save failed:", err.response || err);
       alert(
         err.response?.data?.message ||
-        "Failed to save donor. Check the console for details."
+          "Failed to save donor. Check the console for details."
       );
     }
   };
@@ -113,10 +127,17 @@ const ManageDonors = () => {
   return (
     <Box sx={{ p: 3 }}>
       {/* Header */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        mb={2}
+      >
         <Box display="flex" alignItems="center" gap={1}>
           <Bloodtype sx={{ fontSize: 38, mb: -0.7 }} color="error" />
-          <Typography variant="h4" fontWeight="bold">Manage Donors</Typography>
+          <Typography variant="h4" fontWeight="bold">
+            Manage Donors
+          </Typography>
         </Box>
         <Button
           variant="contained"
@@ -142,16 +163,37 @@ const ManageDonors = () => {
       {/* Table */}
       <TableContainer component={Paper} elevation={3} sx={{ borderRadius: 3 }}>
         <Table>
-          <TableHead sx={{ backgroundColor: theme.palette.mode === "dark" ? "#333" : "#fbe9e7" }}>
+          <TableHead
+            sx={{
+              backgroundColor:
+                theme.palette.mode === "dark" ? "#333" : "#fbe9e7",
+            }}
+          >
             <TableRow>
-              <TableCell><strong>Name</strong></TableCell>
-              <TableCell><strong>Blood Type</strong></TableCell>
-              <TableCell><strong>Phone</strong></TableCell>
-              <TableCell><strong>Email</strong></TableCell>
-              <TableCell><strong>Location</strong></TableCell>
-              <TableCell><strong>Last Donation</strong></TableCell>
-              <TableCell><strong>Available</strong></TableCell>
-              <TableCell align="center"><strong>Actions</strong></TableCell>
+              <TableCell>
+                <strong>Name</strong>
+              </TableCell>
+              <TableCell>
+                <strong>Blood Type</strong>
+              </TableCell>
+              <TableCell>
+                <strong>Phone</strong>
+              </TableCell>
+              <TableCell>
+                <strong>Email</strong>
+              </TableCell>
+              <TableCell>
+                <strong>Location</strong>
+              </TableCell>
+              <TableCell>
+                <strong>Last Donation</strong>
+              </TableCell>
+              <TableCell>
+                <strong>Available</strong>
+              </TableCell>
+              <TableCell align="center">
+                <strong>Actions</strong>
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -206,7 +248,12 @@ const ManageDonors = () => {
       </TableContainer>
 
       {/* Dialog: Add/Edit Donor */}
-      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>
           {selectedDonor?._id ? "✍️ Update Donor" : "➕ Add New Donor"}
         </DialogTitle>
@@ -237,14 +284,21 @@ const ManageDonors = () => {
                 fullWidth
                 margin="dense"
               />
-              <TextField
-                label="Blood Type"
-                name="bloodType"
-                value={selectedDonor.bloodType}
-                onChange={handleEditChange}
-                fullWidth
-                margin="dense"
-              />
+              <FormControl fullWidth margin="dense">
+                <InputLabel>Blood Type</InputLabel>
+                <Select
+                  name="bloodType"
+                  value={selectedDonor.bloodType}
+                  onChange={handleEditChange}
+                  label="Blood Type"
+                >
+                  {bloodTypes.map((type) => (
+                    <MenuItem key={type} value={type}>
+                      {type}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
               <TextField
                 label="Location"
                 name="location"
