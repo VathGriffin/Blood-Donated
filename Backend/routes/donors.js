@@ -2,19 +2,20 @@ const express = require('express');
 const router = express.Router();
 const Donor = require('../models/Donor');
 
-// CREATE
-router.post('/register', async (req, res) => {
+// CREATE - POST /api/donors
+router.post('/', async (req, res) => {
   try {
     console.log("Creating donor:", req.body); // debug
     const donor = new Donor(req.body);
     const savedDonor = await donor.save();
     res.status(201).json(savedDonor);
   } catch (error) {
+    console.error("Create failed:", error);
     res.status(400).json({ message: error.message });
   }
 });
 
-// READ ALL
+// READ ALL - GET /api/donors
 router.get('/', async (req, res) => {
   try {
     const donors = await Donor.find().sort({ createdAt: -1 });
@@ -24,7 +25,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// READ ONE
+// READ ONE - GET /api/donors/:id
 router.get('/:id', async (req, res) => {
   try {
     const donor = await Donor.findById(req.params.id);
@@ -35,7 +36,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// UPDATE
+// UPDATE - PUT /api/donors/:id
 router.put('/:id', async (req, res) => {
   try {
     console.log("Updating donor:", req.body); // debug
@@ -45,11 +46,12 @@ router.put('/:id', async (req, res) => {
     });
     res.json(updatedDonor);
   } catch (err) {
+    console.error("Update failed:", err);
     res.status(400).json({ message: err.message });
   }
 });
 
-// DELETE
+// DELETE - DELETE /api/donors/:id
 router.delete('/:id', async (req, res) => {
   try {
     const deleted = await Donor.findByIdAndDelete(req.params.id);
