@@ -17,7 +17,7 @@ const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/blood-dona
 // Disable Mongoose buffering so operations fail immediately when DB is down
 mongoose.set("bufferCommands", false);
 
-app.use(cors({ origin: ["http://localhost:3000", "http://localhost:3002"] }));
+app.use(cors({ origin: ["http://localhost:3000", "http://localhost:3002", "http://localhost:3003"] }));
 app.use(express.json());
 app.use("/uploads", require("express").static(require("path").join(__dirname, "uploads")));
 
