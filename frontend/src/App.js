@@ -19,7 +19,6 @@ import RequestBlood from "./pages/RequestBlood";
 import DonorList from "./pages/DonorList";
 import Team from "./pages/Team";
 import RequestThankYou from "./pages/RequestThankYou";
-import ThankYouContact from "./pages/ThankYouContact";
 import About from "./pages/About";
 import Appointment from "./pages/Appointment";
 import AppointmentConfirmed from "./pages/AppointmentConfirmed";
@@ -57,7 +56,6 @@ function App() {
                 <Route path="/team" element={<Team />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/request/thank-you" element={<RequestThankYou />} />
-                <Route path="/contact/thank-you" element={<ThankYouContact />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/appointment" element={<Appointment />} />
                 <Route path="/appointment/confirmed" element={<AppointmentConfirmed />} />
