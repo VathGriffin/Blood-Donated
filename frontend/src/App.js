@@ -4,6 +4,7 @@ import { CustomThemeProvider } from "./ThemeContext";
 import CssBaseline from "@mui/material/CssBaseline";
 import { AuthProvider } from "./context/AuthContext";
 import { UserAuthProvider } from "./context/UserAuthContext";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 // Layouts
 import MainLayout from "./layouts/MainLayout";
@@ -39,6 +40,7 @@ import ManageAppointments from "./admin/ManageAppointments";
 
 function App() {
   return (
+    <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID || ""}>
     <CustomThemeProvider>
       <CssBaseline />
       <AuthProvider>
@@ -87,6 +89,7 @@ function App() {
         </UserAuthProvider>
       </AuthProvider>
     </CustomThemeProvider>
+    </GoogleOAuthProvider>
   );
 }
 

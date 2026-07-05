@@ -8,6 +8,7 @@ import { useNavigate, Link as RouterLink, Navigate } from "react-router-dom";
 import axios from "axios";
 import { useUserAuth } from "../context/UserAuthContext";
 import API_BASE from "../config";
+import SocialButtons from "../components/SocialButtons";
 
 const UserLogin = () => {
   const theme = useTheme();
@@ -117,6 +118,8 @@ const UserLogin = () => {
               Sign up
             </Link>
           </Typography>
+
+          <SocialButtons onError={(msg) => setError(msg)} />
         </Box>
       </Paper>
     </Box>
