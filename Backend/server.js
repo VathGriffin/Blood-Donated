@@ -8,6 +8,7 @@ dotenv.config();
 const donorRoutes = require("./routes/donors");
 const bloodRequestRoutes = require("./routes/bloodRequests");
 const contactRoutes = require("./routes/contactMessages");
+const authRoutes = require("./routes/auth");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -35,6 +36,7 @@ app.get("/", (req, res) => {
   res.send("🩸 Blood Donation API is running");
 });
 
+app.use("/api/auth", authRoutes);
 app.use("/api/donors", donorRoutes);
 app.use("/api/requests", bloodRequestRoutes);
 app.use("/api/contacts", contactRoutes);

@@ -2,6 +2,7 @@ import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { CustomThemeProvider } from "./ThemeContext";
 import CssBaseline from "@mui/material/CssBaseline";
+import { AuthProvider } from "./context/AuthContext";
 
 // Layouts
 import MainLayout from "./layouts/MainLayout";
@@ -20,6 +21,8 @@ import ThankYouContact from "./pages/ThankYouContact";
 import About from "./pages/About";
 
 // Admin Pages
+import AdminLogin from "./admin/AdminLogin";
+import ProtectedAdminRoute from "./admin/ProtectedAdminRoute";
 import Dashboard from "./admin/Dashboard";
 import ManageDonors from "./admin/ManageDonors";
 import ManageRequests from "./admin/ManageRequests";
@@ -30,33 +33,40 @@ function App() {
   return (
     <CustomThemeProvider>
       <CssBaseline />
-      <Router>
-        <Routes>
-          {/* Public Routes */}
-          <Route element={<MainLayout />}>
-            <Route path="/" element={<Home />} />
-            <Route path="/donate" element={<DonateBlood />} />
-            <Route path="/donate/thank-you" element={<ThankYou />} />
-            <Route path="/request" element={<RequestBlood />} />
-            <Route path="/donors" element={<DonorList />} />
-            <Route path="/team" element={<Team />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/request/thank-you" element={<RequestThankYou />} />
-            <Route path="/contact/thank-you" element={<ThankYouContact />} />
-            <Route path="/about" element={<About />} />
-          </Route>
+      <AuthProvider>
+        <Router>
+          <Routes>
+            {/* Public Routes */}
+            <Route element={<MainLayout />}>
+              <Route path="/" element={<Home />} />
+              <Route path="/donate" element={<DonateBlood />} />
+              <Route path="/donate/thank-you" element={<ThankYou />} />
+              <Route path="/request" element={<RequestBlood />} />
+              <Route path="/donors" element={<DonorList />} />
+              <Route path="/team" element={<Team />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/request/thank-you" element={<RequestThankYou />} />
+              <Route path="/contact/thank-you" element={<ThankYouContact />} />
+              <Route path="/about" element={<About />} />
+            </Route>
 
-          {/* Admin Routes */}
-          <Route element={<AdminLayout />}>
-            <Route path="/admin" element={<Dashboard />} />
-            <Route path="/admin/dashboard" element={<Dashboard />} />
-            <Route path="/admin/donors" element={<ManageDonors />} />
-            <Route path="/admin/requests" element={<ManageRequests />} />
-            <Route path="/admin/inventory" element={<Inventory />} />
-            <Route path="/admin/contacts" element={<ManageContact />} />
-          </Route>
-        </Routes>
-      </Router>
+            {/* Admin Login */}
+            <Route path="/admin/login" element={<AdminLogin />} />
+
+            {/* Protected Admin Routes */}
+            <Route element={<ProtectedAdminRoute />}>
+              <Route element={<AdminLayout />}>
+                <Route path="/admin" element={<Dashboard />} />
+                <Route path="/admin/dashboard" element={<Dashboard />} />
+                <Route path="/admin/donors" element={<ManageDonors />} />
+                <Route path="/admin/requests" element={<ManageRequests />} />
+                <Route path="/admin/inventory" element={<Inventory />} />
+                <Route path="/admin/contacts" element={<ManageContact />} />
+              </Route>
+            </Route>
+          </Routes>
+        </Router>
+      </AuthProvider>
     </CustomThemeProvider>
   );
 }
