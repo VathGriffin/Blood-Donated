@@ -27,6 +27,7 @@ import {
     CartesianGrid,
 } from "recharts";
 import axios from "axios";
+import API_BASE from "../config";
 
 const getUrgencyColor = (u) => {
     if (!u) return "default";
@@ -55,9 +56,9 @@ const Dashboard = () => {
         setLoading(true);
         try {
             const [d, r, c] = await Promise.all([
-                axios.get("http://localhost:3001/api/donors"),
-                axios.get("http://localhost:3001/api/requests"),
-                axios.get("http://localhost:3001/api/contacts"),
+                axios.get(`${API_BASE}/api/donors`),
+                axios.get(`${API_BASE}/api/requests`),
+                axios.get(`${API_BASE}/api/contacts`),
             ]);
             setDonors(d.data);
             setRequests(r.data);

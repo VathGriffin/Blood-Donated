@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import API_BASE from '../config';
 import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
 import DeleteIcon from '@mui/icons-material/Delete';
 
@@ -60,7 +61,7 @@ const RequestBlood = () => {
 
         let savedRequest;
         try {
-            const response = await axios.post('http://localhost:3001/api/requests', requestData);
+            const response = await axios.post(`${API_BASE}/api/requests`, requestData);
             savedRequest = response.data;
         } catch (error) {
             console.error('❌ Error submitting request:', error);
@@ -73,7 +74,7 @@ const RequestBlood = () => {
             try {
                 const photoPayload = new FormData();
                 photoPayload.append('photo', photoFile);
-                await axios.post(`http://localhost:3001/api/requests/${savedRequest._id}/photo`, photoPayload);
+                await axios.post(`${API_BASE}/api/requests/${savedRequest._id}/photo`, photoPayload);
             } catch (error) {
                 console.error('❌ Photo upload failed:', error);
             }

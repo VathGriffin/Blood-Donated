@@ -23,6 +23,7 @@ import {
   Tooltip,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import API_BASE from "../config";
 import VolunteerActivismIcon from "@mui/icons-material/VolunteerActivism";
 import BloodtypeIcon from "@mui/icons-material/Bloodtype";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
@@ -90,7 +91,7 @@ const DonateBlood = () => {
     }
     try {
       setLoading(true);
-      const response = await fetch("http://localhost:3001/api/donors/register", {
+      const response = await fetch(`${API_BASE}/api/donors/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...formData, bloodType }),
@@ -104,7 +105,7 @@ const DonateBlood = () => {
       if (photoFile && savedDonor._id) {
         const photoPayload = new FormData();
         photoPayload.append("photo", photoFile);
-        await fetch(`http://localhost:3001/api/donors/${savedDonor._id}/photo`, {
+        await fetch(`${API_BASE}/api/donors/${savedDonor._id}/photo`, {
           method: "POST",
           body: photoPayload,
         });

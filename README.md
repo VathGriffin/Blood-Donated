@@ -1,59 +1,121 @@
-# 🩸 Blood Donation Management System
+# Blood Donated 🩸
 
-A full-stack web application to manage blood donations, donors, requests, and inventories built using **React.js**, **Node.js**, **Express.js**, and **MongoDB**.
+A full-stack web application for voluntary blood donation management — connecting donors, patients, and hospitals across Cambodia.
 
-## 🚀 Live Demo
-
-👉 [Frontend on Vercel](https://blood-donated.vercel.app)
-
-> Note: Backend is not deployed. You need to run the server locally for full functionality.
+Built as a Graduation Project by 4th-year Data Science students at the **Institute of Technology of Cambodia (ITC)**.
 
 ---
 
-## 📂 Project Structure
+## Features
 
-Blood-Donated/
-├── Backend/ # Express + MongoDB backend
-├── frontend/ # React frontend
-└── README.md # Project documentation
+### Public
+- **Donor Registration** — Register with blood type, location, availability, and photo
+- **Blood Requests** — Submit urgent blood requests with urgency level and patient details
+- **Donor Directory** — Browse and filter verified donors by blood type
+- **Contact Form** — Send messages to the platform team
+- **Blood Type Compatibility Guide** — Interactive reference chart
 
-
----
-
-## 💡 Features
-
-### 👨‍⚕️ Admin
-- Manage donors, requests, blood inventory
-- Approve or reject requests
-- Dashboard with statistics
-
-### 🧑‍🤝‍🧑 Donors
-- Register and donate blood
-- View donation history
-
-### 📦 Inventory
-- Track blood types, units, and availability
+### Admin Panel (`/admin`)
+- Secure JWT-based login
+- Dashboard with real-time stats, bar chart, and pie chart
+- Full CRUD for donors, blood requests, and contact messages
+- Blood inventory management
+- CSV export of dashboard data
 
 ---
 
-## ⚙️ Tech Stack
+## Tech Stack
 
-| Frontend            | Backend               | Database |
-|---------------------|------------------------|----------|
-| React.js            | Node.js + Express.js   | MongoDB  |
-| Tailwind CSS        | REST API               |          |
-| React Router, Axios | JWT Auth, Mongoose     |          |
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 19, Material UI 7, React Router 7 |
+| Backend | Node.js, Express.js |
+| Database | MongoDB (Mongoose) |
+| Auth | JWT + bcryptjs |
+| Charts | Recharts |
+| Animations | AOS |
+| File Upload | Multer |
 
 ---
 
-## 🛠️ Setup Instructions
+## Getting Started
 
-### 📦 Backend
+### Prerequisites
+- Node.js >= 18
+- MongoDB (local or Atlas)
+
+### Backend
+
 ```bash
 cd Backend
 npm install
-npm start
-💻 Frontend
+```
+
+Create a `.env` file in `Backend/`:
+```
+MONGO_URI=mongodb://localhost:27017/blood-donation
+JWT_SECRET=your_jwt_secret_here
+ADMIN_EMAIL=admin@blooddonated.com
+ADMIN_PASSWORD_HASH=<bcrypt hash of your password>
+PORT=3001
+```
+
+```bash
+node server.js
+```
+
+### Frontend
+
+```bash
 cd frontend
 npm install
-npm run start
+```
+
+Copy `.env.example` to `.env` and set your API URL:
+```
+REACT_APP_API_URL=http://localhost:3001
+```
+
+```bash
+npm start
+```
+
+The app runs at `http://localhost:3000`.
+
+---
+
+## Project Structure
+
+```
+Blood Donated/
+├── Backend/
+│   ├── models/        # Mongoose schemas (Donor, BloodRequest, ContactMessage)
+│   ├── routes/        # Express API routes
+│   ├── middleware/    # JWT auth middleware
+│   ├── uploads/       # Uploaded donor/request photos
+│   └── server.js      # Entry point
+└── frontend/
+    └── src/
+        ├── admin/     # Admin dashboard pages
+        ├── components/ # Header, Footer, shared components
+        ├── context/   # Auth context
+        ├── pages/     # Public-facing pages
+        └── config.js  # Central API base URL config
+```
+
+---
+
+## Team
+
+| Name | Role |
+|------|------|
+| Vith Vath | Full Stack Developer (Lead) |
+| Sopheak Sok | System Architect |
+| Chanthou Hem | Backend Developer |
+| Dara Khieu | UI/UX Designer |
+
+---
+
+## License
+
+Academic project — Institute of Technology of Cambodia, 2024-2025.

@@ -7,9 +7,6 @@ import {
   Card,
   CardContent,
   Grid,
-  Dialog,
-  DialogTitle,
-  DialogContent,
   Chip,
   useTheme,
 } from "@mui/material";
@@ -195,7 +192,6 @@ function StatCard({ stat, animate }) {
 const Home = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
-  const [openDialog, setOpenDialog] = useState(false);
   const [statsVisible, setStatsVisible] = useState(false);
   const statsRef = useRef(null);
 
@@ -787,30 +783,6 @@ const Home = () => {
         </Container>
       </Box>
 
-      {/* Awareness Dialog */}
-      <Dialog
-        open={openDialog}
-        onClose={() => setOpenDialog(false)}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{ sx: { borderRadius: 3, p: 3, backgroundColor: "#fff8f8" } }}
-      >
-        <DialogTitle sx={{ fontWeight: 700, color: "#b71c1c" }}>
-          ❤️ Blood Donation Awareness
-        </DialogTitle>
-        <DialogContent>
-          <Typography variant="body1" sx={{ lineHeight: 1.8, color: "#444", mb: 2 }}>
-            Every 2 seconds, someone in the world needs blood. Blood cannot be
-            manufactured, and regular donations are essential for surgeries,
-            cancer treatment, chronic illnesses, and traumatic injuries.
-          </Typography>
-          <Box textAlign="right" mt={2}>
-            <Button onClick={() => setOpenDialog(false)} variant="contained" color="error">
-              Close
-            </Button>
-          </Box>
-        </DialogContent>
-      </Dialog>
     </Box>
   );
 };

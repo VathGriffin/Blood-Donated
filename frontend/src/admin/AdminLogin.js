@@ -15,6 +15,7 @@ import { Visibility, VisibilityOff, Bloodtype, Lock, Email } from '@mui/icons-ma
 import { useNavigate, Navigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import API_BASE from '../config';
 
 const AdminLogin = () => {
     const theme = useTheme();
@@ -39,7 +40,7 @@ const AdminLogin = () => {
         setLoading(true);
         setError('');
         try {
-            const { data } = await axios.post('http://localhost:3001/api/auth/login', form);
+            const { data } = await axios.post(`${API_BASE}/api/auth/login`, form);
             login(data.token);
             navigate('/admin/dashboard', { replace: true });
         } catch (err) {

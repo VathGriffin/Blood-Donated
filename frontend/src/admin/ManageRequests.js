@@ -30,9 +30,10 @@ import {
 } from "@mui/material";
 import { Delete, Edit, Bloodtype, CameraAlt, DeleteOutline, Close, Visibility, LocalHospital, Phone, CalendarToday } from "@mui/icons-material";
 import axios from "axios";
+import API_BASE_URL from "../config";
 
-const API_BASE = "http://localhost:3001/api/requests";
-const BASE_URL = "http://localhost:3001";
+const API_BASE = `${API_BASE_URL}/api/requests`;
+const BASE_URL = API_BASE_URL;
 
 const URGENCY_LEVELS = ["Low", "Medium", "High", "Critical"];
 const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];

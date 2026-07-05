@@ -26,7 +26,8 @@ import {
 import { Delete, Edit, ContactMail, Search } from "@mui/icons-material";
 import axios from "axios";
 
-const API = "http://localhost:3001/api/contacts";
+import API_BASE from "../config";
+const API = `${API_BASE}/api/contacts`;
 
 const ManageContact = () => {
     const theme = useTheme();

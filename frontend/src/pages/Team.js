@@ -56,11 +56,6 @@ const teamMembers = [
   },
 ];
 
-React.useEffect &&
-  (() => {
-    AOS.init({ duration: 900, once: true });
-  })();
-
 const Team = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";

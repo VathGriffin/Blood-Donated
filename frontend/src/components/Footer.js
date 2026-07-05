@@ -72,7 +72,7 @@ function Footer() {
                 <Facebook fontSize="small" />
               </IconButton>
               <IconButton
-                href="https://t.me/yourchannel"
+                href="https://t.me/blooddonatedkh"
                 target="_blank"
                 size="small"
                 sx={{

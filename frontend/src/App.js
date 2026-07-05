@@ -19,6 +19,7 @@ import Team from "./pages/Team";
 import RequestThankYou from "./pages/RequestThankYou";
 import ThankYouContact from "./pages/ThankYouContact";
 import About from "./pages/About";
+import NotFound from "./pages/NotFound";
 
 // Admin Pages
 import AdminLogin from "./admin/AdminLogin";
@@ -49,6 +50,9 @@ function App() {
               <Route path="/contact/thank-you" element={<ThankYouContact />} />
               <Route path="/about" element={<About />} />
             </Route>
+
+            {/* 404 */}
+            <Route path="*" element={<NotFound />} />
 
             {/* Admin Login */}
             <Route path="/admin/login" element={<AdminLogin />} />

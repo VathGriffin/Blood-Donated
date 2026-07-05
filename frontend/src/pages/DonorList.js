@@ -23,6 +23,7 @@ import {
 } from "@mui/material";
 import BloodtypeIcon from "@mui/icons-material/Bloodtype";
 import axios from "axios";
+import API_BASE from "../config";
 import { formatDistanceToNow } from "date-fns";
 
 const bloodTypes = ["All", "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
@@ -39,7 +40,7 @@ const DonorList = () => {
   useEffect(() => {
     const fetchDonors = async () => {
       try {
-        const res = await axios.get("http://localhost:3001/api/donors");
+        const res = await axios.get(`${API_BASE}/api/donors`);
         setDonors(res.data);
       } catch (err) {
         console.error("Failed to fetch donors:", err);
@@ -169,7 +170,7 @@ const DonorList = () => {
                   <CardContent>
                     <Box display="flex" alignItems="center" mb={2}>
                       <Avatar
-                        src={donor.photo ? `http://localhost:3001${donor.photo}` : undefined}
+                        src={donor.photo ? `${API_BASE}${donor.photo}` : undefined}
                         sx={{ bgcolor: "error.main", mr: 2, width: 48, height: 48, fontSize: "1rem", fontWeight: 700 }}
                       >
                         {donor.fullName?.split(" ").map((n) => n[0]).join("").slice(0, 2)}

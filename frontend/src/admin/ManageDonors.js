@@ -38,9 +38,10 @@ import {
   DeleteOutline,
 } from "@mui/icons-material";
 import axios from "axios";
+import API_BASE from "../config";
 
-const API = "http://localhost:3001/api/donors";
-const BASE_URL = "http://localhost:3001";
+const API = `${API_BASE}/api/donors`;
+const BASE_URL = API_BASE;
 
 const bloodTypes = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
