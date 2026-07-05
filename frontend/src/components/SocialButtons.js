@@ -24,7 +24,6 @@ const FacebookIcon = () => (
     </svg>
 );
 
-// Loads the Facebook JS SDK once globally
 let fbSDKLoaded = false;
 const loadFacebookSDK = (appId) => {
     if (fbSDKLoaded || !appId) return;
@@ -39,13 +38,10 @@ const loadFacebookSDK = (appId) => {
     document.body.appendChild(script);
 };
 
-const SocialButtons = ({ onError }) => {
+// Separate component so useGoogleLogin hook only runs when client ID is present
+const GoogleLoginButton = ({ onError }) => {
     const { login } = useUserAuth();
     const navigate = useNavigate();
-
-    useEffect(() => {
-        loadFacebookSDK(FACEBOOK_APP_ID);
-    }, []);
 
     const googleLogin = useGoogleLogin({
         onSuccess: async (tokenResponse) => {
@@ -62,6 +58,31 @@ const SocialButtons = ({ onError }) => {
         onError: () => onError("Google sign-in was cancelled or failed."),
     });
 
+    return (
+        <Button
+            fullWidth
+            variant="outlined"
+            onClick={() => googleLogin()}
+            startIcon={<GoogleIcon />}
+            sx={{
+                py: 1.3, borderRadius: 3, textTransform: "none", fontWeight: 600, fontSize: "0.92rem",
+                borderColor: "#dadce0", color: "text.primary",
+                "&:hover": { borderColor: "#bbb", bgcolor: "rgba(0,0,0,0.03)" },
+            }}
+        >
+            Continue with Google
+        </Button>
+    );
+};
+
+const FacebookLoginButton = ({ onError }) => {
+    const { login } = useUserAuth();
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        loadFacebookSDK(FACEBOOK_APP_ID);
+    }, []);
+
     const handleFacebookLogin = () => {
         if (!window.FB) {
             onError("Facebook is loading — please try again in a moment.");
@@ -73,9 +94,8 @@ const SocialButtons = ({ onError }) => {
                     onError("Facebook sign-in was cancelled.");
                     return;
                 }
-                const { accessToken } = response.authResponse;
                 axios
-                    .post(`${API_BASE}/api/user/facebook`, { accessToken })
+                    .post(`${API_BASE}/api/user/facebook`, { accessToken: response.authResponse.accessToken })
                     .then(({ data }) => {
                         login(data.token, data.user);
                         navigate("/messages");
@@ -88,6 +108,24 @@ const SocialButtons = ({ onError }) => {
         );
     };
 
+    return (
+        <Button
+            fullWidth
+            variant="outlined"
+            onClick={handleFacebookLogin}
+            startIcon={<FacebookIcon />}
+            sx={{
+                py: 1.3, borderRadius: 3, textTransform: "none", fontWeight: 600, fontSize: "0.92rem",
+                borderColor: "#1877F2", color: "#1877F2",
+                "&:hover": { borderColor: "#1877F2", bgcolor: "rgba(24,119,242,0.05)" },
+            }}
+        >
+            Continue with Facebook
+        </Button>
+    );
+};
+
+const SocialButtons = ({ onError }) => {
     if (!GOOGLE_CLIENT_ID && !FACEBOOK_APP_ID) return null;
 
     return (
@@ -98,36 +136,8 @@ const SocialButtons = ({ onError }) => {
                 </Typography>
             </Divider>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-                {GOOGLE_CLIENT_ID && (
-                    <Button
-                        fullWidth
-                        variant="outlined"
-                        onClick={() => googleLogin()}
-                        startIcon={<GoogleIcon />}
-                        sx={{
-                            py: 1.3, borderRadius: 3, textTransform: "none", fontWeight: 600, fontSize: "0.92rem",
-                            borderColor: "#dadce0", color: "text.primary",
-                            "&:hover": { borderColor: "#bbb", bgcolor: "rgba(0,0,0,0.03)" },
-                        }}
-                    >
-                        Continue with Google
-                    </Button>
-                )}
-                {FACEBOOK_APP_ID && (
-                    <Button
-                        fullWidth
-                        variant="outlined"
-                        onClick={handleFacebookLogin}
-                        startIcon={<FacebookIcon />}
-                        sx={{
-                            py: 1.3, borderRadius: 3, textTransform: "none", fontWeight: 600, fontSize: "0.92rem",
-                            borderColor: "#1877F2", color: "#1877F2",
-                            "&:hover": { borderColor: "#1877F2", bgcolor: "rgba(24,119,242,0.05)" },
-                        }}
-                    >
-                        Continue with Facebook
-                    </Button>
-                )}
+                {GOOGLE_CLIENT_ID && <GoogleLoginButton onError={onError} />}
+                {FACEBOOK_APP_ID && <FacebookLoginButton onError={onError} />}
             </Box>
         </>
     );
