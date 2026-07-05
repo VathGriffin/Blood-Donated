@@ -3,10 +3,8 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const dotenv = require("dotenv");
 
-// Load environment variables
 dotenv.config();
 
-// Import routes
 const donorRoutes = require("./routes/donors");
 const bloodRequestRoutes = require("./routes/bloodRequests");
 const contactRoutes = require("./routes/contactMessages");
@@ -15,30 +13,43 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/blood-donation";
 
-// Middleware
+// Disable Mongoose buffering so operations fail immediately when DB is down
+mongoose.set("bufferCommands", false);
+
 app.use(cors({ origin: "http://localhost:3000" }));
 app.use(express.json());
+app.use("/uploads", require("express").static(require("path").join(__dirname, "uploads")));
 
-// Health check
+// Reject API requests immediately if MongoDB is not connected
+app.use("/api", (req, res, next) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({
+      error: "Database unavailable",
+      message: "MongoDB is not connected. Please check your Atlas cluster or connection string.",
+    });
+  }
+  next();
+});
+
 app.get("/", (req, res) => {
   res.send("🩸 Blood Donation API is running");
 });
 
-// Routes
 app.use("/api/donors", donorRoutes);
 app.use("/api/requests", bloodRequestRoutes);
 app.use("/api/contacts", contactRoutes);
 
-// MongoDB connection
+app.listen(PORT, () => {
+  console.log(`🚀 Server running at http://localhost:${PORT}`);
+});
+
 mongoose
-  .connect(MONGO_URI)
+  .connect(MONGO_URI, { serverSelectionTimeoutMS: 5000 })
   .then(() => {
     console.log("✅ MongoDB connected");
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running at http://localhost:${PORT}`);
-    });
   })
   .catch((err) => {
-    console.error("❌ MongoDB connection error:", err.message);
-    process.exit(1);
+    console.error("⚠️  MongoDB connection failed:", err.message);
+    console.error("   Fix: check your Atlas cluster at https://cloud.mongodb.com");
+    console.error("   Make sure the cluster is running and your IP is whitelisted.");
   });

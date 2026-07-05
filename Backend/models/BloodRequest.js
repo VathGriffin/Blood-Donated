@@ -10,11 +10,12 @@ const bloodRequestSchema = new mongoose.Schema({
     },
     urgency: {
         type: String,
-        enum: ['Low', 'Medium', 'High'],
+        enum: ['Low', 'Medium', 'High', 'Critical'],
         required: true
     },
     reason: { type: String, required: true },
     contact: { type: String, required: true },
+    photo: { type: String, default: null },
     createdAt: { type: Date, default: Date.now }
 });
 

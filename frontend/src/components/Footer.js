@@ -5,107 +5,201 @@ import {
   IconButton,
   Link,
   useTheme,
-  useMediaQuery,
   Divider,
+  Grid,
 } from "@mui/material";
-import { Facebook, Telegram } from "@mui/icons-material";
+import { Facebook, Telegram, Favorite } from "@mui/icons-material";
+import { Link as RouterLink } from "react-router-dom";
+
+const quickLinks = [
+  { label: "Home", path: "/" },
+  { label: "Donate Blood", path: "/donate" },
+  { label: "Request Blood", path: "/request" },
+  { label: "Find Donors", path: "/donors" },
+  { label: "Our Team", path: "/team" },
+  { label: "About Us", path: "/about" },
+  { label: "Contact", path: "/contact" },
+];
+
+const bloodTypes = ["A+", "A−", "B+", "B−", "AB+", "AB−", "O+", "O−"];
 
 function Footer() {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isDark = theme.palette.mode === "dark";
 
   return (
-    <Box sx={{ backgroundColor: "#b71c1c", color: "#fff", pt: 6, pb: 4, px: 3 }}>
+    <Box
+      sx={{
+        background: isDark
+          ? "linear-gradient(180deg, #1a0000 0%, #0d0000 100%)"
+          : "linear-gradient(180deg, #b71c1c 0%, #7f0000 100%)",
+        color: "#fff",
+        pt: 7,
+        pb: 3,
+        px: 3,
+      }}
+    >
+      <Box sx={{ maxWidth: "1200px", mx: "auto" }}>
+        <Grid container spacing={5}>
+          {/* Brand Section */}
+          <Grid item xs={12} md={4}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+              <Favorite sx={{ color: "#ffcdd2", fontSize: 28 }} />
+              <Typography variant="h6" fontWeight={800} sx={{ color: "#ffeb3b", letterSpacing: "-0.5px" }}>
+                Blood Donated
+              </Typography>
+            </Box>
+            <Typography variant="body2" sx={{ lineHeight: 1.85, opacity: 0.9, textAlign: "justify", mb: 3 }}>
+              A voluntary blood donation platform connecting compassionate
+              donors with patients in need. Our mission is to ensure no life is
+              lost due to a lack of blood — making donation easy, safe, and
+              impactful.
+              <br />
+              <strong> Be a hero — donate blood today.</strong>
+            </Typography>
+            <Box sx={{ display: "flex", gap: 1.5 }}>
+              <IconButton
+                href="https://www.facebook.com/vith.vath.2025/"
+                target="_blank"
+                size="small"
+                sx={{
+                  color: "#fff",
+                  backgroundColor: "#3b5998",
+                  "&:hover": { backgroundColor: "#2d4373", transform: "translateY(-2px)" },
+                  transition: "0.2s",
+                }}
+              >
+                <Facebook fontSize="small" />
+              </IconButton>
+              <IconButton
+                href="https://t.me/yourchannel"
+                target="_blank"
+                size="small"
+                sx={{
+                  color: "#fff",
+                  backgroundColor: "#0088cc",
+                  "&:hover": { backgroundColor: "#006699", transform: "translateY(-2px)" },
+                  transition: "0.2s",
+                }}
+              >
+                <Telegram fontSize="small" />
+              </IconButton>
+            </Box>
+          </Grid>
+
+          {/* Quick Links */}
+          <Grid item xs={6} md={2.5}>
+            <Typography
+              variant="subtitle1"
+              sx={{ color: "#ffeb3b", fontWeight: 700, mb: 2.5, textTransform: "uppercase", fontSize: "0.85rem", letterSpacing: "0.08em" }}
+            >
+              Quick Links
+            </Typography>
+            <Box component="ul" sx={{ listStyle: "none", p: 0, m: 0 }}>
+              {quickLinks.map((link) => (
+                <li key={link.path}>
+                  <Link
+                    component={RouterLink}
+                    to={link.path}
+                    sx={{
+                      color: "rgba(255,255,255,0.85)",
+                      textDecoration: "none",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 0.8,
+                      py: 0.5,
+                      fontSize: "0.9rem",
+                      transition: "0.2s",
+                      "&:hover": { color: "#ffeb3b", paddingLeft: "4px" },
+                      "&::before": { content: '"›"', color: "#ffcdd2" },
+                    }}
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </Box>
+          </Grid>
+
+          {/* Blood Types */}
+          <Grid item xs={6} md={2}>
+            <Typography
+              variant="subtitle1"
+              sx={{ color: "#ffeb3b", fontWeight: 700, mb: 2.5, textTransform: "uppercase", fontSize: "0.85rem", letterSpacing: "0.08em" }}
+            >
+              Blood Types
+            </Typography>
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+              {bloodTypes.map((bt) => (
+                <Box
+                  key={bt}
+                  sx={{
+                    backgroundColor: "rgba(255,255,255,0.15)",
+                    color: "white",
+                    px: 1.2,
+                    py: 0.4,
+                    borderRadius: 1.5,
+                    fontSize: "0.8rem",
+                    fontWeight: 700,
+                    border: "1px solid rgba(255,255,255,0.2)",
+                  }}
+                >
+                  {bt}
+                </Box>
+              ))}
+            </Box>
+          </Grid>
+
+          {/* Contact Info */}
+          <Grid item xs={12} md={3.5}>
+            <Typography
+              variant="subtitle1"
+              sx={{ color: "#ffeb3b", fontWeight: 700, mb: 2.5, textTransform: "uppercase", fontSize: "0.85rem", letterSpacing: "0.08em" }}
+            >
+              Contact Us
+            </Typography>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+              <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                📧{" "}
+                <Link
+                  href="mailto:Vath.V211006@sis.hust.edu.vn"
+                  sx={{ color: "#fff", textDecoration: "underline dotted", "&:hover": { color: "#ffeb3b" } }}
+                >
+                  Vath.V211006@sis.hust.edu.vn
+                </Link>
+              </Typography>
+              <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                📍 Institute of Technology of Cambodia, Phnom Penh
+              </Typography>
+              <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                📞 +855 12 345 678
+              </Typography>
+              <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                🕐 Mon–Fri: 8:00 AM – 5:00 PM
+              </Typography>
+            </Box>
+          </Grid>
+        </Grid>
+      </Box>
+
+      <Divider sx={{ backgroundColor: "rgba(255,255,255,0.15)", mt: 5, mb: 3 }} />
+
       <Box
         sx={{
           maxWidth: "1200px",
           mx: "auto",
           display: "flex",
-          flexDirection: isMobile ? "column" : "row",
+          flexDirection: { xs: "column", sm: "row" },
           justifyContent: "space-between",
-          gap: 6,
+          alignItems: "center",
+          gap: 1,
         }}
       >
-        {/* About Section */}
-        <Box sx={{ flex: 2 }}>
-          <Typography
-            variant="h6"
-            sx={{ color: "#ffeb3b", fontWeight: 700, mb: 2 }}
-          >
-            About Blood Donated
-          </Typography>
-          <Typography variant="body2" sx={{ lineHeight: 1.8, textAlign: "justify" }}>
-            Blood Donated is a voluntary blood donation platform that connects
-            compassionate donors with patients in need. Our mission is to ensure
-            that no life is lost due to lack of blood by making the donation
-            process easy, safe, and impactful.
-            <br /><br />
-            We promote awareness, educate communities, and empower individuals to
-            become regular blood donors. With every drop, you give someone a
-            second chance at life.
-            <strong> Be a hero—donate blood today.</strong>
-          </Typography>
-        </Box>
-
-        {/* Follow Us */}
-        <Box sx={{ flex: 1 }}>
-          <Typography
-            variant="h6"
-            sx={{ color: "#ffeb3b", fontWeight: 700, mb: 2 }}
-          >
-            Follow Us
-          </Typography>
-          <Box sx={{ display: "flex", gap: 2 }}>
-            <IconButton
-              href="https://www.facebook.com/vith.vath.2025/"
-              target="_blank"
-              sx={{
-                color: "#fff",
-                backgroundColor: "#3b5998",
-                "&:hover": { backgroundColor: "#2d4373" },
-              }}
-            >
-              <Facebook />
-            </IconButton>
-            <IconButton
-              href="https://t.me/yourchannel"
-              target="_blank"
-              sx={{
-                color: "#fff",
-                backgroundColor: "#0088cc",
-                "&:hover": { backgroundColor: "#006699" },
-              }}
-            >
-              <Telegram />
-            </IconButton>
-          </Box>
-        </Box>
-
-        {/* Contact */}
-        <Box sx={{ flex: 1 }}>
-          <Typography
-            variant="h6"
-            sx={{ color: "#ffeb3b", fontWeight: 700, mb: 2 }}
-          >
-            Contact
-          </Typography>
-          <Typography variant="body2">
-            Email:{" "}
-            <Link
-              href="mailto:Vath.V211006@sis.hust.edu.vn"
-              sx={{ color: "#fff", textDecoration: "underline" }}
-            >
-              Vath.V211006@sis.hust.edu.vn
-            </Link>
-          </Typography>
-        </Box>
-      </Box>
-
-      <Divider sx={{ backgroundColor: "#eee", mt: 4, mb: 2 }} />
-
-      <Box sx={{ textAlign: "center" }}>
-        <Typography variant="body2" sx={{ fontSize: "0.9rem" }}>
-          &copy; {new Date().getFullYear()} Blood Donated. All rights reserved.
+        <Typography variant="body2" sx={{ opacity: 0.7, fontSize: "0.82rem" }}>
+          © {new Date().getFullYear()} Blood Donated. All rights reserved.
+        </Typography>
+        <Typography variant="body2" sx={{ opacity: 0.7, fontSize: "0.82rem", display: "flex", alignItems: "center", gap: 0.5 }}>
+          Made with <Favorite sx={{ fontSize: 14, color: "#ffcdd2" }} /> by Data Science Students — ITC Cambodia
         </Typography>
       </Box>
     </Box>

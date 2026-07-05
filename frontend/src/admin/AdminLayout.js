@@ -1,25 +1,33 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import { Box, CssBaseline, Toolbar } from '@mui/material';
+import { Box, CssBaseline, Toolbar, useTheme } from '@mui/material';
 import Sidebar from './Sidebar';
 import AdminNavbar from './AdminNavbar';
 
 const AdminLayout = () => {
+    const theme = useTheme();
+    const isDark = theme.palette.mode === 'dark';
+
     return (
-        <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default', color: 'text.primary' }}>
+        <Box sx={{
+            display: 'flex',
+            minHeight: '100vh',
+            bgcolor: isDark ? '#121212' : '#f8f9fa',
+            color: 'text.primary',
+        }}>
             <CssBaseline />
-
-            {/* Sidebar (cố định bên trái) */}
             <Sidebar />
-
-            {/* Nội dung chính */}
-            <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-                {/* Navbar cố định bên trên */}
+            <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                 <AdminNavbar />
-
-                {/* Nội dung trang */}
-                <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
-                    <Toolbar /> {/* Đệm chiều cao để tránh navbar đè */}
+                <Box
+                    component="main"
+                    sx={{
+                        flexGrow: 1,
+                        p: { xs: 2, md: 3 },
+                        pt: { xs: 2, md: 3 },
+                    }}
+                >
+                    <Toolbar />
                     <Outlet />
                 </Box>
             </Box>

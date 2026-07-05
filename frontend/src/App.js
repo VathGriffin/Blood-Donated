@@ -12,8 +12,6 @@ import Home from "./pages/Home";
 import DonateBlood from "./pages/DonateBlood";
 import Contact from "./pages/Contact";
 import ThankYou from "./pages/ThankYou";
-import Appointment from "./pages/Appointment";
-import AppointmentConfirmed from "./pages/AppointmentConfirmed";
 import RequestBlood from "./pages/RequestBlood";
 import DonorList from "./pages/DonorList";
 import Team from "./pages/Team";
@@ -39,11 +37,6 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/donate" element={<DonateBlood />} />
             <Route path="/donate/thank-you" element={<ThankYou />} />
-            <Route path="/appointment" element={<Appointment />} />
-            <Route
-              path="/appointment/confirmed"
-              element={<AppointmentConfirmed />}
-            />
             <Route path="/request" element={<RequestBlood />} />
             <Route path="/donors" element={<DonorList />} />
             <Route path="/team" element={<Team />} />

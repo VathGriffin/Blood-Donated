@@ -1,248 +1,512 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
-  Typography,
-  Grid,
-  Card,
-  CardContent,
-  CardActions,
-  IconButton,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  TextField,
-  Box,
-  Chip,
-  Stack,
-  Divider,
+    Typography,
+    Paper,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    IconButton,
+    Button,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    TextField,
+    Box,
+    Chip,
+    Tabs,
+    Tab,
+    Avatar,
+    Badge,
+    Tooltip,
+    useTheme,
+    MenuItem,
+    Select,
+    FormControl,
+    InputLabel,
 } from "@mui/material";
-import { Delete, Edit, Bloodtype } from "@mui/icons-material";
+import { Delete, Edit, Bloodtype, CameraAlt, DeleteOutline, Close } from "@mui/icons-material";
 import axios from "axios";
 
 const API_BASE = "http://localhost:3001/api/requests";
+const BASE_URL = "http://localhost:3001";
+
+const URGENCY_LEVELS = ["Low", "Medium", "High", "Critical"];
+const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
 const getUrgencyColor = (urgency) => {
-  switch (urgency.toLowerCase()) {
-    case "high":
-      return "error";
-    case "medium":
-      return "warning";
-    case "low":
-      return "success";
-    case "critical":
-      return "error";
-    default:
-      return "default";
-  }
+    switch ((urgency || "").toLowerCase()) {
+        case "high":
+        case "critical":
+            return "error";
+        case "medium":
+            return "warning";
+        case "low":
+            return "success";
+        default:
+            return "default";
+    }
 };
 
-const ManageRequests = () => {
-  const [requests, setRequests] = useState([]);
-  const [formData, setFormData] = useState({
+const urgencyOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+
+const emptyForm = {
     hospitalName: "",
     patientName: "",
     bloodType: "",
     urgency: "",
     reason: "",
     contact: "",
-  });
-  const [editId, setEditId] = useState(null);
-  const [open, setOpen] = useState(false);
+    photo: null,
+};
 
-  const fetchRequests = async () => {
-    try {
-      const res = await axios.get(API_BASE);
-      setRequests(res.data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+const ManageRequests = () => {
+    const theme = useTheme();
+    const isDark = theme.palette.mode === "dark";
+    const [requests, setRequests] = useState([]);
+    const [formData, setFormData] = useState(emptyForm);
+    const [editId, setEditId] = useState(null);
+    const [open, setOpen] = useState(false);
+    const [tab, setTab] = useState("All");
+    const [photoPreview, setPhotoPreview] = useState(null);
+    const [photoFile, setPhotoFile] = useState(null);
+    const [uploading, setUploading] = useState(false);
+    const fileInputRef = useRef(null);
+    const [viewPhoto, setViewPhoto] = useState(null);
 
-  useEffect(() => {
-    fetchRequests();
-  }, []);
+    const fetchRequests = async () => {
+        try {
+            const res = await axios.get(API_BASE);
+            setRequests(res.data);
+        } catch (err) {
+            console.error(err);
+        }
+    };
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+    useEffect(() => {
+        fetchRequests();
+    }, []);
 
-  const handleSubmit = async () => {
-    try {
-      if (editId) {
-        await axios.put(`${API_BASE}/${editId}`, formData);
-      }
-      fetchRequests();
-      setFormData({
-        hospitalName: "",
-        patientName: "",
-        bloodType: "",
-        urgency: "",
-        reason: "",
-        contact: "",
-      });
-      setEditId(null);
-      setOpen(false);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData((prev) => ({ ...prev, [name]: value }));
+    };
 
-  const handleDelete = async (id) => {
-    try {
-      await axios.delete(`${API_BASE}/${id}`);
-      fetchRequests();
-    } catch (err) {
-      console.error(err);
-    }
-  };
+    const handlePhotoChange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setPhotoFile(file);
+        setPhotoPreview(URL.createObjectURL(file));
+    };
 
-  const handleEdit = (req) => {
-    setFormData(req);
-    setEditId(req._id);
-    setOpen(true);
-  };
+    const handleRemovePhoto = () => {
+        setPhotoFile(null);
+        setPhotoPreview(null);
+        setFormData((prev) => ({ ...prev, photo: null }));
+        if (fileInputRef.current) fileInputRef.current.value = "";
+    };
 
-  return (
-    <Box sx={{ p: 3 }}>
-      {/* 🔧 Title with Bloodtype icon */}
-      <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-        <Bloodtype sx={{ color: "#b71c1c", fontSize: 40, mr: 1 }} />
-        <Typography
-          variant="h4"
-          fontWeight="bold"
-          sx={{
-            background: "linear-gradient(to right, #b71c1c, #d32f2f)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-          }}
-        >
-          Manage Blood Requests
-        </Typography>
-      </Box>
+    const handleSubmit = async () => {
+        if (!editId) return;
 
-      <Grid container spacing={3}>
-        {requests.map((req) => (
-          <Grid item xs={12} sm={6} md={4} key={req._id}>
-            <Card elevation={4} sx={{ borderRadius: 3 }}>
-              <CardContent>
-                <Stack
-                  direction="row"
-                  justifyContent="space-between"
-                  alignItems="center"
-                  mb={1}
+        // Step 1: update text fields
+        try {
+            const { hospitalName, patientName, bloodType, urgency, reason, contact } = formData;
+            await axios.put(`${API_BASE}/${editId}`, { hospitalName, patientName, bloodType, urgency, reason, contact });
+        } catch (err) {
+            console.error("PUT error:", err);
+            const msg = err.response?.data?.error || err.response?.data?.message || err.message || "Failed to update request.";
+            alert(msg);
+            return;
+        }
+
+        // Step 2: upload photo if one was selected
+        if (photoFile) {
+            try {
+                setUploading(true);
+                const fd = new FormData();
+                fd.append("photo", photoFile);
+                await axios.post(`${API_BASE}/${editId}/photo`, fd);
+            } catch (err) {
+                console.error("Photo upload error:", err);
+                alert("Request updated, but photo upload failed. Please try uploading the photo again.");
+            } finally {
+                setUploading(false);
+            }
+        }
+
+        await fetchRequests();
+        setFormData(emptyForm);
+        setEditId(null);
+        setPhotoFile(null);
+        setPhotoPreview(null);
+        setOpen(false);
+    };
+
+    const handleDelete = async (id) => {
+        if (!window.confirm("Delete this request?")) return;
+        try {
+            await axios.delete(`${API_BASE}/${id}`);
+            fetchRequests();
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const handleEdit = (req) => {
+        setFormData({
+            hospitalName: req.hospitalName || "",
+            patientName: req.patientName || "",
+            bloodType: req.bloodType || "",
+            urgency: req.urgency || "",
+            reason: req.reason || "",
+            contact: req.contact || "",
+            photo: req.photo || null,
+        });
+        setEditId(req._id);
+        setPhotoPreview(req.photo ? `${BASE_URL}${req.photo}` : null);
+        setPhotoFile(null);
+        setOpen(true);
+    };
+
+    const tabs = ["All", "Critical", "High", "Medium", "Low"];
+
+    const filtered = requests
+        .filter((r) => tab === "All" || (r.urgency || "").toLowerCase() === tab.toLowerCase())
+        .sort((a, b) => (urgencyOrder[a.urgency?.toLowerCase()] ?? 4) - (urgencyOrder[b.urgency?.toLowerCase()] ?? 4));
+
+    const countFor = (level) =>
+        level === "All"
+            ? requests.length
+            : requests.filter((r) => (r.urgency || "").toLowerCase() === level.toLowerCase()).length;
+
+    const cardBg = isDark ? "#1a1a1a" : "#fff";
+    const cardBorder = isDark ? "#2a2a2a" : "#f0f0f0";
+    const headBg = isDark ? "#1e1e1e" : "#fbe9e7";
+
+    return (
+        <Box>
+            {/* Header */}
+            <Box display="flex" alignItems="center" justifyContent="space-between" mb={3}>
+                <Box display="flex" alignItems="center" gap={1.5}>
+                    <Avatar sx={{ bgcolor: "#b71c1c", width: 52, height: 52 }}>
+                        <Bloodtype sx={{ fontSize: 26 }} />
+                    </Avatar>
+                    <Box>
+                        <Typography
+                            variant="h5"
+                            fontWeight={800}
+                            sx={{
+                                background: "linear-gradient(to right, #b71c1c, #d32f2f)",
+                                WebkitBackgroundClip: "text",
+                                WebkitTextFillColor: "transparent",
+                                lineHeight: 1.2,
+                            }}
+                        >
+                            Manage Blood Requests
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                            {requests.length} total request{requests.length !== 1 ? "s" : ""}
+                        </Typography>
+                    </Box>
+                </Box>
+            </Box>
+
+            {/* Tabs */}
+            <Paper
+                elevation={0}
+                sx={{ mb: 3, borderRadius: 3, border: `1px solid ${cardBorder}`, bgcolor: cardBg }}
+            >
+                <Tabs
+                    value={tab}
+                    onChange={(_, v) => setTab(v)}
+                    variant="scrollable"
+                    scrollButtons="auto"
+                    sx={{
+                        px: 1,
+                        "& .MuiTab-root": { textTransform: "none", fontWeight: 600, fontSize: "0.85rem" },
+                        "& .Mui-selected": { color: "#b71c1c" },
+                        "& .MuiTabs-indicator": { bgcolor: "#b71c1c" },
+                    }}
                 >
-                  <Typography variant="h6" color="error.main" fontWeight="bold">
-                    {req.hospitalName}
-                  </Typography>
-                  <Chip label={req.bloodType} color="error" />
-                </Stack>
+                    {tabs.map((t) => (
+                        <Tab
+                            key={t}
+                            value={t}
+                            label={
+                                <Box display="flex" alignItems="center" gap={0.8}>
+                                    {t}
+                                    <Chip
+                                        label={countFor(t)}
+                                        size="small"
+                                        color={t === "All" ? "default" : getUrgencyColor(t)}
+                                        sx={{ height: 18, fontSize: "0.68rem", fontWeight: 700 }}
+                                    />
+                                </Box>
+                            }
+                        />
+                    ))}
+                </Tabs>
+            </Paper>
 
-                <Divider sx={{ mb: 1 }} />
+            {/* Table */}
+            <TableContainer
+                component={Paper}
+                elevation={0}
+                sx={{ borderRadius: 3, border: `1px solid ${cardBorder}`, bgcolor: cardBg }}
+            >
+                <Table>
+                    <TableHead sx={{ bgcolor: headBg }}>
+                        <TableRow>
+                            {["Patient", "Hospital", "Blood Type", "Urgency", "Reason", "Contact", "Actions"].map(
+                                (h) => (
+                                    <TableCell key={h} sx={{ fontWeight: 700, fontSize: "0.82rem", py: 1.5 }}>
+                                        {h}
+                                    </TableCell>
+                                )
+                            )}
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {filtered.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
+                                    <Bloodtype sx={{ fontSize: 40, color: "text.disabled", mb: 1 }} />
+                                    <Typography color="text.secondary" fontSize="0.9rem">
+                                        No {tab !== "All" ? tab.toLowerCase() : ""} requests found.
+                                    </Typography>
+                                </TableCell>
+                            </TableRow>
+                        ) : (
+                            filtered.map((req) => (
+                                <TableRow
+                                    key={req._id}
+                                    hover
+                                    sx={{ "&:nth-of-type(odd)": { bgcolor: isDark ? "rgba(255,255,255,0.02)" : "#fafafa" } }}
+                                >
+                                    {/* Patient column with photo avatar */}
+                                    <TableCell>
+                                        <Box display="flex" alignItems="center" gap={1.5}>
+                                            <Tooltip title={req.photo ? "Click to view photo" : "No photo"}>
+                                                <Avatar
+                                                    src={req.photo ? `${BASE_URL}${req.photo}` : undefined}
+                                                    onClick={() => req.photo && setViewPhoto({ url: `${BASE_URL}${req.photo}`, name: req.patientName })}
+                                                    sx={{
+                                                        width: 42,
+                                                        height: 42,
+                                                        bgcolor: "#b71c1c",
+                                                        fontSize: "0.9rem",
+                                                        fontWeight: 700,
+                                                        cursor: req.photo ? "pointer" : "default",
+                                                        border: req.photo ? "2px solid #b71c1c" : "none",
+                                                        transition: "transform 0.15s",
+                                                        "&:hover": req.photo ? { transform: "scale(1.12)" } : {},
+                                                    }}
+                                                >
+                                                    {req.patientName?.charAt(0)?.toUpperCase()}
+                                                </Avatar>
+                                            </Tooltip>
+                                            <Typography fontWeight={600} fontSize="0.86rem">
+                                                {req.patientName}
+                                            </Typography>
+                                        </Box>
+                                    </TableCell>
+                                    <TableCell sx={{ fontWeight: 600, fontSize: "0.85rem" }}>
+                                        {req.hospitalName}
+                                    </TableCell>
+                                    <TableCell>
+                                        <Chip
+                                            label={req.bloodType}
+                                            color="error"
+                                            size="small"
+                                            sx={{ fontWeight: 800, fontSize: "0.75rem" }}
+                                        />
+                                    </TableCell>
+                                    <TableCell>
+                                        <Chip
+                                            label={req.urgency || "—"}
+                                            color={getUrgencyColor(req.urgency)}
+                                            size="small"
+                                            sx={{ fontWeight: 700, fontSize: "0.75rem" }}
+                                        />
+                                    </TableCell>
+                                    <TableCell sx={{ fontSize: "0.82rem", maxWidth: 180 }}>
+                                        <Typography noWrap fontSize="0.82rem" title={req.reason}>
+                                            {req.reason}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell sx={{ fontSize: "0.82rem" }}>{req.contact}</TableCell>
+                                    <TableCell>
+                                        <Tooltip title="Edit">
+                                            <IconButton
+                                                size="small"
+                                                color="primary"
+                                                onClick={() => handleEdit(req)}
+                                            >
+                                                <Edit fontSize="small" />
+                                            </IconButton>
+                                        </Tooltip>
+                                        <Tooltip title="Delete">
+                                            <IconButton
+                                                size="small"
+                                                color="error"
+                                                onClick={() => handleDelete(req._id)}
+                                            >
+                                                <Delete fontSize="small" />
+                                            </IconButton>
+                                        </Tooltip>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        )}
+                    </TableBody>
+                </Table>
+            </TableContainer>
 
-                <Typography variant="body2">
-                  <strong>Patient:</strong> {req.patientName}
-                </Typography>
-                <Typography variant="body2">
-                  <strong>Reason:</strong> {req.reason}
-                </Typography>
-                <Typography variant="body2">
-                  <strong>Contact:</strong> {req.contact}
-                </Typography>
+            {/* Photo Preview Dialog */}
+            <Dialog
+                open={!!viewPhoto}
+                onClose={() => setViewPhoto(null)}
+                maxWidth="sm"
+                fullWidth
+                PaperProps={{ sx: { borderRadius: 3, overflow: "hidden" } }}
+            >
+                <DialogTitle sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", pb: 1 }}>
+                    <Typography fontWeight={700}>{viewPhoto?.name}</Typography>
+                    <IconButton size="small" onClick={() => setViewPhoto(null)}>
+                        <Close fontSize="small" />
+                    </IconButton>
+                </DialogTitle>
+                <DialogContent sx={{ p: 0 }}>
+                    <Box
+                        component="img"
+                        src={viewPhoto?.url}
+                        alt={viewPhoto?.name}
+                        sx={{ width: "100%", maxHeight: 480, objectFit: "contain", display: "block", bgcolor: isDark ? "#111" : "#f5f5f5" }}
+                    />
+                </DialogContent>
+            </Dialog>
 
-                <Stack direction="row" spacing={1} mt={1}>
-                  <Chip
-                    label={`Urgency: ${req.urgency}`}
-                    color={getUrgencyColor(req.urgency)}
-                    size="small"
-                  />
-                </Stack>
-              </CardContent>
+            {/* Edit Dialog */}
+            <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
+                <DialogTitle fontWeight={700}>Update Blood Request</DialogTitle>
+                <DialogContent dividers>
+                    {/* Photo uploader */}
+                    <Box display="flex" flexDirection="column" alignItems="center" mb={3} mt={1}>
+                        <Badge
+                            overlap="circular"
+                            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                            badgeContent={
+                                <Tooltip title="Change photo">
+                                    <IconButton
+                                        size="small"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        sx={{
+                                            bgcolor: "#b71c1c",
+                                            color: "white",
+                                            width: 32,
+                                            height: 32,
+                                            border: "2px solid white",
+                                            "&:hover": { bgcolor: "#d32f2f" },
+                                        }}
+                                    >
+                                        <CameraAlt sx={{ fontSize: 16 }} />
+                                    </IconButton>
+                                </Tooltip>
+                            }
+                        >
+                            <Avatar
+                                src={photoPreview || undefined}
+                                sx={{
+                                    width: 100,
+                                    height: 100,
+                                    bgcolor: "#b71c1c",
+                                    fontSize: "2rem",
+                                    fontWeight: 700,
+                                    border: "3px solid #ffcdd2",
+                                    cursor: "pointer",
+                                }}
+                                onClick={() => fileInputRef.current?.click()}
+                            >
+                                {!photoPreview && formData.patientName?.charAt(0)?.toUpperCase()}
+                            </Avatar>
+                        </Badge>
 
-              <CardActions sx={{ justifyContent: "flex-end" }}>
-                <IconButton color="primary" onClick={() => handleEdit(req)}>
-                  <Edit />
-                </IconButton>
-                <IconButton color="error" onClick={() => handleDelete(req._id)}>
-                  <Delete />
-                </IconButton>
-              </CardActions>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            style={{ display: "none" }}
+                            onChange={handlePhotoChange}
+                        />
 
-      {/* Edit Dialog */}
-      <Dialog
-        open={open}
-        onClose={() => setOpen(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>Update Blood Request</DialogTitle>
-        <DialogContent>
-          <TextField
-            fullWidth
-            margin="normal"
-            label="Hospital Name"
-            name="hospitalName"
-            value={formData.hospitalName}
-            onChange={handleChange}
-          />
-          <TextField
-            fullWidth
-            margin="normal"
-            label="Patient Name"
-            name="patientName"
-            value={formData.patientName}
-            onChange={handleChange}
-          />
-          <TextField
-            fullWidth
-            margin="normal"
-            label="Blood Type"
-            name="bloodType"
-            value={formData.bloodType}
-            onChange={handleChange}
-            placeholder="A+, B-, O+, etc."
-          />
-          <TextField
-            fullWidth
-            margin="normal"
-            label="Urgency"
-            name="urgency"
-            value={formData.urgency}
-            onChange={handleChange}
-            placeholder="Low, Medium, High, Critical"
-          />
-          <TextField
-            fullWidth
-            margin="normal"
-            label="Reason"
-            name="reason"
-            value={formData.reason}
-            onChange={handleChange}
-          />
-          <TextField
-            fullWidth
-            margin="normal"
-            label="Contact"
-            name="contact"
-            value={formData.contact}
-            onChange={handleChange}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpen(false)} color="inherit">
-            Cancel
-          </Button>
-          <Button onClick={handleSubmit} variant="contained" color="primary">
-            Update
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
-  );
+                        <Box display="flex" gap={1} mt={1.5}>
+                            <Button
+                                size="small"
+                                variant="outlined"
+                                color="error"
+                                onClick={() => fileInputRef.current?.click()}
+                                sx={{ borderRadius: 2, textTransform: "none", fontSize: "0.78rem" }}
+                            >
+                                {photoPreview ? "Change Photo" : "Upload Photo"}
+                            </Button>
+                            {photoPreview && (
+                                <Button
+                                    size="small"
+                                    variant="outlined"
+                                    color="inherit"
+                                    startIcon={<DeleteOutline />}
+                                    onClick={handleRemovePhoto}
+                                    sx={{ borderRadius: 2, textTransform: "none", fontSize: "0.78rem" }}
+                                >
+                                    Remove
+                                </Button>
+                            )}
+                        </Box>
+                        <Typography variant="caption" color="text.disabled" mt={0.5}>
+                            JPG, PNG, WebP — max 5 MB
+                        </Typography>
+                    </Box>
+
+                    <TextField fullWidth margin="dense" label="Hospital Name" name="hospitalName" value={formData.hospitalName} onChange={handleChange} variant="outlined" />
+                    <TextField fullWidth margin="dense" label="Patient Name" name="patientName" value={formData.patientName} onChange={handleChange} variant="outlined" />
+                    <FormControl fullWidth margin="dense">
+                        <InputLabel>Blood Type</InputLabel>
+                        <Select name="bloodType" value={formData.bloodType} onChange={handleChange} label="Blood Type">
+                            {BLOOD_TYPES.map((t) => (
+                                <MenuItem key={t} value={t}>{t}</MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                    <FormControl fullWidth margin="dense">
+                        <InputLabel>Urgency</InputLabel>
+                        <Select name="urgency" value={formData.urgency} onChange={handleChange} label="Urgency" variant="outlined">
+                            {URGENCY_LEVELS.map((u) => (
+                                <MenuItem key={u} value={u}>{u}</MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                    <TextField fullWidth margin="dense" label="Reason" name="reason" value={formData.reason} onChange={handleChange} multiline rows={2} variant="outlined" />
+                    <TextField fullWidth margin="dense" label="Contact" name="contact" value={formData.contact} onChange={handleChange} variant="outlined" />
+                </DialogContent>
+                <DialogActions sx={{ px: 3, pb: 2.5 }}>
+                    <Button onClick={() => setOpen(false)} color="inherit">Cancel</Button>
+                    <Button
+                        onClick={handleSubmit}
+                        variant="contained"
+                        color="error"
+                        disabled={uploading}
+                        sx={{ borderRadius: 2 }}
+                    >
+                        {uploading ? "Uploading…" : "Update"}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+        </Box>
+    );
 };
 
 export default ManageRequests;

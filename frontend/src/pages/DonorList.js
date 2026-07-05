@@ -156,12 +156,11 @@ const DonorList = () => {
                 >
                   <CardContent>
                     <Box display="flex" alignItems="center" mb={2}>
-                      <Avatar sx={{ bgcolor: "error.main", mr: 2 }}>
-                        {donor.fullName
-                          ?.split(" ")
-                          .map((n) => n[0])
-                          .join("")
-                          .slice(0, 2)}
+                      <Avatar
+                        src={donor.photo ? `http://localhost:3001${donor.photo}` : undefined}
+                        sx={{ bgcolor: "error.main", mr: 2, width: 48, height: 48, fontSize: "1rem", fontWeight: 700 }}
+                      >
+                        {donor.fullName?.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                       </Avatar>
                       <Box>
                         <Typography variant="h6" fontWeight="bold">
@@ -278,23 +277,28 @@ const DonorList = () => {
 
         {/* Dialog */}
         {selectedDonor && (
-          <Dialog open onClose={handleClose} maxWidth="sm" fullWidth>
-            <DialogTitle>👤 Contact {selectedDonor.fullName}</DialogTitle>
+          <Dialog open onClose={handleClose} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
+            <DialogTitle fontWeight={700}>Donor Details</DialogTitle>
             <DialogContent dividers>
-              <Typography>
-                <strong>📱 Phone:</strong>{" "}
-                {selectedDonor.phone || "Not Provided"}
-              </Typography>
-              <Typography sx={{ mt: 1 }}>
-                <strong>📧 Email:</strong>{" "}
-                {selectedDonor.email || "Not Provided"}
-              </Typography>
-              <Typography sx={{ mt: 1 }}>
-                <strong>📍 Location:</strong> {selectedDonor.location}
-              </Typography>
+              <Box display="flex" alignItems="center" gap={2.5} mb={3}>
+                <Avatar
+                  src={selectedDonor.photo ? `http://localhost:3001${selectedDonor.photo}` : undefined}
+                  sx={{ width: 80, height: 80, bgcolor: "error.main", fontSize: "1.8rem", fontWeight: 700, border: "3px solid #ffcdd2" }}
+                >
+                  {selectedDonor.fullName?.charAt(0)?.toUpperCase()}
+                </Avatar>
+                <Box>
+                  <Typography variant="h6" fontWeight={700}>{selectedDonor.fullName}</Typography>
+                  <Chip label={selectedDonor.bloodType} color="error" size="small" sx={{ fontWeight: 800, mt: 0.5 }} />
+                </Box>
+              </Box>
+              <Typography><strong>📱 Phone:</strong> {selectedDonor.phone || "Not Provided"}</Typography>
+              <Typography sx={{ mt: 1 }}><strong>📧 Email:</strong> {selectedDonor.email || "Not Provided"}</Typography>
+              <Typography sx={{ mt: 1 }}><strong>📍 Location:</strong> {selectedDonor.location}</Typography>
+              <Typography sx={{ mt: 1 }}><strong>📅 Last Donation:</strong> {formatDate(selectedDonor.lastDonation)}</Typography>
             </DialogContent>
-            <DialogActions>
-              <Button onClick={handleClose} color="error">
+            <DialogActions sx={{ px: 3, pb: 2 }}>
+              <Button onClick={handleClose} color="error" variant="outlined" sx={{ borderRadius: 2 }}>
                 Close
               </Button>
             </DialogActions>
