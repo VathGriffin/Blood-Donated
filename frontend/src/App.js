@@ -36,7 +36,6 @@ import ManageRequests from "./admin/ManageRequests";
 import Inventory from "./admin/Inventory";
 import ManageContact from "./admin/ManageContact";
 import ManageAppointments from "./admin/ManageAppointments";
-import AdminMessages from "./admin/AdminMessages";
 
 function App() {
   return (
@@ -81,7 +80,6 @@ function App() {
                   <Route path="/admin/inventory" element={<Inventory />} />
                   <Route path="/admin/contacts" element={<ManageContact />} />
                   <Route path="/admin/appointments" element={<ManageAppointments />} />
-                  <Route path="/admin/messages" element={<AdminMessages />} />
                 </Route>
               </Route>
             </Routes>

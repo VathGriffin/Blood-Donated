@@ -18,7 +18,6 @@ import {
     PeopleAlt,
     LocalHospital,
     Inventory2,
-    ContactMail,
     CalendarMonth,
     Chat,
     ArrowBack,
@@ -32,9 +31,8 @@ const navItems = [
     { label: 'Dashboard', icon: <Dashboard />, path: '/admin/dashboard' },
     { label: 'Manage Donors', icon: <PeopleAlt />, path: '/admin/donors' },
     { label: 'Manage Requests', icon: <LocalHospital />, path: '/admin/requests' },
-    { label: 'Manage Contact', icon: <ContactMail />, path: '/admin/contacts' },
+    { label: 'Messages', icon: <Chat />, path: '/admin/contacts' },
     { label: 'Appointments', icon: <CalendarMonth />, path: '/admin/appointments' },
-    { label: 'Messages', icon: <Chat />, path: '/admin/messages' },
     { label: 'Inventory', icon: <Inventory2 />, path: '/admin/inventory' },
 ];
 
