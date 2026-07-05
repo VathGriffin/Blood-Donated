@@ -20,6 +20,7 @@ import {
     Inventory2,
     ContactMail,
     CalendarMonth,
+    Chat,
     ArrowBack,
     Bloodtype,
 } from '@mui/icons-material';
@@ -33,6 +34,7 @@ const navItems = [
     { label: 'Manage Requests', icon: <LocalHospital />, path: '/admin/requests' },
     { label: 'Manage Contact', icon: <ContactMail />, path: '/admin/contacts' },
     { label: 'Appointments', icon: <CalendarMonth />, path: '/admin/appointments' },
+    { label: 'Messages', icon: <Chat />, path: '/admin/messages' },
     { label: 'Inventory', icon: <Inventory2 />, path: '/admin/inventory' },
 ];
 

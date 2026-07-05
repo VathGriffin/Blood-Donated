@@ -10,6 +10,8 @@ const bloodRequestRoutes = require("./routes/bloodRequests");
 const contactRoutes = require("./routes/contactMessages");
 const appointmentRoutes = require("./routes/appointments");
 const authRoutes = require("./routes/auth");
+const userAuthRoutes = require("./routes/userAuth");
+const messageRoutes = require("./routes/messages");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -42,6 +44,8 @@ app.use("/api/donors", donorRoutes);
 app.use("/api/requests", bloodRequestRoutes);
 app.use("/api/contacts", contactRoutes);
 app.use("/api/appointments", appointmentRoutes);
+app.use("/api/user", userAuthRoutes);
+app.use("/api/messages", messageRoutes);
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running at http://localhost:${PORT}`);
