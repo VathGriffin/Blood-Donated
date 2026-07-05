@@ -28,7 +28,7 @@ import {
     FormControl,
     InputLabel,
 } from "@mui/material";
-import { Delete, Edit, Bloodtype, CameraAlt, DeleteOutline, Close } from "@mui/icons-material";
+import { Delete, Edit, Bloodtype, CameraAlt, DeleteOutline, Close, Visibility, LocalHospital, Phone, CalendarToday } from "@mui/icons-material";
 import axios from "axios";
 
 const API_BASE = "http://localhost:3001/api/requests";
@@ -76,6 +76,7 @@ const ManageRequests = () => {
     const [uploading, setUploading] = useState(false);
     const fileInputRef = useRef(null);
     const [viewPhoto, setViewPhoto] = useState(null);
+    const [viewProfile, setViewProfile] = useState(null);
 
     const fetchRequests = async () => {
         try {
@@ -261,7 +262,7 @@ const ManageRequests = () => {
                 <Table>
                     <TableHead sx={{ bgcolor: headBg }}>
                         <TableRow>
-                            {["Patient", "Hospital", "Blood Type", "Urgency", "Reason", "Contact", "Actions"].map(
+                            {["Patient", "Hospital", "Blood Type", "Urgency", "Reason", "Contact", "Photo", "Actions"].map(
                                 (h) => (
                                     <TableCell key={h} sx={{ fontWeight: 700, fontSize: "0.82rem", py: 1.5 }}>
                                         {h}
@@ -273,7 +274,7 @@ const ManageRequests = () => {
                     <TableBody>
                         {filtered.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
+                                <TableCell colSpan={8} align="center" sx={{ py: 6 }}>
                                     <Bloodtype sx={{ fontSize: 40, color: "text.disabled", mb: 1 }} />
                                     <Typography color="text.secondary" fontSize="0.9rem">
                                         No {tab !== "All" ? tab.toLowerCase() : ""} requests found.
@@ -287,32 +288,10 @@ const ManageRequests = () => {
                                     hover
                                     sx={{ "&:nth-of-type(odd)": { bgcolor: isDark ? "rgba(255,255,255,0.02)" : "#fafafa" } }}
                                 >
-                                    {/* Patient column with photo avatar */}
                                     <TableCell>
-                                        <Box display="flex" alignItems="center" gap={1.5}>
-                                            <Tooltip title={req.photo ? "Click to view photo" : "No photo"}>
-                                                <Avatar
-                                                    src={req.photo ? `${BASE_URL}${req.photo}` : undefined}
-                                                    onClick={() => req.photo && setViewPhoto({ url: `${BASE_URL}${req.photo}`, name: req.patientName })}
-                                                    sx={{
-                                                        width: 42,
-                                                        height: 42,
-                                                        bgcolor: "#b71c1c",
-                                                        fontSize: "0.9rem",
-                                                        fontWeight: 700,
-                                                        cursor: req.photo ? "pointer" : "default",
-                                                        border: req.photo ? "2px solid #b71c1c" : "none",
-                                                        transition: "transform 0.15s",
-                                                        "&:hover": req.photo ? { transform: "scale(1.12)" } : {},
-                                                    }}
-                                                >
-                                                    {req.patientName?.charAt(0)?.toUpperCase()}
-                                                </Avatar>
-                                            </Tooltip>
-                                            <Typography fontWeight={600} fontSize="0.86rem">
-                                                {req.patientName}
-                                            </Typography>
-                                        </Box>
+                                        <Typography fontWeight={600} fontSize="0.86rem">
+                                            {req.patientName}
+                                        </Typography>
                                     </TableCell>
                                     <TableCell sx={{ fontWeight: 600, fontSize: "0.85rem" }}>
                                         {req.hospitalName}
@@ -340,6 +319,36 @@ const ManageRequests = () => {
                                     </TableCell>
                                     <TableCell sx={{ fontSize: "0.82rem" }}>{req.contact}</TableCell>
                                     <TableCell>
+                                        <Tooltip title={req.photo ? "View photo" : "No photo"}>
+                                            <Avatar
+                                                src={req.photo ? `${BASE_URL}${req.photo}` : undefined}
+                                                onClick={() => req.photo && setViewPhoto({ url: `${BASE_URL}${req.photo}`, name: req.patientName })}
+                                                sx={{
+                                                    width: 38,
+                                                    height: 38,
+                                                    bgcolor: "#b71c1c",
+                                                    fontSize: "0.85rem",
+                                                    fontWeight: 700,
+                                                    cursor: req.photo ? "pointer" : "default",
+                                                    border: req.photo ? "2px solid #b71c1c" : "2px solid transparent",
+                                                    transition: "transform 0.15s",
+                                                    "&:hover": req.photo ? { transform: "scale(1.12)" } : {},
+                                                }}
+                                            >
+                                                {req.patientName?.charAt(0)?.toUpperCase()}
+                                            </Avatar>
+                                        </Tooltip>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Tooltip title="View Profile">
+                                            <IconButton
+                                                size="small"
+                                                color="inherit"
+                                                onClick={() => setViewProfile(req)}
+                                            >
+                                                <Visibility fontSize="small" />
+                                            </IconButton>
+                                        </Tooltip>
                                         <Tooltip title="Edit">
                                             <IconButton
                                                 size="small"
@@ -388,6 +397,106 @@ const ManageRequests = () => {
                         sx={{ width: "100%", maxHeight: 480, objectFit: "contain", display: "block", bgcolor: isDark ? "#111" : "#f5f5f5" }}
                     />
                 </DialogContent>
+            </Dialog>
+
+            {/* View Profile Dialog */}
+            <Dialog
+                open={!!viewProfile}
+                onClose={() => setViewProfile(null)}
+                maxWidth="xs"
+                fullWidth
+                PaperProps={{ sx: { borderRadius: 4, overflow: "hidden" } }}
+            >
+                {viewProfile && (
+                    <>
+                        {/* Header with gradient */}
+                        <Box sx={{
+                            background: "linear-gradient(135deg, #b71c1c 0%, #d32f2f 100%)",
+                            pt: 4, pb: 6, px: 3,
+                            display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5,
+                            position: "relative",
+                        }}>
+                            <IconButton
+                                size="small"
+                                onClick={() => setViewProfile(null)}
+                                sx={{ position: "absolute", top: 10, right: 10, color: "rgba(255,255,255,0.8)" }}
+                            >
+                                <Close fontSize="small" />
+                            </IconButton>
+                            <Avatar
+                                src={viewProfile.photo ? `${BASE_URL}${viewProfile.photo}` : undefined}
+                                onClick={() => viewProfile.photo && setViewPhoto({ url: `${BASE_URL}${viewProfile.photo}`, name: viewProfile.patientName })}
+                                sx={{
+                                    width: 90, height: 90,
+                                    bgcolor: "rgba(255,255,255,0.25)",
+                                    fontSize: "2.2rem", fontWeight: 800,
+                                    border: "3px solid rgba(255,255,255,0.6)",
+                                    cursor: viewProfile.photo ? "pointer" : "default",
+                                    "&:hover": viewProfile.photo ? { transform: "scale(1.05)" } : {},
+                                    transition: "transform 0.15s",
+                                }}
+                            >
+                                {viewProfile.patientName?.charAt(0)?.toUpperCase()}
+                            </Avatar>
+                            <Box textAlign="center">
+                                <Typography fontWeight={800} fontSize="1.1rem" color="#fff">
+                                    {viewProfile.patientName}
+                                </Typography>
+                                <Box display="flex" gap={0.8} justifyContent="center" mt={0.5}>
+                                    <Chip label={viewProfile.bloodType} size="small" sx={{ bgcolor: "rgba(255,255,255,0.2)", color: "#fff", fontWeight: 800, fontSize: "0.75rem" }} />
+                                    <Chip label={viewProfile.urgency} size="small" color={getUrgencyColor(viewProfile.urgency)} sx={{ fontWeight: 700, fontSize: "0.75rem" }} />
+                                </Box>
+                            </Box>
+                        </Box>
+
+                        {/* Info cards pulled up over gradient */}
+                        <Box sx={{ px: 2.5, pb: 2.5, mt: -3 }}>
+                            <Paper elevation={3} sx={{ borderRadius: 3, overflow: "hidden" }}>
+                                {[
+                                    { icon: <LocalHospital fontSize="small" color="error" />, label: "Hospital", value: viewProfile.hospitalName },
+                                    { icon: <Phone fontSize="small" color="error" />, label: "Contact", value: viewProfile.contact },
+                                    { icon: <Bloodtype fontSize="small" color="error" />, label: "Reason", value: viewProfile.reason },
+                                    { icon: <CalendarToday fontSize="small" color="error" />, label: "Submitted", value: viewProfile.createdAt ? new Date(viewProfile.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "—" },
+                                ].map((row, i, arr) => (
+                                    <Box key={row.label} sx={{
+                                        display: "flex", alignItems: "flex-start", gap: 1.5,
+                                        px: 2, py: 1.5,
+                                        borderBottom: i < arr.length - 1 ? `1px solid ${isDark ? "#2a2a2a" : "#f0f0f0"}` : "none",
+                                    }}>
+                                        <Box mt={0.2}>{row.icon}</Box>
+                                        <Box>
+                                            <Typography fontSize="0.7rem" color="text.disabled" fontWeight={600} textTransform="uppercase" letterSpacing="0.05em">
+                                                {row.label}
+                                            </Typography>
+                                            <Typography fontSize="0.88rem" fontWeight={600}>
+                                                {row.value}
+                                            </Typography>
+                                        </Box>
+                                    </Box>
+                                ))}
+                            </Paper>
+
+                            {!viewProfile.photo && (
+                                <Typography fontSize="0.78rem" color="text.disabled" textAlign="center" mt={1.5}>
+                                    No photo uploaded for this request
+                                </Typography>
+                            )}
+                            {viewProfile.photo && (
+                                <Button
+                                    fullWidth
+                                    variant="outlined"
+                                    color="error"
+                                    size="small"
+                                    startIcon={<Visibility fontSize="small" />}
+                                    onClick={() => setViewPhoto({ url: `${BASE_URL}${viewProfile.photo}`, name: viewProfile.patientName })}
+                                    sx={{ mt: 1.5, borderRadius: 2, textTransform: "none", fontWeight: 600 }}
+                                >
+                                    View Full Photo
+                                </Button>
+                            )}
+                        </Box>
+                    </>
+                )}
             </Dialog>
 
             {/* Edit Dialog */}
