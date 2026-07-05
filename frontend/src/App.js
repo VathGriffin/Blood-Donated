@@ -19,6 +19,8 @@ import Team from "./pages/Team";
 import RequestThankYou from "./pages/RequestThankYou";
 import ThankYouContact from "./pages/ThankYouContact";
 import About from "./pages/About";
+import Appointment from "./pages/Appointment";
+import AppointmentConfirmed from "./pages/AppointmentConfirmed";
 import NotFound from "./pages/NotFound";
 
 // Admin Pages
@@ -29,6 +31,7 @@ import ManageDonors from "./admin/ManageDonors";
 import ManageRequests from "./admin/ManageRequests";
 import Inventory from "./admin/Inventory";
 import ManageContact from "./admin/ManageContact";
+import ManageAppointments from "./admin/ManageAppointments";
 
 function App() {
   return (
@@ -49,6 +52,8 @@ function App() {
               <Route path="/request/thank-you" element={<RequestThankYou />} />
               <Route path="/contact/thank-you" element={<ThankYouContact />} />
               <Route path="/about" element={<About />} />
+              <Route path="/appointment" element={<Appointment />} />
+              <Route path="/appointment/confirmed" element={<AppointmentConfirmed />} />
             </Route>
 
             {/* 404 */}
@@ -66,6 +71,7 @@ function App() {
                 <Route path="/admin/requests" element={<ManageRequests />} />
                 <Route path="/admin/inventory" element={<Inventory />} />
                 <Route path="/admin/contacts" element={<ManageContact />} />
+                <Route path="/admin/appointments" element={<ManageAppointments />} />
               </Route>
             </Route>
           </Routes>

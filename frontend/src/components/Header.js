@@ -26,6 +26,7 @@ import {
   PeopleAlt,
   ContactMail,
   Info,
+  CalendarMonth,
   Brightness4,
   Brightness7,
 } from "@mui/icons-material";
@@ -40,6 +41,7 @@ const sections = [
   { label: "Donors", path: "/donors", icon: <Group sx={{ color: "#8e24aa" }} /> },
   { label: "Team", path: "/team", icon: <PeopleAlt sx={{ color: "#4db6ac" }} /> },
   { label: "About Us", path: "/about", icon: <Info sx={{ color: "#64b5f6" }} /> },
+  { label: "Appointment", path: "/appointment", icon: <CalendarMonth sx={{ color: "#26a69a" }} /> },
   { label: "Contact", path: "/contact", icon: <ContactMail sx={{ color: "#fbc02d" }} /> },
 ];
 

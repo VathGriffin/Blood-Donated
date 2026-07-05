@@ -8,6 +8,7 @@ dotenv.config();
 const donorRoutes = require("./routes/donors");
 const bloodRequestRoutes = require("./routes/bloodRequests");
 const contactRoutes = require("./routes/contactMessages");
+const appointmentRoutes = require("./routes/appointments");
 const authRoutes = require("./routes/auth");
 
 const app = express();
@@ -40,6 +41,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/donors", donorRoutes);
 app.use("/api/requests", bloodRequestRoutes);
 app.use("/api/contacts", contactRoutes);
+app.use("/api/appointments", appointmentRoutes);
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running at http://localhost:${PORT}`);
