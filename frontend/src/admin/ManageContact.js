@@ -1,201 +1,17 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
-    Typography, Paper, Table, TableBody, TableCell,
-    TableContainer, TableHead, TableRow, IconButton,
-    Dialog, DialogTitle, DialogContent, TextField,
-    DialogActions, Button, Box, Snackbar, Alert,
-    useTheme, Avatar, Tooltip, InputAdornment,
-    Tabs, Tab, Badge, List, ListItemButton,
+    Typography, Paper, TextField, Box, Avatar,
+    useTheme, Badge, List, ListItemButton,
     ListItemAvatar, ListItemText, Divider,
-    CircularProgress,
+    CircularProgress, IconButton,
 } from "@mui/material";
-import {
-    Delete, Edit, ContactMail, Search,
-    Chat, Send as SendIcon,
-} from "@mui/icons-material";
+import { Chat, Send as SendIcon } from "@mui/icons-material";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import API_BASE from "../config";
 import { formatDistanceToNow } from "date-fns";
 
-const CONTACTS_API = `${API_BASE}/api/contacts`;
-
-const TabPanel = ({ children, value, index }) =>
-    value === index ? <Box>{children}</Box> : null;
-
-// ─── Contact Forms tab ───────────────────────────────────────────────────────
-const ContactForms = () => {
-    const theme = useTheme();
-    const isDark = theme.palette.mode === "dark";
-    const [contacts, setContacts] = useState([]);
-    const [selected, setSelected] = useState(null);
-    const [open, setOpen] = useState(false);
-    const [search, setSearch] = useState("");
-    const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
-
-    const fetchContacts = async () => {
-        try {
-            const res = await axios.get(CONTACTS_API);
-            setContacts(res.data);
-        } catch (err) {
-            console.error(err);
-        }
-    };
-
-    useEffect(() => { fetchContacts(); }, []);
-
-    const handleUpdate = async () => {
-        try {
-            await axios.put(`${CONTACTS_API}/${selected._id}`, selected);
-            setOpen(false);
-            fetchContacts();
-            setSnackbar({ open: true, message: "Message updated.", severity: "success" });
-        } catch {
-            setSnackbar({ open: true, message: "Update failed.", severity: "error" });
-        }
-    };
-
-    const handleDelete = async (id) => {
-        if (!window.confirm("Delete this message?")) return;
-        try {
-            await axios.delete(`${CONTACTS_API}/${id}`);
-            fetchContacts();
-            setSnackbar({ open: true, message: "Message deleted.", severity: "info" });
-        } catch {
-            setSnackbar({ open: true, message: "Delete failed.", severity: "error" });
-        }
-    };
-
-    const filtered = contacts.filter((c) => {
-        const q = search.toLowerCase();
-        return (
-            c.fullName?.toLowerCase().includes(q) ||
-            c.email?.toLowerCase().includes(q) ||
-            c.message?.toLowerCase().includes(q)
-        );
-    });
-
-    const cardBg = isDark ? "#1a1a1a" : "#fff";
-    const cardBorder = isDark ? "#2a2a2a" : "#f0f0f0";
-    const headBg = isDark ? "#1e1e1e" : "#fbe9e7";
-
-    return (
-        <Box>
-            <Typography variant="body2" color="text.secondary" mb={2}>
-                {contacts.length} message{contacts.length !== 1 ? "s" : ""} received from the contact form
-            </Typography>
-
-            <TextField
-                size="small"
-                placeholder="Search by name, email, or message…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                sx={{ mb: 2.5, width: { xs: "100%", sm: 380 } }}
-                InputProps={{
-                    startAdornment: (
-                        <InputAdornment position="start">
-                            <Search sx={{ color: "text.disabled", fontSize: 20 }} />
-                        </InputAdornment>
-                    ),
-                    sx: { borderRadius: 2 },
-                }}
-            />
-
-            <TableContainer
-                component={Paper}
-                elevation={0}
-                sx={{ borderRadius: 3, border: `1px solid ${cardBorder}`, bgcolor: cardBg }}
-            >
-                <Table>
-                    <TableHead sx={{ bgcolor: headBg }}>
-                        <TableRow>
-                            {["Sender", "Email", "Message", "Received", "Actions"].map((h) => (
-                                <TableCell key={h} sx={{ fontWeight: 700, fontSize: "0.82rem", py: 1.5 }}>
-                                    {h}
-                                </TableCell>
-                            ))}
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {filtered.length === 0 ? (
-                            <TableRow>
-                                <TableCell colSpan={5} align="center" sx={{ py: 6 }}>
-                                    <ContactMail sx={{ fontSize: 40, color: "text.disabled", mb: 1 }} />
-                                    <Typography color="text.secondary" fontSize="0.9rem">No messages found.</Typography>
-                                </TableCell>
-                            </TableRow>
-                        ) : (
-                            filtered.map((msg) => (
-                                <TableRow
-                                    key={msg._id}
-                                    hover
-                                    sx={{ "&:nth-of-type(odd)": { bgcolor: isDark ? "rgba(255,255,255,0.02)" : "#fafafa" } }}
-                                >
-                                    <TableCell>
-                                        <Box display="flex" alignItems="center" gap={1.2}>
-                                            <Avatar sx={{ bgcolor: "#b71c1c", width: 34, height: 34, fontSize: "0.82rem", fontWeight: 700 }}>
-                                                {msg.fullName?.charAt(0)?.toUpperCase()}
-                                            </Avatar>
-                                            <Typography fontWeight={600} fontSize="0.86rem">{msg.fullName}</Typography>
-                                        </Box>
-                                    </TableCell>
-                                    <TableCell sx={{ fontSize: "0.84rem", color: "text.secondary" }}>{msg.email}</TableCell>
-                                    <TableCell sx={{ maxWidth: 260 }}>
-                                        <Typography
-                                            fontSize="0.83rem"
-                                            sx={{ overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}
-                                        >
-                                            {msg.message}
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Typography fontSize="0.8rem" color="text.secondary">
-                                            {new Date(msg.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Tooltip title="Edit">
-                                            <IconButton size="small" color="primary" onClick={() => { setSelected(msg); setOpen(true); }}>
-                                                <Edit fontSize="small" />
-                                            </IconButton>
-                                        </Tooltip>
-                                        <Tooltip title="Delete">
-                                            <IconButton size="small" color="error" onClick={() => handleDelete(msg._id)}>
-                                                <Delete fontSize="small" />
-                                            </IconButton>
-                                        </Tooltip>
-                                    </TableCell>
-                                </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
-            </TableContainer>
-
-            <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
-                <DialogTitle fontWeight={700}>Edit Contact Message</DialogTitle>
-                <DialogContent dividers>
-                    <TextField margin="dense" label="Full Name" value={selected?.fullName || ""} onChange={(e) => setSelected({ ...selected, fullName: e.target.value })} fullWidth variant="outlined" />
-                    <TextField margin="dense" label="Email" value={selected?.email || ""} onChange={(e) => setSelected({ ...selected, email: e.target.value })} fullWidth variant="outlined" />
-                    <TextField margin="dense" label="Message" value={selected?.message || ""} onChange={(e) => setSelected({ ...selected, message: e.target.value })} fullWidth multiline rows={4} variant="outlined" />
-                </DialogContent>
-                <DialogActions sx={{ px: 3, pb: 2.5 }}>
-                    <Button onClick={() => setOpen(false)} color="inherit">Cancel</Button>
-                    <Button onClick={handleUpdate} variant="contained" color="error" sx={{ borderRadius: 2 }}>Save Changes</Button>
-                </DialogActions>
-            </Dialog>
-
-            <Snackbar open={snackbar.open} autoHideDuration={4000} onClose={() => setSnackbar({ ...snackbar, open: false })} anchorOrigin={{ vertical: "bottom", horizontal: "center" }}>
-                <Alert severity={snackbar.severity} variant="filled" onClose={() => setSnackbar({ ...snackbar, open: false })} sx={{ borderRadius: 2 }}>
-                    {snackbar.message}
-                </Alert>
-            </Snackbar>
-        </Box>
-    );
-};
-
-// ─── User Chats tab ──────────────────────────────────────────────────────────
-const UserChats = () => {
+const ManageContact = () => {
     const theme = useTheme();
     const isDark = theme.palette.mode === "dark";
     const { token } = useAuth();
@@ -286,14 +102,28 @@ const UserChats = () => {
 
     return (
         <Box>
-            <Typography variant="body2" color="text.secondary" mb={2}>
-                {conversations.length} conversation{conversations.length !== 1 ? "s" : ""}
-                {totalUnread > 0 && ` • ${totalUnread} unread`}
-            </Typography>
+            {/* Header */}
+            <Box display="flex" alignItems="center" gap={1.5} mb={3}>
+                <Avatar sx={{ bgcolor: "#b71c1c", width: 52, height: 52 }}>
+                    <Chat sx={{ fontSize: 26 }} />
+                </Avatar>
+                <Box>
+                    <Typography
+                        variant="h5" fontWeight={800}
+                        sx={{ background: "linear-gradient(to right, #b71c1c, #d32f2f)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", lineHeight: 1.2 }}
+                    >
+                        Messages
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                        {conversations.length} conversation{conversations.length !== 1 ? "s" : ""}
+                        {totalUnread > 0 && ` • ${totalUnread} unread`}
+                    </Typography>
+                </Box>
+            </Box>
 
             <Paper
                 elevation={0}
-                sx={{ borderRadius: 3, border: `1px solid ${cardBorder}`, bgcolor: cardBg, display: "flex", height: 540, overflow: "hidden" }}
+                sx={{ borderRadius: 3, border: `1px solid ${cardBorder}`, bgcolor: cardBg, display: "flex", height: 580, overflow: "hidden" }}
             >
                 {/* Conversation list */}
                 <Box sx={{ width: 280, flexShrink: 0, borderRight: `1px solid ${cardBorder}`, overflowY: "auto" }}>
@@ -433,55 +263,6 @@ const UserChats = () => {
                     )}
                 </Box>
             </Paper>
-        </Box>
-    );
-};
-
-// ─── Combined page ───────────────────────────────────────────────────────────
-const ManageContact = () => {
-    const [tab, setTab] = useState(0);
-
-    return (
-        <Box>
-            {/* Header */}
-            <Box display="flex" alignItems="center" gap={1.5} mb={3}>
-                <Avatar sx={{ bgcolor: "#b71c1c", width: 52, height: 52 }}>
-                    <ContactMail sx={{ fontSize: 26 }} />
-                </Avatar>
-                <Box>
-                    <Typography
-                        variant="h5" fontWeight={800}
-                        sx={{ background: "linear-gradient(to right, #b71c1c, #d32f2f)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", lineHeight: 1.2 }}
-                    >
-                        Messages
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                        Contact form submissions and user chat messages
-                    </Typography>
-                </Box>
-            </Box>
-
-            {/* Tabs */}
-            <Tabs
-                value={tab}
-                onChange={(_, v) => setTab(v)}
-                sx={{
-                    mb: 3,
-                    "& .MuiTab-root": { textTransform: "none", fontWeight: 600, fontSize: "0.9rem" },
-                    "& .Mui-selected": { color: "#b71c1c" },
-                    "& .MuiTabs-indicator": { backgroundColor: "#b71c1c" },
-                }}
-            >
-                <Tab icon={<ContactMail sx={{ fontSize: 18 }} />} iconPosition="start" label="Contact Forms" />
-                <Tab icon={<Chat sx={{ fontSize: 18 }} />} iconPosition="start" label="User Chats" />
-            </Tabs>
-
-            <TabPanel value={tab} index={0}>
-                <ContactForms />
-            </TabPanel>
-            <TabPanel value={tab} index={1}>
-                <UserChats />
-            </TabPanel>
         </Box>
     );
 };

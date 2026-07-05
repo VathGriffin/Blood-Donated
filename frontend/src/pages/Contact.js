@@ -1,20 +1,19 @@
 import React, { useState } from "react";
 import {
-  Container,
-  Typography,
-  Box,
-  Paper,
-  TextField,
-  Button,
-  useTheme,
+  Container, Typography, Box, Paper, TextField,
+  Button, useTheme, Avatar,
 } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link as RouterLink } from "react-router-dom";
 import EmailIcon from "@mui/icons-material/Email";
 import PhoneIcon from "@mui/icons-material/Phone";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import SendIcon from "@mui/icons-material/Send";
+import LockIcon from "@mui/icons-material/Lock";
+import ChatIcon from "@mui/icons-material/Chat";
+import axios from "axios";
 import API_BASE from "../config";
+import { useUserAuth } from "../context/UserAuthContext";
 
 const contactInfo = [
   {
@@ -45,31 +44,24 @@ const Contact = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
   const navigate = useNavigate();
-  const [form, setForm] = useState({ fullName: "", email: "", message: "" });
+  const { isAuth, user, token } = useUserAuth();
+  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!message.trim()) return;
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/contacts`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      if (res.ok) {
-        navigate("/contact/thank-you");
-      } else {
-        const data = await res.json();
-        alert("Submission failed: " + (data.message || "Unknown error"));
-      }
-    } catch (error) {
-      console.error(error);
-      alert("Server error. Please try again later.");
+      await axios.post(
+        `${API_BASE}/api/messages`,
+        { content: message },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      navigate("/messages");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to send. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -95,8 +87,7 @@ const Contact = () => {
           Contact Us
         </Typography>
         <Typography variant="h6" sx={{ opacity: 0.88, maxWidth: 500, mx: "auto", lineHeight: 1.7 }}>
-          Have a question, feedback, or want to partner with us? We'd love to
-          hear from you.
+          Have a question, feedback, or want to partner with us? We'd love to hear from you.
         </Typography>
       </Box>
 
@@ -116,22 +107,16 @@ const Contact = () => {
                 Get In Touch
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 3, lineHeight: 1.7 }}>
-                Whether you're a donor, patient, or hospital partner — our team
-                is here to help.
+                Whether you're a donor, patient, or hospital partner — our team is here to help.
               </Typography>
               <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
                 {contactInfo.map((info, idx) => (
                   <Box key={idx} sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}>
                     <Box
                       sx={{
-                        width: 44,
-                        height: 44,
-                        borderRadius: 2,
+                        width: 44, height: 44, borderRadius: 2,
                         backgroundColor: isDark ? "#2d1515" : "#fdecea",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0,
+                        display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
                       }}
                     >
                       {info.icon}
@@ -141,20 +126,12 @@ const Contact = () => {
                         {info.label}
                       </Typography>
                       {info.href ? (
-                        <Typography
-                          component="a"
-                          href={info.href}
-                          variant="body2"
-                          display="block"
-                          fontWeight={500}
-                          sx={{ color: "text.primary", textDecoration: "none", "&:hover": { color: "error.main" } }}
-                        >
+                        <Typography component="a" href={info.href} variant="body2" display="block" fontWeight={500}
+                          sx={{ color: "text.primary", textDecoration: "none", "&:hover": { color: "error.main" } }}>
                           {info.value}
                         </Typography>
                       ) : (
-                        <Typography variant="body2" fontWeight={500}>
-                          {info.value}
-                        </Typography>
+                        <Typography variant="body2" fontWeight={500}>{info.value}</Typography>
                       )}
                     </Box>
                   </Box>
@@ -163,99 +140,72 @@ const Contact = () => {
             </Paper>
 
             {/* Urgency note */}
-            <Paper
-              elevation={3}
-              sx={{
-                p: 3,
-                borderRadius: 3,
-                background: isDark
-                  ? "linear-gradient(135deg, #1a0000 0%, #2d0505 100%)"
-                  : "linear-gradient(135deg, #b71c1c 0%, #c62828 100%)",
-                color: "white",
-              }}
-            >
+            <Paper elevation={3} sx={{
+              p: 3, borderRadius: 3,
+              background: isDark
+                ? "linear-gradient(135deg, #1a0000 0%, #2d0505 100%)"
+                : "linear-gradient(135deg, #b71c1c 0%, #c62828 100%)",
+              color: "white",
+            }}>
               <Typography variant="subtitle1" fontWeight={700} gutterBottom>
                 🚨 Emergency Blood Request?
               </Typography>
               <Typography variant="body2" sx={{ opacity: 0.9, lineHeight: 1.7, mb: 2 }}>
-                For urgent blood needs, please use our blood request form for
-                faster processing.
+                For urgent blood needs, please use our blood request form for faster processing.
               </Typography>
-              <Button
-                variant="outlined"
-                size="small"
-                href="/request"
-                sx={{ borderColor: "rgba(255,255,255,0.7)", color: "white", "&:hover": { borderColor: "white", backgroundColor: "rgba(255,255,255,0.1)" } }}
-              >
+              <Button variant="outlined" size="small" href="/request"
+                sx={{ borderColor: "rgba(255,255,255,0.7)", color: "white", "&:hover": { borderColor: "white", backgroundColor: "rgba(255,255,255,0.1)" } }}>
                 Request Blood →
               </Button>
             </Paper>
           </Box>
 
-          {/* Contact Form */}
-          <Paper elevation={4} sx={{ p: { xs: 3, md: 5 }, borderRadius: 4 }}>
-            <Typography variant="h5" fontWeight={800} color="error.dark" gutterBottom>
-              Send a Message
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
-              Fill out the form below and we'll get back to you within 24 hours.
-            </Typography>
+          {/* Message form or login prompt */}
+          {isAuth ? (
+            <Paper elevation={4} sx={{ p: { xs: 3, md: 5 }, borderRadius: 4 }}>
+              <Box display="flex" alignItems="center" gap={1.5} mb={1}>
+                <Avatar sx={{ bgcolor: "#b71c1c", width: 40, height: 40 }}>
+                  <ChatIcon />
+                </Avatar>
+                <Box>
+                  <Typography variant="h5" fontWeight={800} color="error.dark">
+                    Send a Message
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Sending as {user?.fullName}
+                  </Typography>
+                </Box>
+              </Box>
 
-            <Box component="form" onSubmit={handleSubmit} noValidate>
-              <Box
-                sx={{
-                  display: "grid",
-                  gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
-                  gap: 2,
-                }}
-              >
-                <TextField
-                  fullWidth
-                  label="Full Name"
-                  name="fullName"
-                  value={form.fullName}
-                  onChange={handleChange}
-                  required
-                  sx={{ gridColumn: "1 / -1" }}
-                />
-                <TextField
-                  fullWidth
-                  label="Email Address"
-                  name="email"
-                  type="email"
-                  value={form.email}
-                  onChange={handleChange}
-                  required
-                  sx={{ gridColumn: "1 / -1" }}
-                />
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 4, mt: 1 }}>
+                Your message goes directly to our admin team. You can view the full conversation in{" "}
+                <Typography component={RouterLink} to="/messages" variant="body2" color="error.main" sx={{ textDecoration: "none", fontWeight: 600 }}>
+                  My Messages
+                </Typography>.
+              </Typography>
+
+              <Box component="form" onSubmit={handleSubmit} noValidate>
                 <TextField
                   fullWidth
                   label="Your Message"
-                  name="message"
                   multiline
                   rows={6}
-                  value={form.message}
-                  onChange={handleChange}
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
                   required
                   placeholder="Tell us how we can help you..."
-                  sx={{ gridColumn: "1 / -1" }}
+                  sx={{ mb: 3 }}
                 />
-              </Box>
-
-              <Box mt={3}>
                 <Button
                   type="submit"
                   variant="contained"
                   color="error"
                   size="large"
                   fullWidth
-                  disabled={loading}
+                  disabled={loading || !message.trim()}
                   startIcon={<SendIcon />}
                   sx={{
-                    py: 1.5,
-                    fontWeight: 700,
-                    fontSize: "1rem",
-                    borderRadius: 3,
+                    py: 1.5, fontWeight: 700, fontSize: "1rem", borderRadius: 3,
                     boxShadow: "0 4px 15px rgba(183,28,28,0.35)",
                     "&:hover": { boxShadow: "0 6px 20px rgba(183,28,28,0.5)" },
                   }}
@@ -266,8 +216,26 @@ const Contact = () => {
                   We respect your privacy and will never share your information.
                 </Typography>
               </Box>
-            </Box>
-          </Paper>
+            </Paper>
+          ) : (
+            <Paper elevation={4} sx={{ p: { xs: 3, md: 5 }, borderRadius: 4, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", minHeight: 340 }}>
+              <LockIcon sx={{ fontSize: 56, color: "#b71c1c", mb: 2 }} />
+              <Typography variant="h5" fontWeight={700} gutterBottom>
+                Log in to Send a Message
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 4, maxWidth: 340 }}>
+                Create an account or log in to chat directly with our admin team. Your conversation history is saved.
+              </Typography>
+              <Box sx={{ display: "flex", gap: 2 }}>
+                <Button variant="contained" color="error" component={RouterLink} to="/login" sx={{ borderRadius: 3, fontWeight: 700, px: 3 }}>
+                  Log In
+                </Button>
+                <Button variant="outlined" color="error" component={RouterLink} to="/signup" sx={{ borderRadius: 3, fontWeight: 600, px: 3 }}>
+                  Sign Up
+                </Button>
+              </Box>
+            </Paper>
+          )}
         </Box>
       </Container>
     </Box>
