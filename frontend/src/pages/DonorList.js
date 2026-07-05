@@ -19,6 +19,7 @@ import {
   DialogContent,
   DialogActions,
   useTheme,
+  CircularProgress,
 } from "@mui/material";
 import BloodtypeIcon from "@mui/icons-material/Bloodtype";
 import axios from "axios";
@@ -33,6 +34,7 @@ const DonorList = () => {
   const [selectedType, setSelectedType] = useState("All");
   const [page, setPage] = useState(1);
   const [selectedDonor, setSelectedDonor] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchDonors = async () => {
@@ -41,6 +43,8 @@ const DonorList = () => {
         setDonors(res.data);
       } catch (err) {
         console.error("Failed to fetch donors:", err);
+      } finally {
+        setLoading(false);
       }
     };
     fetchDonors();
@@ -129,10 +133,18 @@ const DonorList = () => {
 
         {/* Donors Grid */}
         <Grid container spacing={4} justifyContent="center">
-          {paginatedDonors.length === 0 ? (
+          {loading ? (
+            <Grid item xs={12}>
+              <Box display="flex" justifyContent="center" py={6}>
+                <CircularProgress color="error" />
+              </Box>
+            </Grid>
+          ) : paginatedDonors.length === 0 ? (
             <Grid item xs={12}>
               <Typography variant="body1" color="text.secondary" align="center">
-                ❌ No donors found for selected blood type.
+                {selectedType === "All"
+                  ? "No donors registered yet."
+                  : `❌ No donors found for blood type ${selectedType}.`}
               </Typography>
             </Grid>
           ) : (
