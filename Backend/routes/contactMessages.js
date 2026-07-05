@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const ContactMessage = require('../models/ContactMessage');
+const auth = require('../middleware/auth');
 
 // CREATE
 router.post('/', async (req, res) => {
@@ -34,8 +35,8 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// UPDATE
-router.put('/:id', async (req, res) => {
+// UPDATE  (admin only)
+router.put('/:id', auth, async (req, res) => {
     try {
         const updated = await ContactMessage.findByIdAndUpdate(req.params.id, req.body, { new: true });
         res.json(updated);
@@ -44,8 +45,8 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-// DELETE
-router.delete('/:id', async (req, res) => {
+// DELETE  (admin only)
+router.delete('/:id', auth, async (req, res) => {
     try {
         const deleted = await ContactMessage.findByIdAndDelete(req.params.id);
         if (!deleted) return res.status(404).json({ error: 'Message not found' });

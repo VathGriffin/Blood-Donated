@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Appointment = require('../models/Appointment');
+const auth = require('../middleware/auth');
 
 // CREATE
 router.post('/', async (req, res) => {
@@ -34,8 +35,8 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// UPDATE (status or fields)
-router.put('/:id', async (req, res) => {
+// UPDATE (status or fields)  (admin only)
+router.put('/:id', auth, async (req, res) => {
     try {
         const updated = await Appointment.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
         if (!updated) return res.status(404).json({ error: 'Appointment not found' });
@@ -45,8 +46,8 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-// DELETE
-router.delete('/:id', async (req, res) => {
+// DELETE  (admin only)
+router.delete('/:id', auth, async (req, res) => {
     try {
         const deleted = await Appointment.findByIdAndDelete(req.params.id);
         if (!deleted) return res.status(404).json({ error: 'Appointment not found' });

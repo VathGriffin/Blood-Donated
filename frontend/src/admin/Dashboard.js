@@ -189,42 +189,31 @@ const Dashboard = () => {
             <Grid container spacing={2.5} mb={4}>
                 {stats.map((stat, i) => (
                     <Grid item xs={12} sm={6} md={3} key={i}>
-                        <Paper
-                            elevation={0}
-                            sx={{
-                                p: 2.5,
-                                borderRadius: 3,
-                                border: `1px solid ${cardBorder}`,
-                                bgcolor: cardBg,
-                                transition: "all 0.3s",
-                                "&:hover": { transform: "translateY(-4px)", boxShadow: 6 },
-                            }}
-                        >
-                            <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+                        <Paper elevation={0} sx={{
+                            borderRadius: 3, overflow: 'hidden',
+                            border: `1px solid ${cardBorder}`,
+                            bgcolor: cardBg,
+                            transition: "all 0.25s ease",
+                            "&:hover": { transform: "translateY(-4px)", boxShadow: `0 12px 32px ${stat.color}22`, borderColor: `${stat.color}44` },
+                        }}>
+                            {/* Color top bar */}
+                            <Box sx={{ height: 4, background: `linear-gradient(90deg, ${stat.color} 0%, ${stat.color}88 100%)` }} />
+                            <Box sx={{ p: 2.5, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                 <Box>
-                                    <Typography variant="body2" color="text.secondary" fontWeight={500} gutterBottom>
+                                    <Typography variant="body2" color="text.secondary" fontWeight={600} gutterBottom fontSize="0.8rem" textTransform="uppercase" letterSpacing="0.05em">
                                         {stat.title}
                                     </Typography>
-                                    <Typography variant="h4" fontWeight={800} sx={{ color: stat.color, lineHeight: 1 }}>
+                                    <Typography variant="h4" fontWeight={800} sx={{ color: stat.color, lineHeight: 1, mb: 0.5 }}>
                                         {loading ? "—" : stat.value.toLocaleString()}
                                     </Typography>
-                                    <Typography variant="caption" color="text.secondary" mt={0.5} display="block">
+                                    <Typography variant="caption" color="text.secondary" display="block">
                                         {stat.sub}
                                     </Typography>
                                     {stat.warning && (
-                                        <Typography color="error" variant="caption" display="block" mt={0.5} fontWeight={600}>
-                                            ⚠️ Low stock
-                                        </Typography>
+                                        <Chip label="⚠ Low stock" size="small" color="error" sx={{ mt: 1, fontSize: '0.68rem', height: 20 }} />
                                     )}
                                 </Box>
-                                <Avatar
-                                    sx={{
-                                        bgcolor: `${stat.color}18`,
-                                        color: stat.color,
-                                        width: 50,
-                                        height: 50,
-                                    }}
-                                >
+                                <Avatar sx={{ bgcolor: `${stat.color}15`, color: stat.color, width: 52, height: 52, border: `2px solid ${stat.color}22` }}>
                                     {stat.icon}
                                 </Avatar>
                             </Box>

@@ -12,6 +12,8 @@ const appointmentRoutes = require("./routes/appointments");
 const authRoutes = require("./routes/auth");
 const userAuthRoutes = require("./routes/userAuth");
 const messageRoutes = require("./routes/messages");
+const chatRoutes = require("./routes/chat");
+const statsRoutes = require("./routes/stats");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -23,6 +25,9 @@ mongoose.set("bufferCommands", false);
 app.use(cors({ origin: ["http://localhost:3000", "http://localhost:3002", "http://localhost:3003"] }));
 app.use(express.json());
 app.use("/uploads", require("express").static(require("path").join(__dirname, "uploads")));
+
+// Chat route registered before DB check — does not require MongoDB
+app.use("/api/chat", chatRoutes);
 
 // Reject API requests immediately if MongoDB is not connected
 app.use("/api", (req, res, next) => {
@@ -40,6 +45,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/stats", statsRoutes);
 app.use("/api/donors", donorRoutes);
 app.use("/api/requests", bloodRequestRoutes);
 app.use("/api/contacts", contactRoutes);

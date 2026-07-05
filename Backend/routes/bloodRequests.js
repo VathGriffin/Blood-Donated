@@ -4,6 +4,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const BloodRequest = require('../models/BloodRequest');
+const auth = require('../middleware/auth');
 
 const requestStorage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -77,8 +78,8 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// UPDATE
-router.put('/:id', async (req, res) => {
+// UPDATE  (admin only)
+router.put('/:id', auth, async (req, res) => {
     try {
         const updated = await BloodRequest.findByIdAndUpdate(
             req.params.id,
@@ -92,8 +93,8 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-// DELETE
-router.delete('/:id', async (req, res) => {
+// DELETE  (admin only)
+router.delete('/:id', auth, async (req, res) => {
     try {
         const deleted = await BloodRequest.findByIdAndDelete(req.params.id);
         if (!deleted) return res.status(404).json({ error: 'Request not found' });

@@ -183,32 +183,6 @@ const Home = () => {
   return (
     <Box>
 
-      {/* ── Urgent Banner ─────────────────────────────────────────────────── */}
-      <Box sx={{
-        background: "linear-gradient(90deg, #7f0000 0%, #b71c1c 50%, #7f0000 100%)",
-        color: "white", textAlign: "center", py: 1, px: 2,
-        display: "flex", alignItems: "center", justifyContent: "center", gap: 1.5,
-      }}>
-        <Box sx={{
-          width: 10, height: 10, borderRadius: "50%", backgroundColor: "#ffeb3b",
-          animation: "pulse 1.5s infinite",
-          "@keyframes pulse": {
-            "0%": { opacity: 1, transform: "scale(1)" },
-            "50%": { opacity: 0.5, transform: "scale(1.4)" },
-            "100%": { opacity: 1, transform: "scale(1)" },
-          },
-        }} />
-        <Typography variant="body2" fontWeight={600}>
-          URGENT: O- and AB- blood types critically needed — Donate today and save a life
-        </Typography>
-        <Button component={RouterLink} to="/donate" size="small" sx={{
-          color: "#ffeb3b", border: "1px solid #ffeb3b", px: 1.5, py: 0.2,
-          fontSize: "0.75rem", minWidth: 0, "&:hover": { backgroundColor: "rgba(255,235,59,0.15)" },
-        }}>
-          Donate
-        </Button>
-      </Box>
-
       {/* ── Hero — Photo Background ────────────────────────────────────────── */}
       <Box sx={{
         position: "relative",

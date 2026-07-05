@@ -4,6 +4,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const Donor = require("../models/Donor");
+const auth = require("../middleware/auth");
 
 const imageFilter = (req, file, cb) => {
   if (file.mimetype.startsWith("image/")) cb(null, true);
@@ -21,17 +22,6 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 }, fileFilter: imageFilter });
-
-// Register donor - POST /api/donors/register
-router.post("/register", async (req, res) => {
-  try {
-    const donor = new Donor(req.body);
-    const savedDonor = await donor.save();
-    res.status(201).json(savedDonor);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-});
 
 // Create donor - POST /api/donors
 router.post("/", async (req, res) => {
@@ -65,8 +55,8 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// Update donor - PUT /api/donors/:id
-router.put("/:id", async (req, res) => {
+// Update donor - PUT /api/donors/:id  (admin only)
+router.put("/:id", auth, async (req, res) => {
   try {
     const updatedDonor = await Donor.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -78,8 +68,8 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-// Upload donor photo - POST /api/donors/:id/photo
-router.post("/:id/photo", upload.single("photo"), async (req, res) => {
+// Upload donor photo - POST /api/donors/:id/photo  (admin only)
+router.post("/:id/photo", auth, upload.single("photo"), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: "No file uploaded" });
 
@@ -104,8 +94,8 @@ router.post("/:id/photo", upload.single("photo"), async (req, res) => {
   }
 });
 
-// Delete donor photo - DELETE /api/donors/:id/photo
-router.delete("/:id/photo", async (req, res) => {
+// Delete donor photo - DELETE /api/donors/:id/photo  (admin only)
+router.delete("/:id/photo", auth, async (req, res) => {
   try {
     const donor = await Donor.findById(req.params.id);
     if (!donor) return res.status(404).json({ message: "Donor not found" });
@@ -126,8 +116,8 @@ router.delete("/:id/photo", async (req, res) => {
   }
 });
 
-// Delete donor - DELETE /api/donors/:id
-router.delete("/:id", async (req, res) => {
+// Delete donor - DELETE /api/donors/:id  (admin only)
+router.delete("/:id", auth, async (req, res) => {
   try {
     const donor = await Donor.findByIdAndDelete(req.params.id);
     if (!donor) return res.status(404).json({ message: "Donor not found" });

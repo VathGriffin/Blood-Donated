@@ -19,7 +19,7 @@ const AdminLayout = () => {
             <Sidebar />
             <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                 <AdminNavbar />
-                <Box
+                        <Box
                     component="main"
                     sx={{
                         flexGrow: 1,
