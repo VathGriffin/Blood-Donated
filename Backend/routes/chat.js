@@ -2,6 +2,11 @@ const express = require("express");
 const router = express.Router();
 const Anthropic = require("@anthropic-ai/sdk");
 
+// Module-level singleton — avoids re-instantiating on every request
+const anthropicClient = process.env.ANTHROPIC_API_KEY
+  ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  : null;
+
 const SYSTEM_PROMPT = `You are BloodBot, the AI assistant for "Blood Donated" — a blood donation management platform built by 4th-year Data Science students at ITC (Institute of Technology of Cambodia) as their graduation project.
 
 ## Platform Features
@@ -67,14 +72,12 @@ router.post("/", async (req, res) => {
     return res.status(400).json({ error: "messages array is required" });
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
+  if (!anthropicClient) {
     return res.status(503).json({ configured: false });
   }
 
   try {
-    const client = new Anthropic({ apiKey });
-    const response = await client.messages.create({
+    const response = await anthropicClient.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 1024,
       system: SYSTEM_PROMPT,

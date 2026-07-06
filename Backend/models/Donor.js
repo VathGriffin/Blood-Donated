@@ -41,9 +41,10 @@ const donorSchema = new mongoose.Schema(
       default: null,
     },
   },
-  {
-    timestamps: true, // ✅ adds createdAt and updatedAt automatically
-  }
+  { timestamps: true }
 );
+
+donorSchema.index({ bloodType: 1, available: 1 });
+donorSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model('Donor', donorSchema);

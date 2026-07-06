@@ -23,4 +23,8 @@ const appointmentSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
+appointmentSchema.index({ status: 1 });
+appointmentSchema.index({ email: 1 });
+appointmentSchema.index({ createdAt: -1 });
+
 module.exports = mongoose.model('Appointment', appointmentSchema);

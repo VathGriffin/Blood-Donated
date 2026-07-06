@@ -1,9 +1,17 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const helmet = require("helmet");
+const compression = require("compression");
+const path = require("path");
+const fs = require("fs");
 const dotenv = require("dotenv");
 
 dotenv.config();
+
+// Ensure uploads directory exists on startup
+const uploadsDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
 const donorRoutes = require("./routes/donors");
 const bloodRequestRoutes = require("./routes/bloodRequests");
@@ -22,9 +30,11 @@ const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/blood-dona
 // Disable Mongoose buffering so operations fail immediately when DB is down
 mongoose.set("bufferCommands", false);
 
+app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
+app.use(compression());
 app.use(cors({ origin: ["http://localhost:3000", "http://localhost:3002", "http://localhost:3003"] }));
-app.use(express.json());
-app.use("/uploads", require("express").static(require("path").join(__dirname, "uploads")));
+app.use(express.json({ limit: "1mb" }));
+app.use("/uploads", express.static(uploadsDir));
 
 // Chat route registered before DB check — does not require MongoDB
 app.use("/api/chat", chatRoutes);

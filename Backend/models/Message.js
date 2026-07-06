@@ -9,4 +9,7 @@ const messageSchema = new mongoose.Schema({
     read: { type: Boolean, default: false },
 }, { timestamps: true });
 
+messageSchema.index({ userId: 1, createdAt: 1 });
+messageSchema.index({ sender: 1, read: 1 });
+
 module.exports = mongoose.model('Message', messageSchema);
