@@ -1,3 +1,4 @@
+'use client';
 import React, { useState, useRef, useEffect } from "react";
 import {
   Box, Paper, Typography, TextField, IconButton, Avatar,
@@ -8,7 +9,7 @@ import SendIcon from "@mui/icons-material/Send";
 import SmartToyIcon from "@mui/icons-material/SmartToy";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
-import API_BASE from "../config";
+import API_BASE from "@/lib/config";
 
 // ── Fallback rule-based engine (used when API key is not configured) ──────────
 const KB = [

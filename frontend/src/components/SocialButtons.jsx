@@ -1,13 +1,14 @@
+'use client';
 import React, { useEffect } from "react";
 import { Box, Button, Divider, Typography } from "@mui/material";
 import { useGoogleLogin } from "@react-oauth/google";
 import axios from "axios";
-import { useUserAuth } from "../context/UserAuthContext";
-import { useNavigate } from "react-router-dom";
-import API_BASE from "../config";
+import { useUserAuth } from "@/store/UserAuthContext";
+import { useRouter } from "next/navigation";
+import API_BASE from "@/lib/config";
 
-const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
-const FACEBOOK_APP_ID = process.env.REACT_APP_FACEBOOK_APP_ID;
+const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+const FACEBOOK_APP_ID = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID;
 
 const GoogleIcon = () => (
     <svg width="18" height="18" viewBox="0 0 24 24">
@@ -33,24 +34,20 @@ const loadFacebookSDK = (appId) => {
     };
     const script = document.createElement("script");
     script.src = "https://connect.facebook.net/en_US/sdk.js";
-    script.async = true;
-    script.defer = true;
+    script.async = true; script.defer = true;
     document.body.appendChild(script);
 };
 
-// Separate component so useGoogleLogin hook only runs when client ID is present
 const GoogleLoginButton = ({ onError }) => {
     const { login } = useUserAuth();
-    const navigate = useNavigate();
+    const router = useRouter();
 
     const googleLogin = useGoogleLogin({
         onSuccess: async (tokenResponse) => {
             try {
-                const { data } = await axios.post(`${API_BASE}/api/user/google`, {
-                    accessToken: tokenResponse.access_token,
-                });
+                const { data } = await axios.post(`${API_BASE}/api/user/google`, { accessToken: tokenResponse.access_token });
                 login(data.token, data.user);
-                navigate("/messages");
+                router.push("/notification");
             } catch (err) {
                 onError(err.response?.data?.message || "Google sign-in failed. Please try again.");
             }
@@ -59,17 +56,8 @@ const GoogleLoginButton = ({ onError }) => {
     });
 
     return (
-        <Button
-            fullWidth
-            variant="outlined"
-            onClick={() => googleLogin()}
-            startIcon={<GoogleIcon />}
-            sx={{
-                py: 1.3, borderRadius: 3, textTransform: "none", fontWeight: 600, fontSize: "0.92rem",
-                borderColor: "#dadce0", color: "text.primary",
-                "&:hover": { borderColor: "#bbb", bgcolor: "rgba(0,0,0,0.03)" },
-            }}
-        >
+        <Button fullWidth variant="outlined" onClick={() => googleLogin()} startIcon={<GoogleIcon />}
+            sx={{ py: 1.3, borderRadius: 3, textTransform: "none", fontWeight: 600, fontSize: "0.92rem", borderColor: "#dadce0", color: "text.primary", "&:hover": { borderColor: "#bbb", bgcolor: "rgba(0,0,0,0.03)" } }}>
             Continue with Google
         </Button>
     );
@@ -77,49 +65,23 @@ const GoogleLoginButton = ({ onError }) => {
 
 const FacebookLoginButton = ({ onError }) => {
     const { login } = useUserAuth();
-    const navigate = useNavigate();
+    const router = useRouter();
 
-    useEffect(() => {
-        loadFacebookSDK(FACEBOOK_APP_ID);
-    }, []);
+    useEffect(() => { loadFacebookSDK(FACEBOOK_APP_ID); }, []);
 
     const handleFacebookLogin = () => {
-        if (!window.FB) {
-            onError("Facebook is loading — please try again in a moment.");
-            return;
-        }
-        window.FB.login(
-            (response) => {
-                if (!response.authResponse) {
-                    onError("Facebook sign-in was cancelled.");
-                    return;
-                }
-                axios
-                    .post(`${API_BASE}/api/user/facebook`, { accessToken: response.authResponse.accessToken })
-                    .then(({ data }) => {
-                        login(data.token, data.user);
-                        navigate("/messages");
-                    })
-                    .catch((err) => {
-                        onError(err.response?.data?.message || "Facebook sign-in failed. Please try again.");
-                    });
-            },
-            { scope: "public_profile,email" }
-        );
+        if (!window.FB) { onError("Facebook is loading — please try again in a moment."); return; }
+        window.FB.login((response) => {
+            if (!response.authResponse) { onError("Facebook sign-in was cancelled."); return; }
+            axios.post(`${API_BASE}/api/user/facebook`, { accessToken: response.authResponse.accessToken })
+                .then(({ data }) => { login(data.token, data.user); router.push("/notification"); })
+                .catch((err) => { onError(err.response?.data?.message || "Facebook sign-in failed. Please try again."); });
+        }, { scope: "public_profile,email" });
     };
 
     return (
-        <Button
-            fullWidth
-            variant="outlined"
-            onClick={handleFacebookLogin}
-            startIcon={<FacebookIcon />}
-            sx={{
-                py: 1.3, borderRadius: 3, textTransform: "none", fontWeight: 600, fontSize: "0.92rem",
-                borderColor: "#1877F2", color: "#1877F2",
-                "&:hover": { borderColor: "#1877F2", bgcolor: "rgba(24,119,242,0.05)" },
-            }}
-        >
+        <Button fullWidth variant="outlined" onClick={handleFacebookLogin} startIcon={<FacebookIcon />}
+            sx={{ py: 1.3, borderRadius: 3, textTransform: "none", fontWeight: 600, fontSize: "0.92rem", borderColor: "#1877F2", color: "#1877F2", "&:hover": { borderColor: "#1877F2", bgcolor: "rgba(24,119,242,0.05)" } }}>
             Continue with Facebook
         </Button>
     );
@@ -127,7 +89,6 @@ const FacebookLoginButton = ({ onError }) => {
 
 const SocialButtons = ({ onError }) => {
     if (!GOOGLE_CLIENT_ID && !FACEBOOK_APP_ID) return null;
-
     return (
         <>
             <Divider sx={{ my: 2.5 }}>
