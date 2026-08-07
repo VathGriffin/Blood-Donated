@@ -26,3 +26,6 @@ Thumbs.db
 # IDE config
 .idea/
 .vscode/
+
+# Claude Code AI assistant files
+.claude/

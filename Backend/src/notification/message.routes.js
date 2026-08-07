@@ -23,7 +23,7 @@ router.post('/', userAuth, async (req, res) => {
 
 router.get('/mine', userAuth, async (req, res) => {
   try {
-    res.json(await Message.find({ userId: req.user.id }).sort({ createdAt: 1 }));
+    res.json(await Message.find({ userId: req.user.id }).sort({ createdAt: 1 }).lean());
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

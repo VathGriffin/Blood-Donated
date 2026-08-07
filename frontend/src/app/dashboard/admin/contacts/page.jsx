@@ -30,7 +30,7 @@ const ManageContact = () => {
     const fetchConversations = async () => {
         try {
             const { data } = await axios.get(`${API_BASE}/api/messages/conversations`, { headers });
-            setConversations(data);
+            setConversations(Array.isArray(data) ? data : []);
         } catch (err) {
             console.error(err);
         } finally {

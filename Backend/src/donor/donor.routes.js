@@ -28,7 +28,21 @@ router.post('/', async (req, res) => {
 
 router.get('/', async (req, res) => {
   try {
-    res.json(await Donor.find().sort({ createdAt: -1 }));
+    res.json(await Donor.find().sort({ createdAt: -1 }).lean());
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+router.get('/lookup', async (req, res) => {
+  const { email } = req.query;
+  if (!email) return res.status(400).json({ message: 'Email required' });
+  try {
+    const donor = await Donor.findOne({ email: email.toLowerCase().trim() })
+      .select('fullName bloodType available lastDonation location')
+      .lean();
+    if (!donor) return res.json({ found: false });
+    res.json({ found: true, ...donor });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -36,7 +50,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const donor = await Donor.findById(req.params.id);
+    const donor = await Donor.findById(req.params.id).lean();
     if (!donor) return res.status(404).json({ message: 'Donor not found' });
     res.json(donor);
   } catch (err) {

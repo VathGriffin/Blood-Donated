@@ -1,441 +1,429 @@
 'use client';
 import { useRouter } from 'next/navigation';
-import React, { useState, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Container, Typography, TextField, Button, Paper, Box,
-  FormControl, InputLabel, Select, MenuItem, Avatar,
-  IconButton, Tooltip, useTheme, Chip,
+  FormControl, Select, MenuItem, useTheme, Alert, Tabs, Tab,
+  Chip, Avatar, Grid, Skeleton, Divider,
 } from "@mui/material";
+import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
+import FavoriteIcon       from "@mui/icons-material/Favorite";
+import BloodtypeIcon      from "@mui/icons-material/Bloodtype";
+import AccessTimeIcon     from "@mui/icons-material/AccessTime";
+import CheckCircleIcon    from "@mui/icons-material/CheckCircle";
+import CancelIcon         from "@mui/icons-material/Cancel";
+import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
 import axios from "axios";
 import API_BASE from "@/lib/config";
-import AddAPhotoIcon from "@mui/icons-material/AddAPhoto";
-import DeleteIcon from "@mui/icons-material/Delete";
-import BloodtypeIcon from "@mui/icons-material/Bloodtype";
-import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
-import WarningAmberIcon from "@mui/icons-material/WarningAmber";
-import PhoneIcon from "@mui/icons-material/Phone";
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import { useUserAuth } from "@/store/UserAuthContext";
 
-const HERO_IMG =
-  "https://images.unsplash.com/photo-1504439468489-c8920d796a29?auto=format&fit=crop&w=1920&q=80";
+const BLOOD_TYPES    = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+const UNITS          = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+const URGENCY_LEVELS = ["Low", "Medium", "High", "Critical"];
 
-const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+const URGENCY_STYLES = {
+  Low:      { color: "#16a34a", bg: "#f0fdf4", border: "rgba(22,163,74,0.25)"  },
+  Medium:   { color: "#d97706", bg: "#fffbeb", border: "rgba(217,119,6,0.25)"  },
+  High:     { color: "#ea580c", bg: "#fff7ed", border: "rgba(234,88,12,0.25)"  },
+  Critical: { color: "#dc2626", bg: "#fff0f0", border: "rgba(220,38,38,0.25)"  },
+};
 
-const URGENCY_LEVELS = [
-  { value: "Low", label: "Low", color: "#2e7d32", bg: "#e8f5e9", desc: "Needed within a week" },
-  { value: "Medium", label: "Medium", color: "#f57f17", bg: "#fff8e1", desc: "Needed within 48 hours" },
-  { value: "High", label: "High", color: "#e65100", bg: "#fbe9e7", desc: "Needed within 24 hours" },
-  { value: "Critical", label: "Critical", color: "#b71c1c", bg: "#ffebee", desc: "Needed immediately" },
-];
+const STATUS_META = {
+  Pending:  { color: "#d97706", darkBg: "rgba(217,119,6,0.14)",  lightBg: "#fffbeb", icon: <HourglassEmptyIcon sx={{ fontSize: 13 }} />, label: "Pending"  },
+  Approved: { color: "#16a34a", darkBg: "rgba(22,163,74,0.14)",  lightBg: "#f0fdf4", icon: <CheckCircleIcon   sx={{ fontSize: 13 }} />, label: "Approved" },
+  Rejected: { color: "#dc2626", darkBg: "rgba(220,38,38,0.14)",  lightBg: "#fff0f0", icon: <CancelIcon        sx={{ fontSize: 13 }} />, label: "Rejected" },
+};
 
-const RequestBlood = () => {
-  const theme = useTheme();
+const URGENCY_ORDER = { Critical: 0, High: 1, Medium: 2, Low: 3 };
+
+export default function RequestBlood() {
+  const theme  = useTheme();
   const isDark = theme.palette.mode === "dark";
-  const [bloodType, setBloodType] = useState("");
-  const [urgency, setUrgency] = useState("");
-  const [photoFile, setPhotoFile] = useState(null);
-  const [photoPreview, setPhotoPreview] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const photoInputRef = useRef(null);
   const router = useRouter();
+  const { user: loggedInUser } = useUserAuth();
 
-  const handlePhotoChange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setPhotoFile(file);
-    setPhotoPreview(URL.createObjectURL(file));
+  const [pageTab, setPageTab] = useState(0);
+
+  // ── Submit form state ──
+  const [form, setForm] = useState({
+    hospitalName: "", patientName: "", bloodType: "",
+    unitsNeeded: "", urgency: "", reason: "", notes: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [error,   setError]   = useState("");
+
+  // ── Active requests state ──
+  const [requests,    setRequests]    = useState([]);
+  const [reqLoading,  setReqLoading]  = useState(false);
+  const [filterType,  setFilterType]  = useState("All");
+  const [filterStatus, setFilterStatus] = useState("All");
+
+  const fetchRequests = async () => {
+    setReqLoading(true);
+    try {
+      const res = await axios.get(`${API_BASE}/api/requests`);
+      setRequests(Array.isArray(res.data) ? res.data : []);
+    } catch {
+      setRequests([]);
+    } finally {
+      setReqLoading(false);
+    }
   };
 
-  const handleRemovePhoto = () => {
-    setPhotoFile(null);
-    setPhotoPreview(null);
-    if (photoInputRef.current) photoInputRef.current.value = "";
+  useEffect(() => {
+    if (pageTab === 1) fetchRequests();
+  }, [pageTab]);
+
+  const handleChange = (field) => (e) => {
+    setForm(f => ({ ...f, [field]: e.target.value }));
+    setError("");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!bloodType) { alert("Please select a blood type."); return; }
-    if (!urgency) { alert("Please select an urgency level."); return; }
+    if (!form.hospitalName.trim()) { setError("Hospital name is required."); return; }
+    if (!form.patientName.trim())  { setError("Patient name is required.");  return; }
+    if (!form.bloodType)           { setError("Please select a blood type."); return; }
+    if (!form.unitsNeeded)         { setError("Please select units needed."); return; }
+    if (!form.urgency)             { setError("Please select an urgency level."); return; }
+    if (!form.reason.trim())       { setError("Reason for request is required."); return; }
 
-    const requestData = {
-      hospitalName: e.target.hospitalName.value,
-      patientName: e.target.patientName.value,
-      bloodType,
-      urgency,
-      reason: e.target.reason.value,
-      contact: e.target.contact.value,
-    };
-
-    let savedRequest;
     setLoading(true);
+    setError("");
     try {
-      const response = await axios.post(`${API_BASE}/api/requests`, requestData);
-      savedRequest = response.data;
-    } catch (error) {
-      const msg = error.response?.data?.error || error.response?.data?.message || error.message || "Failed to submit blood request.";
-      alert(msg);
+      await axios.post(`${API_BASE}/api/requests`, {
+        hospitalName: form.hospitalName,
+        patientName:  form.patientName,
+        bloodType:    form.bloodType,
+        unitsNeeded:  form.unitsNeeded,
+        urgency:      form.urgency,
+        reason:       form.reason,
+        contact:      form.notes,
+        userEmail:    loggedInUser?.email || "",
+      });
+      router.push("/requests/thank-you");
+    } catch (err) {
+      setError(err.response?.data?.error || err.response?.data?.message || "Submission failed. Please try again.");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    if (photoFile && savedRequest._id) {
-      try {
-        const photoPayload = new FormData();
-        photoPayload.append("photo", photoFile);
-        await axios.post(`${API_BASE}/api/requests/${savedRequest._id}/photo`, photoPayload);
-      } catch (err) {
-        console.error("Photo upload failed:", err);
-      }
-    }
-
-    setLoading(false);
-    router.push("/request/thank-you");
   };
 
-  const selectedUrgency = URGENCY_LEVELS.find((u) => u.value === urgency);
+  const bg      = isDark ? "#0a0a0a" : "#f8f8f8";
+  const cardBg  = isDark ? "#111111" : "#ffffff";
+  const border  = isDark ? "#1f1f1f" : "#e5e5e5";
+  const fieldSx = { mb: 2.5, "& .MuiOutlinedInput-root": { borderRadius: "10px" } };
+  const selectedUrgency = form.urgency ? URGENCY_STYLES[form.urgency] : null;
+
+  // ── Filter active requests ──
+  const filteredRequests = requests
+    .filter(r => filterType   === "All" || r.bloodType === filterType)
+    .filter(r => filterStatus === "All" || r.status    === filterStatus)
+    .sort((a, b) => (URGENCY_ORDER[a.urgency] ?? 4) - (URGENCY_ORDER[b.urgency] ?? 4));
 
   return (
-    <Box sx={{ backgroundColor: isDark ? "#121212" : "#f4f4f4" }}>
+    <Box sx={{ backgroundColor: bg, minHeight: "100vh", pt: { xs: 10, md: 12 }, pb: 10 }}>
+      <Container maxWidth="md">
 
-      {/* ── Hero — Photo Background ────────────────────────────────────────── */}
-      <Box sx={{
-        position: "relative",
-        minHeight: { xs: "70vh", md: "78vh" },
-        display: "flex", flexDirection: "column",
-        alignItems: "center", justifyContent: "center", textAlign: "center",
-        backgroundImage: `url('${HERO_IMG}')`,
-        backgroundSize: "cover", backgroundPosition: "center 20%",
-        backgroundAttachment: { xs: "scroll", md: "fixed" },
-        "&::before": {
-          content: '""', position: "absolute", inset: 0,
-          background: isDark
-            ? "linear-gradient(135deg, rgba(10,0,0,0.93) 0%, rgba(70,0,0,0.87) 100%)"
-            : "linear-gradient(135deg, rgba(80,0,0,0.90) 0%, rgba(183,28,28,0.84) 100%)",
-          zIndex: 1,
-        },
-      }}>
-        <Box sx={{ position: "relative", zIndex: 2, px: 3, pt: { xs: 14, md: 8 }, pb: { xs: 6, md: 4 } }}>
-          <Chip
-            icon={<BloodtypeIcon sx={{ color: "white !important", fontSize: "18px !important" }} />}
-            label="Blood Request Portal"
-            sx={{ backgroundColor: "rgba(255,255,255,0.15)", color: "white", fontWeight: 700, mb: 3, backdropFilter: "blur(4px)", fontSize: "0.82rem" }}
-          />
-          <Typography variant="h2" fontWeight={800} color="white"
-            sx={{ lineHeight: 1.12, mb: 2, fontSize: { xs: "2.4rem", md: "3.6rem" }, textShadow: "0 2px 24px rgba(0,0,0,0.6)" }}>
-            Request Blood
-          </Typography>
-          <Typography variant="h5" sx={{ color: "#ffcdd2", fontWeight: 700, mb: 2.5, fontSize: { xs: "1.1rem", md: "1.4rem" } }}>
-            Every second counts — we're here to help.
-          </Typography>
-          <Typography variant="h6" sx={{
-            color: "rgba(255,255,255,0.82)", maxWidth: 540, mx: "auto",
-            lineHeight: 1.8, fontWeight: 400, fontSize: { xs: "1rem", md: "1.1rem" },
+        {/* Page header */}
+        <Box textAlign="center" mb={4}>
+          <Box sx={{
+            width: 60, height: 60, borderRadius: "16px", mx: "auto", mb: 2.5,
+            background: "linear-gradient(135deg, #dc2626 0%, #991b1b 100%)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            boxShadow: "0 8px 24px rgba(220,38,38,0.4)",
           }}>
-            Submit a blood request for a patient in need. Our team will match
-            you with available donors as quickly as possible.
-          </Typography>
-
-          {/* Quick info chips */}
-          <Box sx={{ display: "flex", gap: 2, justifyContent: "center", flexWrap: "wrap", mt: 5 }}>
-            {[
-              { icon: "🩸", label: "All Blood Types Available" },
-              { icon: "⚡", label: "Critical Requests Prioritized" },
-              { icon: "🏥", label: "50+ Partner Hospitals" },
-            ].map((item, i) => (
-              <Chip key={i} label={`${item.icon} ${item.label}`}
-                sx={{
-                  backgroundColor: "rgba(255,255,255,0.13)", color: "white", fontWeight: 600,
-                  backdropFilter: "blur(6px)", border: "1px solid rgba(255,255,255,0.2)", fontSize: "0.82rem",
-                }}
-              />
-            ))}
+            <LocalHospitalIcon sx={{ color: "white", fontSize: 28 }} />
           </Box>
+          <Typography sx={{
+            fontSize: { xs: "1.8rem", md: "2.2rem" }, fontWeight: 800,
+            letterSpacing: "-0.025em", color: isDark ? "#f5f5f5" : "#111111",
+          }}>
+            Blood Requests
+          </Typography>
+          <Typography color="text.secondary" mt={1} lineHeight={1.7} maxWidth={420} mx="auto">
+            Submit a new blood request or view active requests waiting for donors.
+          </Typography>
         </Box>
-      </Box>
 
-      {/* ── Main Content ──────────────────────────────────────────────────── */}
-      <Container maxWidth="lg" sx={{ py: 10 }}>
-        <Box sx={{
-          display: "grid",
-          gridTemplateColumns: { xs: "1fr", md: "1fr 2fr" },
-          gap: 4, alignItems: "start",
-        }}>
-
-          {/* ── Left Sidebar ──────────────────────────────────────────────── */}
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-
-            {/* Urgency guide */}
-            <Paper elevation={0} sx={{
-              p: 3.5, borderRadius: 4,
-              backgroundColor: isDark ? "#1a1a1a" : "#fff",
-              border: `1px solid ${isDark ? "#2a2a2a" : "#efefef"}`,
-              boxShadow: isDark ? "none" : "0 4px 24px rgba(0,0,0,0.06)",
+        {/* Tabs */}
+        <Paper elevation={0} sx={{ borderRadius: 3, border: `1px solid ${border}`, bgcolor: cardBg, mb: 3 }}>
+          <Tabs value={pageTab} onChange={(_, v) => setPageTab(v)}
+            sx={{
+              px: 1,
+              "& .MuiTab-root": { textTransform: "none", fontWeight: 600, fontSize: "0.9rem" },
+              "& .Mui-selected": { color: "#dc2626" },
+              "& .MuiTabs-indicator": { bgcolor: "#dc2626" },
             }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2.5 }}>
-                <Box sx={{
-                  width: 40, height: 40, borderRadius: 2,
-                  background: "linear-gradient(135deg, #b71c1c 0%, #d32f2f 100%)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  boxShadow: "0 4px 12px rgba(183,28,28,0.4)",
-                }}>
-                  <WarningAmberIcon sx={{ color: "white", fontSize: 20 }} />
-                </Box>
-                <Typography fontWeight={700}>Urgency Levels</Typography>
+            <Tab label="Submit a Request" />
+            <Tab label={
+              <Box display="flex" alignItems="center" gap={0.8}>
+                Active Requests
+                {requests.length > 0 && (
+                  <Chip label={requests.filter(r => r.status !== "Rejected").length} size="small"
+                    sx={{ height: 18, fontSize: "0.68rem", fontWeight: 700,
+                      bgcolor: "rgba(220,38,38,0.12)", color: "#dc2626" }} />
+                )}
               </Box>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-                {URGENCY_LEVELS.map((u) => (
-                  <Box key={u.value} sx={{
-                    display: "flex", alignItems: "center", gap: 1.5,
-                    p: 1.2, borderRadius: 2,
-                    backgroundColor: isDark ? `${u.color}22` : u.bg,
-                    border: `1px solid ${u.color}44`,
-                  }}>
-                    <Box sx={{ width: 10, height: 10, borderRadius: "50%", backgroundColor: u.color, flexShrink: 0 }} />
-                    <Box>
-                      <Typography variant="body2" fontWeight={700} sx={{ color: u.color, lineHeight: 1.2 }}>{u.label}</Typography>
-                      <Typography variant="caption" color="text.secondary">{u.desc}</Typography>
+            } />
+          </Tabs>
+        </Paper>
+
+        {/* ── TAB 0: Submit Form ── */}
+        {pageTab === 0 && (
+          <Box maxWidth={560} mx="auto">
+            <Paper elevation={0} sx={{ borderRadius: "20px", border: `1px solid ${border}`, bgcolor: cardBg, p: { xs: 3, md: 4.5 } }}>
+              {error && <Alert severity="error" sx={{ mb: 3, borderRadius: "10px" }}>{error}</Alert>}
+
+              <Box component="form" onSubmit={handleSubmit} noValidate>
+                <Typography variant="caption" fontWeight={700} color="text.secondary" mb={0.8} display="block"
+                  sx={{ textTransform: "uppercase", letterSpacing: "0.06em", fontSize: "0.68rem" }}>
+                  Hospital
+                </Typography>
+                <FormControl fullWidth sx={fieldSx}>
+                  <Select value={form.hospitalName} onChange={handleChange("hospitalName")}
+                    displayEmpty sx={{ borderRadius: "10px" }}>
+                    <MenuItem value="" disabled><Box component="em" sx={{ color: "text.secondary" }}>Select hospital…</Box></MenuItem>
+                    {["Calmette Hospital","Royal Phnom Penh Hospital","National Blood Transfusion Center",
+                      "Khmer Soviet Friendship Hospital","Angkor Hospital for Children","Battambang Provincial Hospital"]
+                      .map(h => <MenuItem key={h} value={h}>{h}</MenuItem>)}
+                  </Select>
+                </FormControl>
+
+                <Typography variant="caption" fontWeight={700} color="text.secondary" mb={0.8} display="block"
+                  sx={{ textTransform: "uppercase", letterSpacing: "0.06em", fontSize: "0.68rem" }}>
+                  Patient Name
+                </Typography>
+                <TextField fullWidth placeholder="Enter patient full name" value={form.patientName}
+                  onChange={handleChange("patientName")} sx={fieldSx} />
+
+                <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 2, mb: 2.5 }}>
+                  {[
+                    { key: "bloodType",   label: "Blood Type", placeholder: "Type", options: BLOOD_TYPES.map(bt => ({ v: bt, label: bt, color: "#dc2626" })) },
+                    { key: "unitsNeeded", label: "Units",      placeholder: "Qty",  options: UNITS.map(u => ({ v: u, label: u })) },
+                    { key: "urgency",     label: "Urgency",    placeholder: "Level",options: URGENCY_LEVELS.map(u => ({ v: u, label: u, color: URGENCY_STYLES[u].color })) },
+                  ].map(({ key, label, placeholder, options }) => (
+                    <Box key={key}>
+                      <Typography variant="caption" fontWeight={700} color="text.secondary" mb={0.8} display="block"
+                        sx={{ textTransform: "uppercase", letterSpacing: "0.06em", fontSize: "0.68rem" }}>
+                        {label}
+                      </Typography>
+                      <FormControl fullWidth>
+                        <Select value={form[key]} onChange={handleChange(key)} displayEmpty sx={{ borderRadius: "10px" }}>
+                          <MenuItem value="" disabled>
+                            <Box component="em" sx={{ color: "text.secondary", fontSize: "0.85rem" }}>{placeholder}</Box>
+                          </MenuItem>
+                          {options.map(o => (
+                            <MenuItem key={o.v} value={o.v}>
+                              <Typography fontWeight={700} sx={{ color: o.color }}>{o.label}</Typography>
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
                     </Box>
+                  ))}
+                </Box>
+
+                {selectedUrgency && (
+                  <Box sx={{
+                    display: "flex", alignItems: "center", gap: 1.2,
+                    px: 1.8, py: 1, borderRadius: "10px", mb: 2.5,
+                    bgcolor: isDark ? `${selectedUrgency.color}12` : selectedUrgency.bg,
+                    border: `1px solid ${selectedUrgency.border}`,
+                  }}>
+                    <Box sx={{ width: 7, height: 7, borderRadius: "50%", bgcolor: selectedUrgency.color, flexShrink: 0 }} />
+                    <Typography variant="caption" fontWeight={700} sx={{ color: selectedUrgency.color }}>
+                      {form.urgency} priority selected
+                      {form.urgency === "Critical" && " — our team will respond immediately"}
+                      {form.urgency === "High"     && " — response within 24 hours"}
+                      {form.urgency === "Medium"   && " — response within 48 hours"}
+                      {form.urgency === "Low"      && " — response within a week"}
+                    </Typography>
                   </Box>
-                ))}
-              </Box>
-            </Paper>
+                )}
 
-            {/* Blood type chips */}
-            <Paper elevation={0} sx={{
-              p: 3.5, borderRadius: 4,
-              backgroundColor: isDark ? "#1a1a1a" : "#fff",
-              border: `1px solid ${isDark ? "#2a2a2a" : "#efefef"}`,
-              boxShadow: isDark ? "none" : "0 4px 24px rgba(0,0,0,0.06)",
-            }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
-                <Box sx={{
-                  width: 40, height: 40, borderRadius: 2,
-                  background: "linear-gradient(135deg, #ad1457 0%, #c2185b 100%)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  boxShadow: "0 4px 12px rgba(173,20,87,0.4)",
-                }}>
-                  <BloodtypeIcon sx={{ color: "white", fontSize: 20 }} />
-                </Box>
-                <Typography fontWeight={700}>Blood Types We Support</Typography>
-              </Box>
-              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-                {BLOOD_TYPES.map((bt) => (
-                  <Chip key={bt} label={bt} size="small"
-                    variant={bloodType === bt ? "filled" : "outlined"}
-                    color={bloodType === bt ? "error" : "default"}
-                    sx={{ fontWeight: 700, fontSize: "0.85rem" }}
-                  />
-                ))}
-              </Box>
-            </Paper>
-
-            {/* Emergency contact */}
-            <Paper elevation={0} sx={{
-              p: 3.5, borderRadius: 4,
-              background: "linear-gradient(135deg, #b71c1c 0%, #7f0000 100%)",
-              color: "white",
-              boxShadow: "0 8px 32px rgba(183,28,28,0.35)",
-            }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.5 }}>
-                <PhoneIcon sx={{ fontSize: 22 }} />
-                <Typography variant="subtitle1" fontWeight={800}>Need Immediate Help?</Typography>
-              </Box>
-              <Typography variant="body2" sx={{ opacity: 0.9, lineHeight: 1.75, mb: 2 }}>
-                For life-threatening emergencies, call us directly. We operate a 24/7 emergency blood coordination line.
-              </Typography>
-              <Typography variant="h6" fontWeight={800}>+855 12 345 678</Typography>
-              <Typography variant="caption" sx={{ opacity: 0.75 }}>Available Mon–Fri, 8AM–5PM</Typography>
-            </Paper>
-
-            {/* Info note */}
-            <Box sx={{
-              display: "flex", gap: 1.5, alignItems: "flex-start",
-              p: 2, borderRadius: 3,
-              backgroundColor: isDark ? "#1e1e2e" : "#e3f2fd",
-              border: `1px solid ${isDark ? "#2a2a4a" : "#90caf9"}`,
-            }}>
-              <InfoOutlinedIcon sx={{ color: "#1565c0", fontSize: 20, mt: 0.2, flexShrink: 0 }} />
-              <Typography variant="caption" sx={{ color: isDark ? "#90caf9" : "#1565c0", lineHeight: 1.7 }}>
-                After submission, our team will review your request and contact you within the response time for your selected urgency level.
-              </Typography>
-            </Box>
-          </Box>
-
-          {/* ── Right: Request Form ────────────────────────────────────────── */}
-          <Paper elevation={0} sx={{
-            p: { xs: 3.5, md: 5 }, borderRadius: 4,
-            backgroundColor: isDark ? "#1a1a1a" : "#fff",
-            border: `1px solid ${isDark ? "#2a2a2a" : "#efefef"}`,
-            boxShadow: isDark ? "none" : "0 4px 24px rgba(0,0,0,0.06)",
-          }}>
-            {/* Form header */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1 }}>
-              <Avatar sx={{
-                width: 48, height: 48,
-                background: "linear-gradient(135deg, #b71c1c 0%, #d32f2f 100%)",
-                boxShadow: "0 4px 14px rgba(183,28,28,0.4)",
-              }}>
-                <LocalHospitalIcon />
-              </Avatar>
-              <Box>
-                <Typography variant="overline" color="error" fontWeight={700} letterSpacing="0.12em" sx={{ lineHeight: 1 }}>
-                  Blood Request
+                <Typography variant="caption" fontWeight={700} color="text.secondary" mb={0.8} display="block"
+                  sx={{ textTransform: "uppercase", letterSpacing: "0.06em", fontSize: "0.68rem" }}>
+                  Reason for Request
                 </Typography>
-                <Typography variant="h5" fontWeight={800} sx={{ lineHeight: 1.2 }}>
-                  Request Form
-                </Typography>
-              </Box>
-            </Box>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 4, mt: 1.5, lineHeight: 1.7 }}>
-              Please provide accurate patient information. Our team will contact you to coordinate the blood supply as quickly as possible.
-            </Typography>
+                <TextField fullWidth multiline rows={3}
+                  placeholder="Describe the patient's condition and why blood is needed…"
+                  value={form.reason} onChange={handleChange("reason")} sx={fieldSx} />
 
-            {/* Photo upload */}
-            <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", mb: 4, gap: 1 }}>
-              <Box sx={{ position: "relative" }}>
-                <Avatar
-                  src={photoPreview || undefined}
+                <Typography variant="caption" fontWeight={700} color="text.secondary" mb={0.8} display="block"
+                  sx={{ textTransform: "uppercase", letterSpacing: "0.06em", fontSize: "0.68rem" }}>
+                  Contact / Notes <Box component="span" sx={{ fontWeight: 400, textTransform: "none" }}>(Optional)</Box>
+                </Typography>
+                <TextField fullWidth multiline rows={2}
+                  placeholder="Contact number, special instructions…"
+                  value={form.notes} onChange={handleChange("notes")} sx={fieldSx} />
+
+                <Button type="submit" variant="contained" fullWidth disabled={loading}
                   sx={{
-                    width: 100, height: 100,
-                    border: "3px dashed",
-                    borderColor: photoPreview ? "error.main" : isDark ? "grey.700" : "grey.400",
-                    bgcolor: isDark ? "grey.800" : "grey.100",
-                  }}
-                >
-                  {!photoPreview && <AddAPhotoIcon sx={{ fontSize: 36, color: "grey.500" }} />}
-                </Avatar>
-                <Tooltip title="Upload photo">
-                  <IconButton size="small" onClick={() => photoInputRef.current?.click()}
-                    sx={{
-                      position: "absolute", bottom: 0, right: 0,
-                      bgcolor: "error.main", color: "white",
-                      "&:hover": { bgcolor: "error.dark" }, width: 30, height: 30,
-                    }}>
-                    <AddAPhotoIcon sx={{ fontSize: 16 }} />
-                  </IconButton>
-                </Tooltip>
-              </Box>
-              <input ref={photoInputRef} type="file" accept="image/*" hidden onChange={handlePhotoChange} />
-              {photoPreview ? (
-                <Button size="small" startIcon={<DeleteIcon />} color="error" onClick={handleRemovePhoto}>
-                  Remove Photo
+                    mt: 0.5, py: 1.6, borderRadius: "100px", fontWeight: 700, fontSize: "0.95rem",
+                    background: "linear-gradient(135deg, #dc2626 0%, #991b1b 100%)",
+                    boxShadow: "0 4px 20px rgba(220,38,38,0.4)",
+                    "&:hover": {
+                      background: "linear-gradient(135deg, #b91c1c 0%, #7f1d1d 100%)",
+                      boxShadow: "0 8px 30px rgba(220,38,38,0.5)",
+                      transform: "translateY(-1px)",
+                    },
+                    "&.Mui-disabled": { background: isDark ? "#1f1f1f" : "#e5e5e5" },
+                    transition: "all 0.22s ease",
+                    display: "flex", gap: 1, alignItems: "center",
+                  }}>
+                  <FavoriteIcon sx={{ fontSize: 18 }} />
+                  {loading ? "Submitting…" : "Submit Request"}
                 </Button>
-              ) : (
-                <Typography variant="caption" color="text.secondary">
-                  Optional patient / requester photo (max 5 MB)
+
+                <Typography variant="caption" color="text.disabled" display="block" textAlign="center" mt={2} lineHeight={1.6}>
+                  By submitting, you confirm the information is accurate and pertains to a genuine medical need.
                 </Typography>
-              )}
-            </Box>
-
-            {/* Fields */}
-            <Box component="form" onSubmit={handleSubmit} noValidate>
-              <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2, mb: 2 }}>
-                <TextField
-                  fullWidth label="Hospital Name" name="hospitalName" required
-                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2.5 } }}
-                />
-                <TextField
-                  fullWidth label="Patient Name" name="patientName" required
-                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2.5 } }}
-                />
               </Box>
+            </Paper>
+          </Box>
+        )}
 
-              <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2, mb: 2 }}>
-                <FormControl fullWidth required>
-                  <InputLabel id="blood-type-label">Blood Type</InputLabel>
-                  <Select
-                    labelId="blood-type-label" value={bloodType}
-                    onChange={(e) => setBloodType(e.target.value)} label="Blood Type"
-                    sx={{ borderRadius: 2.5 }}
-                  >
-                    {BLOOD_TYPES.map((type) => (
-                      <MenuItem key={type} value={type}>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                          <Box sx={{
-                            width: 28, height: 28, borderRadius: "50%",
-                            backgroundColor: "#b71c1c", color: "white",
-                            display: "flex", alignItems: "center", justifyContent: "center",
-                            fontSize: "0.72rem", fontWeight: 700,
-                          }}>
-                            {type}
-                          </Box>
-                          Blood Type {type}
-                        </Box>
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-
-                <FormControl fullWidth required>
-                  <InputLabel id="urgency-label">Urgency Level</InputLabel>
-                  <Select
-                    labelId="urgency-label" value={urgency}
-                    onChange={(e) => setUrgency(e.target.value)} label="Urgency Level"
-                    sx={{ borderRadius: 2.5 }}
-                  >
-                    {URGENCY_LEVELS.map((u) => (
-                      <MenuItem key={u.value} value={u.value}>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                          <Box sx={{ width: 10, height: 10, borderRadius: "50%", backgroundColor: u.color, flexShrink: 0 }} />
-                          <Box>
-                            <Typography variant="body2" fontWeight={700} sx={{ color: u.color }}>{u.label}</Typography>
-                            <Typography variant="caption" color="text.secondary">{u.desc}</Typography>
-                          </Box>
-                        </Box>
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Box>
-
-              {/* Urgency banner */}
-              {selectedUrgency && (
-                <Box sx={{
-                  display: "flex", alignItems: "center", gap: 1.5,
-                  p: 1.5, mb: 2, borderRadius: 2.5,
-                  backgroundColor: isDark ? `${selectedUrgency.color}22` : selectedUrgency.bg,
-                  border: `1px solid ${selectedUrgency.color}55`,
-                }}>
-                  <Box sx={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: selectedUrgency.color, flexShrink: 0 }} />
-                  <Typography variant="body2" fontWeight={600} sx={{ color: selectedUrgency.color }}>
-                    {selectedUrgency.label} priority — {selectedUrgency.desc}
-                  </Typography>
-                </Box>
-              )}
-
-              <TextField
-                fullWidth label="Reason for Request" name="reason" multiline rows={3} required
-                sx={{ mb: 2, "& .MuiOutlinedInput-root": { borderRadius: 2.5 } }}
-              />
-              <TextField
-                fullWidth label="Contact Number / Email" name="contact" required
-                sx={{ mb: 3, "& .MuiOutlinedInput-root": { borderRadius: 2.5 } }}
-              />
-
-              <Button
-                type="submit" variant="contained" color="error" size="large"
-                fullWidth disabled={loading}
-                sx={{
-                  py: 1.6, fontWeight: 700, fontSize: "1rem", borderRadius: 3,
-                  background: "linear-gradient(135deg, #b71c1c 0%, #d32f2f 100%)",
-                  boxShadow: "0 6px 20px rgba(183,28,28,0.4)",
-                  "&:hover": { boxShadow: "0 8px 28px rgba(183,28,28,0.55)", transform: "translateY(-1px)" },
-                  "&.Mui-disabled": { background: isDark ? "#2a2a2a" : "#e0e0e0" },
-                  transition: "all 0.25s ease",
-                }}
-              >
-                {loading ? "Submitting…" : "🩸 Submit Blood Request"}
+        {/* ── TAB 1: Active Requests Board ── */}
+        {pageTab === 1 && (
+          <Box>
+            {/* Filters */}
+            <Box display="flex" gap={1.5} mb={3} flexWrap="wrap" alignItems="center">
+              <Typography fontWeight={600} fontSize="0.85rem" color="text.secondary" mr={0.5}>Filter:</Typography>
+              <FormControl size="small" sx={{ minWidth: 120 }}>
+                <Select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
+                  displayEmpty sx={{ borderRadius: 2, fontSize: "0.85rem" }}>
+                  <MenuItem value="All">All Status</MenuItem>
+                  <MenuItem value="Pending">Pending</MenuItem>
+                  <MenuItem value="Approved">Approved</MenuItem>
+                  <MenuItem value="Rejected">Rejected</MenuItem>
+                </Select>
+              </FormControl>
+              <FormControl size="small" sx={{ minWidth: 120 }}>
+                <Select value={filterType} onChange={e => setFilterType(e.target.value)}
+                  displayEmpty sx={{ borderRadius: 2, fontSize: "0.85rem" }}>
+                  <MenuItem value="All">All Blood Types</MenuItem>
+                  {BLOOD_TYPES.map(bt => <MenuItem key={bt} value={bt}>{bt}</MenuItem>)}
+                </Select>
+              </FormControl>
+              <Button size="small" variant="outlined" color="error"
+                onClick={fetchRequests} disabled={reqLoading}
+                sx={{ textTransform: "none", borderRadius: 2, fontWeight: 600 }}>
+                Refresh
               </Button>
-              <Typography variant="caption" color="text.disabled" display="block" textAlign="center" mt={1.5}>
-                By submitting, you confirm the information provided is accurate and pertains to a genuine medical need.
+              <Typography variant="caption" color="text.secondary" ml="auto">
+                {filteredRequests.length} request{filteredRequests.length !== 1 ? "s" : ""}
               </Typography>
             </Box>
-          </Paper>
-        </Box>
-      </Container>
 
+            {reqLoading ? (
+              <Grid container spacing={2}>
+                {[...Array(6)].map((_, i) => (
+                  <Grid item xs={12} sm={6} md={4} key={i}>
+                    <Skeleton variant="rounded" height={200} sx={{ borderRadius: 3 }} />
+                  </Grid>
+                ))}
+              </Grid>
+            ) : filteredRequests.length === 0 ? (
+              <Box textAlign="center" py={10}>
+                <BloodtypeIcon sx={{ fontSize: 56, color: "text.disabled", mb: 2 }} />
+                <Typography fontWeight={700} color="text.secondary">No requests found</Typography>
+                <Typography variant="caption" color="text.disabled">Try adjusting the filters above</Typography>
+              </Box>
+            ) : (
+              <Grid container spacing={2}>
+                {filteredRequests.map(req => {
+                  const urgStyle = URGENCY_STYLES[req.urgency] || URGENCY_STYLES.Low;
+                  const stMeta   = STATUS_META[req.status]   || STATUS_META.Pending;
+                  return (
+                    <Grid item xs={12} sm={6} md={4} key={req._id}>
+                      <Paper elevation={0} sx={{
+                        borderRadius: 3, border: `1px solid ${isDark ? "#1f1f1f" : "#e5e5e5"}`,
+                        bgcolor: cardBg, overflow: "hidden",
+                        transition: "transform 0.18s, box-shadow 0.18s",
+                        "&:hover": { transform: "translateY(-2px)", boxShadow: isDark ? "0 8px 32px rgba(0,0,0,0.4)" : "0 8px 32px rgba(0,0,0,0.1)" },
+                      }}>
+                        {/* Top urgency bar */}
+                        <Box sx={{ height: 4, bgcolor: urgStyle.color }} />
+
+                        <Box sx={{ p: 2.5 }}>
+                          {/* Header */}
+                          <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
+                            <Box display="flex" alignItems="center" gap={1.5}>
+                              <Avatar sx={{ bgcolor: "#b71c1c", width: 42, height: 42, fontSize: "1rem", fontWeight: 800 }}>
+                                {req.patientName?.charAt(0)?.toUpperCase()}
+                              </Avatar>
+                              <Box>
+                                <Typography fontWeight={700} fontSize="0.88rem" lineHeight={1.2}>
+                                  {req.patientName}
+                                </Typography>
+                                <Typography fontSize="0.72rem" color="text.secondary">
+                                  {req.hospitalName}
+                                </Typography>
+                              </Box>
+                            </Box>
+                            <Chip
+                              label={req.bloodType}
+                              size="small"
+                              sx={{
+                                bgcolor: isDark ? "rgba(220,38,38,0.15)" : "#fff0f0",
+                                color: "#dc2626", fontWeight: 800, fontSize: "0.8rem",
+                              }} />
+                          </Box>
+
+                          <Divider sx={{ borderColor: isDark ? "#1f1f1f" : "#f0f0f0", mb: 2 }} />
+
+                          {/* Details */}
+                          <Box display="flex" flexDirection="column" gap={0.8} mb={2}>
+                            <Box display="flex" justifyContent="space-between" alignItems="center">
+                              <Typography fontSize="0.75rem" color="text.secondary" fontWeight={500}>Urgency</Typography>
+                              <Chip label={req.urgency} size="small"
+                                sx={{ fontSize: "0.7rem", fontWeight: 700,
+                                  bgcolor: isDark ? `${urgStyle.color}18` : urgStyle.bg,
+                                  color: urgStyle.color }} />
+                            </Box>
+                            <Box display="flex" justifyContent="space-between" alignItems="center">
+                              <Typography fontSize="0.75rem" color="text.secondary" fontWeight={500}>Units needed</Typography>
+                              <Typography fontSize="0.82rem" fontWeight={700}>{req.unitsNeeded || 1} unit{req.unitsNeeded !== 1 ? "s" : ""}</Typography>
+                            </Box>
+                            <Box display="flex" justifyContent="space-between" alignItems="center">
+                              <Typography fontSize="0.75rem" color="text.secondary" fontWeight={500}>Status</Typography>
+                              <Chip
+                                icon={stMeta.icon}
+                                label={stMeta.label}
+                                size="small"
+                                sx={{
+                                  fontSize: "0.7rem", fontWeight: 700,
+                                  bgcolor: isDark ? stMeta.darkBg : stMeta.lightBg,
+                                  color: stMeta.color,
+                                  "& .MuiChip-icon": { color: stMeta.color },
+                                }} />
+                            </Box>
+                          </Box>
+
+                          {req.reason && (
+                            <Typography fontSize="0.78rem" color="text.secondary" lineHeight={1.5}
+                              sx={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                              {req.reason}
+                            </Typography>
+                          )}
+
+                          <Box display="flex" alignItems="center" gap={0.6} mt={1.5}>
+                            <AccessTimeIcon sx={{ fontSize: 13, color: "text.disabled" }} />
+                            <Typography fontSize="0.7rem" color="text.disabled">
+                              {req.createdAt ? new Date(req.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—"}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Paper>
+                    </Grid>
+                  );
+                })}
+              </Grid>
+            )}
+          </Box>
+        )}
+      </Container>
     </Box>
   );
-};
-
-export default RequestBlood;
+}

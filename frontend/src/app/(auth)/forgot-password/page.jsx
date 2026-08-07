@@ -18,7 +18,7 @@ export default function ForgotPassword() {
       <Box sx={{ width: '100%', maxWidth: 420 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'center', mb: 4 }}>
           <Favorite sx={{ color: '#b71c1c', fontSize: 28 }} />
-          <Typography variant="h6" fontWeight={900} color="error.main">Blood Donated</Typography>
+          <Typography variant="h6" fontWeight={900} color="error.main">BloodLife</Typography>
         </Box>
         <Paper elevation={0} sx={{ borderRadius: 4, border: '1px solid', borderColor: 'divider', overflow: 'hidden' }}>
           <Box sx={{ px: 4, py: 3.5, background: 'linear-gradient(135deg, #7f0000 0%, #b71c1c 100%)', display: 'flex', alignItems: 'center', gap: 1.5 }}>

@@ -13,6 +13,8 @@ const userSchema = new mongoose.Schema(
     password: { type: String, minlength: 6 },
     googleId: { type: String },
     facebookId: { type: String },
+    photo: { type: String, default: null },
+    phone: { type: String, default: '' },
   },
   { timestamps: true }
 );

@@ -5,7 +5,7 @@ import L from 'leaflet';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import {
   Box, Typography, Tabs, Tab, Card, CardContent, Avatar,
-  Chip, CircularProgress, Alert, Button, IconButton, Tooltip,
+  Chip, CircularProgress, Alert, Button, IconButton, Tooltip, useTheme,
 } from '@mui/material';
 import {
   LocalHospital, MyLocation, Directions,
@@ -103,6 +103,10 @@ function MapFlyTo({ center, zoom }) {
 }
 
 export default function Maps() {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const sidebarBg = isDark ? '#111111' : '#ffffff';
+  const sidebarBorder = isDark ? '#1f1f1f' : '#f0f0f0';
   const [tab, setTab]           = useState(0);
   const [userPos, setUserPos]   = useState(null);
   const [geoError, setGeoError] = useState(false);
@@ -228,14 +232,14 @@ export default function Maps() {
         <Box sx={{
           width: { xs: '100%', md: 360 }, flexShrink: 0,
           display: 'flex', flexDirection: 'column',
-          borderRight: { md: '1px solid #f0f0f0' },
-          bgcolor: '#fff', overflow: 'hidden',
+          borderRight: { md: `1px solid ${sidebarBorder}` },
+          bgcolor: sidebarBg, overflow: 'hidden',
         }}>
           <Tabs
             value={tab}
             onChange={(_, v) => { setTab(v); setSelected(null); }}
             sx={{
-              borderBottom: '1px solid #f0f0f0', px: 1,
+              borderBottom: `1px solid ${sidebarBorder}`, px: 1,
               '& .MuiTab-root': { textTransform: 'none', fontWeight: 700, fontSize: '0.875rem', minHeight: 52 },
               '& .Mui-selected': { color: '#b71c1c' },
               '& .MuiTabs-indicator': { bgcolor: '#b71c1c' },
@@ -253,7 +257,7 @@ export default function Maps() {
 
           <Box sx={{ flex: 1, overflowY: 'auto', px: 1.5, py: 1,
             '&::-webkit-scrollbar': { width: 4 },
-            '&::-webkit-scrollbar-thumb': { bgcolor: '#e0e0e0', borderRadius: 2 },
+            '&::-webkit-scrollbar-thumb': { bgcolor: isDark ? '#2a2a2a' : '#e0e0e0', borderRadius: 2 },
           }}>
             {loading && (
               <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
@@ -280,8 +284,8 @@ export default function Maps() {
                   key={id}
                   onClick={() => handleSelectItem(item)}
                   sx={{
-                    mb: 1, cursor: 'pointer', borderRadius: 2.5,
-                    border: isSelected ? '2px solid #b71c1c' : '1.5px solid #f0f0f0',
+                    mb: 1, cursor: 'pointer', borderRadius: 2.5, bgcolor: sidebarBg,
+                    border: isSelected ? '2px solid #b71c1c' : `1.5px solid ${sidebarBorder}`,
                     boxShadow: isSelected ? '0 4px 16px rgba(183,28,28,.15)' : 'none',
                     transition: 'all 0.18s',
                     '&:hover': { borderColor: '#b71c1c44', boxShadow: '0 2px 12px rgba(0,0,0,.08)' },
@@ -291,10 +295,10 @@ export default function Maps() {
                     <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
                       <Avatar sx={{
                         width: 40, height: 40, flexShrink: 0,
-                        bgcolor: isHosp ? '#ffebee' : `${BLOOD_COLORS[item.bloodType] || '#b71c1c'}18`,
+                        bgcolor: isHosp ? (isDark ? 'rgba(183,28,28,0.18)' : '#ffebee') : `${BLOOD_COLORS[item.bloodType] || '#b71c1c'}18`,
                         color: isHosp ? '#b71c1c' : (BLOOD_COLORS[item.bloodType] || '#b71c1c'),
                         fontSize: '0.78rem', fontWeight: 800,
-                        border: `1.5px solid ${isHosp ? '#ffcdd2' : (BLOOD_COLORS[item.bloodType] || '#b71c1c') + '44'}`,
+                        border: `1.5px solid ${isHosp ? (isDark ? 'rgba(183,28,28,0.35)' : '#ffcdd2') : (BLOOD_COLORS[item.bloodType] || '#b71c1c') + '44'}`,
                       }}>
                         {isHosp ? <LocalHospital sx={{ fontSize: 20 }} /> : item.bloodType}
                       </Avatar>
@@ -307,10 +311,10 @@ export default function Maps() {
                         </Typography>
                         <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5, flexWrap: 'wrap', alignItems: 'center' }}>
                           <Chip label={`${dist.toFixed(1)} km`} size="small"
-                            sx={{ height: 18, fontSize: '0.65rem', fontWeight: 700, bgcolor: '#fff3e0', color: '#e65100' }} />
+                            sx={{ height: 18, fontSize: '0.65rem', fontWeight: 700, bgcolor: isDark ? 'rgba(230,81,0,0.15)' : '#fff3e0', color: '#e65100' }} />
                           {isHosp && (
                             <Chip label={item.type} size="small"
-                              sx={{ height: 18, fontSize: '0.65rem', bgcolor: '#ffebee', color: '#b71c1c', fontWeight: 600 }} />
+                              sx={{ height: 18, fontSize: '0.65rem', bgcolor: isDark ? 'rgba(183,28,28,0.18)' : '#ffebee', color: '#b71c1c', fontWeight: 600 }} />
                           )}
                           {!isHosp && (
                             <Chip
@@ -381,7 +385,7 @@ export default function Maps() {
                       {isHosp ? (
                         <>
                           {item.address && <Typography fontSize="0.75rem" color="text.secondary">{item.address}</Typography>}
-                          <Chip label={item.type} size="small" sx={{ mt: 0.5, height: 18, fontSize: '0.65rem', bgcolor: '#ffebee', color: '#b71c1c', fontWeight: 600 }} />
+                          <Chip label={item.type} size="small" sx={{ mt: 0.5, height: 18, fontSize: '0.65rem', bgcolor: isDark ? 'rgba(183,28,28,0.18)' : '#ffebee', color: '#b71c1c', fontWeight: 600 }} />
                           {item.phone && <Typography fontSize="0.73rem" mt={0.5}><Phone sx={{ fontSize: 12, mr: 0.4 }} />{item.phone}</Typography>}
                         </>
                       ) : (
@@ -409,7 +413,7 @@ export default function Maps() {
           {/* Legend */}
           <Box sx={{
             position: 'absolute', top: 12, right: 12, zIndex: 1000,
-            bgcolor: 'rgba(255,255,255,0.96)', backdropFilter: 'blur(6px)',
+            bgcolor: isDark ? 'rgba(17,17,17,0.96)' : 'rgba(255,255,255,0.96)', backdropFilter: 'blur(6px)',
             borderRadius: 2, px: 1.5, py: 1,
             boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
             display: 'flex', flexDirection: 'column', gap: 0.5,

@@ -33,7 +33,7 @@ function Footer() {
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
               <Favorite sx={{ color: "#ffcdd2", fontSize: 28 }} />
               <Typography variant="h6" fontWeight={800} sx={{ color: "#ffeb3b", letterSpacing: "-0.5px" }}>
-                Blood Donated
+                BloodLife
               </Typography>
             </Box>
             <Typography variant="body2" sx={{ lineHeight: 1.85, opacity: 0.9, textAlign: "justify", mb: 3 }}>
@@ -102,7 +102,7 @@ function Footer() {
       <Divider sx={{ backgroundColor: "rgba(255,255,255,0.15)", mt: 5, mb: 3 }} />
       <Box sx={{ maxWidth: "1200px", mx: "auto", display: "flex", flexDirection: { xs: "column", sm: "row" }, justifyContent: "space-between", alignItems: "center", gap: 1 }}>
         <Typography variant="body2" sx={{ opacity: 0.7, fontSize: "0.82rem" }}>
-          © {new Date().getFullYear()} Blood Donated. All rights reserved.
+          © {new Date().getFullYear()} BloodLife. All rights reserved.
         </Typography>
         <Typography variant="body2" sx={{ opacity: 0.7, fontSize: "0.82rem", display: "flex", alignItems: "center", gap: 0.5 }}>
           Made with <Favorite sx={{ fontSize: 14, color: "#ffcdd2" }} /> by Data Science Students — ITC Cambodia

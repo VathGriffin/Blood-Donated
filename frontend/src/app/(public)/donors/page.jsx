@@ -43,7 +43,7 @@ const DonorList = () => {
 
   useEffect(() => {
     axios.get(`${API_BASE}/api/donors`)
-      .then((res) => setDonors(res.data))
+      .then((res) => setDonors(Array.isArray(res.data) ? res.data : []))
       .catch((err) => console.error("Failed to fetch donors:", err))
       .finally(() => setLoading(false));
   }, []);
@@ -212,7 +212,7 @@ const DonorList = () => {
                 const btColor = BLOOD_COLORS[donor.bloodType] || "#b71c1c";
                 const initials = donor.fullName?.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
                 return (
-                  <Paper key={i} elevation={0} sx={{
+                  <Paper key={donor._id || i} elevation={0} sx={{
                     borderRadius: 4, overflow: "hidden",
                     backgroundColor: isDark ? "#1a1a1a" : "#fff",
                     border: `1px solid ${isDark ? "#2a2a2a" : "#efefef"}`,
@@ -247,7 +247,7 @@ const DonorList = () => {
                             backgroundColor: btColor, color: "white",
                             borderRadius: 1, px: 0.6, py: 0.1,
                             fontSize: "0.6rem", fontWeight: 800,
-                            border: "2px solid white",
+                            border: `2px solid ${isDark ? "#1a1a1a" : "white"}`,
                             lineHeight: 1.4,
                           }}>
                             {donor.bloodType}
@@ -271,8 +271,8 @@ const DonorList = () => {
                           </Typography>
                         </Box>
                         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                          <Box sx={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: donor.available ? "#2e7d32" : "#9e9e9e", flexShrink: 0 }} />
-                          <Typography variant="caption" fontWeight={600} sx={{ color: donor.available ? "#2e7d32" : "text.disabled" }}>
+                          <Box sx={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: donor.available ? (isDark ? "#66bb6a" : "#2e7d32") : "#9e9e9e", flexShrink: 0 }} />
+                          <Typography variant="caption" fontWeight={600} sx={{ color: donor.available ? (isDark ? "#66bb6a" : "#2e7d32") : "text.disabled" }}>
                             {donor.available ? "Available to donate" : "Currently unavailable"}
                           </Typography>
                         </Box>
@@ -368,8 +368,12 @@ const DonorList = () => {
                     size="small"
                     sx={{
                       fontWeight: 700,
-                      backgroundColor: selectedDonor.available ? "#e8f5e9" : "#f5f5f5",
-                      color: selectedDonor.available ? "#2e7d32" : "#9e9e9e",
+                      backgroundColor: selectedDonor.available
+                        ? (isDark ? "rgba(102,187,106,0.15)" : "#e8f5e9")
+                        : (isDark ? "#2a2a2a" : "#f5f5f5"),
+                      color: selectedDonor.available
+                        ? (isDark ? "#66bb6a" : "#2e7d32")
+                        : "#9e9e9e",
                     }}
                   />
                 </Box>

@@ -61,7 +61,7 @@ const AdminNavbar = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
               <FavoriteIcon sx={{ fontSize: 18, color: '#b71c1c' }} />
               <Typography fontWeight={800} fontSize="0.95rem" color="error.main" sx={{ display: { xs: 'none', sm: 'block' } }}>
-                Blood Donated
+                BloodLife
               </Typography>
             </Box>
             <NavigateNext sx={{ color: 'text.disabled', fontSize: 18, display: { xs: 'none', sm: 'block' } }} />

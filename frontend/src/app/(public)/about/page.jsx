@@ -97,7 +97,7 @@ const About = () => {
           />
           <Typography variant="h2" fontWeight={800} color="white"
             sx={{ lineHeight: 1.15, mb: 2, fontSize: { xs: "2.4rem", md: "3.6rem" }, textShadow: "0 2px 24px rgba(0,0,0,0.6)" }}>
-            About Blood Donated
+            About BloodLife
           </Typography>
           <Typography variant="h5" sx={{ color: "#ffcdd2", fontWeight: 700, mb: 2, fontSize: { xs: "1.2rem", md: "1.5rem" } }}>
             Revolutionizing Blood Donation Across Cambodia
@@ -178,7 +178,7 @@ const About = () => {
                 Our Mission
               </Typography>
               <Typography variant="body1" sx={{ color: "rgba(255,255,255,0.80)", lineHeight: 1.9, mb: 2.5, fontSize: "1.05rem" }}>
-                <strong style={{ color: "#ffcdd2" }}>Blood Donated</strong> is a full-stack web application built to solve a
+                <strong style={{ color: "#ffcdd2" }}>BloodLife</strong> is a full-stack web application built to solve a
                 real problem — Cambodia's blood supply gap. We connect donors, hospitals,
                 and patients in a single platform that's fast, transparent, and life-saving.
               </Typography>

@@ -13,7 +13,7 @@ router.post('/', async (req, res) => {
 
 router.get('/', async (req, res) => {
   try {
-    res.json(await Appointment.find().sort({ createdAt: -1 }));
+    res.json(await Appointment.find().sort({ createdAt: -1 }).lean());
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -21,7 +21,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const appt = await Appointment.findById(req.params.id);
+    const appt = await Appointment.findById(req.params.id).lean();
     if (!appt) return res.status(404).json({ error: 'Appointment not found' });
     res.json(appt);
   } catch (err) {

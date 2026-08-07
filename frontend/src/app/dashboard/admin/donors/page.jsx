@@ -40,6 +40,7 @@ import {
 } from "@mui/icons-material";
 import axios from "axios";
 import API_BASE from "@/lib/config";
+import { useAuth } from "@/store/AuthContext";
 
 const API = `${API_BASE}/api/donors`;
 const BASE_URL = API_BASE;
@@ -49,6 +50,8 @@ const bloodTypes = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const ManageDonors = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
+  const { token } = useAuth();
+  const authHeader = () => ({ headers: { Authorization: `Bearer ${token}` } });
   const [donors, setDonors] = useState([]);
   const [open, setOpen] = useState(false);
   const [selectedDonor, setSelectedDonor] = useState(null);
@@ -61,7 +64,7 @@ const ManageDonors = () => {
   const fetchDonors = async () => {
     try {
       const res = await axios.get(API);
-      setDonors(res.data);
+      setDonors(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error("Fetch failed:", err);
     }
@@ -104,6 +107,11 @@ const ManageDonors = () => {
   const handleUpdate = async () => {
     if (!selectedDonor) return;
 
+    if (!token) {
+      alert("Session expired. Please log in again.");
+      return;
+    }
+
     const { fullName, email, phone, bloodType, location, lastDonation, available } = selectedDonor;
 
     if (!fullName || !email || !phone || !bloodType || !location) {
@@ -117,12 +125,11 @@ const ManageDonors = () => {
       if (selectedDonor._id && selectedDonor._id.trim() !== "") {
         const res = await axios.put(`${API}/${selectedDonor._id}`, {
           fullName, email, phone, bloodType, location, lastDonation, available,
-        });
+        }, authHeader());
         savedDonor = res.data;
 
-        // Remove photo if user cleared it
         if (selectedDonor.photo === null && !photoFile) {
-          await axios.delete(`${API}/${savedDonor._id}/photo`).catch(() => {});
+          await axios.delete(`${API}/${savedDonor._id}/photo`, authHeader()).catch(() => {});
         }
       } else {
         const res = await axios.post(API, {
@@ -131,14 +138,11 @@ const ManageDonors = () => {
         savedDonor = res.data;
       }
 
-      // Upload new photo if selected
       if (photoFile && savedDonor._id) {
         setUploading(true);
         const formData = new FormData();
         formData.append("photo", photoFile);
-        await axios.post(`${API}/${savedDonor._id}/photo`, formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
+        await axios.post(`${API}/${savedDonor._id}/photo`, formData);
         setUploading(false);
       }
 
@@ -149,15 +153,17 @@ const ManageDonors = () => {
       fetchDonors();
     } catch (err) {
       setUploading(false);
-      console.error("Save failed:", err.response || err);
-      alert(err.response?.data?.message || "Failed to save donor.");
+      const status = err.response?.status;
+      const msg = err.response?.data?.message;
+      console.error("Save failed:", status, msg, err);
+      alert(msg || (status === 401 ? "Session expired — please log in again." : "Failed to save donor."));
     }
   };
 
   const handleDelete = async (id) => {
     if (window.confirm("Delete this donor?")) {
       try {
-        await axios.delete(`${API}/${id}`);
+        await axios.delete(`${API}/${id}`, authHeader());
         fetchDonors();
       } catch (err) {
         console.error("Delete failed:", err);

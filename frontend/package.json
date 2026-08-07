@@ -1,5 +1,5 @@
 {
-  "name": "frontend",
+  "name": "intelligent-blood-donation-platform",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -33,7 +33,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "next dev",
     "lint": "next lint"
   },
   "devDependencies": {

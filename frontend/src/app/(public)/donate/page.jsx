@@ -47,6 +47,7 @@ const DonateBlood = () => {
     fullName: "", email: "", phone: "", location: "", lastDonation: "", available: true,
   });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [eligibilityAck, setEligibilityAck] = useState(false);
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
@@ -73,8 +74,9 @@ const DonateBlood = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!bloodType) { alert("Please select a blood type"); return; }
-    if (!eligibilityAck) { alert("Please confirm that you meet the donation eligibility criteria."); return; }
+    setError("");
+    if (!bloodType) { setError("Please select a blood type."); return; }
+    if (!eligibilityAck) { setError("Please confirm that you meet the donation eligibility criteria."); return; }
     try {
       setLoading(true);
       const response = await fetch(`${API_BASE}/api/donors`, {
@@ -84,7 +86,7 @@ const DonateBlood = () => {
       });
       if (!response.ok) {
         const data = await response.json();
-        alert("Registration failed: " + (data.message || "Unknown error"));
+        setError("Registration failed: " + (data.message || "Unknown error"));
         return;
       }
       const savedDonor = await response.json();
@@ -96,9 +98,8 @@ const DonateBlood = () => {
         });
       }
       router.push("/donate/thank-you");
-    } catch (error) {
-      console.error("Error submitting form:", error);
-      alert("Server error. Please try again later.");
+    } catch {
+      setError("Server error. Please try again later.");
     } finally {
       setLoading(false);
     }
@@ -406,8 +407,15 @@ const DonateBlood = () => {
                 </Box>
               </Box>
 
+              {/* Error alert */}
+              {error && (
+                <Alert severity="error" sx={{ mt: 3, borderRadius: "10px" }} onClose={() => setError("")}>
+                  {error}
+                </Alert>
+              )}
+
               {/* Submit */}
-              <Box mt={4}>
+              <Box mt={3}>
                 <Button
                   variant="contained" color="error" size="large" type="submit"
                   fullWidth disabled={loading}

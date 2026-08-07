@@ -42,7 +42,9 @@ router.post('/:id/photo', upload.single('photo'), async (req, res) => {
 
 router.get('/', async (req, res) => {
   try {
-    res.json(await BloodRequest.find().sort({ createdAt: -1 }));
+    const filter = {};
+    if (req.query.email) filter.userEmail = req.query.email.toLowerCase().trim();
+    res.json(await BloodRequest.find(filter).sort({ createdAt: -1 }).lean());
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -50,9 +52,22 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const request = await BloodRequest.findById(req.params.id);
+    const request = await BloodRequest.findById(req.params.id).lean();
     if (!request) return res.status(404).json({ error: 'Request not found' });
     res.json(request);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.patch('/:id/status', adminAuth, async (req, res) => {
+  const { status } = req.body;
+  if (!['Pending', 'Approved', 'Rejected'].includes(status))
+    return res.status(400).json({ error: 'Invalid status value' });
+  try {
+    const updated = await BloodRequest.findByIdAndUpdate(req.params.id, { status }, { new: true });
+    if (!updated) return res.status(404).json({ error: 'Request not found' });
+    res.json(updated);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

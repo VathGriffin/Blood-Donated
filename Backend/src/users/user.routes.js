@@ -2,8 +2,24 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 const router = express.Router();
 const User = require('./user.model');
+const userAuth = require('../common/middleware/user-auth');
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, path.join(__dirname, '../../uploads')),
+  filename: (req, file, cb) =>
+    cb(null, `user-${req.user?.id || 'unknown'}-${Date.now()}${path.extname(file.originalname)}`),
+});
+const upload = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) =>
+    file.mimetype.startsWith('image/') ? cb(null, true) : cb(new Error('Only image files allowed')),
+});
 
 const signToken = (user) =>
   jwt.sign(
@@ -12,7 +28,13 @@ const signToken = (user) =>
     { expiresIn: '7d' }
   );
 
-const userPayload = (user) => ({ id: user._id, fullName: user.fullName, email: user.email });
+const userPayload = (user) => ({
+  id: user._id,
+  fullName: user.fullName,
+  email: user.email,
+  photo: user.photo || null,
+  phone: user.phone || '',
+});
 
 router.post('/register', async (req, res) => {
   const { fullName, email, password } = req.body;
@@ -89,6 +111,57 @@ router.post('/facebook', async (req, res) => {
   } catch (err) {
     console.error('Facebook auth error:', err.response?.data || err.message);
     res.status(401).json({ message: 'Facebook authentication failed.' });
+  }
+});
+
+// ── Authenticated user endpoints ──
+
+router.get('/me', userAuth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-password').lean();
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json(userPayload(user));
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+router.put('/profile', userAuth, async (req, res) => {
+  const { fullName, phone } = req.body;
+  try {
+    const update = {};
+    if (fullName?.trim()) update.fullName = fullName.trim();
+    if (phone !== undefined) update.phone = String(phone).trim();
+    const user = await User.findByIdAndUpdate(req.user.id, update, { new: true }).select('-password').lean();
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json(userPayload(user));
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+router.post('/photo', userAuth, (req, res, next) => {
+  upload.single('photo')(req, res, (err) => {
+    if (err) return res.status(400).json({ message: err.message });
+    next();
+  });
+}, async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
+    const existing = await User.findById(req.user.id).select('photo').lean();
+    if (existing?.photo) {
+      const oldPath = path.join(__dirname, '../../uploads', path.basename(existing.photo));
+      if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+    }
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { photo: `/uploads/${req.file.filename}` },
+      { new: true }
+    ).select('-password').lean();
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json(userPayload(user));
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 });
 

@@ -26,8 +26,8 @@ router.get('/', adminAuth, async (req, res) => {
     ]);
 
     const [recentDonors, recentRequests] = await Promise.all([
-      Donor.find().sort({ createdAt: -1 }).limit(5).select('fullName bloodType location available createdAt photo'),
-      BloodRequest.find().sort({ createdAt: -1 }).limit(5).select('patientName bloodType urgency status hospitalName createdAt'),
+      Donor.find().sort({ createdAt: -1 }).limit(5).select('fullName bloodType location available createdAt photo').lean(),
+      BloodRequest.find().sort({ createdAt: -1 }).limit(5).select('patientName bloodType urgency status hospitalName createdAt').lean(),
     ]);
 
     res.json({

@@ -47,6 +47,8 @@ const UserSignUp = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!/\S+@\S+\.\S+/.test(form.email)) { setError("Please enter a valid email address."); return; }
+    if (form.password.length < 6) { setError("Password must be at least 6 characters."); return; }
     if (form.password !== form.confirm) { setError("Passwords do not match."); return; }
     setLoading(true);
     try {
@@ -87,7 +89,7 @@ const UserSignUp = () => {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 5 }}>
             <FavoriteIcon sx={{ color: "#ffcdd2", fontSize: 32 }} />
             <Typography variant="h5" fontWeight={900} color="white" letterSpacing="-0.02em">
-              Blood Donated
+              BloodLife
             </Typography>
           </Box>
 
@@ -132,7 +134,7 @@ const UserSignUp = () => {
           {/* Mobile brand */}
           <Box sx={{ display: { xs: "flex", md: "none" }, alignItems: "center", gap: 1, mb: 4, justifyContent: "center" }}>
             <FavoriteIcon sx={{ color: "#b71c1c", fontSize: 26 }} />
-            <Typography variant="h6" fontWeight={900} color="error.main">Blood Donated</Typography>
+            <Typography variant="h6" fontWeight={900} color="error.main">BloodLife</Typography>
           </Box>
 
           <Paper elevation={0} sx={{
@@ -149,7 +151,7 @@ const UserSignUp = () => {
               <Bloodtype sx={{ color: "white", fontSize: 28 }} />
               <Box>
                 <Typography variant="h6" fontWeight={800} color="white" sx={{ lineHeight: 1.2 }}>Create Account</Typography>
-                <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.75)" }}>Join Blood Donated today</Typography>
+                <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.75)" }}>Join BloodLife today</Typography>
               </Box>
             </Box>
 

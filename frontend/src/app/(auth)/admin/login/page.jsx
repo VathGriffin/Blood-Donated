@@ -112,7 +112,7 @@ const AdminLogin = () => {
                         </Box>
                         <Box>
                             <Typography fontWeight={800} fontSize="1.05rem" color="white" lineHeight={1.2}>
-                                Blood Donated
+                                BloodLife
                             </Typography>
                             <Typography fontSize="0.72rem" sx={{ color: 'rgba(255,255,255,0.55)', fontWeight: 600, letterSpacing: '0.08em' }}>
                                 ADMIN PORTAL
@@ -191,7 +191,7 @@ const AdminLogin = () => {
                         </Box>
                         <Box>
                             <Typography fontWeight={800} fontSize="1rem" color="error.main" lineHeight={1.2}>
-                                Blood Donated
+                                BloodLife
                             </Typography>
                             <Typography fontSize="0.7rem" color="text.secondary" fontWeight={600} letterSpacing="0.06em">
                                 ADMIN PORTAL
@@ -310,7 +310,7 @@ const AdminLogin = () => {
                     </Paper>
 
                     <Typography variant="caption" color="text.disabled" sx={{ display: 'block', textAlign: 'center', mt: 2.5 }}>
-                        Authorized personnel only · Blood Donated Admin
+                        Authorized personnel only · BloodLife Admin
                     </Typography>
                 </Box>
             </Box>

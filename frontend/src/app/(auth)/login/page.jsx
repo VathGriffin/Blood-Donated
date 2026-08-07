@@ -84,7 +84,7 @@ const UserLogin = () => {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 5 }}>
             <FavoriteIcon sx={{ color: "#ffcdd2", fontSize: 32 }} />
             <Typography variant="h5" fontWeight={900} color="white" letterSpacing="-0.02em">
-              Blood Donated
+              BloodLife
             </Typography>
           </Box>
 
@@ -125,7 +125,7 @@ const UserLogin = () => {
           {/* Mobile brand */}
           <Box sx={{ display: { xs: "flex", md: "none" }, alignItems: "center", gap: 1, mb: 4, justifyContent: "center" }}>
             <FavoriteIcon sx={{ color: "#b71c1c", fontSize: 26 }} />
-            <Typography variant="h6" fontWeight={900} color="error.main">Blood Donated</Typography>
+            <Typography variant="h6" fontWeight={900} color="error.main">BloodLife</Typography>
           </Box>
 
           <Paper elevation={0} sx={{
@@ -167,8 +167,14 @@ const UserLogin = () => {
                     </InputAdornment>
                   ),
                 }}
-                sx={{ mb: 3, "& .MuiOutlinedInput-root": { borderRadius: 2.5 } }}
+                sx={{ mb: 1, "& .MuiOutlinedInput-root": { borderRadius: 2.5 } }}
               />
+
+              <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2.5 }}>
+                <Link href="/forgot-password" style={{ color: '#b71c1c', fontWeight: 600, textDecoration: 'none', fontSize: '0.82rem' }}>
+                  Forgot password?
+                </Link>
+              </Box>
 
               <Button
                 type="submit" fullWidth variant="contained" color="error"

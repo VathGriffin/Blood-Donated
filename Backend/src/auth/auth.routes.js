@@ -13,7 +13,7 @@ router.post('/login', async (req, res) => {
   const valid = await bcrypt.compare(password, process.env.ADMIN_PASSWORD_HASH);
   if (!valid) return res.status(401).json({ message: 'Invalid credentials' });
 
-  const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '7d' });
+  const token = jwt.sign({ email, role: 'admin' }, process.env.JWT_SECRET, { expiresIn: '7d' });
   res.json({ token });
 });
 

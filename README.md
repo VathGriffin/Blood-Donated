@@ -1,25 +1,34 @@
-# Blood Donated 🩸
+# Development of an Intelligent Blood Donation Management Platform Integrated with an AI Chatbot for Donor and Hospital Support
 
-A full-stack web application for voluntary blood donation management — connecting donors, patients, and hospitals across Cambodia.
+A full-stack web application for intelligent blood donation management — connecting donors, patients, and hospitals across Cambodia with real-time data and AI-powered support.
 
 Built as a Graduation Project by 4th-year Data Science students at the **Institute of Technology of Cambodia (ITC)**.
 
 ---
 
+## Abstract
+
+This project presents the design and development of an intelligent blood donation management platform that streamlines the process of blood collection, distribution, and emergency response. The system integrates an AI-powered chatbot capable of answering donor questions, guiding hospital staff, and facilitating real-time blood requests. The platform enables donors to register, schedule appointments, and track their contribution history, while hospitals can submit urgent blood requests and manage inventory efficiently.
+
+---
+
 ## Features
 
-### Public
+### Public Portal
 - **Donor Registration** — Register with blood type, location, availability, and photo
+- **AI Chatbot** — Intelligent assistant for eligibility, blood type compatibility, and appointment guidance
 - **Blood Requests** — Submit urgent blood requests with urgency level and patient details
+- **Appointment Booking** — 3-step calendar booking at partner hospitals
 - **Donor Directory** — Browse and filter verified donors by blood type
-- **Contact Form** — Send messages to the platform team
 - **Blood Type Compatibility Guide** — Interactive reference chart
+- **Contact Form** — Send messages to the platform team
 
-### Admin Panel (`/admin`)
+### Admin Dashboard (`/dashboard/admin`)
 - Secure JWT-based login
-- Dashboard with real-time stats, bar chart, and pie chart
+- Real-time stats: Total Donors, Blood Units, Requests, Appointments
+- Blood inventory management with critical/low/normal status
 - Full CRUD for donors, blood requests, and contact messages
-- Blood inventory management
+- Analytics charts: BarChart, PieChart (donut), AreaChart, LineChart
 - CSV export of dashboard data
 
 ---
@@ -28,13 +37,14 @@ Built as a Graduation Project by 4th-year Data Science students at the **Institu
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | React 19, Material UI 7, React Router 7 |
+| Frontend | Next.js 15 (App Router), React 19, Material UI 7 |
 | Backend | Node.js, Express.js |
 | Database | MongoDB (Mongoose) |
 | Auth | JWT + bcryptjs |
 | Charts | Recharts |
-| Animations | AOS |
+| AI Chatbot | Rule-based engine + OpenAI API fallback |
 | File Upload | Multer |
+| Font | Inter (Google Fonts) |
 
 ---
 
@@ -55,9 +65,10 @@ Create a `.env` file in `Backend/`:
 ```
 MONGO_URI=mongodb://localhost:27017/blood-donation
 JWT_SECRET=your_jwt_secret_here
-ADMIN_EMAIL=admin@blooddonated.com
+ADMIN_EMAIL=admin@bloodlife.com
 ADMIN_PASSWORD_HASH=<bcrypt hash of your password>
 PORT=3001
+OPENAI_API_KEY=your_openai_key_here
 ```
 
 ```bash
@@ -71,13 +82,13 @@ cd frontend
 npm install
 ```
 
-Copy `.env.example` to `.env` and set your API URL:
+Copy `.env.example` to `.env.local` and set your API URL:
 ```
-REACT_APP_API_URL=http://localhost:3001
+NEXT_PUBLIC_API_URL=http://localhost:3001
 ```
 
 ```bash
-npm start
+npm run dev
 ```
 
 The app runs at `http://localhost:3000`.
@@ -89,18 +100,29 @@ The app runs at `http://localhost:3000`.
 ```
 Blood Donated/
 ├── Backend/
-│   ├── models/        # Mongoose schemas (Donor, BloodRequest, ContactMessage)
+│   ├── models/        # Mongoose schemas (Donor, BloodRequest, Appointment, ContactMessage)
 │   ├── routes/        # Express API routes
 │   ├── middleware/    # JWT auth middleware
-│   ├── uploads/       # Uploaded donor/request photos
+│   ├── uploads/       # Uploaded donor photos
 │   └── server.js      # Entry point
 └── frontend/
     └── src/
-        ├── admin/     # Admin dashboard pages
-        ├── components/ # Header, Footer, shared components
-        ├── context/   # Auth context
-        ├── pages/     # Public-facing pages
-        └── config.js  # Central API base URL config
+        ├── app/
+        │   ├── (public)/      # Landing, Donors, Appointments, Requests, About, Team
+        │   ├── (auth)/        # Login, Register, Forgot Password
+        │   └── dashboard/
+        │       └── admin/     # Dashboard, Donors, Inventory, Requests, Appointments, Contacts
+        ├── components/
+        │   ├── Header.jsx     # Navigation header
+        │   ├── Footer.jsx     # Site footer
+        │   ├── ChatBot.jsx    # AI chatbot panel
+        │   └── admin/
+        │       └── Sidebar.jsx
+        └── lib/
+            ├── ThemeContext.jsx  # MUI dark/light theme
+            ├── Providers.jsx
+            ├── AuthContext.jsx
+            └── config.js        # API base URL
 ```
 
 ---
@@ -118,4 +140,4 @@ Blood Donated/
 
 ## License
 
-Academic project — Institute of Technology of Cambodia, 2024-2025.
+Academic project — Institute of Technology of Cambodia, 2024–2025.

@@ -1,7 +1,7 @@
 'use client';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Box, CssBaseline, Toolbar, useTheme } from '@mui/material';
+import { Box, Toolbar, useTheme } from '@mui/material';
 import Sidebar from '@/components/admin/Sidebar';
 import AdminNavbar from '@/components/admin/AdminNavbar';
 import { useAuth } from '@/store/AuthContext';
@@ -11,16 +11,18 @@ export default function AdminLayout({ children }) {
   const router = useRouter();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
-    if (!isAuth) router.replace('/admin/login');
-  }, [isAuth, router]);
+    if (mounted && !isAuth) router.replace('/admin/login');
+  }, [mounted, isAuth, router]);
 
-  if (!isAuth) return null;
+  if (!mounted || !isAuth) return null;
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: isDark ? '#121212' : '#f8f9fa', color: 'text.primary' }}>
-      <CssBaseline />
       <Sidebar />
       <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         <AdminNavbar />

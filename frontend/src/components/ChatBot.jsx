@@ -1,79 +1,72 @@
 'use client';
 import React, { useState, useRef, useEffect } from "react";
 import {
-  Box, Paper, Typography, TextField, IconButton, Avatar,
-  Fade, Chip, CircularProgress, useTheme, Tooltip,
+  Box, Paper, Typography, TextField, IconButton,
+  CircularProgress, useTheme, Chip,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import SendIcon from "@mui/icons-material/Send";
 import SmartToyIcon from "@mui/icons-material/SmartToy";
 import FavoriteIcon from "@mui/icons-material/Favorite";
-import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import API_BASE from "@/lib/config";
 
-// ── Fallback rule-based engine (used when API key is not configured) ──────────
 const KB = [
-  { tags: ["hello","hi","hey","good morning","good afternoon","howdy","greetings"], answer: "Hello! 👋 I'm BloodBot, your blood donation assistant. I can help you with eligibility, blood types, donor registration, appointments, and more. What would you like to know?" },
-  { tags: ["thank","thanks","thank you","thx","appreciate"], answer: "You're welcome! 🩸 Is there anything else I can help you with?" },
-  { tags: ["bye","goodbye","see you","later"], answer: "Goodbye! Remember — one donation can save up to 3 lives. See you soon! 🩸" },
-  { tags: ["eligible","eligibility","qualify","can i donate","who can donate","requirements","criteria"], answer: "To be eligible to donate blood:\n\n• Age 18–60 years\n• Weight at least 45 kg\n• In good general health\n• No active infection or fever\n• No donation in the past 3 months\n• Not pregnant or breastfeeding\n• No history of HIV, hepatitis B/C\n\nOur staff will do a health screening before your donation." },
-  { tags: ["blood type","blood group","a+","a-","b+","b-","ab+","ab-","o+","o-","compatible","compatibility"], answer: "There are 8 blood types: A+, A-, B+, B-, AB+, AB-, O+, O-\n\n• O- is the universal donor (anyone can receive it)\n• AB+ is the universal recipient (can receive any type)\n• O+ is the most common (~38%)\n• AB- is the rarest (~1%)" },
-  { tags: ["universal donor","o negative","o-"], answer: "O- (O Negative) is the universal donor. People with O- blood can donate red blood cells to anyone regardless of blood type — making O- donations extremely valuable in emergencies." },
-  { tags: ["how often","frequency","how many times","interval","3 month"], answer: "You can donate whole blood once every 3 months (12 weeks). This gives your body enough time to fully replenish the donated blood. Plasma can be donated more frequently — every 2 weeks." },
-  { tags: ["register","sign up","become donor","how to donate","start"], answer: "To register as a donor:\n\n1. Click \"Donate Blood\" in the navigation\n2. Fill in your details (name, email, phone)\n3. Select your blood type\n4. Confirm eligibility criteria\n5. Submit your registration\n\nYou can also upload a profile photo!" },
-  { tags: ["request blood","need blood","how to request","find blood"], answer: "To request blood:\n\n1. Click \"Request Blood\" in the navigation\n2. Enter patient details and hospital name\n3. Select the required blood type\n4. Choose urgency level (Normal / Urgent / Critical)\n5. Submit — our team responds based on urgency" },
-  { tags: ["appointment","book","schedule"], answer: "To book a donation appointment:\n\n1. Click \"Book Appointment\"\n2. Enter your name and contact details\n3. Select preferred date, time, and hospital\n4. Confirm your booking\n\nWe have 6 partner hospitals across Cambodia!" },
-  { tags: ["before donate","prepare","preparation","eat before","drink before"], answer: "How to prepare:\n\n• Eat a healthy meal 2–3 hours before\n• Drink at least 500ml extra water\n• Get a full night's sleep\n• Avoid alcohol 24 hours before\n• Bring a valid ID" },
-  { tags: ["after donate","after donation","recovery","rest after"], answer: "After donation:\n\n• Rest 10–15 minutes at the center\n• Drink extra fluids for 24 hours\n• Eat the snack provided\n• Avoid heavy exercise for 24 hours\n• Keep the bandage on for 4+ hours\n\nYour body replenishes plasma within 24 hours!" },
-  { tags: ["safe","side effect","danger","risk","hurt","pain"], answer: "Blood donation is very safe!\n\n• Small pinch from the needle\n• Most people feel completely fine\n• Mild dizziness is uncommon\n• Serious complications are extremely rare\n\nOur trained staff monitor you throughout." },
-  { tags: ["benefit","why donate","reason","good for"], answer: "Why donate blood? 🩸\n\n• One donation saves up to 3 lives\n• Free mini health screening included\n• Reduces risk of heart disease\n• Burns ~650 calories\n• Sense of purpose and community impact" },
-  { tags: ["how long","duration","process","how much time"], answer: "The full process takes about 30–45 minutes:\n\n1. Registration & check-in — 5 min\n2. Health screening — 10 min\n3. Actual donation — 8–10 min\n4. Rest & refreshments — 15 min\n\nReturn visits are faster (~20–30 min)." },
-  { tags: ["hospital","where","location","center","phnom penh","cambodia","partner"], answer: "Our 6 partner hospitals:\n\n• Calmette Hospital, Phnom Penh\n• Royal Phnom Penh Hospital\n• Khmer Soviet Friendship Hospital\n• National Blood Transfusion Center\n• Angkor Hospital for Children, Siem Reap\n• Battambang Provincial Hospital" },
-  { tags: ["urgent","emergency","critical","immediately","now","asap"], answer: "For an emergency blood request:\n\n🚨 Go to \"Request Blood\" and select \"Critical\" urgency — our team prioritizes these immediately.\n\nFor immediate help: call +855 12 345 678\n\nIf this is a life emergency, contact 119 (Cambodia emergency services) first." },
-  { tags: ["contact","email","phone","support"], answer: "Contact us:\n\n📧 Vath.V211006@sis.hust.edu.vn\n📞 +855 12 345 678\n📍 ITC, Phnom Penh\n🕐 Mon–Fri, 8:00 AM – 5:00 PM\n\nOr send a direct message via the Contact page." },
-  { tags: ["about","platform","itc","cambodia","team","project","student"], answer: "Blood Donated is a graduation project by 4th-year Data Science students at ITC (Institute of Technology of Cambodia).\n\nOur platform connects donors with patients and hospitals across Cambodia — making blood donation faster, easier, and life-saving." },
-  { tags: ["pregnant","breastfeed","nursing","mother"], answer: "Pregnant and breastfeeding women should not donate. After giving birth, wait at least 6 months. After stopping breastfeeding, wait at least 3 months before donating." },
-  { tags: ["medication","medicine","drug","taking","prescription"], answer: "It depends on the medication:\n\n✅ Usually OK: vitamins, birth control pills, thyroid/blood pressure medication\n❌ Usually not OK: blood thinners, antibiotics (wait 2 weeks after finishing)\n\nAlways disclose all medications during your health screening." },
-  { tags: ["tattoo","piercing"], answer: "Wait at least 12 months after getting a tattoo or piercing before donating. This ensures there is no infection risk." },
+  { tags: ["hello","hi","hey","greetings"], answer: "Hello! I'm your blood donation assistant. How can I help you today?" },
+  { tags: ["thank","thanks","thank you"], answer: "You're welcome! Is there anything else I can help you with?" },
+  { tags: ["bye","goodbye"], answer: "Goodbye! Remember — one donation can save up to 3 lives." },
+  { tags: ["eligible","eligibility","qualify","can i donate","requirements"], answer: "To donate blood you need to be:\n• Age 18–60\n• Weight at least 45 kg\n• In good health with no active infection\n• No donation in the past 3 months\n• Not pregnant or breastfeeding" },
+  { tags: ["blood type","blood group","compatible","compatibility"], answer: "There are 8 blood types: A+, A−, B+, B−, AB+, AB−, O+, O−\n\n• O− is the universal donor\n• AB+ is the universal recipient\n• O+ is the most common (~38%)" },
+  { tags: ["cold","sick","fever","flu"], answer: "If you have a mild cold without fever, you may be able to donate. However if you have a fever or sore throat, wait until you're fully recovered — at least 7 days symptom-free." },
+  { tags: ["how often","frequency","how many times","interval"], answer: "You can donate whole blood once every 3 months (12 weeks). Plasma can be donated every 2 weeks." },
+  { tags: ["register","sign up","become donor","how to donate"], answer: "To register:\n1. Click \"Donate Blood\" in the nav\n2. Fill in your details and blood type\n3. Confirm eligibility\n4. Submit your registration" },
+  { tags: ["request blood","need blood","how to request"], answer: "To request blood:\n1. Click \"Request Blood\"\n2. Enter patient and hospital details\n3. Select blood type and urgency\n4. Submit — our team responds by urgency level" },
+  { tags: ["appointment","book","schedule"], answer: "To book an appointment:\n1. Click \"Book Appointment\"\n2. Select a donation center\n3. Choose date and time\n4. Fill in your details and confirm" },
+  { tags: ["prepare","preparation","before","eat before"], answer: "How to prepare:\n• Eat a healthy meal 2–3 hours before\n• Drink at least 500ml extra water\n• Get a full night's sleep\n• Avoid alcohol 24 hours before\n• Bring a valid ID" },
+  { tags: ["after","recovery","rest after"], answer: "After donating:\n• Rest 10–15 minutes at the center\n• Drink extra fluids for 24 hours\n• Avoid heavy exercise for 24 hours\n• Keep the bandage on for 4+ hours" },
+  { tags: ["safe","side effect","danger","risk","pain"], answer: "Blood donation is very safe! You may feel a small pinch. Mild dizziness is uncommon and serious complications are extremely rare." },
+  { tags: ["how long","duration","process","time"], answer: "The full process takes 30–45 minutes:\n1. Registration — 5 min\n2. Health screening — 10 min\n3. Donation — 8–10 min\n4. Rest — 15 min" },
+  { tags: ["hospital","location","center","where"], answer: "Partner hospitals:\n• Calmette Hospital, Phnom Penh\n• Royal Phnom Penh Hospital\n• Khmer Soviet Friendship Hospital\n• National Blood Transfusion Center\n• Angkor Hospital for Children\n• Battambang Provincial Hospital" },
+  { tags: ["tattoo","piercing"], answer: "Wait at least 12 months after a tattoo or piercing before donating." },
+  { tags: ["medication","medicine","drug"], answer: "It depends on the medication. Always disclose all medications during your health screening. Blood thinners and some antibiotics may require a waiting period." },
 ];
 
-const FALLBACK = "I'm not sure about that, but I'm here to help with blood donation topics! Ask me about eligibility, blood types, donor registration, appointments, or anything else related to blood donation. 🩸";
+const FALLBACK = "I'm not sure about that. Ask me about eligibility, blood types, registration, appointments, or anything related to blood donation!";
+
+const QUICK_PROMPTS = [
+  "Am I eligible to donate?",
+  "How long does donation take?",
+  "Can I donate with a cold?",
+  "How often can I donate?",
+  "What to do after donating?",
+];
 
 function ruleBasedResponse(input) {
   const lower = input.toLowerCase();
   for (const entry of KB) {
-    if (entry.tags.some((tag) => lower.includes(tag))) return entry.answer;
+    if (entry.tags.some(tag => lower.includes(tag))) return entry.answer;
   }
   return FALLBACK;
 }
-
-// ── Component ─────────────────────────────────────────────────────────────────
-const GREETING = "Hi! I'm BloodBot 🩸 Your AI-powered blood donation assistant.\n\nI can help you with eligibility, blood types, donor registration, appointments, finding hospitals, and more. What would you like to know?";
-
-const QUICK_PROMPTS = [
-  "Am I eligible to donate?",
-  "Blood type compatibility?",
-  "How do I register as a donor?",
-  "How to request blood urgently?",
-];
 
 export default function ChatBot() {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState([{ role: "assistant", content: GREETING }]);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [poweredByClaude, setPoweredByClaude] = useState(null); // null=unknown, true=claude, false=fallback
+  const [visible, setVisible] = useState(false);
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
 
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, loading]);
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, loading]);
-
-  useEffect(() => {
-    if (open) setTimeout(() => inputRef.current?.focus(), 150);
+    if (open) {
+      setTimeout(() => setVisible(true), 10);
+      setTimeout(() => inputRef.current?.focus(), 180);
+    } else {
+      setVisible(false);
+    }
   }, [open]);
 
   const sendMessage = async (text) => {
@@ -93,176 +86,268 @@ export default function ChatBot() {
         body: JSON.stringify({ messages: history }),
       });
       const data = await res.json();
-
-      // API key not configured — silently use rule-based
       if (!res.ok && data.configured === false) {
-        setPoweredByClaude(false);
         const reply = ruleBasedResponse(content);
-        setTimeout(() => {
-          setMessages((prev) => [...prev, { role: "assistant", content: reply }]);
-          setLoading(false);
-        }, 500 + Math.random() * 400);
+        setTimeout(() => { setMessages(prev => [...prev, { role: "assistant", content: reply }]); setLoading(false); }, 480);
         return;
       }
-
-      if (!res.ok) throw new Error(data.error || "Unknown error");
-
-      setPoweredByClaude(true);
-      setMessages((prev) => [...prev, { role: "assistant", content: data.content }]);
+      if (!res.ok) throw new Error();
+      setMessages(prev => [...prev, { role: "assistant", content: data.content }]);
     } catch {
-      // Network error or other failure — fall back silently
-      setPoweredByClaude(false);
       const reply = ruleBasedResponse(content);
-      setMessages((prev) => [...prev, { role: "assistant", content: reply }]);
+      setMessages(prev => [...prev, { role: "assistant", content: reply }]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleKey = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
-  };
+  const border = isDark ? "#1f1f1f" : "#e5e5e5";
+  const panelBg = isDark ? "#111111" : "#ffffff";
 
   return (
     <>
-      {/* ── Floating Button ─────────────────────────────────────────────── */}
-      <Box onClick={() => setOpen((v) => !v)} sx={{
+      <style>{`
+        @keyframes chatPanelIn {
+          from { opacity: 0; transform: translateY(16px) scale(0.97); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes dotBounce {
+          0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+          40% { transform: translateY(-5px); opacity: 1; }
+        }
+      `}</style>
+
+      {/* FAB */}
+      <Box onClick={() => setOpen(v => !v)} sx={{
         position: "fixed", bottom: 28, right: 28, zIndex: 1300,
-        width: 58, height: 58, borderRadius: "50%",
-        background: "linear-gradient(135deg, #b71c1c 0%, #d32f2f 100%)",
+        width: 56, height: 56, borderRadius: "50%",
+        background: "linear-gradient(135deg, #dc2626 0%, #991b1b 100%)",
         display: "flex", alignItems: "center", justifyContent: "center",
         cursor: "pointer",
-        boxShadow: "0 6px 24px rgba(183,28,28,0.55)",
-        transition: "transform 0.2s ease, box-shadow 0.2s ease",
-        "&:hover": { transform: "scale(1.10)", boxShadow: "0 10px 32px rgba(183,28,28,0.7)" },
+        boxShadow: "0 4px 20px rgba(220,38,38,0.5), 0 2px 8px rgba(220,38,38,0.3)",
+        transition: "all 0.22s ease",
+        "&:hover": {
+          transform: "scale(1.08)",
+          boxShadow: "0 8px 32px rgba(220,38,38,0.6), 0 4px 12px rgba(220,38,38,0.4)",
+        },
       }}>
         {open
-          ? <CloseIcon sx={{ color: "white", fontSize: 26 }} />
-          : <SmartToyIcon sx={{ color: "white", fontSize: 28 }} />}
+          ? <CloseIcon sx={{ color: "white", fontSize: 22 }} />
+          : <SmartToyIcon sx={{ color: "white", fontSize: 24 }} />}
       </Box>
 
-      {/* ── Chat Panel ──────────────────────────────────────────────────── */}
-      <Fade in={open}>
+      {/* Panel */}
+      {open && (
         <Paper elevation={0} sx={{
-          position: "fixed", bottom: 100, right: 28, zIndex: 1299,
-          width: { xs: "calc(100vw - 32px)", sm: 390 },
-          maxWidth: 420, height: 540,
-          borderRadius: 4,
+          position: "fixed", bottom: 96, right: 28, zIndex: 1299,
+          width: { xs: "calc(100vw - 32px)", sm: 400 },
+          maxWidth: 420, height: 560,
+          borderRadius: "20px",
           display: "flex", flexDirection: "column", overflow: "hidden",
-          border: `1px solid ${isDark ? "#2a2a2a" : "#e0e0e0"}`,
-          boxShadow: "0 16px 64px rgba(0,0,0,0.22)",
-          backgroundColor: isDark ? "#1a1a1a" : "#fff",
+          border: `1px solid ${border}`,
+          boxShadow: isDark
+            ? "0 24px 80px rgba(0,0,0,0.7), 0 8px 32px rgba(0,0,0,0.5)"
+            : "0 24px 80px rgba(0,0,0,0.15), 0 8px 32px rgba(0,0,0,0.08)",
+          bgcolor: panelBg,
+          animation: "chatPanelIn 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) both",
+          opacity: visible ? 1 : 0,
+          transition: "opacity 0.2s ease",
         }}>
 
           {/* Header */}
           <Box sx={{
-            px: 2.5, py: 1.8,
-            background: "linear-gradient(135deg, #7f0000 0%, #b71c1c 100%)",
+            px: 2.5, py: 2,
+            borderBottom: `1px solid ${border}`,
             display: "flex", alignItems: "center", gap: 1.5, flexShrink: 0,
+            background: isDark
+              ? "linear-gradient(135deg, #1a0000 0%, #2d0505 100%)"
+              : "linear-gradient(135deg, #dc2626 0%, #991b1b 100%)",
           }}>
-            <Avatar sx={{ width: 38, height: 38, background: "rgba(255,255,255,0.18)", border: "2px solid rgba(255,255,255,0.35)" }}>
-              <FavoriteIcon sx={{ color: "white", fontSize: 20 }} />
-            </Avatar>
-            <Box sx={{ flex: 1 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.8 }}>
-                <Typography variant="subtitle1" fontWeight={800} color="white" sx={{ lineHeight: 1.2 }}>BloodBot</Typography>
-                {poweredByClaude === true && (
-                  <Tooltip title="Powered by Claude AI">
-                    <AutoAwesomeIcon sx={{ fontSize: 14, color: "#ffcdd2" }} />
-                  </Tooltip>
-                )}
-              </Box>
-              <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.72)", lineHeight: 1 }}>
-                {poweredByClaude === true ? "Powered by Claude AI" : "Blood Donation Assistant"}
-              </Typography>
+            <Box sx={{
+              width: 38, height: 38, borderRadius: "12px",
+              background: "rgba(255,255,255,0.18)",
+              border: "1px solid rgba(255,255,255,0.3)",
+              display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+            }}>
+              <SmartToyIcon sx={{ color: "white", fontSize: 20 }} />
             </Box>
-            <IconButton size="small" onClick={() => setOpen(false)} sx={{ color: "rgba(255,255,255,0.8)", "&:hover": { color: "white" } }}>
+            <Box flex={1}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.8 }}>
+                <Typography fontWeight={800} fontSize="0.92rem" sx={{ color: "white", letterSpacing: "-0.01em" }}>
+                  AI Assistant
+                </Typography>
+                <Box sx={{
+                  display: "flex", alignItems: "center", gap: 0.4,
+                  px: 0.8, py: 0.2, borderRadius: "100px",
+                  bgcolor: "rgba(255,255,255,0.18)",
+                }}>
+                  <Box sx={{ width: 5, height: 5, borderRadius: "50%", bgcolor: "#4ade80",
+                    animation: "pulse 2s ease infinite",
+                    "@keyframes pulse": { "0%,100%": { opacity: 1 }, "50%": { opacity: 0.4 } },
+                  }} />
+                  <Typography sx={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.85)", fontWeight: 600 }}>Online</Typography>
+                </Box>
+              </Box>
+              <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.65)" }}>BloodLife Assistant</Typography>
+            </Box>
+            <IconButton size="small" onClick={() => setOpen(false)}
+              sx={{ color: "rgba(255,255,255,0.7)", "&:hover": { color: "white", bgcolor: "rgba(255,255,255,0.1)" }, borderRadius: "8px" }}>
               <CloseIcon fontSize="small" />
             </IconButton>
           </Box>
 
           {/* Messages */}
-          <Box sx={{ flex: 1, overflowY: "auto", px: 2, py: 2, display: "flex", flexDirection: "column", gap: 1.5 }}>
+          <Box sx={{
+            flex: 1, overflowY: "auto", px: 2, py: 2,
+            display: "flex", flexDirection: "column", gap: 1.5,
+            "&::-webkit-scrollbar": { width: 4 },
+            "&::-webkit-scrollbar-thumb": { bgcolor: isDark ? "#2a2a2a" : "#e0e0e0", borderRadius: 2 },
+          }}>
+
+            {/* Empty state */}
+            {messages.length === 0 && (
+              <Box sx={{ textAlign: "center", py: 2 }}>
+                <Box sx={{
+                  width: 68, height: 68, borderRadius: "18px", mx: "auto", mb: 2,
+                  background: "linear-gradient(135deg, rgba(220,38,38,0.15) 0%, rgba(185,28,28,0.08) 100%)",
+                  border: `1px solid ${isDark ? "rgba(220,38,38,0.25)" : "rgba(220,38,38,0.20)"}`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  <FavoriteIcon sx={{ fontSize: 32, color: "#dc2626" }} />
+                </Box>
+                <Typography fontWeight={700} fontSize="0.95rem" mb={0.5} sx={{ color: isDark ? "#f5f5f5" : "#111111" }}>
+                  How can I help you?
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 2.5 }}>
+                  Ask me anything about blood donation.
+                </Typography>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 0.8 }}>
+                  {QUICK_PROMPTS.map(p => (
+                    <Chip
+                      key={p} label={p} size="small" clickable onClick={() => sendMessage(p)}
+                      variant="outlined"
+                      sx={{
+                        fontSize: "0.78rem", fontWeight: 500, height: 30,
+                        borderColor: isDark ? "#2a2a2a" : "#e0e0e0",
+                        color: isDark ? "#888888" : "#555555",
+                        borderRadius: "8px",
+                        "&:hover": {
+                          borderColor: "#dc2626", color: "#dc2626",
+                          bgcolor: "rgba(220,38,38,0.06)",
+                        },
+                        transition: "all 0.15s ease",
+                      }}
+                    />
+                  ))}
+                </Box>
+              </Box>
+            )}
+
             {messages.map((msg, i) => (
-              <Box key={i} sx={{ display: "flex", justifyContent: msg.role === "user" ? "flex-end" : "flex-start" }}>
+              <Box key={i} sx={{ display: "flex", justifyContent: msg.role === "user" ? "flex-end" : "flex-start", gap: 1 }}>
                 {msg.role === "assistant" && (
-                  <Avatar sx={{ width: 28, height: 28, mr: 1, flexShrink: 0, mt: 0.3, background: "linear-gradient(135deg, #b71c1c 0%, #d32f2f 100%)" }}>
-                    <FavoriteIcon sx={{ fontSize: 14, color: "white" }} />
-                  </Avatar>
+                  <Box sx={{
+                    width: 28, height: 28, borderRadius: "8px",
+                    background: "linear-gradient(135deg, #dc2626 0%, #991b1b 100%)",
+                    flexShrink: 0, mt: 0.2,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    <SmartToyIcon sx={{ fontSize: 14, color: "white" }} />
+                  </Box>
                 )}
                 <Box sx={{
-                  maxWidth: "80%", px: 2, py: 1.2,
-                  borderRadius: msg.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
-                  backgroundColor: msg.role === "user" ? "#b71c1c" : isDark ? "#2a2a2a" : "#f5f5f5",
-                  color: msg.role === "user" ? "white" : "text.primary",
-                  boxShadow: msg.role === "user" ? "0 2px 8px rgba(183,28,28,0.3)" : "0 1px 4px rgba(0,0,0,0.08)",
+                  maxWidth: "78%", px: 1.8, py: 1.2,
+                  borderRadius: msg.role === "user" ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
+                  bgcolor: msg.role === "user"
+                    ? "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)"
+                    : isDark ? "#1a1a1a" : "#f5f5f5",
+                  background: msg.role === "user"
+                    ? "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)"
+                    : isDark ? "#1a1a1a" : "#f5f5f5",
+                  border: msg.role === "user" ? "none" : `1px solid ${isDark ? "#2a2a2a" : "#ebebeb"}`,
+                  color: msg.role === "user" ? "white" : isDark ? "rgba(245,245,245,0.9)" : "#222222",
+                  boxShadow: msg.role === "user" ? "0 2px 8px rgba(220,38,38,0.3)" : "none",
                 }}>
-                  <Typography variant="body2" sx={{ lineHeight: 1.65, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                  <Typography variant="body2" sx={{ fontSize: "0.83rem", lineHeight: 1.65, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
                     {msg.content}
                   </Typography>
                 </Box>
               </Box>
             ))}
 
-            {/* Typing indicator */}
+            {/* Typing indicator — 3 bouncing dots */}
             {loading && (
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Avatar sx={{ width: 28, height: 28, background: "linear-gradient(135deg, #b71c1c 0%, #d32f2f 100%)" }}>
-                  <FavoriteIcon sx={{ fontSize: 14, color: "white" }} />
-                </Avatar>
-                <Box sx={{ px: 2, py: 1.2, borderRadius: "18px 18px 18px 4px", backgroundColor: isDark ? "#2a2a2a" : "#f5f5f5", display: "flex", alignItems: "center", gap: 1 }}>
-                  <CircularProgress size={13} sx={{ color: "#b71c1c" }} />
-                  <Typography variant="caption" color="text.secondary">BloodBot is thinking…</Typography>
+              <Box sx={{ display: "flex", alignItems: "flex-end", gap: 1 }}>
+                <Box sx={{
+                  width: 28, height: 28, borderRadius: "8px",
+                  background: "linear-gradient(135deg, #dc2626 0%, #991b1b 100%)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  <SmartToyIcon sx={{ fontSize: 14, color: "white" }} />
+                </Box>
+                <Box sx={{
+                  px: 2, py: 1.3, borderRadius: "16px 16px 16px 4px",
+                  bgcolor: isDark ? "#1a1a1a" : "#f5f5f5",
+                  border: `1px solid ${isDark ? "#2a2a2a" : "#ebebeb"}`,
+                  display: "flex", alignItems: "center", gap: 0.6,
+                }}>
+                  {[0, 1, 2].map(i => (
+                    <Box key={i} sx={{
+                      width: 7, height: 7, borderRadius: "50%",
+                      bgcolor: "#dc2626", opacity: 0.7,
+                      animation: `dotBounce 1.2s ease ${i * 0.2}s infinite`,
+                    }} />
+                  ))}
                 </Box>
               </Box>
             )}
+
             <div ref={bottomRef} />
           </Box>
-
-          {/* Quick prompts */}
-          {messages.length === 1 && (
-            <Box sx={{ px: 2, pb: 1.5, display: "flex", flexWrap: "wrap", gap: 0.8 }}>
-              {QUICK_PROMPTS.map((p) => (
-                <Chip key={p} label={p} size="small" clickable onClick={() => sendMessage(p)}
-                  variant="outlined"
-                  sx={{
-                    fontSize: "0.73rem", fontWeight: 600,
-                    borderColor: "#b71c1c", color: "#b71c1c",
-                    "&:hover": { backgroundColor: "#b71c1c", color: "white" },
-                    transition: "all 0.2s",
-                  }}
-                />
-              ))}
-            </Box>
-          )}
 
           {/* Input */}
           <Box sx={{
             px: 1.5, py: 1.5, flexShrink: 0,
-            borderTop: `1px solid ${isDark ? "#2a2a2a" : "#efefef"}`,
+            borderTop: `1px solid ${border}`,
             display: "flex", alignItems: "flex-end", gap: 1,
+            bgcolor: isDark ? "#0f0f0f" : "#fafafa",
           }}>
             <TextField
-              inputRef={inputRef} fullWidth
-              placeholder="Ask me anything about blood donation…"
-              value={input} onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKey} multiline maxRows={4} size="small"
-              disabled={loading}
-              sx={{ "& .MuiOutlinedInput-root": { borderRadius: 3, fontSize: "0.875rem" } }}
+              inputRef={inputRef} fullWidth size="small"
+              placeholder="Type a message..."
+              value={input} onChange={e => setInput(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
+              multiline maxRows={4} disabled={loading}
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "12px", fontSize: "0.85rem",
+                  bgcolor: isDark ? "#111111" : "#ffffff",
+                  "& fieldset": { borderColor: isDark ? "#2a2a2a" : "#e5e5e5" },
+                  "&:hover fieldset": { borderColor: "#dc2626" },
+                  "&.Mui-focused fieldset": { borderColor: "#dc2626", borderWidth: "1.5px" },
+                },
+              }}
             />
             <IconButton onClick={() => sendMessage()} disabled={!input.trim() || loading}
               sx={{
-                width: 40, height: 40, flexShrink: 0, borderRadius: 2.5,
-                background: input.trim() && !loading ? "linear-gradient(135deg, #b71c1c 0%, #d32f2f 100%)" : isDark ? "#2a2a2a" : "#e0e0e0",
+                width: 38, height: 38, flexShrink: 0, borderRadius: "10px",
+                background: input.trim() && !loading
+                  ? "linear-gradient(135deg, #dc2626 0%, #991b1b 100%)"
+                  : isDark ? "#1f1f1f" : "#ebebeb",
                 color: input.trim() && !loading ? "white" : "text.disabled",
-                "&:hover": { background: input.trim() && !loading ? "linear-gradient(135deg, #7f0000 0%, #b71c1c 100%)" : undefined },
-                transition: "all 0.2s",
+                "&:hover": {
+                  background: input.trim() && !loading
+                    ? "linear-gradient(135deg, #b91c1c 0%, #7f1d1d 100%)"
+                    : undefined,
+                },
+                transition: "all 0.18s ease",
+                boxShadow: input.trim() && !loading ? "0 2px 8px rgba(220,38,38,0.4)" : "none",
               }}>
-              <SendIcon sx={{ fontSize: 18 }} />
+              <SendIcon sx={{ fontSize: 17 }} />
             </IconButton>
           </Box>
         </Paper>
-      </Fade>
+      )}
     </>
   );
 }

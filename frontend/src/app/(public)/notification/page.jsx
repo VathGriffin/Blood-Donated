@@ -28,7 +28,7 @@ const UserMessages = () => {
   const fetchMessages = async () => {
     try {
       const { data } = await axios.get(`${API_BASE}/api/messages/mine`, { headers });
-      setMessages(data);
+      setMessages(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -147,7 +147,7 @@ const UserMessages = () => {
               AD
             </Avatar>
             <Box>
-              <Typography fontWeight={700} fontSize="0.92rem">Blood Donated Support</Typography>
+              <Typography fontWeight={700} fontSize="0.92rem">BloodLife Support</Typography>
               <Typography variant="caption" color="text.secondary">Admin • Typically replies within a few hours</Typography>
             </Box>
           </Box>

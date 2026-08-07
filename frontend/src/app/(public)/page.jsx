@@ -1,567 +1,614 @@
 'use client';
 import Link from 'next/link';
 import React, { useState, useEffect, useRef } from "react";
-import {
-  Container, Box, Typography, Button, Card, CardContent,
-  Grid, Chip, useTheme, Divider,
-} from "@mui/material";
-import VolunteerActivismIcon from "@mui/icons-material/VolunteerActivism";
-import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
+import { Container, Box, Typography, Button, useTheme } from "@mui/material";
 import FavoriteIcon from "@mui/icons-material/Favorite";
+import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
+import GroupsIcon from "@mui/icons-material/Groups";
 import PeopleIcon from "@mui/icons-material/People";
 import BloodtypeIcon from "@mui/icons-material/Bloodtype";
 import LocalPharmacyIcon from "@mui/icons-material/LocalPharmacy";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import HowToRegIcon from "@mui/icons-material/HowToReg";
 import ScienceIcon from "@mui/icons-material/Science";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
-import FormatQuoteIcon from "@mui/icons-material/FormatQuote";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import VerifiedIcon from "@mui/icons-material/Verified";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
-import SecurityIcon from "@mui/icons-material/Security";
-import AOS from "aos";
-import "aos/dist/aos.css";
+import ShieldIcon from "@mui/icons-material/Shield";
+import FormatQuoteIcon from "@mui/icons-material/FormatQuote";
 
-// ── Photo URLs (Unsplash CDN) ───────────────────────────────────────────────
-const HERO_IMG =
-  "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=1920&q=80";
-const CTA_IMG =
-  "https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=1920&q=80";
-const HOW_IMG =
-  "https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=1920&q=80";
+const stats = [
+  { icon: <PeopleIcon />,        value: 15230, suffix: "+", label: "Registered Donors" },
+  { icon: <BloodtypeIcon />,     value: 7540,  suffix: "+", label: "Units Collected" },
+  { icon: <LocalPharmacyIcon />, value: 126,   suffix: "+", label: "Partner Hospitals" },
+  { icon: <FavoriteIcon />,      value: 24300, suffix: "+", label: "Lives Saved" },
+];
 
-const features = [
+const actions = [
   {
-    icon: <VolunteerActivismIcon sx={{ fontSize: 36, color: "#b71c1c" }} />,
+    icon: <FavoriteIcon sx={{ fontSize: 26 }} />,
     title: "Donate Blood",
-    desc: "Register now and become someone's hero today. Your single donation can save up to 3 lives.",
+    desc: "Schedule an appointment at a nearby center and donate in under an hour.",
     link: "/donate",
-    label: "DONATE NOW",
-    bg: "#fdecea",
-    darkBg: "#3d1515",
+    red: false,
   },
   {
-    icon: <LocalHospitalIcon sx={{ fontSize: 36, color: "#ad1457" }} />,
+    icon: <LocalHospitalIcon sx={{ fontSize: 26 }} />,
     title: "Request Blood",
-    desc: "Submit your blood request and get immediate assistance from our verified donor network.",
+    desc: "Submit an urgent request for a patient who needs blood now.",
     link: "/requests",
-    label: "REQUEST NOW",
-    bg: "#f3e5f5",
-    darkBg: "#2d1530",
+    red: true,
   },
   {
-    icon: <FavoriteIcon sx={{ fontSize: 36, color: "#d81b60" }} />,
-    title: "Find Donors",
-    desc: "Browse our verified donor community and filter by blood type to find the perfect match.",
-    link: "/donors",
-    label: "VIEW DONORS",
-    bg: "#fce4ec",
-    darkBg: "#2d1520",
+    icon: <GroupsIcon sx={{ fontSize: 26 }} />,
+    title: "Volunteer",
+    desc: "Join our network of volunteers and help run donation drives.",
+    link: "/team",
+    red: false,
+  },
+  {
+    icon: <FavoriteBorderIcon sx={{ fontSize: 26 }} />,
+    title: "Learn More",
+    desc: "Explore eligibility, blood types, and the impact of your donation.",
+    link: "/about",
+    red: false,
   },
 ];
 
-const statistics = [
-  { icon: <PeopleIcon sx={{ fontSize: 36 }} />, value: 15000, suffix: "+", label: "Registered Donors", color: "#e53935" },
-  { icon: <BloodtypeIcon sx={{ fontSize: 36 }} />, value: 7500, suffix: "+", label: "Units Available", color: "#8e24aa" },
-  { icon: <LocalPharmacyIcon sx={{ fontSize: 36 }} />, value: 120, suffix: "+", label: "Hospitals Supported", color: "#3949ab" },
-  { icon: <FavoriteIcon sx={{ fontSize: 36 }} />, value: 45000, suffix: "+", label: "Lives Saved", color: "#d81b60" },
-];
-
-const howItWorks = [
+const steps = [
   {
-    step: "01",
-    icon: <HowToRegIcon sx={{ fontSize: 40, color: "#fff" }} />,
-    title: "Register as a Donor",
-    desc: "Fill out our quick registration form with your basic information and blood type. Takes less than 2 minutes.",
+    num: "01",
+    icon: <HowToRegIcon sx={{ fontSize: 24, color: "#dc2626" }} />,
+    title: "Register Online",
+    desc: "Fill out a quick 2-minute form with your details and blood type.",
   },
   {
-    step: "02",
-    icon: <ScienceIcon sx={{ fontSize: 40, color: "#fff" }} />,
+    num: "02",
+    icon: <ScienceIcon sx={{ fontSize: 24, color: "#dc2626" }} />,
     title: "Health Screening",
-    desc: "Our team conducts a brief health check to ensure you're fit to donate. Your safety is our top priority.",
+    desc: "A brief check by our medical staff to confirm you're fit to donate.",
   },
   {
-    step: "03",
-    icon: <FavoriteBorderIcon sx={{ fontSize: 40, color: "#fff" }} />,
-    title: "Save a Life",
-    desc: "Donate blood at one of our partner hospitals or collection drives. One donation can save up to 3 lives.",
+    num: "03",
+    icon: <FavoriteIcon sx={{ fontSize: 24, color: "#dc2626" }} />,
+    title: "Donate & Save",
+    desc: "The donation takes just 8–10 minutes. One bag can save up to 3 lives.",
   },
-];
-
-const bloodTypes = [
-  { type: "A+", donors: "A+, A-, O+, O-", patients: "A+, AB+" },
-  { type: "B+", donors: "B+, B-, O+, O-", patients: "B+, AB+" },
-  { type: "O+", donors: "O+, O-", patients: "A+, B+, O+, AB+" },
-  { type: "O-", donors: "O-", patients: "Everyone" },
-  { type: "AB+", donors: "Everyone", patients: "AB+" },
-  { type: "A-", donors: "A-, O-", patients: "A+, A-, AB+, AB-" },
-  { type: "B-", donors: "B-, O-", patients: "B+, B-, AB+, AB-" },
-  { type: "AB-", donors: "AB-, A-, B-, O-", patients: "AB+, AB-" },
 ];
 
 const testimonials = [
   {
-    quote: "Donating blood is the most meaningful thing I've ever done. This platform made it so easy to register and connect with hospitals.",
-    author: "Sopheak M.",
-    role: "Regular Donor",
-    avatar: "SM",
+    quote: "I donated for the first time last year. The process was so smooth — I was in and out in 45 minutes. Knowing someone is alive because of me is incredible.",
+    name: "Sophea Meas",
+    role: "First-time Donor",
+    initials: "SM",
+    color: "#dc2626",
   },
   {
-    quote: "My son needed an emergency transfusion. Within hours, Blood Donated connected us with a matching donor. They saved his life.",
-    author: "Chanthou K.",
-    role: "Parent",
-    avatar: "CK",
+    quote: "My daughter needed O- blood after surgery. BloodLife connected us to a donor within 2 hours. I can never repay that kindness.",
+    name: "Dara Keo",
+    role: "Grateful Parent",
+    initials: "DK",
+    color: "#b91c1c",
   },
   {
-    quote: "As a hospital coordinator, this system has cut our blood sourcing time in half. The inventory management is outstanding.",
-    author: "Dr. Dara P.",
-    role: "Hospital Coordinator",
-    avatar: "DP",
+    quote: "As a medical professional, I recommend BloodLife to all my patients' families. The platform is reliable, fast, and trustworthy.",
+    name: "Dr. Chan Bopha",
+    role: "Cardiologist, Calmette Hospital",
+    initials: "CB",
+    color: "#991b1b",
   },
 ];
 
-const trustBadges = [
-  { icon: <VerifiedIcon sx={{ fontSize: 18 }} />, label: "Verified Donors" },
-  { icon: <AccessTimeIcon sx={{ fontSize: 18 }} />, label: "24/7 Support" },
-  { icon: <SecurityIcon sx={{ fontSize: 18 }} />, label: "Secure & Private" },
-  { icon: <LocalPharmacyIcon sx={{ fontSize: 18 }} />, label: "120+ Hospitals" },
+const bloodTypes = [
+  { type: "A+",  can: "A+, AB+",         pct: 36 },
+  { type: "A-",  can: "A+, A-, AB+, AB-", pct: 6 },
+  { type: "B+",  can: "B+, AB+",          pct: 8 },
+  { type: "B-",  can: "B+, B-, AB+, AB-", pct: 2 },
+  { type: "O+",  can: "A+, B+, O+, AB+",  pct: 38 },
+  { type: "O-",  can: "All blood types",   pct: 7 },
+  { type: "AB+", can: "AB+ only",          pct: 3 },
+  { type: "AB-", can: "AB+, AB-",          pct: 1 },
 ];
 
-function useCountUp(target, duration = 2000, start = false) {
+function useCountUp(target, duration = 2000, active = false) {
   const [count, setCount] = useState(0);
   useEffect(() => {
-    if (!start) return;
-    let startTime = null;
-    const step = (timestamp) => {
-      if (!startTime) startTime = timestamp;
-      const progress = Math.min((timestamp - startTime) / duration, 1);
-      setCount(Math.floor(progress * target));
-      if (progress < 1) requestAnimationFrame(step);
+    if (!active) return;
+    let start = null;
+    const tick = (ts) => {
+      if (!start) start = ts;
+      const p = Math.min((ts - start) / duration, 1);
+      setCount(Math.floor(p * target));
+      if (p < 1) requestAnimationFrame(tick);
     };
-    requestAnimationFrame(step);
-  }, [target, duration, start]);
+    requestAnimationFrame(tick);
+  }, [target, duration, active]);
   return count;
 }
 
-function StatCard({ stat, animate }) {
-  const count = useCountUp(stat.value, 1800, animate);
+function StatItem({ stat, active }) {
+  const n = useCountUp(stat.value, 1800, active);
   return (
-    <Box textAlign="center" data-aos="zoom-in">
-      <Box sx={{
-        width: 80, height: 80, borderRadius: "50%", mx: "auto", mb: 2,
-        display: "flex", alignItems: "center", justifyContent: "center",
-        backgroundColor: `${stat.color}22`, color: stat.color,
-      }}>
-        {stat.icon}
-      </Box>
-      <Typography variant="h4" fontWeight={800} sx={{ color: stat.color }}>
-        {animate ? count.toLocaleString() : "0"}{stat.suffix}
+    <Box sx={{ textAlign: "center", flex: 1, px: 2 }}>
+      <Typography sx={{ fontSize: { xs: "2rem", md: "2.4rem" }, fontWeight: 900, color: "#dc2626", letterSpacing: "-0.04em", lineHeight: 1 }}>
+        {active ? n.toLocaleString() : "0"}{stat.suffix}
       </Typography>
-      <Typography variant="body2" color="text.secondary" fontWeight={500}>
+      <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 500, mt: 0.5, display: "block", fontSize: "0.78rem" }}>
         {stat.label}
       </Typography>
     </Box>
   );
 }
 
-const Home = () => {
+const BloodBagSVG = () => (
+  <svg viewBox="0 0 340 420" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: "100%", maxWidth: 320 }}>
+    {/* Hanger hook */}
+    <path d="M170 14 Q170 2 182 2 Q194 2 194 14 Q194 24 182 24 L170 24" stroke="#9ca3af" strokeWidth="3.5" strokeLinecap="round" fill="none"/>
+    {/* Tube top */}
+    <rect x="163" y="24" width="14" height="40" rx="7" fill="#d1d5db"/>
+    <rect x="155" y="62" width="30" height="12" rx="6" fill="#9ca3af"/>
+
+    {/* Bag body */}
+    <rect x="55" y="74" width="210" height="230" rx="40" fill="#fff1f2" stroke="#fecaca" strokeWidth="2.5"/>
+
+    {/* Blood fill (animated-feel gradient) */}
+    <defs>
+      <linearGradient id="bloodFill" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stopColor="#fca5a5" stopOpacity="0.4"/>
+        <stop offset="100%" stopColor="#ef4444" stopOpacity="0.55"/>
+      </linearGradient>
+      <clipPath id="bagClip">
+        <rect x="55" y="74" width="210" height="230" rx="40"/>
+      </clipPath>
+    </defs>
+    <rect x="55" y="200" width="210" height="104" fill="url(#bloodFill)" clipPath="url(#bagClip)"/>
+
+    {/* Red Cross */}
+    <rect x="148" y="120" width="26" height="80" rx="13" fill="#dc2626"/>
+    <rect x="118" y="150" width="86" height="26" rx="13" fill="#dc2626"/>
+
+    {/* Tube bottom */}
+    <path d="M170 304 Q170 340 145 360 Q128 372 134 390" stroke="#d1d5db" strokeWidth="11" strokeLinecap="round" fill="none"/>
+    <circle cx="132" cy="394" r="8" fill="#dc2626"/>
+
+    {/* Floating hearts */}
+    <text x="250" y="105" fontSize="24" fill="#dc2626" opacity="0.65">♥</text>
+    <text x="46" y="136" fontSize="17" fill="#ef4444" opacity="0.45">♥</text>
+    <text x="268" y="165" fontSize="13" fill="#dc2626" opacity="0.35">♥</text>
+    <text x="38" y="240" fontSize="20" fill="#fca5a5" opacity="0.5">+</text>
+    <text x="280" y="250" fontSize="26" fill="#fca5a5" opacity="0.45">+</text>
+    <text x="58" y="300" fontSize="13" fill="#fca5a5" opacity="0.4">+</text>
+
+    {/* Hand */}
+    <rect x="110" y="302" width="100" height="30" rx="15" fill="#fce7f3" stroke="#fbcfe8" strokeWidth="1.5"/>
+    <rect x="116" y="320" width="13" height="24" rx="6.5" fill="#fbcfe8"/>
+    <rect x="133" y="322" width="13" height="26" rx="6.5" fill="#fbcfe8"/>
+    <rect x="150" y="322" width="13" height="26" rx="6.5" fill="#fbcfe8"/>
+    <rect x="167" y="320" width="13" height="24" rx="6.5" fill="#fbcfe8"/>
+    <rect x="183" y="316" width="11" height="20" rx="5.5" fill="#fbcfe8"/>
+  </svg>
+);
+
+export default function Home() {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
-  const [statsVisible, setStatsVisible] = useState(false);
   const statsRef = useRef(null);
-
-  useEffect(() => { AOS.init({ duration: 900, once: true }); }, []);
+  const [statsOn, setStatsOn] = useState(false);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setStatsVisible(true); },
-      { threshold: 0.3 }
-    );
-    if (statsRef.current) observer.observe(statsRef.current);
-    return () => observer.disconnect();
+    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) setStatsOn(true); }, { threshold: 0.2 });
+    if (statsRef.current) obs.observe(statsRef.current);
+    return () => obs.disconnect();
   }, []);
 
+  const bg     = isDark ? "#0a0a0a" : "#ffffff";
+  const alt    = isDark ? "#0f0f0f" : "#f7f7f7";
+  const border = isDark ? "#1e1e1e" : "#e8e8e8";
+  const card   = isDark ? "#111111" : "#ffffff";
+
   return (
-    <Box>
+    <Box sx={{ backgroundColor: bg }}>
+      <style>{`
+        @keyframes fadeUp   { from { opacity:0; transform:translateY(22px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes floatBlob{ 0%,100%{transform:translate(0,0) scale(1);} 40%{transform:translate(18px,-16px) scale(1.04);} 70%{transform:translate(-12px,10px) scale(0.97);} }
+        @keyframes pulse    { 0%,100%{opacity:1;} 50%{opacity:0.5;} }
+      `}</style>
 
-      {/* ── Hero — Photo Background ────────────────────────────────────────── */}
-      <Box sx={{
-        position: "relative",
-        minHeight: { xs: "100vh", md: "95vh" },
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        backgroundImage: `url('${HERO_IMG}')`,
-        backgroundSize: "cover",
-        backgroundPosition: "center top",
-        backgroundAttachment: { xs: "scroll", md: "fixed" },
-        "&::before": {
-          content: '""',
-          position: "absolute",
-          inset: 0,
+      {/* ── Hero ───────────────────────────────────────────────────────── */}
+      <Box sx={{ pt: { xs: 7, md: 9 }, pb: { xs: 10, md: 14 }, position: "relative", overflow: "hidden", bgcolor: bg }}>
+        {/* Soft radial blobs */}
+        <Box sx={{
+          position: "absolute", right: { xs: "-20%", md: "2%" }, top: "5%",
+          width: { xs: 360, md: 620 }, height: { xs: 360, md: 620 }, borderRadius: "50%", pointerEvents: "none", zIndex: 0,
           background: isDark
-            ? "linear-gradient(135deg, rgba(10,0,0,0.92) 0%, rgba(80,0,0,0.82) 50%, rgba(0,0,0,0.88) 100%)"
-            : "linear-gradient(135deg, rgba(100,0,0,0.88) 0%, rgba(183,28,28,0.80) 50%, rgba(40,0,0,0.85) 100%)",
-          zIndex: 1,
-        },
-      }}>
-        <Container maxWidth="lg" sx={{ position: "relative", zIndex: 2, pt: { xs: 14, md: 10 }, pb: { xs: 8, md: 8 } }}>
-          <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, alignItems: "center", gap: 6 }}>
+            ? "radial-gradient(circle, rgba(220,38,38,0.11) 0%, transparent 72%)"
+            : "radial-gradient(circle, rgba(220,38,38,0.07) 0%, transparent 72%)",
+          animation: "floatBlob 9s ease-in-out infinite",
+        }} />
+        <Box sx={{
+          position: "absolute", left: { xs: "-15%", md: "-4%" }, bottom: "5%",
+          width: { xs: 280, md: 480 }, height: { xs: 280, md: 480 }, borderRadius: "50%", pointerEvents: "none", zIndex: 0,
+          background: isDark
+            ? "radial-gradient(circle, rgba(185,28,28,0.09) 0%, transparent 68%)"
+            : "radial-gradient(circle, rgba(220,38,38,0.05) 0%, transparent 68%)",
+          animation: "floatBlob 12s ease-in-out infinite reverse",
+        }} />
 
-            {/* Left: Text */}
-            <Box flex={1} data-aos="fade-right">
-              <Chip
-                label="🏥 Cambodia's Blood Donation Platform"
-                sx={{ backgroundColor: "rgba(255,255,255,0.15)", color: "white", fontWeight: 700, mb: 3, backdropFilter: "blur(4px)", fontSize: "0.82rem" }}
-              />
-              <Typography variant="h2" component="h1" fontWeight={800} color="white"
-                sx={{ lineHeight: 1.12, mb: 2, fontSize: { xs: "2.4rem", md: "3.4rem" }, textShadow: "0 2px 20px rgba(0,0,0,0.5)" }}>
-                Every Drop Counts.
+        <Container maxWidth="lg" sx={{ position: "relative", zIndex: 1 }}>
+          <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, alignItems: "center", gap: { xs: 7, md: 6 } }}>
+
+            {/* Left text */}
+            <Box flex={1} sx={{ animation: "fadeUp 0.7s ease both" }}>
+              {/* Badge */}
+              <Box sx={{
+                display: "inline-flex", alignItems: "center", gap: 0.8,
+                px: 1.6, py: 0.55, borderRadius: "100px", mb: 3,
+                bgcolor: isDark ? "rgba(220,38,38,0.12)" : "#fff1f2",
+                border: `1px solid ${isDark ? "rgba(220,38,38,0.25)" : "#fecaca"}`,
+              }}>
+                <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "#dc2626", animation: "pulse 1.4s ease infinite" }} />
+                <Typography sx={{ fontSize: "0.72rem", fontWeight: 700, color: "#dc2626", letterSpacing: "0.09em", textTransform: "uppercase" }}>
+                  Save a Life · Be a Hero
+                </Typography>
+              </Box>
+
+              {/* Headline */}
+              <Typography component="h1" sx={{
+                fontSize: { xs: "3rem", sm: "3.6rem", md: "4.2rem" },
+                fontWeight: 900, lineHeight: 1.05, letterSpacing: "-0.03em",
+                color: isDark ? "#f5f5f5" : "#111111", mb: 0,
+              }}>
+                Donate Blood,
               </Typography>
-              <Typography variant="h2" component="p" fontWeight={800}
-                sx={{ lineHeight: 1.12, mb: 3, fontSize: { xs: "2.4rem", md: "3.4rem" }, color: "#ffcdd2", textShadow: "0 2px 20px rgba(0,0,0,0.5)" }}>
-                Be Someone's Hero.
-              </Typography>
-              <Typography variant="h6" sx={{ color: "rgba(255,255,255,0.88)", mb: 4, lineHeight: 1.75, maxWidth: 540, fontWeight: 400 }}>
-                A centralized platform connecting blood donors with patients in need —
-                streamlining donations, inventory, and hospital requests across Cambodia.
+              <Typography component="h1" sx={{
+                fontSize: { xs: "3rem", sm: "3.6rem", md: "4.2rem" },
+                fontWeight: 900, lineHeight: 1.05, letterSpacing: "-0.03em",
+                color: "#dc2626", mb: 3,
+              }}>
+                Save Lives
               </Typography>
 
-              <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 5 }}>
-                <Button
-                  variant="contained" size="large" component={Link} href="/donate"
+              <Typography sx={{
+                color: isDark ? "#777777" : "#555555",
+                fontSize: { xs: "1rem", md: "1.08rem" }, lineHeight: 1.8, maxWidth: 480, mb: 4.5,
+              }}>
+                Join thousands of volunteers across Cambodia helping patients in need.
+                Every drop counts — your donation can be the difference between life and death.
+              </Typography>
+
+              {/* CTA */}
+              <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", mb: 5 }}>
+                <Button component={Link} href="/map" variant="contained" size="large"
+                  endIcon={<ArrowForwardIcon />}
                   sx={{
-                    backgroundColor: "white", color: "#b71c1c", fontWeight: 800,
-                    px: 4.5, py: 1.6, borderRadius: 3, fontSize: "1rem",
-                    boxShadow: "0 8px 32px rgba(0,0,0,0.35)",
-                    "&:hover": { backgroundColor: "#ffcdd2", transform: "translateY(-2px)", boxShadow: "0 12px 40px rgba(0,0,0,0.4)" },
-                    transition: "all 0.25s ease",
+                    bgcolor: "#dc2626", fontWeight: 700, px: 3.5, py: 1.55,
+                    borderRadius: "10px", fontSize: "0.95rem",
+                    boxShadow: "0 6px 22px rgba(220,38,38,0.38)",
+                    "&:hover": { bgcolor: "#b91c1c", boxShadow: "0 10px 32px rgba(220,38,38,0.5)", transform: "translateY(-2px)" },
+                    transition: "all 0.22s ease",
                   }}>
-                  BECOME A DONOR
+                  Find a Donation Center
                 </Button>
-                <Button
-                  variant="outlined" size="large" component={Link} href="/requests"
+                <Button component={Link} href="/appointments" variant="outlined" size="large"
                   sx={{
-                    borderColor: "rgba(255,255,255,0.7)", color: "white", fontWeight: 700,
-                    px: 4.5, py: 1.6, borderRadius: 3, fontSize: "1rem",
-                    backdropFilter: "blur(4px)",
-                    "&:hover": { backgroundColor: "rgba(255,255,255,0.15)", borderColor: "white", transform: "translateY(-2px)" },
-                    transition: "all 0.25s ease",
+                    color: isDark ? "rgba(245,245,245,0.82)" : "#333333",
+                    borderColor: isDark ? "#2a2a2a" : "#e0e0e0",
+                    fontWeight: 600, px: 3.5, py: 1.55, borderRadius: "10px", fontSize: "0.95rem",
+                    "&:hover": { borderColor: "#dc2626", color: "#dc2626", bgcolor: "rgba(220,38,38,0.04)" },
+                    transition: "all 0.2s ease",
                   }}>
-                  NEED BLOOD?
+                  Book Appointment
                 </Button>
               </Box>
 
-              {/* Trust badges */}
-              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
-                {trustBadges.map((b, i) => (
-                  <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 0.7, color: "rgba(255,255,255,0.75)", fontSize: "0.83rem" }}>
-                    {b.icon}
-                    <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.75)", fontWeight: 600 }}>
-                      {b.label}
+              {/* Trust row */}
+              <Box sx={{ display: "flex", alignItems: "center", gap: 3, flexWrap: "wrap" }}>
+                {[
+                  { icon: <VerifiedIcon sx={{ fontSize: 15, color: "#dc2626" }} />, text: "Ministry Certified" },
+                  { icon: <ShieldIcon sx={{ fontSize: 15, color: "#dc2626" }} />, text: "100% Safe Process" },
+                  { icon: <AccessTimeIcon sx={{ fontSize: 15, color: "#dc2626" }} />, text: "Takes Under 1 Hour" },
+                ].map((t, i) => (
+                  <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 0.6 }}>
+                    {t.icon}
+                    <Typography sx={{ fontSize: "0.78rem", fontWeight: 600, color: isDark ? "#666" : "#888" }}>
+                      {t.text}
                     </Typography>
                   </Box>
                 ))}
               </Box>
             </Box>
 
-            {/* Right: Stats card */}
-            <Box data-aos="fade-left" sx={{
-              flex: "0 0 auto", display: { xs: "none", md: "block" },
-              backgroundColor: "rgba(255,255,255,0.10)",
-              backdropFilter: "blur(16px)",
-              border: "1px solid rgba(255,255,255,0.2)",
-              borderRadius: 4, p: 3.5, minWidth: 260,
+            {/* Right illustration */}
+            <Box sx={{
+              flex: "0 0 auto",
+              width: { xs: "60%", sm: "48%", md: 300 },
+              animation: "fadeUp 0.9s ease 0.18s both",
+              display: "flex", justifyContent: "center",
             }}>
-              <Typography variant="subtitle2" fontWeight={800} color="rgba(255,255,255,0.7)" letterSpacing="0.1em" mb={2.5} sx={{ textTransform: "uppercase" }}>
-                Live Impact
-              </Typography>
-              {[
-                { label: "Donors Online", value: "1,243", color: "#ff8a80" },
-                { label: "Requests Today", value: "38", color: "#ffcdd2" },
-                { label: "Lives Saved", value: "45,000+", color: "#f48fb1" },
-                { label: "Hospitals", value: "120+", color: "#ef9a9a" },
-              ].map((item, i) => (
-                <Box key={i}>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", py: 1.2 }}>
-                    <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.75)", fontWeight: 500 }}>{item.label}</Typography>
-                    <Typography variant="body1" fontWeight={800} sx={{ color: item.color }}>{item.value}</Typography>
-                  </Box>
-                  {i < 3 && <Divider sx={{ borderColor: "rgba(255,255,255,0.1)" }} />}
-                </Box>
-              ))}
-              <Button
-                fullWidth component={Link} href="/appointments" variant="contained"
-                sx={{ mt: 2.5, bgcolor: "#b71c1c", borderRadius: 3, fontWeight: 700, py: 1.2, "&:hover": { bgcolor: "#9a1515" } }}>
-                Book Appointment
-              </Button>
+              <BloodBagSVG />
             </Box>
           </Box>
-        </Container>
 
-        {/* Scroll indicator */}
-        <Box sx={{
-          position: "absolute", bottom: 28, left: "50%", transform: "translateX(-50%)", zIndex: 2,
-          display: "flex", flexDirection: "column", alignItems: "center", gap: 1,
-        }}>
-          <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.5)", letterSpacing: "0.12em", textTransform: "uppercase", fontSize: "0.7rem" }}>
-            Scroll Down
-          </Typography>
-          <Box sx={{
-            width: 24, height: 38, borderRadius: 12, border: "2px solid rgba(255,255,255,0.35)",
-            display: "flex", justifyContent: "center", pt: 1,
+          {/* ── Stats ── */}
+          <Box ref={statsRef} sx={{
+            mt: { xs: 8, md: 11 },
+            pt: 5, borderTop: `1px solid ${border}`,
+            display: "flex", flexWrap: "wrap",
+            alignItems: "center", justifyContent: "space-between", gap: 3,
           }}>
-            <Box sx={{
-              width: 4, height: 8, borderRadius: 2, backgroundColor: "rgba(255,255,255,0.7)",
-              animation: "scrollDot 1.8s ease infinite",
-              "@keyframes scrollDot": {
-                "0%": { opacity: 1, transform: "translateY(0)" },
-                "100%": { opacity: 0, transform: "translateY(12px)" },
-              },
-            }} />
-          </Box>
-        </Box>
-      </Box>
-
-      {/* ── Statistics ─────────────────────────────────────────────────────── */}
-      <Box ref={statsRef} sx={{
-        backgroundColor: isDark ? "#1a1a1a" : "#fff", py: 8,
-        borderBottom: `1px solid ${isDark ? "#333" : "#eee"}`,
-        boxShadow: isDark ? "none" : "0 4px 24px rgba(0,0,0,0.06)",
-      }}>
-        <Container maxWidth="lg">
-          <Grid container spacing={4} justifyContent="center">
-            {statistics.map((stat, idx) => (
-              <Grid item xs={6} sm={3} key={idx}>
-                <StatCard stat={stat} animate={statsVisible} />
-              </Grid>
+            {stats.map((s, i) => (
+              <React.Fragment key={i}>
+                <StatItem stat={s} active={statsOn} />
+                {i < stats.length - 1 && (
+                  <Box sx={{ width: "1px", height: 40, bgcolor: border, display: { xs: "none", md: "block" } }} />
+                )}
+              </React.Fragment>
             ))}
-          </Grid>
+          </Box>
         </Container>
       </Box>
 
-      {/* ── Feature Cards ─────────────────────────────────────────────────── */}
-      <Box sx={{ backgroundColor: isDark ? "#121212" : "#f9f9f9", py: 10 }}>
+      {/* ── What do you need? ──────────────────────────────────────────── */}
+      <Box sx={{ bgcolor: alt, py: { xs: 8, md: 11 } }}>
         <Container maxWidth="lg">
-          <Box textAlign="center" mb={7} data-aos="fade-up">
-            <Typography variant="overline" color="error" fontWeight={700} letterSpacing="0.15em">Our Services</Typography>
-            <Typography variant="h4" fontWeight={700} color={isDark ? "white" : "text.primary"} gutterBottom mt={0.5}>
-              What Can You Do?
+          <Box textAlign="center" mb={6}>
+            <Typography sx={{
+              fontSize: { xs: "1.7rem", md: "2.2rem" }, fontWeight: 900,
+              letterSpacing: "-0.025em", color: isDark ? "#f5f5f5" : "#111111", mb: 1,
+            }}>
+              How Can We Help?
             </Typography>
-            <Typography variant="body1" color="text.secondary" maxWidth={520} mx="auto">
-              Whether you want to donate, request, or find donors — we've got you covered.
+            <Typography color="text.secondary" sx={{ fontSize: "1rem", maxWidth: 400, mx: "auto" }}>
+              Choose what you need and we'll guide you through every step.
             </Typography>
           </Box>
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" }, gap: 4 }}>
-            {features.map((item, idx) => (
-              <Card key={idx} data-aos="fade-up" data-aos-delay={idx * 100} sx={{
-                textAlign: "center", p: 4, borderRadius: 4, boxShadow: 3, transition: "0.3s ease",
-                backgroundColor: isDark ? item.darkBg : "#fff",
-                "&:hover": { boxShadow: 10, transform: "translateY(-10px)" },
-              }}>
+
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(4, 1fr)" }, gap: 2 }}>
+            {actions.map((a, idx) => (
+              <Link key={idx} href={a.link} style={{ textDecoration: "none" }}>
                 <Box sx={{
-                  width: 90, height: 90, borderRadius: "50%", mx: "auto", mb: 3,
-                  backgroundColor: isDark ? "rgba(255,255,255,0.07)" : item.bg,
-                  display: "flex", alignItems: "center", justifyContent: "center",
+                  height: "100%",
+                  bgcolor: a.red ? "#dc2626" : card,
+                  border: `1px solid ${a.red ? "#dc2626" : border}`,
+                  borderRadius: "18px", p: { xs: 2.5, md: 3.2 },
+                  cursor: "pointer", transition: "all 0.22s ease",
+                  animation: `fadeUp 0.5s ease ${idx * 0.08}s both`,
+                  "&:hover": {
+                    transform: "translateY(-6px)",
+                    boxShadow: a.red
+                      ? "0 20px 50px rgba(220,38,38,0.42)"
+                      : isDark
+                        ? "0 20px 50px rgba(0,0,0,0.5)"
+                        : "0 20px 50px rgba(0,0,0,0.1)",
+                  },
                 }}>
-                  {item.icon}
+                  <Box sx={{
+                    width: 50, height: 50, borderRadius: "14px", mb: 2.5,
+                    bgcolor: a.red ? "rgba(255,255,255,0.2)" : isDark ? "rgba(220,38,38,0.12)" : "#fff1f2",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    color: a.red ? "#ffffff" : "#dc2626",
+                  }}>
+                    {a.icon}
+                  </Box>
+                  <Typography fontWeight={800} fontSize="0.95rem" mb={0.8}
+                    sx={{ color: a.red ? "#ffffff" : isDark ? "#f5f5f5" : "#111111" }}>
+                    {a.title}
+                  </Typography>
+                  <Typography variant="caption" sx={{
+                    color: a.red ? "rgba(255,255,255,0.78)" : "text.secondary",
+                    lineHeight: 1.65, display: "block",
+                  }}>
+                    {a.desc}
+                  </Typography>
                 </Box>
-                <Typography variant="h6" fontWeight={700} gutterBottom>{item.title}</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 3, lineHeight: 1.7 }}>{item.desc}</Typography>
-                <Button variant="contained" color="error" size="small" component={Link} href={item.link} sx={{ borderRadius: 3, px: 3 }}>
-                  {item.label}
-                </Button>
-              </Card>
+              </Link>
             ))}
           </Box>
         </Container>
       </Box>
 
-      {/* ── How It Works — Photo Background ───────────────────────────────── */}
-      <Box sx={{
-        position: "relative",
-        py: 12,
-        backgroundImage: `url('${HOW_IMG}')`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundAttachment: { xs: "scroll", md: "fixed" },
-        "&::before": {
-          content: '""',
-          position: "absolute",
-          inset: 0,
-          background: "linear-gradient(135deg, rgba(10,10,10,0.92) 0%, rgba(60,0,0,0.88) 100%)",
-        },
-      }}>
-        <Container maxWidth="lg" sx={{ position: "relative", zIndex: 1 }}>
-          <Box textAlign="center" mb={8} data-aos="fade-up">
-            <Typography variant="overline" sx={{ color: "#ffcdd2", fontWeight: 700, letterSpacing: "0.15em" }}>
-              Simple Process
-            </Typography>
-            <Typography variant="h4" fontWeight={700} color="white" mt={0.5} gutterBottom>
+      {/* ── How It Works ──────────────────────────────────────────────── */}
+      <Box sx={{ bgcolor: bg, py: { xs: 8, md: 12 } }}>
+        <Container maxWidth="lg">
+          <Box textAlign="center" mb={7}>
+            <Box sx={{
+              display: "inline-block", px: 2.2, py: 0.65, borderRadius: "100px", mb: 2.5,
+              bgcolor: isDark ? "rgba(220,38,38,0.1)" : "#fff1f2",
+              border: `1px solid ${isDark ? "rgba(220,38,38,0.22)" : "#fecaca"}`,
+            }}>
+              <Typography sx={{ fontSize: "0.72rem", fontWeight: 700, color: "#dc2626", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+                Simple 3-Step Process
+              </Typography>
+            </Box>
+            <Typography sx={{
+              fontSize: { xs: "1.7rem", md: "2.2rem" }, fontWeight: 900,
+              letterSpacing: "-0.025em", color: isDark ? "#f5f5f5" : "#111111",
+            }}>
               How It Works
             </Typography>
-            <Typography variant="body1" sx={{ color: "rgba(255,255,255,0.7)", maxWidth: 500, mx: "auto" }}>
-              Getting started as a donor is simple. Follow these three easy steps.
+            <Typography color="text.secondary" mt={1} maxWidth={400} mx="auto">
+              From signup to saving a life — it takes less than an hour.
             </Typography>
           </Box>
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" }, gap: 4 }}>
-            {howItWorks.map((step, idx) => (
-              <Box key={idx} data-aos="fade-up" data-aos-delay={idx * 150} sx={{
-                textAlign: "center",
-                backgroundColor: "rgba(255,255,255,0.07)",
-                backdropFilter: "blur(10px)",
-                border: "1px solid rgba(255,255,255,0.12)",
-                borderRadius: 4,
-                p: 4,
-                transition: "0.3s",
-                "&:hover": { backgroundColor: "rgba(183,28,28,0.3)", transform: "translateY(-6px)" },
+
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" }, gap: 3, position: "relative" }}>
+            {/* Desktop connector */}
+            <Box sx={{
+              display: { xs: "none", md: "block" }, position: "absolute",
+              top: 42, left: "calc(33.33% + 8px)", right: "calc(33.33% + 8px)", height: "2px",
+              background: `repeating-linear-gradient(90deg, ${isDark ? "#2a2a2a" : "#e5e5e5"} 0, ${isDark ? "#2a2a2a" : "#e5e5e5"} 7px, transparent 7px, transparent 15px)`,
+            }} />
+
+            {steps.map((s, i) => (
+              <Box key={i} sx={{
+                bgcolor: card, border: `1px solid ${border}`,
+                borderRadius: "18px", p: { xs: 3.5, md: 4 },
+                animation: `fadeUp 0.6s ease ${i * 0.12}s both`,
+                transition: "all 0.22s ease",
+                "&:hover": {
+                  borderColor: "#dc2626",
+                  boxShadow: isDark ? "0 16px 40px rgba(220,38,38,0.12)" : "0 16px 40px rgba(220,38,38,0.09)",
+                  transform: "translateY(-5px)",
+                },
               }}>
-                <Box sx={{ position: "relative", width: 90, height: 90, mx: "auto", mb: 3 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
                   <Box sx={{
-                    width: 90, height: 90, borderRadius: "50%",
-                    background: "linear-gradient(135deg, #b71c1c 0%, #d32f2f 100%)",
+                    width: 52, height: 52, borderRadius: "14px",
+                    bgcolor: isDark ? "rgba(220,38,38,0.12)" : "#fff1f2",
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    boxShadow: "0 8px 24px rgba(183,28,28,0.45)",
                   }}>
-                    {step.icon}
+                    {s.icon}
                   </Box>
+                  <Typography sx={{ fontSize: "2.2rem", fontWeight: 900, color: isDark ? "#242424" : "#ebebeb", letterSpacing: "-0.05em", lineHeight: 1 }}>
+                    {s.num}
+                  </Typography>
+                </Box>
+                <Typography fontWeight={800} fontSize="1rem" mb={1} sx={{ color: isDark ? "#f5f5f5" : "#111" }}>
+                  {s.title}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" lineHeight={1.75}>
+                  {s.desc}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
+        </Container>
+      </Box>
+
+      {/* ── Blood Type Grid ────────────────────────────────────────────── */}
+      <Box sx={{ bgcolor: alt, py: { xs: 8, md: 11 } }}>
+        <Container maxWidth="lg">
+          <Box textAlign="center" mb={6}>
+            <Typography sx={{
+              fontSize: { xs: "1.7rem", md: "2.2rem" }, fontWeight: 900,
+              letterSpacing: "-0.025em", color: isDark ? "#f5f5f5" : "#111111", mb: 1,
+            }}>
+              Blood Type Compatibility
+            </Typography>
+            <Typography color="text.secondary">Know your type. Know who you can help.</Typography>
+          </Box>
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, 1fr)", sm: "repeat(4, 1fr)", md: "repeat(8, 1fr)" }, gap: 1.5 }}>
+            {bloodTypes.map((bt, i) => (
+              <Box key={i} sx={{
+                bgcolor: card, border: `1px solid ${border}`,
+                borderRadius: "14px", p: 2, textAlign: "center",
+                transition: "all 0.2s ease",
+                "&:hover": {
+                  borderColor: "#dc2626",
+                  boxShadow: "0 8px 24px rgba(220,38,38,0.14)",
+                  transform: "translateY(-3px)",
+                },
+              }}>
+                <Typography sx={{ fontSize: "1.65rem", fontWeight: 900, color: "#dc2626", letterSpacing: "-0.03em", lineHeight: 1 }}>
+                  {bt.type}
+                </Typography>
+                <Typography sx={{ fontSize: "0.62rem", color: "text.disabled", mt: 0.5, lineHeight: 1.4, fontWeight: 500 }}>
+                  {bt.pct}% of people
+                </Typography>
+              </Box>
+            ))}
+          </Box>
+          <Typography variant="caption" color="text.disabled" display="block" textAlign="center" mt={3}>
+            O- is the universal donor type — compatible with all blood types.
+          </Typography>
+        </Container>
+      </Box>
+
+      {/* ── Testimonials ──────────────────────────────────────────────── */}
+      <Box sx={{ bgcolor: bg, py: { xs: 8, md: 12 } }}>
+        <Container maxWidth="lg">
+          <Box textAlign="center" mb={6}>
+            <Typography sx={{
+              fontSize: { xs: "1.7rem", md: "2.2rem" }, fontWeight: 900,
+              letterSpacing: "-0.025em", color: isDark ? "#f5f5f5" : "#111111", mb: 1,
+            }}>
+              Real Stories, Real Impact
+            </Typography>
+            <Typography color="text.secondary">From donors and families who experienced the difference.</Typography>
+          </Box>
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" }, gap: 2.5 }}>
+            {testimonials.map((t, i) => (
+              <Box key={i} sx={{
+                bgcolor: card, border: `1px solid ${border}`, borderRadius: "18px",
+                p: { xs: 3, md: 3.5 }, transition: "all 0.22s ease",
+                animation: `fadeUp 0.6s ease ${i * 0.1}s both`,
+                "&:hover": {
+                  borderColor: "#dc2626",
+                  boxShadow: isDark ? "0 16px 40px rgba(220,38,38,0.1)" : "0 16px 40px rgba(0,0,0,0.08)",
+                  transform: "translateY(-4px)",
+                },
+              }}>
+                <FormatQuoteIcon sx={{ fontSize: 32, color: "#dc2626", opacity: 0.4, mb: 1 }} />
+                <Typography variant="body2" lineHeight={1.8} color="text.secondary" mb={3}>
+                  "{t.quote}"
+                </Typography>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                   <Box sx={{
-                    position: "absolute", top: -6, right: -6, width: 30, height: 30,
-                    borderRadius: "50%", backgroundColor: "#fff", color: "#b71c1c",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: "0.7rem", fontWeight: 900, boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+                    width: 40, height: 40, borderRadius: "50%", bgcolor: t.color,
+                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
                   }}>
-                    {step.step}
+                    <Typography sx={{ fontSize: "0.75rem", fontWeight: 800, color: "white" }}>{t.initials}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography fontWeight={700} fontSize="0.85rem" sx={{ color: isDark ? "#f5f5f5" : "#111" }}>
+                      {t.name}
+                    </Typography>
+                    <Typography variant="caption" color="text.disabled">{t.role}</Typography>
                   </Box>
                 </Box>
-                <Typography variant="h6" fontWeight={700} color="white" gutterBottom>{step.title}</Typography>
-                <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.72)", lineHeight: 1.75 }}>{step.desc}</Typography>
               </Box>
             ))}
           </Box>
         </Container>
       </Box>
 
-      {/* ── Blood Type Compatibility ───────────────────────────────────────── */}
+      {/* ── CTA Banner ────────────────────────────────────────────────── */}
       <Box sx={{
+        py: { xs: 10, md: 14 }, textAlign: "center", position: "relative", overflow: "hidden",
         background: isDark
-          ? "linear-gradient(135deg, #1a0000 0%, #2d0505 100%)"
-          : "linear-gradient(135deg, #b71c1c 0%, #7f0000 100%)",
-        py: 10, color: "white",
+          ? "linear-gradient(135deg, #1c0202 0%, #2d0606 55%, #0f0f0f 100%)"
+          : "linear-gradient(135deg, #dc2626 0%, #b91c1c 55%, #7f1d1d 100%)",
       }}>
-        <Container maxWidth="lg">
-          <Box textAlign="center" mb={7} data-aos="fade-up">
-            <Typography variant="overline" sx={{ color: "#ffcdd2", fontWeight: 700, letterSpacing: "0.15em" }}>
-              Compatibility Guide
-            </Typography>
-            <Typography variant="h4" fontWeight={700} gutterBottom mt={0.5}>Blood Type Compatibility</Typography>
-            <Typography variant="body1" sx={{ opacity: 0.85 }}>
-              Find out which blood types you can donate to and receive from.
-            </Typography>
-          </Box>
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, 1fr)", sm: "repeat(4, 1fr)" }, gap: 2 }}>
-            {bloodTypes.map((bt, idx) => (
-              <Box key={idx} data-aos="zoom-in" data-aos-delay={idx * 50} sx={{
-                backgroundColor: "rgba(255,255,255,0.12)", backdropFilter: "blur(6px)",
-                borderRadius: 3, p: 2.5, textAlign: "center",
-                border: "1px solid rgba(255,255,255,0.2)", transition: "0.3s",
-                "&:hover": { backgroundColor: "rgba(255,255,255,0.22)", transform: "translateY(-4px)" },
-              }}>
-                <Typography variant="h5" fontWeight={800} sx={{ color: "#ffcdd2", mb: 1 }}>{bt.type}</Typography>
-                <Typography variant="caption" sx={{ display: "block", opacity: 0.75, mb: 0.4 }}>Can donate to:</Typography>
-                <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>{bt.patients}</Typography>
-                <Typography variant="caption" sx={{ display: "block", opacity: 0.75, mb: 0.4 }}>Can receive from:</Typography>
-                <Typography variant="body2" fontWeight={600}>{bt.donors}</Typography>
-              </Box>
-            ))}
-          </Box>
-        </Container>
-      </Box>
+        <Box sx={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px)", backgroundSize: "28px 28px", pointerEvents: "none" }} />
+        <Box sx={{ position: "absolute", top: "-25%", right: "-8%", width: 500, height: 500, borderRadius: "50%", bgcolor: "rgba(255,255,255,0.035)", pointerEvents: "none" }} />
+        <Box sx={{ position: "absolute", bottom: "-20%", left: "-5%",  width: 380, height: 380, borderRadius: "50%", bgcolor: "rgba(255,255,255,0.025)", pointerEvents: "none" }} />
 
-      {/* ── Testimonials ──────────────────────────────────────────────────── */}
-      <Box sx={{ backgroundColor: isDark ? "#121212" : "#f9f9f9", py: 10 }}>
-        <Container maxWidth="lg">
-          <Box textAlign="center" mb={7} data-aos="fade-up">
-            <Typography variant="overline" color="error" fontWeight={700} letterSpacing="0.15em">Community</Typography>
-            <Typography variant="h4" fontWeight={700} color={isDark ? "white" : "text.primary"} mt={0.5} gutterBottom>
-              Stories That Inspire
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              Real stories from our donor and patient community.
-            </Typography>
-          </Box>
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" }, gap: 4 }}>
-            {testimonials.map((t, idx) => (
-              <Card key={idx} data-aos="fade-up" data-aos-delay={idx * 120} sx={{
-                p: 3, borderRadius: 4, boxShadow: 3, position: "relative", transition: "0.3s",
-                "&:hover": { boxShadow: 7, transform: "translateY(-5px)" },
-              }}>
-                <FormatQuoteIcon sx={{ fontSize: 48, color: "#fdecea", position: "absolute", top: 12, left: 12 }} />
-                <CardContent sx={{ pt: 4 }}>
-                  <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.8, fontStyle: "italic", mb: 3 }}>
-                    "{t.quote}"
-                  </Typography>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                    <Box sx={{
-                      width: 44, height: 44, borderRadius: "50%", backgroundColor: "#b71c1c",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      color: "white", fontWeight: 700, fontSize: "0.85rem", flexShrink: 0,
-                    }}>
-                      {t.avatar}
-                    </Box>
-                    <Box>
-                      <Typography variant="body2" fontWeight={700}>{t.author}</Typography>
-                      <Typography variant="caption" color="text.secondary">{t.role}</Typography>
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-            ))}
-          </Box>
-        </Container>
-      </Box>
-
-      {/* ── CTA — Photo Background ────────────────────────────────────────── */}
-      <Box sx={{
-        position: "relative",
-        py: 14,
-        textAlign: "center",
-        backgroundImage: `url('${CTA_IMG}')`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundAttachment: { xs: "scroll", md: "fixed" },
-        "&::before": {
-          content: '""',
-          position: "absolute",
-          inset: 0,
-          background: "linear-gradient(135deg, rgba(80,0,0,0.90) 0%, rgba(183,28,28,0.82) 50%, rgba(40,0,0,0.90) 100%)",
-        },
-      }} data-aos="fade-up">
         <Container maxWidth="md" sx={{ position: "relative", zIndex: 1 }}>
-          <CheckCircleOutlineIcon sx={{ fontSize: 60, mb: 2, color: "#ffcdd2" }} />
-          <Typography variant="h3" fontWeight={800} color="white" gutterBottom sx={{ textShadow: "0 2px 20px rgba(0,0,0,0.5)" }}>
-            Ready to Save a Life?
+          <Box sx={{
+            width: 64, height: 64, borderRadius: "18px", mx: "auto", mb: 3,
+            bgcolor: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <FavoriteIcon sx={{ fontSize: 32, color: "white" }} />
+          </Box>
+          <Typography sx={{
+            fontSize: { xs: "2rem", md: "2.8rem" }, fontWeight: 900, color: "white",
+            letterSpacing: "-0.03em", lineHeight: 1.1, mb: 2,
+          }}>
+            Ready to Save a Life Today?
           </Typography>
-          <Typography variant="h6" sx={{ color: "rgba(255,255,255,0.85)", mb: 6, lineHeight: 1.75, maxWidth: 560, mx: "auto", fontWeight: 400 }}>
-            Join 15,000+ registered donors in Cambodia. Your single donation
-            could be the difference between life and death for someone today.
+          <Typography sx={{ color: "rgba(255,255,255,0.76)", mb: 5, fontSize: "1.05rem", maxWidth: 500, mx: "auto", lineHeight: 1.8 }}>
+            Join 15,230+ registered donors across Cambodia. Your 8 minutes of donation could give someone a lifetime.
           </Typography>
-          <Box sx={{ display: "flex", justifyContent: "center", gap: 2.5, flexWrap: "wrap" }}>
-            <Button variant="contained" size="large" component={Link} href="/donate" sx={{
-              backgroundColor: "white", color: "#b71c1c", fontWeight: 800, px: 5, py: 1.7, borderRadius: 3, fontSize: "1rem",
-              boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
-              "&:hover": { backgroundColor: "#ffcdd2", transform: "translateY(-3px)" },
-              transition: "all 0.25s ease",
-            }}>
-              BECOME A DONOR
+          <Box sx={{ display: "flex", justifyContent: "center", gap: 2, flexWrap: "wrap" }}>
+            <Button component={Link} href="/donate" variant="contained" size="large"
+              sx={{
+                bgcolor: "white", color: "#b91c1c", fontWeight: 800, px: 4.5, py: 1.6,
+                borderRadius: "10px", fontSize: "0.95rem",
+                boxShadow: "0 8px 32px rgba(0,0,0,0.28)",
+                "&:hover": { bgcolor: "#fff1f2", transform: "translateY(-2px)", boxShadow: "0 14px 40px rgba(0,0,0,0.3)" },
+                transition: "all 0.22s ease",
+              }}>
+              Become a Donor
             </Button>
-            <Button variant="outlined" size="large" component={Link} href="/appointments" sx={{
-              borderColor: "rgba(255,255,255,0.7)", color: "white", fontWeight: 700, px: 5, py: 1.7, borderRadius: 3, fontSize: "1rem",
-              backdropFilter: "blur(4px)",
-              "&:hover": { backgroundColor: "rgba(255,255,255,0.15)", borderColor: "white", transform: "translateY(-3px)" },
-              transition: "all 0.25s ease",
-            }}>
-              BOOK APPOINTMENT
+            <Button component={Link} href="/requests" variant="outlined" size="large"
+              sx={{
+                borderColor: "rgba(255,255,255,0.48)", color: "white", fontWeight: 700,
+                px: 4.5, py: 1.6, borderRadius: "10px", fontSize: "0.95rem",
+                "&:hover": { bgcolor: "rgba(255,255,255,0.1)", borderColor: "white", transform: "translateY(-2px)" },
+                transition: "all 0.22s ease",
+              }}>
+              Request Blood
             </Button>
           </Box>
         </Container>
@@ -569,6 +616,4 @@ const Home = () => {
 
     </Box>
   );
-};
-
-export default Home;
+}
