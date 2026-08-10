@@ -294,7 +294,7 @@ const DonateBlood = () => {
                   Registration
                 </Typography>
                 <Typography variant="h5" fontWeight={800} sx={{ lineHeight: 1.2 }}>
-                  Donor Registration
+                  Complete Your Details
                 </Typography>
               </Box>
             </Box>

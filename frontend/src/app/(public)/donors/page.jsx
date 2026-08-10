@@ -67,12 +67,10 @@ const DonorList = () => {
       {/* ── Hero ────────────────────────────────────────────────────────────── */}
       <Box sx={{
         position: "relative",
-        minHeight: { xs: "68vh", md: "76vh" },
         display: "flex", flexDirection: "column",
         alignItems: "center", justifyContent: "center", textAlign: "center",
         backgroundImage: `url('${HERO_IMG}')`,
         backgroundSize: "cover", backgroundPosition: "center",
-        backgroundAttachment: { xs: "scroll", md: "fixed" },
         "&::before": {
           content: '""', position: "absolute", inset: 0,
           background: isDark
@@ -81,29 +79,29 @@ const DonorList = () => {
           zIndex: 1,
         },
       }}>
-        <Box sx={{ position: "relative", zIndex: 2, px: 3, pt: { xs: 14, md: 8 }, pb: { xs: 6, md: 4 } }}>
+        <Box sx={{ position: "relative", zIndex: 2, px: 3, pt: { xs: 12, md: 8 }, pb: { xs: 4, md: 4 } }}>
           <Chip
-            icon={<PeopleIcon sx={{ color: "white !important", fontSize: "18px !important" }} />}
+            icon={<PeopleIcon sx={{ color: "white !important", fontSize: "16px !important" }} />}
             label="Verified Donor Network"
-            sx={{ backgroundColor: "rgba(255,255,255,0.15)", color: "white", fontWeight: 700, mb: 3, backdropFilter: "blur(4px)", fontSize: "0.82rem" }}
+            sx={{ backgroundColor: "rgba(255,255,255,0.15)", color: "white", fontWeight: 700, mb: 2, backdropFilter: "blur(4px)", fontSize: "0.75rem" }}
           />
-          <Typography variant="h2" fontWeight={800} color="white"
-            sx={{ lineHeight: 1.12, mb: 2, fontSize: { xs: "2.4rem", md: "3.6rem" }, textShadow: "0 2px 24px rgba(0,0,0,0.6)" }}>
+          <Typography variant="h3" fontWeight={800} color="white"
+            sx={{ lineHeight: 1.12, mb: 1.5, fontSize: { xs: "1.8rem", md: "2.6rem" }, textShadow: "0 2px 24px rgba(0,0,0,0.6)" }}>
             Find a Donor
           </Typography>
-          <Typography variant="h5" sx={{ color: "#ffcdd2", fontWeight: 700, mb: 2.5, fontSize: { xs: "1.1rem", md: "1.4rem" } }}>
+          <Typography variant="body1" sx={{ color: "#ffcdd2", fontWeight: 700, mb: 1, fontSize: { xs: "0.95rem", md: "1.05rem" } }}>
             Every donor here is a potential lifesaver.
           </Typography>
-          <Typography variant="h6" sx={{
-            color: "rgba(255,255,255,0.82)", maxWidth: 520, mx: "auto",
-            lineHeight: 1.8, fontWeight: 400, fontSize: { xs: "1rem", md: "1.1rem" },
+          <Typography variant="body2" sx={{
+            color: "rgba(255,255,255,0.82)", maxWidth: 480, mx: "auto",
+            lineHeight: 1.7, fontWeight: 400, fontSize: { xs: "0.85rem", md: "0.92rem" },
           }}>
             Browse our network of registered blood donors. Filter by blood type or
             search by name to find the right match quickly.
           </Typography>
 
           {/* Live stats */}
-          <Box sx={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: { xs: 2, md: 3 }, mt: 6 }}>
+          <Box sx={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: { xs: 1.5, md: 2 }, mt: 3 }}>
             {[
               { value: loading ? "…" : donors.length, label: "Registered Donors" },
               { value: loading ? "…" : availableCount, label: "Available Now" },
@@ -111,14 +109,14 @@ const DonorList = () => {
               { value: "50+", label: "Partner Hospitals" },
             ].map((s, i) => (
               <Box key={i} sx={{
-                textAlign: "center", px: { xs: 2, md: 3 }, py: 1.5,
+                textAlign: "center", px: { xs: 1.5, md: 2 }, py: 1,
                 backgroundColor: "rgba(255,255,255,0.10)",
                 backdropFilter: "blur(8px)",
                 border: "1px solid rgba(255,255,255,0.18)",
-                borderRadius: 3, minWidth: 110,
+                borderRadius: 2.5, minWidth: 90,
               }}>
-                <Typography variant="h6" fontWeight={800} color="white">{s.value}</Typography>
-                <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.75)", fontWeight: 600 }}>{s.label}</Typography>
+                <Typography variant="subtitle1" fontWeight={800} color="white" sx={{ fontSize: "1rem", lineHeight: 1.2 }}>{s.value}</Typography>
+                <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.75)", fontWeight: 600, fontSize: "0.68rem" }}>{s.label}</Typography>
               </Box>
             ))}
           </Box>

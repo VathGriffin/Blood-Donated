@@ -13,6 +13,7 @@ router.get('/', adminAuth, async (req, res) => {
       totalRequests, pendingRequests, criticalRequests,
       totalAppointments, pendingAppointments,
       totalMessages, bloodTypeBreakdown,
+      recentDonors, recentRequests,
     ] = await Promise.all([
       Donor.countDocuments(),
       Donor.countDocuments({ available: true }),
@@ -23,9 +24,6 @@ router.get('/', adminAuth, async (req, res) => {
       Appointment.countDocuments({ status: 'Pending' }),
       ContactMessage.countDocuments(),
       Donor.aggregate([{ $group: { _id: '$bloodType', count: { $sum: 1 } } }, { $sort: { _id: 1 } }]),
-    ]);
-
-    const [recentDonors, recentRequests] = await Promise.all([
       Donor.find().sort({ createdAt: -1 }).limit(5).select('fullName bloodType location available createdAt photo').lean(),
       BloodRequest.find().sort({ createdAt: -1 }).limit(5).select('patientName bloodType urgency status hospitalName createdAt').lean(),
     ]);

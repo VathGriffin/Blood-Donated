@@ -100,13 +100,30 @@ function Footer() {
       </Box>
 
       <Divider sx={{ backgroundColor: "rgba(255,255,255,0.15)", mt: 5, mb: 3 }} />
-      <Box sx={{ maxWidth: "1200px", mx: "auto", display: "flex", flexDirection: { xs: "column", sm: "row" }, justifyContent: "space-between", alignItems: "center", gap: 1 }}>
-        <Typography variant="body2" sx={{ opacity: 0.7, fontSize: "0.82rem" }}>
-          © {new Date().getFullYear()} BloodLife. All rights reserved.
-        </Typography>
-        <Typography variant="body2" sx={{ opacity: 0.7, fontSize: "0.82rem", display: "flex", alignItems: "center", gap: 0.5 }}>
-          Made with <Favorite sx={{ fontSize: 14, color: "#ffcdd2" }} /> by Data Science Students — ITC Cambodia
-        </Typography>
+      <Box sx={{ maxWidth: "1200px", mx: "auto" }}>
+        <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, justifyContent: "space-between", alignItems: "center", gap: 1.5, mb: 1.5 }}>
+          <Typography variant="body2" sx={{ opacity: 0.7, fontSize: "0.82rem" }} suppressHydrationWarning>
+            © {new Date().getFullYear()} BloodLife. All rights reserved.
+          </Typography>
+          <Typography variant="body2" sx={{ opacity: 0.7, fontSize: "0.82rem", display: "flex", alignItems: "center", gap: 0.5 }}>
+            Made with <Favorite sx={{ fontSize: 14, color: "#ffcdd2" }} /> by Data Science Students — ITC Cambodia
+          </Typography>
+        </Box>
+        <Box sx={{ display: "flex", justifyContent: "center", gap: 3, flexWrap: "wrap" }}>
+          {[
+            { label: "Privacy Policy", path: "/privacy" },
+            { label: "Terms of Service", path: "/terms" },
+            { label: "Cookie Policy", path: "/privacy#collect" },
+            { label: "Contact", path: "/contact" },
+          ].map(l => (
+            <Link key={l.path} href={l.path}
+              style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.78rem", textDecoration: "none" }}
+              onMouseEnter={e => e.target.style.color = "#ffcdd2"}
+              onMouseLeave={e => e.target.style.color = "rgba(255,255,255,0.6)"}>
+              {l.label}
+            </Link>
+          ))}
+        </Box>
       </Box>
     </Box>
   );

@@ -50,7 +50,9 @@ const Header = () => {
   const theme = useTheme();
   const { toggleColorMode } = useContext(ColorModeContext);
   const { isAuth, user, logout } = useUserAuth();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const isMobileQuery = useMediaQuery(theme.breakpoints.down("md"), { noSsr: true });
+  const [mounted, setMounted] = useState(false);
+  const isMobile = mounted && isMobileQuery;
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const [scrolled, setScrolled] = useState(false);
@@ -58,6 +60,8 @@ const Header = () => {
   const router = useRouter();
   const pathname = usePathname();
   const isDark = theme.palette.mode === "dark";
+
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);

@@ -6,11 +6,14 @@ const donorSchema = new mongoose.Schema(
     email: {
       type: String,
       required: [true, 'Email is required'],
+      lowercase: true,
+      trim: true,
       match: [/\S+@\S+\.\S+/, 'Please enter a valid email address'],
     },
     phone: {
       type: String,
       required: [true, 'Phone number is required'],
+      trim: true,
       match: [/^0\d{9,10}$/, 'Please enter a valid phone number'],
     },
     bloodType: {
@@ -22,11 +25,19 @@ const donorSchema = new mongoose.Schema(
     available: { type: Boolean, default: false },
     lastDonation: { type: Date, default: null },
     photo: { type: String, default: null },
+    donationCount: { type: Number, default: 0 },
+    donationHistory: [{
+      date:     { type: Date, default: Date.now },
+      location: { type: String, default: '' },
+      units:    { type: Number, default: 1 },
+      notes:    { type: String, default: '' },
+    }],
   },
   { timestamps: true }
 );
 
 donorSchema.index({ bloodType: 1, available: 1 });
 donorSchema.index({ createdAt: -1 });
+donorSchema.index({ email: 1 });
 
 module.exports = mongoose.model('Donor', donorSchema);

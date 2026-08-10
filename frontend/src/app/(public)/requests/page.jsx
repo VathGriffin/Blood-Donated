@@ -13,6 +13,8 @@ import AccessTimeIcon     from "@mui/icons-material/AccessTime";
 import CheckCircleIcon    from "@mui/icons-material/CheckCircle";
 import CancelIcon         from "@mui/icons-material/Cancel";
 import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
+import LockOutlinedIcon   from "@mui/icons-material/LockOutlined";
+import Link               from "next/link";
 import axios from "axios";
 import API_BASE from "@/lib/config";
 import { useUserAuth } from "@/store/UserAuthContext";
@@ -40,7 +42,10 @@ export default function RequestBlood() {
   const theme  = useTheme();
   const isDark = theme.palette.mode === "dark";
   const router = useRouter();
-  const { user: loggedInUser } = useUserAuth();
+  const { user: loggedInUser, isAuth } = useUserAuth();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   const [pageTab, setPageTab] = useState(0);
 
@@ -173,6 +178,7 @@ export default function RequestBlood() {
         {pageTab === 0 && (
           <Box maxWidth={560} mx="auto">
             <Paper elevation={0} sx={{ borderRadius: "20px", border: `1px solid ${border}`, bgcolor: cardBg, p: { xs: 3, md: 4.5 } }}>
+
               {error && <Alert severity="error" sx={{ mb: 3, borderRadius: "10px" }}>{error}</Alert>}
 
               <Box component="form" onSubmit={handleSubmit} noValidate>
@@ -258,26 +264,48 @@ export default function RequestBlood() {
                   placeholder="Contact number, special instructions…"
                   value={form.notes} onChange={handleChange("notes")} sx={fieldSx} />
 
-                <Button type="submit" variant="contained" fullWidth disabled={loading}
-                  sx={{
-                    mt: 0.5, py: 1.6, borderRadius: "100px", fontWeight: 700, fontSize: "0.95rem",
-                    background: "linear-gradient(135deg, #dc2626 0%, #991b1b 100%)",
-                    boxShadow: "0 4px 20px rgba(220,38,38,0.4)",
-                    "&:hover": {
-                      background: "linear-gradient(135deg, #b91c1c 0%, #7f1d1d 100%)",
-                      boxShadow: "0 8px 30px rgba(220,38,38,0.5)",
-                      transform: "translateY(-1px)",
-                    },
-                    "&.Mui-disabled": { background: isDark ? "#1f1f1f" : "#e5e5e5" },
-                    transition: "all 0.22s ease",
-                    display: "flex", gap: 1, alignItems: "center",
-                  }}>
-                  <FavoriteIcon sx={{ fontSize: 18 }} />
-                  {loading ? "Submitting…" : "Submit Request"}
-                </Button>
+                {/* Submit — redirects to login if not authenticated */}
+                {mounted && !isAuth ? (
+                  <Button component={Link} href="/login" variant="contained" fullWidth
+                    sx={{
+                      mt: 0.5, py: 1.6, borderRadius: "100px", fontWeight: 700, fontSize: "0.95rem",
+                      background: "linear-gradient(135deg, #dc2626 0%, #991b1b 100%)",
+                      boxShadow: "0 4px 20px rgba(220,38,38,0.4)",
+                      "&:hover": {
+                        background: "linear-gradient(135deg, #b91c1c 0%, #7f1d1d 100%)",
+                        boxShadow: "0 8px 30px rgba(220,38,38,0.5)",
+                        transform: "translateY(-1px)",
+                      },
+                      transition: "all 0.22s ease",
+                      display: "flex", gap: 1, alignItems: "center",
+                    }}>
+                    <LockOutlinedIcon sx={{ fontSize: 18 }} />
+                    Log in to Submit Request
+                  </Button>
+                ) : (
+                  <Button type="submit" variant="contained" fullWidth disabled={loading}
+                    sx={{
+                      mt: 0.5, py: 1.6, borderRadius: "100px", fontWeight: 700, fontSize: "0.95rem",
+                      background: "linear-gradient(135deg, #dc2626 0%, #991b1b 100%)",
+                      boxShadow: "0 4px 20px rgba(220,38,38,0.4)",
+                      "&:hover": {
+                        background: "linear-gradient(135deg, #b91c1c 0%, #7f1d1d 100%)",
+                        boxShadow: "0 8px 30px rgba(220,38,38,0.5)",
+                        transform: "translateY(-1px)",
+                      },
+                      "&.Mui-disabled": { background: isDark ? "#1f1f1f" : "#e5e5e5" },
+                      transition: "all 0.22s ease",
+                      display: "flex", gap: 1, alignItems: "center",
+                    }}>
+                    <FavoriteIcon sx={{ fontSize: 18 }} />
+                    {loading ? "Submitting…" : "Submit Request"}
+                  </Button>
+                )}
 
                 <Typography variant="caption" color="text.disabled" display="block" textAlign="center" mt={2} lineHeight={1.6}>
-                  By submitting, you confirm the information is accurate and pertains to a genuine medical need.
+                  {mounted && !isAuth
+                    ? "You need to log in before submitting a blood request."
+                    : "By submitting, you confirm the information is accurate and pertains to a genuine medical need."}
                 </Typography>
               </Box>
             </Paper>

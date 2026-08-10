@@ -35,7 +35,7 @@ const UserLogin = () => {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (isAuth) router.replace('/notification');
+    if (isAuth) router.replace('/');
   }, [isAuth, router]);
 
   if (isAuth) return null;
@@ -51,7 +51,7 @@ const UserLogin = () => {
     try {
       const { data } = await axios.post(`${API_BASE}/api/user/login`, form);
       login(data.token, data.user);
-      router.push("/notification");
+      router.push("/");
     } catch (err) {
       setError(err.response?.data?.message || "Login failed. Please try again.");
     } finally {

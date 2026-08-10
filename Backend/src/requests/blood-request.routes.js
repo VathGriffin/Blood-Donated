@@ -1,10 +1,19 @@
 const express = require('express');
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-const router = express.Router();
+const multer  = require('multer');
+const path    = require('path');
+const fs      = require('fs');
+const { body, validationResult } = require('express-validator');
+const router  = express.Router();
 const BloodRequest = require('./blood-request.model');
-const adminAuth = require('../common/middleware/admin-auth');
+const adminAuth    = require('../common/middleware/admin-auth');
+
+const validateRequest = [
+  body('patientName').trim().notEmpty().withMessage('Patient name is required').isLength({ max: 100 }),
+  body('bloodType').isIn(['A+','A-','B+','B-','AB+','AB-','O+','O-']).withMessage('Invalid blood type'),
+  body('unitsNeeded').isInt({ min: 1, max: 50 }).withMessage('Units needed must be between 1 and 50'),
+  body('hospital').trim().notEmpty().withMessage('Hospital name is required'),
+  body('urgency').isIn(['normal','urgent','critical']).withMessage('Invalid urgency level'),
+];
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, path.join(__dirname, '../../uploads')),
@@ -17,7 +26,9 @@ const upload = multer({
     file.mimetype.startsWith('image/') ? cb(null, true) : cb(new Error('Only image files are allowed')),
 });
 
-router.post('/', async (req, res) => {
+router.post('/', validateRequest, async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
   try {
     res.status(201).json(await new BloodRequest(req.body).save());
   } catch (err) {

@@ -314,7 +314,7 @@ export default function QRCardPage() {
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           }}>
             <Typography fontSize="0.6rem" color="text.disabled">BloodLife Cambodia · blooddonated.org</Typography>
-            <Typography fontSize="0.6rem" color="text.disabled">{new Date().getFullYear()}</Typography>
+            <Typography fontSize="0.6rem" color="text.disabled" suppressHydrationWarning>{new Date().getFullYear()}</Typography>
           </Box>
         </Box>
 

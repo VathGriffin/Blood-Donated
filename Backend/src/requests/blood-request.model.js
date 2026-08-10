@@ -10,7 +10,7 @@ const bloodRequestSchema = new mongoose.Schema(
     status: { type: String, enum: ['Pending', 'Approved', 'Rejected'], default: 'Pending' },
     reason: { type: String, required: true },
     contact:   { type: String, default: '' },
-    userEmail: { type: String, default: '' },
+    userEmail: { type: String, default: '', lowercase: true, trim: true },
     photo: { type: String, default: null },
   },
   { timestamps: true }
@@ -19,5 +19,6 @@ const bloodRequestSchema = new mongoose.Schema(
 bloodRequestSchema.index({ status: 1, urgency: 1 });
 bloodRequestSchema.index({ bloodType: 1 });
 bloodRequestSchema.index({ createdAt: -1 });
+bloodRequestSchema.index({ userEmail: 1 });
 
 module.exports = mongoose.model('BloodRequest', bloodRequestSchema);

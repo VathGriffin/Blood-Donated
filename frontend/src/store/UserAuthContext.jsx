@@ -1,5 +1,5 @@
 'use client';
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const UserAuthContext = createContext({
   token: null, user: null, isAuth: false,
@@ -7,11 +7,12 @@ const UserAuthContext = createContext({
 });
 
 export const UserAuthProvider = ({ children }) => {
-  const [userData, setUserData] = useState(() => {
-    if (typeof window === 'undefined') return null;
+  const [userData, setUserData] = useState(null);
+
+  useEffect(() => {
     const stored = localStorage.getItem('userAuth');
-    return stored ? JSON.parse(stored) : null;
-  });
+    if (stored) setUserData(JSON.parse(stored));
+  }, []);
 
   const login = (token, user) => {
     const data = { token, ...user };

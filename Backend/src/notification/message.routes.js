@@ -54,9 +54,10 @@ router.get('/conversations', adminAuth, async (req, res) => {
 
 router.get('/conversation/:userId', adminAuth, async (req, res) => {
   try {
-    const messages = await Message.find({ userId: req.params.userId }).sort({ createdAt: 1 });
-    await Message.updateMany({ userId: req.params.userId, sender: 'user', read: false }, { $set: { read: true } });
+    const messages = await Message.find({ userId: req.params.userId }).sort({ createdAt: 1 }).lean();
     res.json(messages);
+    Message.updateMany({ userId: req.params.userId, sender: 'user', read: false }, { $set: { read: true } })
+      .catch((err) => console.error('Failed to mark messages as read:', err.message));
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

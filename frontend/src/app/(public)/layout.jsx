@@ -3,6 +3,7 @@ import React from 'react';
 import Header, { URGENT_STRIP_HEIGHT } from '@/components/Header';
 import Footer from '@/components/Footer';
 import ChatBotWrapper from '@/components/ChatBotWrapper';
+import CookieConsent from '@/components/CookieConsent';
 import { Box, useTheme } from '@mui/material';
 
 export default function PublicLayout({ children }) {
@@ -23,6 +24,7 @@ export default function PublicLayout({ children }) {
       </Box>
       <Footer />
       <ChatBotWrapper />
+      <CookieConsent />
     </Box>
   );
 }

@@ -11,11 +11,14 @@ import {
   Settings, SmartToy, LocalHospital, Bloodtype, CalendarMonth,
   Notifications, Security, Backup, Assignment, Key,
   Save, Add, Delete, Refresh, Visibility, VisibilityOff,
-  CheckCircle, ContentCopy, Warning,
+  CheckCircle, ContentCopy, Warning, Home, AddAPhoto,
 } from '@mui/icons-material';
+import API_BASE from '@/lib/config';
+import { useAuth } from '@/store/AuthContext';
 
 const SECTIONS = [
   { id: 'general',     label: 'General',              icon: <Settings sx={{ fontSize: 18 }} /> },
+  { id: 'homepage',    label: 'Homepage Profiles',    icon: <Home sx={{ fontSize: 18 }} /> },
   { id: 'ai',          label: 'AI Configuration',     icon: <SmartToy sx={{ fontSize: 18 }} /> },
   { id: 'hospitals',   label: 'Hospital Management',  icon: <LocalHospital sx={{ fontSize: 18 }} /> },
   { id: 'blood',       label: 'Blood Rules',          icon: <Bloodtype sx={{ fontSize: 18 }} /> },
@@ -60,10 +63,73 @@ const levelBg   = (l, dark) => ({
 export default function AdminSettings() {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const { token } = useAuth();
 
   const [section, setSection] = useState('general');
   const [saved, setSaved]     = useState(false);
   const [showKey, setShowKey] = useState({});
+
+  // Homepage profiles state
+  const [hpProfiles, setHpProfiles]     = useState([]);
+  const [hpLoading, setHpLoading]       = useState(false);
+  const [hpUploading, setHpUploading]   = useState({});
+  const [hpError, setHpError]           = useState('');
+  const photoInputRefs = React.useRef({});
+
+  const loadHpProfiles = React.useCallback(() => {
+    setHpLoading(true);
+    setHpError('');
+    fetch(`${API_BASE}/api/homepage`)
+      .then(r => {
+        if (!r.ok) throw new Error(`Server returned ${r.status}`);
+        return r.json();
+      })
+      .then(data => setHpProfiles(Array.isArray(data) ? data : []))
+      .catch(err => setHpError(err.message || 'Failed to load profiles.'))
+      .finally(() => setHpLoading(false));
+  }, []);
+
+  React.useEffect(() => {
+    if (section !== 'homepage') return;
+    loadHpProfiles();
+  }, [section, loadHpProfiles]);
+
+  const handlePhotoUpload = async (profileId, file) => {
+    if (!file) return;
+    setHpUploading(p => ({ ...p, [profileId]: true }));
+    const form = new FormData();
+    form.append('photo', file);
+    try {
+      const res = await fetch(`${API_BASE}/api/homepage/${profileId}/photo`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      });
+      const updated = await res.json();
+      if (!res.ok) throw new Error(updated.message || 'Upload failed');
+      setHpProfiles(prev => prev.map(p => p._id === profileId ? { ...p, photo: updated.photo } : p));
+    } catch (err) {
+      setHpError(err.message);
+    } finally {
+      setHpUploading(p => ({ ...p, [profileId]: false }));
+    }
+  };
+
+  const handlePhotoRemove = async (profileId) => {
+    setHpUploading(p => ({ ...p, [profileId]: true }));
+    try {
+      const res = await fetch(`${API_BASE}/api/homepage/${profileId}/photo`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Remove failed');
+      setHpProfiles(prev => prev.map(p => p._id === profileId ? { ...p, photo: null } : p));
+    } catch (err) {
+      setHpError(err.message);
+    } finally {
+      setHpUploading(p => ({ ...p, [profileId]: false }));
+    }
+  };
 
   // General state
   const [siteName, setSiteName]   = useState('BloodLife Platform');
@@ -191,6 +257,117 @@ export default function AdminSettings() {
                 </Box>
               </Box>
             </Paper>
+          </Box>
+        );
+
+      /* ── HOMEPAGE PROFILES ── */
+      case 'homepage':
+        return (
+          <Box>
+            <SectionTitle sub="Update profile photos shown in the 'People Behind the Mission' section">
+              Homepage Profiles
+            </SectionTitle>
+            {hpError && (
+              <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}
+                action={
+                  <Button color="error" size="small" onClick={loadHpProfiles} sx={{ fontWeight: 700, textTransform: 'none' }}>
+                    Retry
+                  </Button>
+                }
+              >
+                {hpError} — make sure the backend server is running.
+              </Alert>
+            )}
+            {hpLoading ? (
+              <Typography color="text.secondary" fontSize="0.9rem">Loading profiles…</Typography>
+            ) : (
+              <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: 'repeat(3, 1fr)' }} gap={2.5}>
+                {hpProfiles.map(p => {
+                  const photoUrl = p.photo
+                    ? (p.photo.startsWith('http') ? p.photo : `${API_BASE}${p.photo}`)
+                    : null;
+                  const isUploading = !!hpUploading[p._id];
+                  return (
+                    <Paper key={p._id} elevation={0} sx={{
+                      p: 3, borderRadius: 3, border: `1px solid ${border}`, bgcolor: card,
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5, textAlign: 'center',
+                    }}>
+                      {/* Avatar */}
+                      <Box sx={{ position: 'relative' }}>
+                        <Avatar
+                          src={photoUrl || undefined}
+                          sx={{
+                            width: 88, height: 88, fontSize: '1.4rem', fontWeight: 900,
+                            bgcolor: p.color,
+                            border: '3px solid',
+                            borderColor: isDark ? '#2a2a2a' : '#f5f5f5',
+                            boxShadow: `0 6px 20px ${p.color}44`,
+                          }}
+                        >
+                          {p.initials}
+                        </Avatar>
+                        <Tooltip title="Upload photo">
+                          <IconButton
+                            size="small"
+                            disabled={isUploading}
+                            onClick={() => photoInputRefs.current[p._id]?.click()}
+                            sx={{
+                              position: 'absolute', bottom: 0, right: -4,
+                              bgcolor: '#dc2626', color: 'white', width: 28, height: 28,
+                              '&:hover': { bgcolor: '#b91c1c' },
+                              '&.Mui-disabled': { bgcolor: '#ccc' },
+                            }}
+                          >
+                            <AddAPhoto sx={{ fontSize: 14 }} />
+                          </IconButton>
+                        </Tooltip>
+                        <input
+                          type="file" accept="image/*" hidden
+                          ref={el => { photoInputRefs.current[p._id] = el; }}
+                          onChange={e => handlePhotoUpload(p._id, e.target.files[0])}
+                        />
+                      </Box>
+
+                      <Box>
+                        <Typography fontWeight={700} fontSize="0.92rem">{p.name}</Typography>
+                        <Typography variant="caption" color="text.disabled">{p.role}</Typography>
+                      </Box>
+
+                      <Chip
+                        label={p.badge} size="small"
+                        sx={{ bgcolor: isDark ? 'rgba(220,38,38,0.12)' : '#fff1f2', color: '#dc2626', fontWeight: 700, fontSize: '0.7rem' }}
+                      />
+
+                      <Box display="flex" gap={1} mt={0.5} width="100%">
+                        <Button
+                          fullWidth size="small" variant="outlined" color="error"
+                          disabled={isUploading}
+                          onClick={() => photoInputRefs.current[p._id]?.click()}
+                          sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2, fontSize: '0.78rem' }}
+                        >
+                          {isUploading ? 'Uploading…' : 'Change Photo'}
+                        </Button>
+                        {photoUrl && (
+                          <Tooltip title="Remove photo">
+                            <IconButton
+                              size="small" color="error"
+                              disabled={isUploading}
+                              onClick={() => handlePhotoRemove(p._id)}
+                              sx={{ border: `1px solid ${border}`, borderRadius: 2, flexShrink: 0 }}
+                            >
+                              <Delete sx={{ fontSize: 16 }} />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                      </Box>
+                    </Paper>
+                  );
+                })}
+              </Box>
+            )}
+            <Typography variant="caption" color="text.disabled" display="block" mt={2.5}>
+              Photos are shown on the public homepage. Max file size: 5 MB. Supported formats: JPG, PNG, WebP.
+            </Typography>
           </Box>
         );
 
