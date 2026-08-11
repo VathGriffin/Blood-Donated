@@ -10,9 +10,9 @@ const adminAuth    = require('../common/middleware/admin-auth');
 const validateRequest = [
   body('patientName').trim().notEmpty().withMessage('Patient name is required').isLength({ max: 100 }),
   body('bloodType').isIn(['A+','A-','B+','B-','AB+','AB-','O+','O-']).withMessage('Invalid blood type'),
-  body('unitsNeeded').isInt({ min: 1, max: 50 }).withMessage('Units needed must be between 1 and 50'),
-  body('hospital').trim().notEmpty().withMessage('Hospital name is required'),
-  body('urgency').isIn(['normal','urgent','critical']).withMessage('Invalid urgency level'),
+  body('unitsNeeded').isInt({ min: 1, max: 10 }).withMessage('Units needed must be between 1 and 10'),
+  body('hospitalName').trim().notEmpty().withMessage('Hospital name is required'),
+  body('urgency').isIn(['Low','Medium','High','Critical']).withMessage('Invalid urgency level'),
 ];
 
 const storage = multer.diskStorage({

@@ -8,8 +8,7 @@ import {
 } from '@mui/material';
 import {
   Dashboard, PeopleAlt, LocalHospital, Inventory2, CalendarMonth,
-  Chat, ArrowBack, Favorite, Assessment, NotificationsNone,
-  ManageAccounts, Settings,
+  Chat, ArrowBack, Favorite, Assessment, Settings,
 } from '@mui/icons-material';
 
 const drawerWidth = 244;
@@ -25,8 +24,6 @@ const mainNav = [
 
 const systemNav = [
   { label: 'Analytics',       icon: <Assessment sx={{ fontSize: 18 }} />,         path: '/dashboard/admin/analytics' },
-  { label: 'Notifications',   icon: <NotificationsNone sx={{ fontSize: 18 }} />,  path: '/dashboard/admin/contacts' },
-  { label: 'Users',           icon: <ManageAccounts sx={{ fontSize: 18 }} />,     path: '/dashboard/admin/donors' },
   { label: 'Settings',        icon: <Settings sx={{ fontSize: 18 }} />,           path: '/dashboard/admin/settings' },
 ];
 

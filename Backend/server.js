@@ -49,20 +49,21 @@ const allowedOrigins = [
 ].filter(Boolean);
 app.use(cors({ origin: allowedOrigins }));
 
-// Rate limiting — 100 req / 15 min per IP
+// Rate limiting — 100 req / 15 min per IP in production, relaxed in development
+const isDev = process.env.NODE_ENV !== 'production';
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: isDev ? 10000 : 100,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests, please try again later.' },
 });
 app.use('/api', limiter);
 
-// Auth endpoints — stricter limit (10 req / 15 min)
+// Auth endpoints — stricter limit (10 req / 15 min in production)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: isDev ? 1000 : 10,
   message: { error: 'Too many login attempts, please try again later.' },
 });
 
@@ -70,8 +71,15 @@ app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
 // NoSQL injection sanitization — strips $ and . from req.body, req.params, req.query
+// Express 5 makes req.query a getter-only property, so we sanitize in place
+// instead of using the package's middleware, which reassigns req.query directly.
 const mongoSanitize = require('express-mongo-sanitize');
-app.use(mongoSanitize());
+app.use((req, res, next) => {
+  if (req.body) mongoSanitize.sanitize(req.body);
+  if (req.params) mongoSanitize.sanitize(req.params);
+  if (req.query) mongoSanitize.sanitize(req.query);
+  next();
+});
 
 app.use('/uploads', express.static(uploadsDir));
 

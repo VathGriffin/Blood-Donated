@@ -40,9 +40,11 @@ const STATUS_META = {
 
 const urgencyOrder = { critical: 0, high: 1, medium: 2, low: 3 };
 
+const UNITS = Array.from({ length: 10 }, (_, i) => i + 1);
+
 const emptyForm = {
     hospitalName: "", patientName: "", bloodType: "",
-    urgency: "", reason: "", contact: "", photo: null,
+    unitsNeeded: "", urgency: "", reason: "", contact: "", photo: null,
 };
 
 const ManageRequests = () => {
@@ -110,8 +112,8 @@ const ManageRequests = () => {
     const handleSubmit = async () => {
         if (!editId) return;
         try {
-            const { hospitalName, patientName, bloodType, urgency, reason, contact } = formData;
-            await axios.put(`${API_BASE}/${editId}`, { hospitalName, patientName, bloodType, urgency, reason, contact }, authHeader());
+            const { hospitalName, patientName, bloodType, unitsNeeded, urgency, reason, contact } = formData;
+            await axios.put(`${API_BASE}/${editId}`, { hospitalName, patientName, bloodType, unitsNeeded, urgency, reason, contact }, authHeader());
         } catch (err) {
             const msg = err.response?.data?.error || err.response?.data?.message || "Failed to update request.";
             alert(msg);
@@ -152,6 +154,7 @@ const ManageRequests = () => {
             hospitalName: req.hospitalName || "",
             patientName:  req.patientName  || "",
             bloodType:    req.bloodType    || "",
+            unitsNeeded:  req.unitsNeeded  || "",
             urgency:      req.urgency      || "",
             reason:       req.reason       || "",
             contact:      req.contact      || "",
@@ -273,7 +276,7 @@ const ManageRequests = () => {
                 <Table>
                     <TableHead sx={{ bgcolor: headBg }}>
                         <TableRow>
-                            {["Patient", "Hospital", "Blood", "Urgency", "Status", "Reason", "Actions"].map(h => (
+                            {["Patient", "Hospital", "Blood", "Units", "Urgency", "Status", "Reason", "Actions"].map(h => (
                                 <TableCell key={h} sx={{ fontWeight: 700, fontSize: "0.82rem", py: 1.5 }}>{h}</TableCell>
                             ))}
                         </TableRow>
@@ -281,7 +284,7 @@ const ManageRequests = () => {
                     <TableBody>
                         {filtered.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
+                                <TableCell colSpan={8} align="center" sx={{ py: 6 }}>
                                     <Bloodtype sx={{ fontSize: 40, color: "text.disabled", mb: 1 }} />
                                     <Typography color="text.secondary" fontSize="0.9rem">
                                         No {statusTab !== "All" ? statusTab.toLowerCase() : ""} requests found.
@@ -330,6 +333,10 @@ const ManageRequests = () => {
                                     <TableCell>
                                         <Chip label={req.bloodType} color="error" size="small"
                                             sx={{ fontWeight: 800, fontSize: "0.75rem" }} />
+                                    </TableCell>
+
+                                    <TableCell sx={{ fontWeight: 600, fontSize: "0.85rem" }}>
+                                        {req.unitsNeeded ?? "—"}
                                     </TableCell>
 
                                     <TableCell>
@@ -481,6 +488,7 @@ const ManageRequests = () => {
                                 {[
                                     { icon: <LocalHospital fontSize="small" sx={{ color: "#b71c1c" }} />, label: "Hospital",    value: viewProfile.hospitalName },
                                     { icon: <Bloodtype     fontSize="small" sx={{ color: "#b71c1c" }} />, label: "Blood Type",  value: viewProfile.bloodType },
+                                    { icon: <Bloodtype     fontSize="small" sx={{ color: "#b71c1c" }} />, label: "Units Needed", value: viewProfile.unitsNeeded },
                                     { icon: <Phone         fontSize="small" sx={{ color: "#b71c1c" }} />, label: "Contact",     value: viewProfile.contact },
                                     { icon: <Bloodtype     fontSize="small" sx={{ color: "#b71c1c" }} />, label: "Reason",      value: viewProfile.reason },
                                     { icon: <CalendarToday fontSize="small" sx={{ color: "#b71c1c" }} />, label: "Submitted",   value: viewProfile.createdAt ? new Date(viewProfile.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "—" },
@@ -591,6 +599,12 @@ const ManageRequests = () => {
                         <InputLabel>Blood Type</InputLabel>
                         <Select name="bloodType" value={formData.bloodType} onChange={handleChange} label="Blood Type">
                             {BLOOD_TYPES.map(t => <MenuItem key={t} value={t}>{t}</MenuItem>)}
+                        </Select>
+                    </FormControl>
+                    <FormControl fullWidth margin="dense">
+                        <InputLabel>Units Needed</InputLabel>
+                        <Select name="unitsNeeded" value={formData.unitsNeeded} onChange={handleChange} label="Units Needed">
+                            {UNITS.map(u => <MenuItem key={u} value={u}>{u}</MenuItem>)}
                         </Select>
                     </FormControl>
                     <FormControl fullWidth margin="dense">
