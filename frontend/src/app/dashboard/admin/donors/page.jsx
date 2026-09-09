@@ -63,7 +63,7 @@ const ManageDonors = () => {
 
   const fetchDonors = async () => {
     try {
-      const res = await axios.get(API);
+      const res = await axios.get(API, authHeader());
       setDonors(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error("Fetch failed:", err);
@@ -142,7 +142,7 @@ const ManageDonors = () => {
         setUploading(true);
         const formData = new FormData();
         formData.append("photo", photoFile);
-        await axios.post(`${API}/${savedDonor._id}/photo`, formData);
+        await axios.post(`${API}/${savedDonor._id}/photo`, formData, authHeader());
         setUploading(false);
       }
 

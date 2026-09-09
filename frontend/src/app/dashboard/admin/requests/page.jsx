@@ -124,7 +124,7 @@ const ManageRequests = () => {
                 setUploading(true);
                 const fd = new FormData();
                 fd.append("photo", photoFile);
-                await axios.post(`${API_BASE}/${editId}/photo`, fd);
+                await axios.post(`${API_BASE}/${editId}/photo`, fd, authHeader());
             } catch {
                 alert("Request updated, but photo upload failed.");
             } finally {

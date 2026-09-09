@@ -83,3 +83,51 @@ describe('blood request fulfillment -> inventory decrement', () => {
     expect(res.status).toBe(200);
   });
 });
+
+describe('blood request photo upload', () => {
+  test('rejects an unauthenticated upload', async () => {
+    const hospital = await createHospital();
+    const req = await BloodRequest.create({
+      hospitalName: hospital.name, hospital: hospital._id, patientName: 'Patient',
+      bloodType: 'O+', unitsNeeded: 1, urgency: 'Low', reason: 'checkup', status: 'Pending',
+    });
+
+    const res = await request(app)
+      .post(`/api/requests/${req._id}/photo`)
+      .attach('photo', Buffer.from('fake-image-bytes'), 'photo.jpg');
+    expect(res.status).toBe(401);
+  });
+
+  test('hospital_staff cannot attach a photo to another hospital\'s request', async () => {
+    const hospitalA = await createHospital({ name: 'Hospital A' });
+    const hospitalB = await createHospital({ name: 'Hospital B' });
+    const { token: staffAToken } = await createHospitalStaff(hospitalA._id, { email: 'staffA2@test.com' });
+
+    const req = await BloodRequest.create({
+      hospitalName: hospitalB.name, hospital: hospitalB._id, patientName: 'Patient',
+      bloodType: 'O+', unitsNeeded: 1, urgency: 'Low', reason: 'checkup', status: 'Pending',
+    });
+
+    const res = await request(app)
+      .post(`/api/requests/${req._id}/photo`)
+      .set('Authorization', `Bearer ${staffAToken}`)
+      .attach('photo', Buffer.from('fake-image-bytes'), 'photo.jpg');
+    expect(res.status).toBe(403);
+  });
+
+  test('admin can attach a photo to any request', async () => {
+    const hospital = await createHospital();
+    const { token: adminToken } = await createAdmin();
+    const req = await BloodRequest.create({
+      hospitalName: hospital.name, hospital: hospital._id, patientName: 'Patient',
+      bloodType: 'O+', unitsNeeded: 1, urgency: 'Low', reason: 'checkup', status: 'Pending',
+    });
+
+    const res = await request(app)
+      .post(`/api/requests/${req._id}/photo`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .attach('photo', Buffer.from('fake-image-bytes'), 'photo.jpg');
+    expect(res.status).toBe(200);
+    expect(res.body.photo).toBeDefined();
+  });
+});

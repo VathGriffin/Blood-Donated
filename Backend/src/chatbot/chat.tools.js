@@ -41,7 +41,9 @@ const dbUnavailable = (label) => ({ error: `${label} is temporarily unavailable 
 
 async function getInventoryLevels() {
   if (mongoose.connection.readyState !== 1) return dbUnavailable('Inventory data');
-  const items = await Inventory.find({ hospital: null }).lean({ virtuals: true });
+  // Not .lean() — the `status` field is a schema virtual, which only computes on
+  // hydrated documents (lean() skips it, "virtuals: true" isn't a real lean option).
+  const items = await Inventory.find({ hospital: null });
   return items.map((i) => ({ bloodType: i.bloodType, units: i.units, status: i.status }));
 }
 

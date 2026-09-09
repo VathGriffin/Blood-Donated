@@ -94,7 +94,9 @@ const DonateBlood = () => {
         const photoPayload = new FormData();
         photoPayload.append("photo", photoFile);
         await fetch(`${API_BASE}/api/donors/${savedDonor._id}/photo`, {
-          method: "POST", body: photoPayload,
+          method: "POST",
+          headers: { Authorization: `Bearer ${savedDonor.photoUploadToken}` },
+          body: photoPayload,
         });
       }
       router.push("/donate/thank-you");

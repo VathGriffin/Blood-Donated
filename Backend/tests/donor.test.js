@@ -13,12 +13,56 @@ const donorBody = {
 };
 
 describe('donor CRUD', () => {
-  test('creates and fetches a donor', async () => {
+  test('creates a donor and issues a scoped photo-upload token', async () => {
     const created = await request(app).post('/api/donors').send(donorBody);
     expect(created.status).toBe(201);
-    const fetched = await request(app).get(`/api/donors/${created.body._id}`);
-    expect(fetched.status).toBe(200);
-    expect(fetched.body.email).toBe(donorBody.email);
+    expect(created.body.photoUploadToken).toBeDefined();
+  });
+
+  test('public fetch omits email/phone; staff fetch includes them', async () => {
+    const created = await request(app).post('/api/donors').send(donorBody);
+
+    const publicFetch = await request(app).get(`/api/donors/${created.body._id}`);
+    expect(publicFetch.status).toBe(200);
+    expect(publicFetch.body.email).toBeUndefined();
+    expect(publicFetch.body.phone).toBeUndefined();
+    expect(publicFetch.body.fullName).toBe(donorBody.fullName);
+
+    const { token: staffToken } = await createAdmin();
+    const staffFetch = await request(app)
+      .get(`/api/donors/${created.body._id}`)
+      .set('Authorization', `Bearer ${staffToken}`);
+    expect(staffFetch.body.email).toBe(donorBody.email);
+  });
+
+  test('photo upload requires the scoped token or a staff role', async () => {
+    const created = await request(app).post('/api/donors').send(donorBody);
+    const donorId = created.body._id;
+
+    const rejected = await request(app)
+      .post(`/api/donors/${donorId}/photo`)
+      .attach('photo', Buffer.from('fake-image-bytes'), 'photo.jpg');
+    expect(rejected.status).toBe(401);
+
+    const accepted = await request(app)
+      .post(`/api/donors/${donorId}/photo`)
+      .set('Authorization', `Bearer ${created.body.photoUploadToken}`)
+      .attach('photo', Buffer.from('fake-image-bytes'), 'photo.jpg');
+    expect(accepted.status).toBe(200);
+    expect(accepted.body.photo).toBeDefined();
+  });
+
+  test('a photo-upload token cannot be used against a different donor', async () => {
+    const created = await request(app).post('/api/donors').send(donorBody);
+    const other = await request(app)
+      .post('/api/donors')
+      .send({ ...donorBody, email: 'other@test.com' });
+
+    const res = await request(app)
+      .post(`/api/donors/${other.body._id}/photo`)
+      .set('Authorization', `Bearer ${created.body.photoUploadToken}`)
+      .attach('photo', Buffer.from('fake-image-bytes'), 'photo.jpg');
+    expect(res.status).toBe(401);
   });
 
   test('lookup by email', async () => {

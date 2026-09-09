@@ -43,11 +43,15 @@ router.post('/', validateRequest, async (req, res) => {
   }
 });
 
-router.post('/:id/photo', upload.single('photo'), async (req, res) => {
+router.post('/:id/photo', requireRole('admin', 'hospital_staff'), upload.single('photo'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
     const request = await BloodRequest.findById(req.params.id);
     if (!request) return res.status(404).json({ error: 'Request not found' });
+    if (!assertHospitalScope(req, request)) {
+      fs.unlinkSync(req.file.path);
+      return res.status(403).json({ error: "Not your hospital's request" });
+    }
     if (request.photo) {
       const old = path.join(__dirname, '../../uploads', path.basename(request.photo));
       if (fs.existsSync(old)) fs.unlinkSync(old);
