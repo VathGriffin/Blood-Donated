@@ -2,8 +2,7 @@ const mongoose = require('mongoose');
 const Inventory = require('../inventory/inventory.model');
 const BloodRequest = require('../requests/blood-request.model');
 const Appointment = require('../appointments/appointment.model');
-
-const ELIGIBILITY_INTERVAL_DAYS = 56;
+const { computeEligibility } = require('../common/eligibility');
 
 const tools = [
   {
@@ -67,15 +66,7 @@ async function getMyAppointments(authUser) {
 
 function checkDonorEligibility({ last_donation_date } = {}) {
   if (!last_donation_date) return { eligible: true, reason: 'No prior donation on record.' };
-  const days = Math.floor((Date.now() - new Date(last_donation_date).getTime()) / 86400000);
-  const eligible = days >= ELIGIBILITY_INTERVAL_DAYS;
-  return {
-    eligible,
-    daysSinceLastDonation: days,
-    nextEligibleDate: eligible
-      ? null
-      : new Date(new Date(last_donation_date).getTime() + ELIGIBILITY_INTERVAL_DAYS * 86400000).toISOString(),
-  };
+  return computeEligibility(last_donation_date);
 }
 
 async function executeTool(name, input, authUser) {

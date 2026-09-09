@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Anthropic = require('@anthropic-ai/sdk');
-const { optionalAuth } = require('../common/middleware/require-role');
+const { optionalAuth, requireRole } = require('../common/middleware/require-role');
 const { tools, executeTool } = require('./chat.tools');
 
 const anthropicClient = process.env.ANTHROPIC_API_KEY
@@ -48,6 +48,11 @@ Detect the user's language from their message and always respond in that same la
 - For urgent blood needs, guide to Critical request option and phone number immediately
 - For questions outside blood donation, kindly redirect
 - Never make up medical facts or numbers — use your tools`;
+
+// Lets the admin settings page show real AI status without exposing the key itself.
+router.get('/status', requireRole('admin'), (req, res) => {
+  res.json({ configured: !!anthropicClient, model: MODEL, maxToolIterations: MAX_TOOL_ITERATIONS });
+});
 
 router.post('/', optionalAuth, async (req, res) => {
   const { messages } = req.body;

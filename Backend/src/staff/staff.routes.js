@@ -41,6 +41,40 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// Self-service: update the logged-in staff member's own display name.
+router.patch('/me', requireRole('admin', 'hospital_staff'), async (req, res) => {
+  const fullName = req.body.fullName?.trim();
+  if (!fullName) return res.status(400).json({ message: 'fullName is required.' });
+  try {
+    const staff = await StaffUser.findByIdAndUpdate(req.auth.id, { fullName }, { new: true });
+    if (!staff) return res.status(404).json({ message: 'Account not found' });
+    res.json(staffPayload(staff));
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// Self-service: change the logged-in staff member's own password — requires
+// proving the current one, unlike the admin-only PATCH /:id reset below.
+router.patch('/me/password', requireRole('admin', 'hospital_staff'), async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || !newPassword)
+    return res.status(400).json({ message: 'currentPassword and newPassword are required.' });
+  if (newPassword.length < 8)
+    return res.status(400).json({ message: 'New password must be at least 8 characters.' });
+  try {
+    const staff = await StaffUser.findById(req.auth.id);
+    if (!staff) return res.status(404).json({ message: 'Account not found' });
+    const valid = await bcrypt.compare(currentPassword, staff.password);
+    if (!valid) return res.status(401).json({ message: 'Current password is incorrect.' });
+    staff.password = await bcrypt.hash(newPassword, 10);
+    await staff.save();
+    res.json({ message: 'Password updated successfully.' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // Admin-only management of hospital_staff (and other admin) accounts.
 router.post('/', requireRole('admin'), async (req, res) => {
   const { fullName, email, password, role, hospital } = req.body;

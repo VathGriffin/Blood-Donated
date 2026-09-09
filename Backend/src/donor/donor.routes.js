@@ -6,6 +6,7 @@ const fs = require('fs');
 const router = express.Router();
 const Donor = require('./donor.model');
 const { requireRole, optionalAuth } = require('../common/middleware/require-role');
+const { computeEligibility } = require('../common/eligibility');
 
 const PUBLIC_FIELDS = 'fullName bloodType location available photo donationCount lastDonation createdAt';
 const isStaff = (req) => ['admin', 'hospital_staff'].includes(req.auth?.role);
@@ -39,22 +40,6 @@ const upload = multer({
   fileFilter: (req, file, cb) =>
     file.mimetype.startsWith('image/') ? cb(null, true) : cb(new Error('Only image files are allowed')),
 });
-
-// Whole-blood donation eligibility interval, in days.
-const ELIGIBILITY_INTERVAL_DAYS = 56;
-
-const computeEligibility = (lastDonation) => {
-  if (!lastDonation) return { eligible: true, daysSinceLastDonation: null, nextEligibleDate: null };
-  const days = Math.floor((Date.now() - new Date(lastDonation).getTime()) / 86400000);
-  const eligible = days >= ELIGIBILITY_INTERVAL_DAYS;
-  return {
-    eligible,
-    daysSinceLastDonation: days,
-    nextEligibleDate: eligible
-      ? null
-      : new Date(new Date(lastDonation).getTime() + ELIGIBILITY_INTERVAL_DAYS * 86400000).toISOString(),
-  };
-};
 
 router.post('/', async (req, res) => {
   try {
