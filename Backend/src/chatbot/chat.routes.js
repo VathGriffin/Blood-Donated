@@ -1,53 +1,32 @@
 const express = require('express');
 const router = express.Router();
 const Anthropic = require('@anthropic-ai/sdk');
+const { optionalAuth } = require('../common/middleware/require-role');
+const { tools, executeTool } = require('./chat.tools');
 
 const anthropicClient = process.env.ANTHROPIC_API_KEY
   ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
   : null;
+
+const MODEL = 'claude-sonnet-5';
+const MAX_TOOL_ITERATIONS = 5;
 
 const SYSTEM_PROMPT = `You are BloodBot, the AI assistant for "Blood Donated" — a blood donation management platform built by 4th-year Data Science students at ITC (Institute of Technology of Cambodia) as their graduation project.
 
 ## Platform Features
 - Donor registration with blood type, location, availability, and photo
 - Blood requests with urgency levels: Low, Medium, High, Critical
-- Appointment booking at 6 partner hospitals in Cambodia
+- Appointment booking at partner hospitals in Cambodia
 - Real-time donor search and filtering by blood type
 - Direct messaging between users and the admin team
 - Google and Facebook social login
 
-## Partner Hospitals
-- Calmette Hospital, Phnom Penh
-- Royal Phnom Penh Hospital
-- Khmer Soviet Friendship Hospital
-- National Blood Transfusion Center
-- Angkor Hospital for Children, Siem Reap
-- Battambang Provincial Hospital
-
-## Blood Donation Knowledge
-Eligibility: age 18–60, weight ≥ 45 kg, no active illness/fever, no donation in past 3 months, not pregnant or breastfeeding, no HIV/hepatitis B or C.
-
-Blood types: A+, A-, B+, B-, AB+, AB-, O+, O-
-- O- = universal donor (red cells go to anyone)
-- AB+ = universal recipient (can receive from anyone)
-- AB- can donate plasma to all types
-- O+ is most common (~38%), AB- is rarest (~1%)
-
-Compatibility (who can donate TO whom):
-- A+ → A+, AB+
-- A- → A+, A-, AB+, AB-
-- B+ → B+, AB+
-- B- → B+, B-, AB+, AB-
-- AB+ → AB+ only
-- AB- → AB+, AB-
-- O+ → A+, B+, AB+, O+
-- O- → everyone
-
-Donation process: registration → health screening → donation (~8–10 min) → rest & refreshments. Total ~30–45 min.
-Whole blood donation: ~450 ml. Can donate every 3 months.
-Preparation: eat 2–3 hrs before, drink 500ml+ extra water, avoid alcohol 24 hrs before, get good sleep.
-After donation: rest 10–15 min, drink fluids, avoid heavy exercise for 24 hrs.
-Benefits: free health screening, reduces heart disease risk, burns ~650 calories, saves up to 3 lives per donation.
+## Tools
+You have tools to look up LIVE data instead of relying on memorized facts:
+- get_inventory_levels — current real blood stock by type
+- get_my_requests / get_my_appointments — the logged-in user's own records (only works if they're logged in)
+- check_donor_eligibility — computes real eligibility from a last-donation date (56-day rule)
+Always call the relevant tool rather than guessing when the user asks about inventory, their own requests/appointments, or eligibility. Never state a specific inventory number or "your request status" from memory — only from a tool result.
 
 ## Contact
 Email: Vath.V211006@sis.hust.edu.vn
@@ -68,22 +47,51 @@ Detect the user's language from their message and always respond in that same la
 - Keep responses focused and concise
 - For urgent blood needs, guide to Critical request option and phone number immediately
 - For questions outside blood donation, kindly redirect
-- Never make up medical facts`;
+- Never make up medical facts or numbers — use your tools`;
 
-router.post('/', async (req, res) => {
+router.post('/', optionalAuth, async (req, res) => {
   const { messages } = req.body;
   if (!messages || !Array.isArray(messages) || messages.length === 0)
     return res.status(400).json({ error: 'messages array is required' });
   if (!anthropicClient)
     return res.status(503).json({ configured: false });
+
   try {
-    const response = await anthropicClient.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+    let conversation = messages.map((m) => ({ role: m.role, content: m.content }));
+    let response = await anthropicClient.messages.create({
+      model: MODEL,
       max_tokens: 1024,
       system: SYSTEM_PROMPT,
-      messages: messages.map((m) => ({ role: m.role, content: m.content })),
+      tools,
+      messages: conversation,
     });
-    res.json({ content: response.content[0].text, powered: 'claude' });
+
+    let iterations = 0;
+    while (response.stop_reason === 'tool_use' && iterations < MAX_TOOL_ITERATIONS) {
+      iterations++;
+      const toolResults = [];
+      for (const block of response.content) {
+        if (block.type === 'tool_use') {
+          const result = await executeTool(block.name, block.input, req.user);
+          toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: JSON.stringify(result) });
+        }
+      }
+      conversation = [
+        ...conversation,
+        { role: 'assistant', content: response.content },
+        { role: 'user', content: toolResults },
+      ];
+      response = await anthropicClient.messages.create({
+        model: MODEL,
+        max_tokens: 1024,
+        system: SYSTEM_PROMPT,
+        tools,
+        messages: conversation,
+      });
+    }
+
+    const textBlock = response.content.find((b) => b.type === 'text');
+    res.json({ content: textBlock?.text || '', powered: 'claude' });
   } catch (err) {
     console.error('BloodBot error:', err.message);
     res.status(500).json({ error: 'Failed to get AI response. Please try again.' });

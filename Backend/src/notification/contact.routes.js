@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const ContactMessage = require('./contact-message.model');
-const adminAuth = require('../common/middleware/admin-auth');
+const { requireRole } = require('../common/middleware/require-role');
+const adminAuth = requireRole('admin');
 
 router.post('/', async (req, res) => {
   const { fullName, email, message } = req.body;

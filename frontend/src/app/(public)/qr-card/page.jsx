@@ -26,7 +26,7 @@ const BLOOD_COLORS = {
 };
 
 export default function QRCardPage() {
-  const { isAuth, user } = useUserAuth();
+  const { isAuth, user, token } = useUserAuth();
   const cardRef = useRef(null);
   const theme   = useTheme();
   const isDark  = theme.palette.mode === 'dark';
@@ -34,6 +34,7 @@ export default function QRCardPage() {
   const [bloodType,  setBloodType]  = useState('O+');
   const [donor,      setDonor]      = useState(null);   // null = loading, false = not found
   const [loading,    setLoading]    = useState(false);
+  const [qrToken,    setQrToken]    = useState(null);    // signed, opaque — issued by the server, never built client-side
 
   useEffect(() => {
     if (!isAuth || !user?.email) return;
@@ -43,13 +44,15 @@ export default function QRCardPage() {
         if (res.data.found) {
           setDonor(res.data);
           setBloodType(res.data.bloodType);
-        } else {
-          setDonor(false);
+          return axios.get(`${API_BASE}/api/donors/${res.data._id}/qr-token`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }).then(qr => setQrToken(qr.data.token)).catch(() => setQrToken(null));
         }
+        setDonor(false);
       })
       .catch(() => setDonor(false))
       .finally(() => setLoading(false));
-  }, [isAuth, user?.email]);
+  }, [isAuth, user?.email, token]);
 
   const isVerified = !!donor;
   const isAvailable = donor?.available ?? false;
@@ -57,15 +60,6 @@ export default function QRCardPage() {
   const donorId = user?.id
     ? `BD-${user.id.toString().slice(-6).toUpperCase()}`
     : 'BD-XXXXXX';
-
-  const qrValue = JSON.stringify({
-    name:      user?.fullName ?? '',
-    email:     user?.email    ?? '',
-    bloodType,
-    id:        donorId,
-    verified:  isVerified,
-    org:       'BloodLife Cambodia',
-  });
 
   const handlePrint    = () => window.print();
   const handleDownload = async () => {
@@ -287,22 +281,30 @@ export default function QRCardPage() {
               </Box>
             </Box>
 
-            {/* Right: QR code */}
+            {/* Right: QR code — encodes only a server-signed token, never raw claims */}
             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.8, flexShrink: 0 }}>
               <Box sx={{
-                p: 1.2, borderRadius: 2,
+                p: 1.2, borderRadius: 2, minWidth: 110, minHeight: 110,
                 border: `2px solid ${BLOOD_COLORS[bloodType]}44`,
-                background: '#fff',
+                background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
-                <QRCode
-                  value={qrValue}
-                  size={110}
-                  fgColor={BLOOD_COLORS[bloodType]}
-                  bgColor="#ffffff"
-                  level="M"
-                />
+                {isVerified && qrToken ? (
+                  <QRCode
+                    value={qrToken}
+                    size={110}
+                    fgColor={BLOOD_COLORS[bloodType]}
+                    bgColor="#ffffff"
+                    level="M"
+                  />
+                ) : isVerified ? (
+                  <CircularProgress size={24} sx={{ color: BLOOD_COLORS[bloodType] }} />
+                ) : (
+                  <LockIcon sx={{ fontSize: 28, color: 'text.disabled' }} />
+                )}
               </Box>
-              <Typography fontSize="0.6rem" color="text.disabled" textAlign="center">Scan to verify</Typography>
+              <Typography fontSize="0.6rem" color="text.disabled" textAlign="center">
+                {isVerified ? 'Scan to verify' : 'Register to unlock'}
+              </Typography>
             </Box>
           </Box>
 

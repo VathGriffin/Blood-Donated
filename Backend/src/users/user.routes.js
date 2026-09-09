@@ -7,7 +7,8 @@ const path = require('path');
 const fs = require('fs');
 const router = express.Router();
 const User = require('./user.model');
-const userAuth = require('../common/middleware/user-auth');
+const { requireRole } = require('../common/middleware/require-role');
+const userAuth = requireRole('donor');
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, path.join(__dirname, '../../uploads')),
@@ -23,7 +24,7 @@ const upload = multer({
 
 const signToken = (user) =>
   jwt.sign(
-    { id: user._id, email: user.email, fullName: user.fullName, role: 'user' },
+    { id: user._id, email: user.email, fullName: user.fullName, role: 'donor' },
     process.env.JWT_SECRET,
     { expiresIn: '7d' }
   );

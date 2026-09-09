@@ -41,17 +41,17 @@ const capabilities = [
 
 const AdminLogin = () => {
     const router = useRouter();
-    const { login, isAuth } = useAuth();
+    const { login, isAdmin } = useAuth();
     const [form, setForm] = useState({ email: '', password: '' });
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
     useEffect(() => {
-        if (isAuth) router.replace('/dashboard/admin');
-    }, [isAuth, router]);
+        if (isAdmin) router.replace('/dashboard/admin');
+    }, [isAdmin, router]);
 
-    if (isAuth) return null;
+    if (isAdmin) return null;
 
     const handleChange = (e) => {
         setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
@@ -63,8 +63,12 @@ const AdminLogin = () => {
         setLoading(true);
         setError('');
         try {
-            const { data } = await axios.post(`${API_BASE}/api/auth/login`, form);
-            login(data.token);
+            const { data } = await axios.post(`${API_BASE}/api/staff/login`, form);
+            if (data.staff.role !== 'admin') {
+                setError('This account is not an admin account. Hospital staff should use the hospital login.');
+                return;
+            }
+            login(data.token, data.staff);
             router.push('/dashboard/admin', { replace: true });
         } catch (err) {
             setError(err.response?.data?.message || 'Login failed. Try again.');

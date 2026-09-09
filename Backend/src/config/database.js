@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 
-const connect = () => {
+const connect = (uri = process.env.MONGO_URI || 'mongodb://localhost:27017/blood-donation') => {
   mongoose.set('bufferCommands', false);
-  mongoose
-    .connect(process.env.MONGO_URI || 'mongodb://localhost:27017/blood-donation', {
+  return mongoose
+    .connect(uri, {
       serverSelectionTimeoutMS: 5000,
     })
     .then(() => console.log('✅ MongoDB connected'))

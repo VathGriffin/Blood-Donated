@@ -26,6 +26,7 @@ import {
 import { Delete, Search, CalendarMonth } from "@mui/icons-material";
 import axios from "axios";
 import API_BASE from "@/lib/config";
+import { useAuth } from "@/store/AuthContext";
 
 const API = `${API_BASE}/api/appointments`;
 
@@ -38,6 +39,8 @@ const statusColors = {
 const ManageAppointments = () => {
     const theme = useTheme();
     const isDark = theme.palette.mode === "dark";
+    const { token } = useAuth();
+    const authHeader = () => ({ headers: { Authorization: `Bearer ${token}` } });
     const [appointments, setAppointments] = useState([]);
     const [search, setSearch] = useState("");
     const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
@@ -57,7 +60,7 @@ const ManageAppointments = () => {
 
     const handleStatusChange = async (id, status) => {
         try {
-            await axios.put(`${API}/${id}`, { status });
+            await axios.put(`${API}/${id}`, { status }, authHeader());
             setAppointments((prev) =>
                 prev.map((a) => (a._id === id ? { ...a, status } : a))
             );
@@ -70,7 +73,7 @@ const ManageAppointments = () => {
     const handleDelete = async (id) => {
         if (!window.confirm("Delete this appointment?")) return;
         try {
-            await axios.delete(`${API}/${id}`);
+            await axios.delete(`${API}/${id}`, authHeader());
             setAppointments((prev) => prev.filter((a) => a._id !== id));
             setSnackbar({ open: true, message: "Appointment deleted.", severity: "info" });
         } catch (err) {

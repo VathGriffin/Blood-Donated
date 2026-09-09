@@ -4,7 +4,8 @@ const path    = require('path');
 const fs      = require('fs');
 const router  = express.Router();
 const HomepageProfile = require('./homepage.model');
-const adminAuth = require('../common/middleware/admin-auth');
+const { requireRole } = require('../common/middleware/require-role');
+const adminAuth = requireRole('admin');
 
 const DEFAULT_PROFILES = [
   {

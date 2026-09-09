@@ -9,6 +9,7 @@ import SendIcon from "@mui/icons-material/Send";
 import SmartToyIcon from "@mui/icons-material/SmartToy";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import API_BASE from "@/lib/config";
+import { useUserAuth } from "@/store/UserAuthContext";
 
 function detectLanguage(text) {
   if (/[ក-៿]/.test(text)) return 'km';
@@ -103,9 +104,9 @@ const KB = [
   },
   {
     tags: {
-      en: ["register","sign up","become donor","how to donate"],
-      km: ["ចុះឈ្មោះ","ក្លាយជា","ជាអ្នកបរិច្ចាគ"],
-      vi: ["đăng ký","đăng kí","trở thành người hiến"],
+      en: ["register","sign up","become donor","how to donate","want to donate","i want to donate","want donate","donate blood","i want donate","give blood","wanna donate"],
+      km: ["ចុះឈ្មោះ","ក្លាយជា","ជាអ្នកបរិច្ចាគ","ចង់បរិចាគ","ចង់ឲ្យឈាម","បរិចាគឈាម"],
+      vi: ["đăng ký","đăng kí","trở thành người hiến","muốn hiến máu","tôi muốn hiến"],
     },
     answer: {
       en: "To register:\n1. Click \"Donate Blood\" in the nav\n2. Fill in your details and blood type\n3. Confirm eligibility\n4. Submit your registration",
@@ -287,6 +288,7 @@ function ruleBasedResponse(input, lang) {
 }
 
 export default function ChatBot() {
+  const { token } = useUserAuth();
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
   const [open, setOpen] = useState(false);
@@ -324,7 +326,10 @@ export default function ChatBot() {
     try {
       const res = await fetch(`${API_BASE}/api/chat`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ messages: history, lang }),
       });
       const data = await res.json();

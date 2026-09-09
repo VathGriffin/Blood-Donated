@@ -1,6 +1,7 @@
 'use client';
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Box, Container, Typography, Avatar, Paper, Chip, Button,
   useTheme, Grid, Skeleton, Tooltip, IconButton, Dialog,
@@ -32,7 +33,15 @@ const URGENCY_COLOR = { Critical: '#dc2626', High: '#ea580c', Medium: '#d97706',
 export default function ProfilePage() {
   const theme  = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const { isAuth, user, token, updateUser } = useUserAuth();
+  const router = useRouter();
+  const { isAuth, user, token, updateUser, logout } = useUserAuth();
+
+  const sessionExpired = (err) => {
+    if (err.response?.status !== 401) return false;
+    logout();
+    router.push('/login');
+    return true;
+  };
 
   const [requests,     setRequests]     = useState([]);
   const [loading,      setLoading]      = useState(false);
@@ -45,6 +54,12 @@ export default function ProfilePage() {
   const [saveError,    setSaveError]    = useState('');
 
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    if (!isAuth || !token) return;
+    axios.get(`${API_BASE}/api/user/me`, { headers: { Authorization: `Bearer ${token}` } })
+      .catch(sessionExpired);
+  }, [isAuth, token]);
 
   useEffect(() => {
     if (!isAuth || !user?.email) return;
@@ -105,7 +120,7 @@ export default function ProfilePage() {
       });
       updateUser({ photo: res.data.photo });
     } catch (err) {
-      setPhotoError(err.response?.data?.message || 'Photo upload failed.');
+      if (!sessionExpired(err)) setPhotoError(err.response?.data?.message || 'Photo upload failed.');
     } finally {
       setPhotoLoading(false);
       e.target.value = '';
@@ -128,7 +143,7 @@ export default function ProfilePage() {
       updateUser({ fullName: res.data.fullName, phone: res.data.phone });
       setEditOpen(false);
     } catch (err) {
-      setSaveError(err.response?.data?.message || 'Failed to save. Please try again.');
+      if (!sessionExpired(err)) setSaveError(err.response?.data?.message || 'Failed to save. Please try again.');
     } finally {
       setSaving(false);
     }

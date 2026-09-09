@@ -9,8 +9,11 @@ const appointmentSchema = new mongoose.Schema(
     date: { type: String, required: true },
     time: { type: String, required: true },
     location: { type: String, required: true },
+    hospital: { type: mongoose.Schema.Types.ObjectId, ref: 'Hospital', default: null },
     notes: { type: String, default: '' },
-    status: { type: String, enum: ['Pending', 'Confirmed', 'Cancelled'], default: 'Pending' },
+    status: { type: String, enum: ['Pending', 'Confirmed', 'CheckedIn', 'Cancelled'], default: 'Pending' },
+    checkedInAt: { type: Date, default: null },
+    checkedInBy: { type: mongoose.Schema.Types.ObjectId, ref: 'StaffUser', default: null },
   },
   { timestamps: true }
 );

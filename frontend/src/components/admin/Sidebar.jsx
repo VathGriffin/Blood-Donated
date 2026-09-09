@@ -8,7 +8,7 @@ import {
 } from '@mui/material';
 import {
   Dashboard, PeopleAlt, LocalHospital, Inventory2, CalendarMonth,
-  Chat, ArrowBack, Favorite, Assessment, Settings,
+  Chat, ArrowBack, Favorite, Assessment, Settings, Domain,
 } from '@mui/icons-material';
 
 const drawerWidth = 244;
@@ -19,6 +19,7 @@ const mainNav = [
   { label: 'Appointments',    icon: <CalendarMonth sx={{ fontSize: 18 }} />,      path: '/dashboard/admin/appointments' },
   { label: 'Blood Inventory', icon: <Inventory2 sx={{ fontSize: 18 }} />,         path: '/dashboard/admin/inventory' },
   { label: 'Blood Requests',  icon: <LocalHospital sx={{ fontSize: 18 }} />,      path: '/dashboard/admin/requests' },
+  { label: 'Hospitals',       icon: <Domain sx={{ fontSize: 18 }} />,             path: '/dashboard/admin/hospitals' },
   { label: 'Messages',        icon: <Chat sx={{ fontSize: 18 }} />,               path: '/dashboard/admin/contacts' },
 ];
 

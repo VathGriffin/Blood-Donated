@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const adminAuth = require('../common/middleware/admin-auth');
+const { requireRole } = require('../common/middleware/require-role');
+const adminAuth = requireRole('admin');
 const Donor = require('../donor/donor.model');
 const BloodRequest = require('../requests/blood-request.model');
 const Appointment = require('../appointments/appointment.model');

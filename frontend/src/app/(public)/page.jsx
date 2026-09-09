@@ -43,7 +43,7 @@ const actions = [
     icon: <GroupsIcon sx={{ fontSize: 26 }} />,
     title: "Volunteer",
     desc: "Join our network of volunteers and help run donation drives.",
-    link: "/team",
+    link: "/about#team-section",
     red: false,
   },
   {

@@ -9,7 +9,7 @@ import {
 } from "@mui/material";
 import {
   Menu as MenuIcon, Close as CloseIcon, Favorite,
-  LocalHospital, Group, PeopleAlt, ContactMail, Info,
+  LocalHospital, Group, ContactMail, Info,
   Chat, Brightness4, Brightness7, Logout, QrCode2, Person,
 } from "@mui/icons-material";
 import { ColorModeContext } from "@/lib/ThemeContext";
@@ -33,7 +33,6 @@ const sections = [
   { label: "About",     path: "/about" },
   { label: "Donors",    path: "/donors" },
   { label: "Hospitals", path: "/map" },
-  { label: "Blog",      path: "/team" },
   { label: "Contact",   path: "/contact" },
 ];
 
@@ -42,7 +41,6 @@ const mobileIcons = {
   About: <Info sx={{ color: "#64b5f6", fontSize: 20 }} />,
   Donors: <Group sx={{ color: "#8e24aa", fontSize: 20 }} />,
   Hospitals: <LocalHospital sx={{ color: "#d81b60", fontSize: 20 }} />,
-  Blog: <PeopleAlt sx={{ color: "#4db6ac", fontSize: 20 }} />,
   Contact: <ContactMail sx={{ color: "#fbc02d", fontSize: 20 }} />,
 };
 

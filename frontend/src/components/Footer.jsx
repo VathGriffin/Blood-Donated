@@ -9,7 +9,6 @@ const quickLinks = [
   { label: "Donate Blood",  path: "/donate" },
   { label: "Request Blood", path: "/requests" },
   { label: "Find Donors",   path: "/donors" },
-  { label: "Our Team",      path: "/team" },
   { label: "About Us",      path: "/about" },
   { label: "Contact",       path: "/contact" },
 ];

@@ -4,7 +4,8 @@ const Donor        = require('../donor/donor.model');
 const BloodRequest = require('../requests/blood-request.model');
 const Appointment  = require('../appointments/appointment.model');
 const Inventory    = require('../inventory/inventory.model');
-const adminAuth    = require('../common/middleware/admin-auth');
+const { requireRole } = require('../common/middleware/require-role');
+const adminAuth = requireRole('admin');
 
 router.use(adminAuth);
 
@@ -30,9 +31,9 @@ router.get('/', async (req, res) => {
       Donor.countDocuments({ createdAt: { $gte: month } }),
       Donor.countDocuments({ available: true }),
       BloodRequest.countDocuments(),
-      BloodRequest.countDocuments({ status: 'pending' }),
-      BloodRequest.countDocuments({ status: 'fulfilled' }),
-      BloodRequest.countDocuments({ urgency: 'critical', status: 'pending' }),
+      BloodRequest.countDocuments({ status: 'Pending' }),
+      BloodRequest.countDocuments({ status: 'Fulfilled' }),
+      BloodRequest.countDocuments({ urgency: 'Critical', status: 'Pending' }),
       Appointment.countDocuments(),
       Appointment.countDocuments({ createdAt: { $gte: month } }),
       Inventory.find().lean({ virtuals: true }),

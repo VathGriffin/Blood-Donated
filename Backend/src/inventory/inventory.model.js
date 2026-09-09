@@ -5,8 +5,8 @@ const inventorySchema = new mongoose.Schema({
     type: String,
     enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'],
     required: true,
-    unique: true,
   },
+  hospital: { type: mongoose.Schema.Types.ObjectId, ref: 'Hospital', default: null },
   units:       { type: Number, default: 0, min: 0 },
   minUnits:    { type: Number, default: 10 },
   maxUnits:    { type: Number, default: 200 },
@@ -14,6 +14,9 @@ const inventorySchema = new mongoose.Schema({
   lastUpdated: { type: Date, default: Date.now },
   updatedBy:   { type: String, default: 'system' },
 }, { timestamps: true });
+
+// hospital: null = the central/unassigned pool; each hospital gets its own row per blood type.
+inventorySchema.index({ hospital: 1, bloodType: 1 }, { unique: true });
 
 inventorySchema.virtual('status').get(function () {
   if (this.units === 0)             return 'empty';
