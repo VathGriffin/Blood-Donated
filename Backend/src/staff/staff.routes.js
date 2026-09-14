@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const router = express.Router();
 const StaffUser = require('./staff.model');
 const { requireRole } = require('../common/middleware/require-role');
+const { authLimiter } = require('../common/middleware/auth-limiter');
 
 const signToken = (staff) =>
   jwt.sign(
@@ -26,7 +27,7 @@ const staffPayload = (staff) => ({
   hospitalId: staff.hospital || null,
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login', authLimiter, async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password)
     return res.status(400).json({ message: 'Email and password are required.' });
@@ -46,7 +47,7 @@ router.patch('/me', requireRole('admin', 'hospital_staff'), async (req, res) => 
   const fullName = req.body.fullName?.trim();
   if (!fullName) return res.status(400).json({ message: 'fullName is required.' });
   try {
-    const staff = await StaffUser.findByIdAndUpdate(req.auth.id, { fullName }, { new: true });
+    const staff = await StaffUser.findByIdAndUpdate(req.auth.id, { fullName }, { new: true }).select('-password');
     if (!staff) return res.status(404).json({ message: 'Account not found' });
     res.json(staffPayload(staff));
   } catch (err) {

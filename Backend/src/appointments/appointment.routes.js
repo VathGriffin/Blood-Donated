@@ -3,11 +3,7 @@ const router = express.Router();
 const Appointment = require('./appointment.model');
 const Donor = require('../donor/donor.model');
 const { requireRole } = require('../common/middleware/require-role');
-
-const assertHospitalScope = (req, appt) => {
-  if (!req.staff) return true;
-  return appt.hospital && String(appt.hospital) === String(req.staff.hospitalId);
-};
+const { assertHospitalScope } = require('../common/middleware/assert-hospital-scope');
 
 router.post('/', async (req, res) => {
   try {
@@ -21,6 +17,7 @@ router.get('/', async (req, res) => {
   try {
     const filter = {};
     if (req.query.hospital) filter.hospital = req.query.hospital;
+    if (req.query.email) filter.email = req.query.email.toLowerCase();
     res.json(await Appointment.find(filter).sort({ createdAt: -1 }).lean());
   } catch (err) {
     res.status(500).json({ error: err.message });

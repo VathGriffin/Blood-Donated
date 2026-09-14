@@ -3,8 +3,7 @@ const { body, validationResult } = require('express-validator');
 const router   = express.Router();
 const Inventory = require('./inventory.model');
 const { requireRole } = require('../common/middleware/require-role');
-
-const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+const { BLOOD_TYPES } = require('../common/blood-types');
 
 const DEFAULTS = BLOOD_TYPES.map((t, i) => ({
   bloodType: t,

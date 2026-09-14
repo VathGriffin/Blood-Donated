@@ -52,6 +52,16 @@ describe('donor CRUD', () => {
     expect(accepted.body.photo).toBeDefined();
   });
 
+  test('rejects a non-image upload with a proper JSON message instead of a bare 500', async () => {
+    const created = await request(app).post('/api/donors').send(donorBody);
+    const res = await request(app)
+      .post(`/api/donors/${created.body._id}/photo`)
+      .set('Authorization', `Bearer ${created.body.photoUploadToken}`)
+      .attach('photo', Buffer.from('not an image'), { filename: 'notes.txt', contentType: 'text/plain' });
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/image/i);
+  });
+
   test('a photo-upload token cannot be used against a different donor', async () => {
     const created = await request(app).post('/api/donors').send(donorBody);
     const other = await request(app)
@@ -75,6 +85,30 @@ describe('donor CRUD', () => {
   test('lookup for unknown email returns found:false', async () => {
     const res = await request(app).get('/api/donors/lookup?email=nobody@test.com');
     expect(res.body.found).toBe(false);
+  });
+
+  test('rejects a second registration with an already-registered email', async () => {
+    const first = await request(app).post('/api/donors').send(donorBody);
+    expect(first.status).toBe(201);
+
+    const duplicate = await request(app)
+      .post('/api/donors')
+      .send({ ...donorBody, fullName: 'Someone Else' });
+    expect(duplicate.status).toBe(409);
+    expect(duplicate.body.message).toMatch(/already registered/i);
+
+    const all = await Donor.find({ email: donorBody.email });
+    expect(all).toHaveLength(1);
+  });
+
+  test('registration email match is case-insensitive', async () => {
+    const first = await request(app).post('/api/donors').send(donorBody);
+    expect(first.status).toBe(201);
+
+    const duplicate = await request(app)
+      .post('/api/donors')
+      .send({ ...donorBody, email: donorBody.email.toUpperCase() });
+    expect(duplicate.status).toBe(409);
   });
 });
 

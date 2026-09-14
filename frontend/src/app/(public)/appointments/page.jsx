@@ -1,6 +1,6 @@
 'use client';
 import { useRouter } from 'next/navigation';
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box, Container, Typography, TextField, Button, Paper,
   FormControl, InputLabel, Select, MenuItem, useTheme, Alert,
@@ -10,6 +10,7 @@ import LocationOnIcon from "@mui/icons-material/LocationOn";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import axios from "axios";
 import API_BASE from "@/lib/config";
+import { useUserAuth } from "@/store/UserAuthContext";
 
 const bloodTypes = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
@@ -54,10 +55,24 @@ const Appointment = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
   const router = useRouter();
+  const { user: loggedInUser, isAuth } = useUserAuth();
   const [step, setStep] = useState(0);
   const [form, setForm] = useState(defaultForm);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Booking is linked to a profile by exact email match, so a signed-in
+  // user's booking must use their account email rather than one they type.
+  useEffect(() => {
+    if (isAuth && loggedInUser?.email) {
+      setForm(f => ({
+        ...f,
+        email: loggedInUser.email,
+        fullName: f.fullName || loggedInUser.fullName || "",
+        phone: f.phone || loggedInUser.phone || "",
+      }));
+    }
+  }, [isAuth, loggedInUser]);
 
   const now = new Date();
   const [calYear, setCalYear] = useState(now.getFullYear());
@@ -340,7 +355,9 @@ const Appointment = () => {
               <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2, mb: 2 }}>
                 <TextField fullWidth label="Email" type="email" value={form.email}
                   onChange={e => { setForm(f => ({ ...f, email: e.target.value })); setError(""); }}
-                  required sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px" } }} />
+                  required disabled={isAuth}
+                  helperText={isAuth ? "Using your account email so this appointment shows in your profile." : ""}
+                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px" } }} />
                 <TextField fullWidth label="Phone" value={form.phone}
                   onChange={e => { setForm(f => ({ ...f, phone: e.target.value })); setError(""); }}
                   required sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px" } }} />

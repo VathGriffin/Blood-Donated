@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { BLOOD_TYPES } = require('../common/blood-types');
 
 const donorSchema = new mongoose.Schema(
   {
@@ -18,7 +19,7 @@ const donorSchema = new mongoose.Schema(
     },
     bloodType: {
       type: String,
-      enum: { values: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'], message: '{VALUE} is not a valid blood type' },
+      enum: { values: BLOOD_TYPES, message: '{VALUE} is not a valid blood type' },
       required: [true, 'Blood type is required'],
     },
     location: { type: String, required: [true, 'Location is required'] },

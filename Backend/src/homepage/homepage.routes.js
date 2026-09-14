@@ -1,10 +1,10 @@
 const express = require('express');
-const multer  = require('multer');
 const path    = require('path');
 const fs      = require('fs');
 const router  = express.Router();
 const HomepageProfile = require('./homepage.model');
 const { requireRole } = require('../common/middleware/require-role');
+const { createImageUpload } = require('../common/upload');
 const adminAuth = requireRole('admin');
 
 const DEFAULT_PROFILES = [
@@ -25,16 +25,7 @@ const DEFAULT_PROFILES = [
   },
 ];
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, path.join(__dirname, '../../uploads')),
-  filename:    (req, file, cb) => cb(null, `homepage-${req.params.id}-${Date.now()}${path.extname(file.originalname)}`),
-});
-const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: (req, file, cb) =>
-    file.mimetype.startsWith('image/') ? cb(null, true) : cb(new Error('Only image files allowed')),
-});
+const upload = createImageUpload('homepage');
 
 // GET all profiles — seeds defaults on first call
 router.get('/', async (req, res) => {
@@ -49,8 +40,55 @@ router.get('/', async (req, res) => {
   }
 });
 
+// POST create profile — admin only
+router.post('/', adminAuth, async (req, res) => {
+  try {
+    const { name, role, bloodType, bio, donations, badge, color } = req.body;
+    if (!name?.trim() || !role?.trim())
+      return res.status(400).json({ message: 'Name and role are required' });
+
+    const initials = name.trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2);
+    const order = await HomepageProfile.countDocuments();
+    const profile = await new HomepageProfile({
+      name: name.trim(),
+      role: role.trim(),
+      initials,
+      color: color || '#dc2626',
+      bloodType: bloodType || '',
+      bio: bio || '',
+      donations: donations || 0,
+      badge: badge || '',
+      order,
+    }).save();
+    res.status(201).json(profile);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// DELETE profile — admin only
+router.delete('/:id', adminAuth, async (req, res) => {
+  try {
+    const profile = await HomepageProfile.findById(req.params.id);
+    if (!profile) return res.status(404).json({ message: 'Profile not found' });
+    if (profile.photo && !profile.photo.startsWith('http')) {
+      const filePath = path.join(__dirname, '../../uploads', path.basename(profile.photo));
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    }
+    await HomepageProfile.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Profile deleted', id: req.params.id });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // POST upload photo — admin only
-router.post('/:id/photo', adminAuth, upload.single('photo'), async (req, res) => {
+router.post('/:id/photo', adminAuth, (req, res, next) => {
+  upload.single('photo')(req, res, (err) => {
+    if (err) return res.status(400).json({ message: err.message });
+    next();
+  });
+}, async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
     const profile = await HomepageProfile.findById(req.params.id);

@@ -450,65 +450,62 @@ const About = () => {
             {/* Vertical line */}
             <Box sx={{
               position: "absolute",
-              left: { xs: 20, md: "50%" },
-              top: 0, bottom: 0, width: 2,
-              backgroundColor: isDark ? "#4a1515" : "#ffcdd2",
-              transform: { md: "translateX(-50%)" },
+              left: 21, top: 6, bottom: 6, width: 2,
+              background: isDark
+                ? "linear-gradient(180deg, #4a1515 0%, #4a1515 85%, transparent 100%)"
+                : "linear-gradient(180deg, #ffcdd2 0%, #ffcdd2 85%, transparent 100%)",
             }} />
 
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 5 }}>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
               {timeline.map((item, idx) => {
-                const isRight = idx % 2 === 0;
+                const isLast = idx === timeline.length - 1;
                 return (
                   <Box
                     key={idx}
-                    data-aos={isRight ? "fade-right" : "fade-left"}
+                    data-aos="fade-up"
                     data-aos-delay={idx * 80}
-                    sx={{
-                      display: "flex",
-                      flexDirection: { xs: "row", md: isRight ? "row" : "row-reverse" },
-                      gap: 3,
-                      alignItems: "center",
-                      position: "relative",
-                    }}
+                    sx={{ display: "flex", gap: 3, alignItems: "flex-start", position: "relative" }}
                   >
                     {/* Dot */}
                     <Box sx={{
-                      position: { md: "absolute" },
-                      left: { xs: "auto", md: "50%" },
-                      transform: { md: "translateX(-50%)" },
                       width: 44, height: 44, borderRadius: "50%", flexShrink: 0,
                       background: "linear-gradient(135deg, #b71c1c 0%, #d32f2f 100%)",
                       display: "flex", alignItems: "center", justifyContent: "center",
-                      boxShadow: `0 0 0 5px ${isDark ? "#121212" : "#f9f9f9"}, 0 4px 16px rgba(183,28,28,0.4)`,
+                      boxShadow: isLast
+                        ? `0 0 0 5px ${isDark ? "#121212" : "#f9f9f9"}, 0 0 0 9px rgba(183,28,28,0.25), 0 4px 16px rgba(183,28,28,0.4)`
+                        : `0 0 0 5px ${isDark ? "#121212" : "#f9f9f9"}, 0 4px 16px rgba(183,28,28,0.4)`,
                       zIndex: 2,
                     }}>
                       {item.icon}
                     </Box>
 
                     {/* Card */}
-                    <Box sx={{
-                      flex: 1,
-                      ml: { xs: 2, md: isRight ? 0 : "auto" },
-                      mr: { xs: 0, md: isRight ? "auto" : 0 },
-                      maxWidth: { md: "42%" },
+                    <Paper elevation={isDark ? 0 : 3} sx={{
+                      flex: 1, p: 3, borderRadius: 3, mt: 0.5,
+                      backgroundColor: isDark ? "#1f1f1f" : "#fff",
+                      border: isDark ? "1px solid #2a2a2a" : "none",
+                      transition: "0.3s",
+                      "&:hover": { transform: "translateY(-3px)", boxShadow: 5 },
                     }}>
-                      <Paper elevation={isDark ? 0 : 3} sx={{
-                        p: 3, borderRadius: 3,
-                        backgroundColor: isDark ? "#1f1f1f" : "#fff",
-                        border: isDark ? "1px solid #2a2a2a" : "none",
-                        transition: "0.3s",
-                        "&:hover": { transform: "translateY(-3px)", boxShadow: 5 },
-                      }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap", mb: 1 }}>
                         <Chip
                           label={item.year}
                           size="small"
-                          sx={{ backgroundColor: "#b71c1c", color: "white", fontWeight: 700, fontSize: "0.75rem", mb: 1 }}
+                          sx={{ backgroundColor: "#b71c1c", color: "white", fontWeight: 700, fontSize: "0.75rem" }}
                         />
-                        <Typography variant="subtitle1" fontWeight={700} gutterBottom>{item.event}</Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.7 }}>{item.desc}</Typography>
-                      </Paper>
-                    </Box>
+                        {isLast && (
+                          <Chip
+                            label="In Progress"
+                            size="small"
+                            variant="outlined"
+                            color="error"
+                            sx={{ fontWeight: 700, fontSize: "0.7rem" }}
+                          />
+                        )}
+                      </Box>
+                      <Typography variant="subtitle1" fontWeight={700} gutterBottom>{item.event}</Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.7 }}>{item.desc}</Typography>
+                    </Paper>
                   </Box>
                 );
               })}

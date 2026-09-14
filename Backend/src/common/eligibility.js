@@ -4,14 +4,15 @@ const ELIGIBILITY_INTERVAL_DAYS = 56;
 
 function computeEligibility(lastDonation) {
   if (!lastDonation) return { eligible: true, daysSinceLastDonation: null, nextEligibleDate: null };
-  const days = Math.floor((Date.now() - new Date(lastDonation).getTime()) / 86400000);
+  const lastMs = new Date(lastDonation).getTime();
+  const days = Math.floor((Date.now() - lastMs) / 86400000);
   const eligible = days >= ELIGIBILITY_INTERVAL_DAYS;
   return {
     eligible,
     daysSinceLastDonation: days,
     nextEligibleDate: eligible
       ? null
-      : new Date(new Date(lastDonation).getTime() + ELIGIBILITY_INTERVAL_DAYS * 86400000).toISOString(),
+      : new Date(lastMs + ELIGIBILITY_INTERVAL_DAYS * 86400000).toISOString(),
   };
 }
 

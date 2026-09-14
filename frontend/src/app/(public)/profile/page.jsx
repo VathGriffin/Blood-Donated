@@ -6,6 +6,7 @@ import {
   Box, Container, Typography, Avatar, Paper, Chip, Button,
   useTheme, Grid, Skeleton, Tooltip, IconButton, Dialog,
   DialogTitle, DialogContent, DialogActions, TextField, CircularProgress,
+  Tabs, Tab,
 } from '@mui/material';
 import BloodtypeIcon      from '@mui/icons-material/Bloodtype';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
@@ -18,6 +19,8 @@ import AddCircleIcon      from '@mui/icons-material/AddCircle';
 import LockIcon           from '@mui/icons-material/Lock';
 import EditIcon           from '@mui/icons-material/Edit';
 import CameraAltIcon      from '@mui/icons-material/CameraAlt';
+import EventAvailableIcon from '@mui/icons-material/EventAvailable';
+import DoneAllIcon        from '@mui/icons-material/DoneAll';
 import axios              from 'axios';
 import API_BASE           from '@/lib/config';
 import { useUserAuth }    from '@/store/UserAuthContext';
@@ -29,6 +32,13 @@ const STATUS_META = {
 };
 
 const URGENCY_COLOR = { Critical: '#dc2626', High: '#ea580c', Medium: '#d97706', Low: '#16a34a' };
+
+const APPT_STATUS_META = {
+  Pending:   { color: '#d97706', bg: 'rgba(217,119,6,0.12)',  darkBg: 'rgba(217,119,6,0.15)',  label: 'Pending',    icon: <HourglassEmptyIcon sx={{ fontSize: 13 }} /> },
+  Confirmed: { color: '#16a34a', bg: 'rgba(22,163,74,0.1)',   darkBg: 'rgba(22,163,74,0.15)',  label: 'Confirmed',  icon: <CheckCircleIcon   sx={{ fontSize: 13 }} /> },
+  CheckedIn: { color: '#2563eb', bg: 'rgba(37,99,235,0.1)',   darkBg: 'rgba(37,99,235,0.15)',  label: 'Checked In', icon: <DoneAllIcon       sx={{ fontSize: 13 }} /> },
+  Cancelled: { color: '#dc2626', bg: 'rgba(220,38,38,0.1)',   darkBg: 'rgba(220,38,38,0.15)',  label: 'Cancelled',  icon: <CancelIcon        sx={{ fontSize: 13 }} /> },
+};
 
 export default function ProfilePage() {
   const theme  = useTheme();
@@ -45,6 +55,8 @@ export default function ProfilePage() {
 
   const [requests,     setRequests]     = useState([]);
   const [loading,      setLoading]      = useState(false);
+  const [appointments, setAppointments] = useState([]);
+  const [apptLoading,  setApptLoading]  = useState(false);
   const [photoLoading, setPhotoLoading] = useState(false);
   const [photoError,   setPhotoError]   = useState('');
   const [editOpen,     setEditOpen]     = useState(false);
@@ -52,6 +64,9 @@ export default function ProfilePage() {
   const [editPhone,    setEditPhone]    = useState('');
   const [saving,       setSaving]       = useState(false);
   const [saveError,    setSaveError]    = useState('');
+  const [tab,          setTab]          = useState(0); // 0 = requests, 1 = appointments
+  const [reqFilter,    setReqFilter]    = useState('All');
+  const [apptFilter,   setApptFilter]   = useState('All');
 
   const fileInputRef = useRef(null);
 
@@ -68,6 +83,15 @@ export default function ProfilePage() {
       .then(res => setRequests(Array.isArray(res.data) ? res.data : []))
       .catch(() => setRequests([]))
       .finally(() => setLoading(false));
+  }, [isAuth, user?.email]);
+
+  useEffect(() => {
+    if (!isAuth || !user?.email) return;
+    setApptLoading(true);
+    axios.get(`${API_BASE}/api/appointments?email=${encodeURIComponent(user.email)}`)
+      .then(res => setAppointments(Array.isArray(res.data) ? res.data : []))
+      .catch(() => setAppointments([]))
+      .finally(() => setApptLoading(false));
   }, [isAuth, user?.email]);
 
   if (!isAuth) {
@@ -89,6 +113,9 @@ export default function ProfilePage() {
 
   const initials  = user?.fullName?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) ?? '?';
   const statCount = (s) => s === 'All' ? requests.length : requests.filter(r => (r.status || 'Pending') === s).length;
+  const apptStatCount = (s) => s === 'All' ? appointments.length : appointments.filter(a => (a.status || 'Pending') === s).length;
+  const filteredRequests    = requests.filter(r => reqFilter === 'All' || (r.status || 'Pending') === reqFilter);
+  const filteredAppointments = appointments.filter(a => apptFilter === 'All' || (a.status || 'Pending') === apptFilter);
   const card   = isDark ? '#111111' : '#ffffff';
   const border = isDark ? '#1f1f1f' : '#e5e5e5';
   const subBg  = isDark ? '#0d0d0d' : '#f8f8f8';
@@ -254,30 +281,57 @@ export default function ProfilePage() {
 
       <Container maxWidth="md" sx={{ mt: -3 }}>
 
-        {/* Stats row */}
-        <Grid container spacing={2} mb={3}>
-          {[
-            { label: 'Total',    value: statCount('All'),      color: '#b71c1c' },
-            { label: 'Pending',  value: statCount('Pending'),  color: '#d97706' },
-            { label: 'Approved', value: statCount('Approved'), color: '#16a34a' },
-            { label: 'Rejected', value: statCount('Rejected'), color: '#dc2626' },
-          ].map(s => (
-            <Grid item xs={6} sm={3} key={s.label}>
-              <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: `1px solid ${border}`,
-                bgcolor: card, textAlign: 'center' }}>
-                <Typography fontWeight={900} fontSize="2rem" sx={{ color: s.color }} lineHeight={1}>
-                  {s.value}
-                </Typography>
-                <Typography fontSize="0.72rem" fontWeight={700} color="text.secondary"
-                  textTransform="uppercase" letterSpacing="0.06em" mt={0.4}>
-                  {s.label}
-                </Typography>
-              </Paper>
-            </Grid>
-          ))}
-        </Grid>
+        {/* Tabs + status filters */}
+        <Paper elevation={0} sx={{ borderRadius: 3, border: `1px solid ${border}`, bgcolor: card, overflow: 'hidden', mb: 3 }}>
+          <Tabs
+            value={tab}
+            onChange={(e, v) => setTab(v)}
+            variant="fullWidth"
+            TabIndicatorProps={{ sx: { height: 3, bgcolor: '#dc2626' } }}
+            sx={{
+              minHeight: 0,
+              '& .MuiTab-root': { textTransform: 'none', fontWeight: 700, fontSize: '0.85rem', py: 2, minHeight: 0, color: 'text.secondary' },
+              '& .Mui-selected': { color: '#dc2626 !important' },
+            }}
+          >
+            <Tab icon={<BloodtypeIcon sx={{ fontSize: 18 }} />} iconPosition="start"
+              label={`Requests (${requests.length})`} />
+            <Tab icon={<EventAvailableIcon sx={{ fontSize: 18 }} />} iconPosition="start"
+              label={`Appointments (${appointments.length})`} />
+          </Tabs>
 
-        {/* Requests section */}
+          <Box sx={{ px: 2.5, py: 1.75, display: 'flex', gap: 1, flexWrap: 'wrap',
+            borderTop: `1px solid ${border}`, bgcolor: subBg }}>
+            {(tab === 0
+              ? ['All', 'Pending', 'Approved', 'Rejected']
+              : ['All', 'Pending', 'Confirmed', 'CheckedIn', 'Cancelled']
+            ).map(s => {
+              const isAppt  = tab === 1;
+              const count   = isAppt ? apptStatCount(s) : statCount(s);
+              const active  = isAppt ? apptFilter === s : reqFilter === s;
+              const meta    = isAppt ? APPT_STATUS_META[s] : STATUS_META[s];
+              const color   = meta ? meta.color : '#8a8a8a';
+              const label   = s === 'CheckedIn' ? 'Checked In' : s;
+              return (
+                <Chip
+                  key={s}
+                  label={`${label} · ${count}`}
+                  onClick={() => (isAppt ? setApptFilter(s) : setReqFilter(s))}
+                  sx={{
+                    fontWeight: 700, fontSize: '0.76rem', cursor: 'pointer', height: 28,
+                    bgcolor: active ? color : 'transparent',
+                    color: active ? '#fff' : color,
+                    border: `1.5px solid ${color}`,
+                    transition: 'all 0.15s',
+                  }}
+                />
+              );
+            })}
+          </Box>
+        </Paper>
+
+        {/* Requests panel */}
+        {tab === 0 && (
         <Paper elevation={0} sx={{ borderRadius: 3, border: `1px solid ${border}`, bgcolor: card, overflow: 'hidden' }}>
           <Box sx={{ px: 3, py: 2.5, borderBottom: `1px solid ${border}`,
             display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -286,7 +340,7 @@ export default function ProfilePage() {
               <Box>
                 <Typography fontWeight={800} fontSize="1rem">My Blood Requests</Typography>
                 <Typography variant="caption" color="text.secondary">
-                  {requests.length} total request{requests.length !== 1 ? 's' : ''} submitted by you
+                  {filteredRequests.length} of {requests.length} request{requests.length !== 1 ? 's' : ''} shown
                 </Typography>
               </Box>
             </Box>
@@ -316,9 +370,19 @@ export default function ProfilePage() {
                 Submit Your First Request
               </Button>
             </Box>
+          ) : filteredRequests.length === 0 ? (
+            <Box sx={{ py: 6, textAlign: 'center' }}>
+              <Typography fontWeight={700} color="text.secondary" gutterBottom>
+                No {reqFilter.toLowerCase()} requests
+              </Typography>
+              <Button size="small" onClick={() => setReqFilter('All')}
+                sx={{ textTransform: 'none', fontWeight: 700, color: '#dc2626' }}>
+                Clear filter
+              </Button>
+            </Box>
           ) : (
             <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-              {requests.map((req) => {
+              {filteredRequests.map((req) => {
                 const status   = req.status || 'Pending';
                 const stMeta   = STATUS_META[status] || STATUS_META.Pending;
                 const urgColor = URGENCY_COLOR[req.urgency] || '#888';
@@ -418,6 +482,164 @@ export default function ProfilePage() {
             </Box>
           )}
         </Paper>
+        )}
+
+        {/* Appointments panel */}
+        {tab === 1 && (
+        <Paper elevation={0} sx={{ borderRadius: 3, border: `1px solid ${border}`, bgcolor: card, overflow: 'hidden' }}>
+          <Box sx={{ px: 3, py: 2.5, borderBottom: `1px solid ${border}`,
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Box display="flex" alignItems="center" gap={1.5}>
+              <EventAvailableIcon sx={{ color: '#b71c1c', fontSize: 22 }} />
+              <Box>
+                <Typography fontWeight={800} fontSize="1rem">My Appointments</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {filteredAppointments.length} of {appointments.length} appointment{appointments.length !== 1 ? 's' : ''} shown
+                </Typography>
+              </Box>
+            </Box>
+            <Button component={Link} href="/appointments" variant="outlined" color="error" size="small"
+              startIcon={<AddCircleIcon />}
+              sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2, fontSize: '0.8rem' }}>
+              Book Appointment
+            </Button>
+          </Box>
+
+          {apptLoading ? (
+            <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {[...Array(2)].map((_, i) => (
+                <Skeleton key={i} variant="rounded" height={90} sx={{ borderRadius: 2 }} />
+              ))}
+            </Box>
+          ) : appointments.length === 0 ? (
+            <Box sx={{ py: 8, textAlign: 'center' }}>
+              <EventAvailableIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1.5 }} />
+              <Typography fontWeight={700} color="text.secondary" gutterBottom>No appointments yet</Typography>
+              <Typography variant="caption" color="text.disabled" display="block" mb={3}>
+                Appointments you book will appear here.
+              </Typography>
+              <Button component={Link} href="/appointments" variant="contained" color="error"
+                startIcon={<AddCircleIcon />}
+                sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2 }}>
+                Book an Appointment
+              </Button>
+            </Box>
+          ) : filteredAppointments.length === 0 ? (
+            <Box sx={{ py: 6, textAlign: 'center' }}>
+              <Typography fontWeight={700} color="text.secondary" gutterBottom>
+                No {(apptFilter === 'CheckedIn' ? 'checked in' : apptFilter.toLowerCase())} appointments
+              </Typography>
+              <Button size="small" onClick={() => setApptFilter('All')}
+                sx={{ textTransform: 'none', fontWeight: 700, color: '#dc2626' }}>
+                Clear filter
+              </Button>
+            </Box>
+          ) : (
+            <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              {filteredAppointments.map((appt) => {
+                const status = appt.status || 'Pending';
+                const stMeta = APPT_STATUS_META[status] || APPT_STATUS_META.Pending;
+                return (
+                  <Paper key={appt._id} elevation={0} sx={{
+                    borderRadius: 2.5, border: `1px solid ${border}`, bgcolor: subBg,
+                    overflow: 'hidden',
+                    transition: 'box-shadow 0.15s',
+                    '&:hover': { boxShadow: isDark ? '0 4px 20px rgba(0,0,0,0.4)' : '0 4px 20px rgba(0,0,0,0.08)' },
+                  }}>
+                    <Box sx={{ height: 3, bgcolor: stMeta.color }} />
+                    <Box sx={{ p: 2, display: 'flex', gap: 2, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                      <Box sx={{
+                        width: 48, height: 48, borderRadius: 2, flexShrink: 0,
+                        bgcolor: isDark ? 'rgba(183,28,28,0.15)' : '#fff0f0',
+                        border: `1.5px solid ${isDark ? 'rgba(183,28,28,0.3)' : '#ffcdd2'}`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        <Typography fontWeight={900} fontSize="0.95rem" color="#dc2626">
+                          {appt.bloodType}
+                        </Typography>
+                      </Box>
+
+                      <Box flex={1} minWidth={0}>
+                        <Box display="flex" alignItems="center" gap={1} flexWrap="wrap" mb={0.5}>
+                          <Typography fontWeight={700} fontSize="0.92rem" noWrap>{appt.location}</Typography>
+                          <Chip
+                            icon={stMeta.icon}
+                            label={stMeta.label}
+                            size="small"
+                            sx={{
+                              fontSize: '0.7rem', fontWeight: 700, height: 22,
+                              bgcolor: isDark ? stMeta.darkBg : stMeta.bg,
+                              color: stMeta.color,
+                              '& .MuiChip-icon': { color: stMeta.color },
+                            }}
+                          />
+                        </Box>
+                        <Box display="flex" alignItems="center" gap={0.6} mb={0.3}>
+                          <AccessTimeIcon sx={{ fontSize: 13, color: 'text.disabled' }} />
+                          <Typography fontSize="0.78rem" color="text.secondary" noWrap>
+                            {appt.date} at {appt.time}
+                          </Typography>
+                        </Box>
+                        {appt.notes && (
+                          <Typography fontSize="0.78rem" color="text.disabled"
+                            sx={{ display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                            {appt.notes}
+                          </Typography>
+                        )}
+                      </Box>
+
+                      <Box textAlign="right" flexShrink={0}>
+                        <Box display="flex" alignItems="center" gap={0.5} justifyContent="flex-end">
+                          <AccessTimeIcon sx={{ fontSize: 12, color: 'text.disabled' }} />
+                          <Typography fontSize="0.72rem" color="text.disabled">
+                            {appt.createdAt
+                              ? new Date(appt.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                              : '—'}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Box>
+
+                    {status === 'Confirmed' && (
+                      <Box sx={{ px: 2, pb: 1.5, pt: 0 }}>
+                        <Box sx={{ px: 1.5, py: 0.8, borderRadius: 1.5,
+                          bgcolor: isDark ? 'rgba(22,163,74,0.1)' : '#f0fdf4',
+                          border: '1px solid rgba(22,163,74,0.2)' }}>
+                          <Typography fontSize="0.75rem" color="#16a34a" fontWeight={600}>
+                            ✓ Your appointment is confirmed. See you at the center!
+                          </Typography>
+                        </Box>
+                      </Box>
+                    )}
+                    {status === 'CheckedIn' && (
+                      <Box sx={{ px: 2, pb: 1.5, pt: 0 }}>
+                        <Box sx={{ px: 1.5, py: 0.8, borderRadius: 1.5,
+                          bgcolor: isDark ? 'rgba(37,99,235,0.1)' : '#eff6ff',
+                          border: '1px solid rgba(37,99,235,0.2)' }}>
+                          <Typography fontSize="0.75rem" color="#2563eb" fontWeight={600}>
+                            ✓ You&apos;ve checked in. Thank you for donating!
+                          </Typography>
+                        </Box>
+                      </Box>
+                    )}
+                    {status === 'Cancelled' && (
+                      <Box sx={{ px: 2, pb: 1.5, pt: 0 }}>
+                        <Box sx={{ px: 1.5, py: 0.8, borderRadius: 1.5,
+                          bgcolor: isDark ? 'rgba(220,38,38,0.08)' : '#fff0f0',
+                          border: '1px solid rgba(220,38,38,0.2)' }}>
+                          <Typography fontSize="0.75rem" color="#dc2626" fontWeight={600}>
+                            This appointment was cancelled. Please book a new one.
+                          </Typography>
+                        </Box>
+                      </Box>
+                    )}
+                  </Paper>
+                );
+              })}
+            </Box>
+          )}
+        </Paper>
+        )}
 
         {/* Quick links */}
         <Grid container spacing={2} mt={1}>

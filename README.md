@@ -71,7 +71,7 @@ cd Backend
 npm install
 ```
 
-Copy `.env.example` to `.env` and fill in real values:
+Create a `.env` file in `Backend/` with real values:
 ```
 MONGO_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/blood-donation
 JWT_SECRET=your_jwt_secret_here
@@ -101,7 +101,7 @@ cd frontend
 npm install
 ```
 
-Copy `.env.example` to `.env.local` and fill in real values:
+Create a `.env.local` file in `frontend/` with real values:
 ```
 NEXT_PUBLIC_API_URL=http://localhost:3001
 NEXT_PUBLIC_GOOGLE_CLIENT_ID=

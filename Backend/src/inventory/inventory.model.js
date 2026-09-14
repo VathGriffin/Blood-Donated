@@ -1,9 +1,10 @@
 const mongoose = require('mongoose');
+const { BLOOD_TYPES } = require('../common/blood-types');
 
 const inventorySchema = new mongoose.Schema({
   bloodType: {
     type: String,
-    enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'],
+    enum: BLOOD_TYPES,
     required: true,
   },
   hospital: { type: mongoose.Schema.Types.ObjectId, ref: 'Hospital', default: null },

@@ -9,7 +9,7 @@ import {
 } from "@mui/material";
 import {
   Menu as MenuIcon, Close as CloseIcon, Favorite,
-  LocalHospital, Group, ContactMail, Info,
+  LocalHospital, Group, ContactMail, Info, SmartToy,
   Chat, Brightness4, Brightness7, Logout, QrCode2, Person,
 } from "@mui/icons-material";
 import { ColorModeContext } from "@/lib/ThemeContext";
@@ -33,6 +33,7 @@ const sections = [
   { label: "About",     path: "/about" },
   { label: "Donors",    path: "/donors" },
   { label: "Hospitals", path: "/map" },
+  { label: "Assistant", path: "/assistant" },
   { label: "Contact",   path: "/contact" },
 ];
 
@@ -41,6 +42,7 @@ const mobileIcons = {
   About: <Info sx={{ color: "#64b5f6", fontSize: 20 }} />,
   Donors: <Group sx={{ color: "#8e24aa", fontSize: 20 }} />,
   Hospitals: <LocalHospital sx={{ color: "#d81b60", fontSize: 20 }} />,
+  Assistant: <SmartToy sx={{ color: "#dc2626", fontSize: 20 }} />,
   Contact: <ContactMail sx={{ color: "#fbc02d", fontSize: 20 }} />,
 };
 
@@ -219,10 +221,6 @@ const Header = () => {
                         sx={{ fontSize: "0.875rem", py: 1.2 }}>
                         <Person fontSize="small" sx={{ mr: 1.5, color: "#dc2626" }} /> My Profile
                       </MenuItem>
-                      <MenuItem onClick={() => { router.push("/notification"); handleUserMenuClose(); }}
-                        sx={{ fontSize: "0.875rem", py: 1.2 }}>
-                        <Chat fontSize="small" sx={{ mr: 1.5, color: "#dc2626" }} /> My Messages
-                      </MenuItem>
                       <MenuItem onClick={() => { router.push("/qr-card"); handleUserMenuClose(); }}
                         sx={{ fontSize: "0.875rem", py: 1.2 }}>
                         <QrCode2 fontSize="small" sx={{ mr: 1.5, color: "#dc2626" }} /> My QR Card
@@ -297,10 +295,6 @@ const Header = () => {
                 <MenuItem onClick={() => { router.push("/profile"); handleUserMenuClose(); setDrawerOpen(false); }}
                   sx={{ fontSize: "0.875rem", py: 1.2 }}>
                   <Person fontSize="small" sx={{ mr: 1.5, color: "#dc2626" }} /> My Profile
-                </MenuItem>
-                <MenuItem onClick={() => { router.push("/notification"); handleUserMenuClose(); setDrawerOpen(false); }}
-                  sx={{ fontSize: "0.875rem", py: 1.2 }}>
-                  <Chat fontSize="small" sx={{ mr: 1.5, color: "#dc2626" }} /> My Messages
                 </MenuItem>
                 <MenuItem onClick={() => { router.push("/qr-card"); handleUserMenuClose(); setDrawerOpen(false); }}
                   sx={{ fontSize: "0.875rem", py: 1.2 }}>

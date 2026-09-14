@@ -1,11 +1,12 @@
 const mongoose = require('mongoose');
+const { BLOOD_TYPES } = require('../common/blood-types');
 
 const bloodRequestSchema = new mongoose.Schema(
   {
     hospitalName: { type: String, required: true },
     hospital: { type: mongoose.Schema.Types.ObjectId, ref: 'Hospital', default: null },
     patientName: { type: String, required: true },
-    bloodType: { type: String, enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'], required: true },
+    bloodType: { type: String, enum: BLOOD_TYPES, required: true },
     unitsNeeded: { type: Number, min: 1, max: 10, default: 1 },
     urgency: { type: String, enum: ['Low', 'Medium', 'High', 'Critical'], required: true },
     status: { type: String, enum: ['Pending', 'Approved', 'Rejected', 'Fulfilled'], default: 'Pending' },

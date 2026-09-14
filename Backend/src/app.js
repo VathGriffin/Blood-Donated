@@ -55,13 +55,6 @@ const limiter = rateLimit({
 });
 app.use('/api', limiter);
 
-// Auth endpoints — stricter limit (10 req / 15 min in production)
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: isDev ? 1000 : 10,
-  message: { error: 'Too many login attempts, please try again later.' },
-});
-
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
@@ -92,7 +85,7 @@ app.use('/api', (req, res, next) => {
 });
 
 // Routes
-app.use('/api/staff',        authLimiter, staffRoutes);
+app.use('/api/staff',        staffRoutes);
 app.use('/api/user',         userRoutes);
 app.use('/api/hospitals',    hospitalRoutes);
 app.use('/api/donors',       donorRoutes);
@@ -108,8 +101,14 @@ app.use('/api/analytics',    analyticsRoutes);
 // Global error handler
 app.use((err, req, res, next) => {
   console.error(`[ERROR] ${req.method} ${req.path}:`, err.message);
+  // Route handlers are split between `{ message }` and `{ error }` response
+  // shapes, and frontend pages read whichever one their route uses — so an
+  // error that reaches this fallback (multer, bad JSON body, etc.) has to
+  // carry both keys or it silently renders as "undefined" client-side.
+  const text = err.message || 'Internal server error';
   res.status(err.status || 500).json({
-    error: err.message || 'Internal server error',
+    message: text,
+    error: text,
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
   });
 });

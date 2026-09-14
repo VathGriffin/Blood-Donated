@@ -1,12 +1,12 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
-const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const router = express.Router();
 const Donor = require('./donor.model');
 const { requireRole, optionalAuth } = require('../common/middleware/require-role');
 const { computeEligibility } = require('../common/eligibility');
+const { createImageUpload } = require('../common/upload');
 
 const PUBLIC_FIELDS = 'fullName bloodType location available photo donationCount lastDonation createdAt';
 const isStaff = (req) => ['admin', 'hospital_staff'].includes(req.auth?.role);
@@ -30,20 +30,15 @@ const canUploadPhoto = (req, donorId) => {
   }
 };
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, path.join(__dirname, '../../uploads')),
-  filename: (req, file, cb) => cb(null, `donor-${req.params.id}-${Date.now()}${path.extname(file.originalname)}`),
-});
-const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: (req, file, cb) =>
-    file.mimetype.startsWith('image/') ? cb(null, true) : cb(new Error('Only image files are allowed')),
-});
+const upload = createImageUpload('donor');
 
 router.post('/', async (req, res) => {
   try {
-    const donor = await new Donor(req.body).save();
+    const email = (req.body.email || '').toLowerCase().trim();
+    const existing = await Donor.findOne({ email }).select('_id').lean();
+    if (existing)
+      return res.status(409).json({ message: 'This email is already registered as a donor.' });
+    const donor = await new Donor({ ...req.body, email }).save();
     res.status(201).json({ ...donor.toObject(), photoUploadToken: signPhotoUploadToken(donor._id) });
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -152,7 +147,12 @@ router.put('/:id', requireRole('admin', 'hospital_staff'), async (req, res) => {
   }
 });
 
-router.post('/:id/photo', upload.single('photo'), async (req, res) => {
+router.post('/:id/photo', (req, res, next) => {
+  upload.single('photo')(req, res, (err) => {
+    if (err) return res.status(400).json({ message: err.message });
+    next();
+  });
+}, async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
     if (!canUploadPhoto(req, req.params.id)) {

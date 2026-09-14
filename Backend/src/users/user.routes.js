@@ -2,25 +2,16 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
-const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const router = express.Router();
 const User = require('./user.model');
 const { requireRole } = require('../common/middleware/require-role');
+const { createImageUpload } = require('../common/upload');
+const { authLimiter } = require('../common/middleware/auth-limiter');
 const userAuth = requireRole('donor');
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, path.join(__dirname, '../../uploads')),
-  filename: (req, file, cb) =>
-    cb(null, `user-${req.user?.id || 'unknown'}-${Date.now()}${path.extname(file.originalname)}`),
-});
-const upload = multer({
-  storage,
-  limits: { fileSize: 10 * 1024 * 1024 },
-  fileFilter: (req, file, cb) =>
-    file.mimetype.startsWith('image/') ? cb(null, true) : cb(new Error('Only image files allowed')),
-});
+const upload = createImageUpload('user', (req) => req.user?.id || 'unknown');
 
 const signToken = (user) =>
   jwt.sign(
@@ -37,7 +28,7 @@ const userPayload = (user) => ({
   phone: user.phone || '',
 });
 
-router.post('/register', async (req, res) => {
+router.post('/register', authLimiter, async (req, res) => {
   const { fullName, email, password } = req.body;
   if (!fullName || !email || !password)
     return res.status(400).json({ message: 'All fields are required.' });
@@ -54,7 +45,7 @@ router.post('/register', async (req, res) => {
   }
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login', authLimiter, async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password)
     return res.status(400).json({ message: 'Email and password are required.' });

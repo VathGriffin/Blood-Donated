@@ -46,6 +46,7 @@ const API = `${API_BASE}/api/donors`;
 const BASE_URL = API_BASE;
 
 const bloodTypes = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+const MAX_PHOTO_SIZE = 10 * 1024 * 1024; // must match Backend/src/donor/donor.routes.js multer limit
 
 const ManageDonors = () => {
   const theme = useTheme();
@@ -58,6 +59,7 @@ const ManageDonors = () => {
   const [search, setSearch] = useState("");
   const [photoPreview, setPhotoPreview] = useState(null);
   const [photoFile, setPhotoFile] = useState(null);
+  const [photoError, setPhotoError] = useState("");
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
 
@@ -78,6 +80,7 @@ const ManageDonors = () => {
     setSelectedDonor(donor);
     setPhotoPreview(donor.photo ? `${BASE_URL}${donor.photo}` : null);
     setPhotoFile(null);
+    setPhotoError("");
     setOpen(true);
   };
 
@@ -93,6 +96,17 @@ const ManageDonors = () => {
   const handlePhotoChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setPhotoError("Only image files are allowed.");
+      e.target.value = "";
+      return;
+    }
+    if (file.size > MAX_PHOTO_SIZE) {
+      setPhotoError(`Image is too large — max ${MAX_PHOTO_SIZE / (1024 * 1024)} MB.`);
+      e.target.value = "";
+      return;
+    }
+    setPhotoError("");
     setPhotoFile(file);
     setPhotoPreview(URL.createObjectURL(file));
   };
@@ -100,6 +114,7 @@ const ManageDonors = () => {
   const handleRemovePhoto = () => {
     setPhotoFile(null);
     setPhotoPreview(null);
+    setPhotoError("");
     setSelectedDonor((prev) => ({ ...prev, photo: null }));
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
@@ -155,7 +170,10 @@ const ManageDonors = () => {
       setUploading(false);
       const status = err.response?.status;
       const msg = err.response?.data?.message;
-      console.error("Save failed:", status, msg, err);
+      // 4xx here means the server rejected bad input (duplicate email, oversized
+      // file, etc.) — expected and already shown to the user below, not a bug.
+      const log = status >= 400 && status < 500 ? console.warn : console.error;
+      log("Save failed:", status, msg, err);
       alert(msg || (status === 401 ? "Session expired — please log in again." : "Failed to save donor."));
     }
   };
@@ -414,9 +432,15 @@ const ManageDonors = () => {
                     </Button>
                   )}
                 </Box>
-                <Typography variant="caption" color="text.disabled" mt={0.5}>
-                  JPG, PNG, WebP — max 5 MB
-                </Typography>
+                {photoError ? (
+                  <Typography variant="caption" color="error" mt={0.5}>
+                    {photoError}
+                  </Typography>
+                ) : (
+                  <Typography variant="caption" color="text.disabled" mt={0.5}>
+                    JPG, PNG, WebP — max {MAX_PHOTO_SIZE / (1024 * 1024)} MB
+                  </Typography>
+                )}
               </Box>
 
               <TextField label="Full Name" name="fullName" value={selectedDonor.fullName} onChange={handleEditChange} fullWidth margin="dense" required />

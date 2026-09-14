@@ -1,11 +1,12 @@
 const mongoose = require('mongoose');
+const { BLOOD_TYPES } = require('../common/blood-types');
 
 const appointmentSchema = new mongoose.Schema(
   {
     fullName: { type: String, required: true },
-    email: { type: String, required: true },
+    email: { type: String, required: true, lowercase: true, trim: true },
     phone: { type: String, required: true },
-    bloodType: { type: String, enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'], required: true },
+    bloodType: { type: String, enum: BLOOD_TYPES, required: true },
     date: { type: String, required: true },
     time: { type: String, required: true },
     location: { type: String, required: true },

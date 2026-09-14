@@ -22,6 +22,7 @@ const HERO_IMG =
   "https://images.unsplash.com/photo-1615461066841-6116e61058f4?auto=format&fit=crop&w=1920&q=80";
 
 const bloodTypeOptions = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+const MAX_PHOTO_SIZE = 10 * 1024 * 1024; // must match Backend/src/donor/donor.routes.js multer limit
 
 const eligibilityChecks = [
   "I am between 18–60 years old",
@@ -51,6 +52,7 @@ const DonateBlood = () => {
   const [eligibilityAck, setEligibilityAck] = useState(false);
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
+  const [photoError, setPhotoError] = useState("");
   const photoInputRef = useRef(null);
   const router = useRouter();
 
@@ -62,6 +64,17 @@ const DonateBlood = () => {
   const handlePhotoChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setPhotoError("Only image files are allowed.");
+      e.target.value = "";
+      return;
+    }
+    if (file.size > MAX_PHOTO_SIZE) {
+      setPhotoError(`Image is too large — max ${MAX_PHOTO_SIZE / (1024 * 1024)} MB.`);
+      e.target.value = "";
+      return;
+    }
+    setPhotoError("");
     setPhotoFile(file);
     setPhotoPreview(URL.createObjectURL(file));
   };
@@ -69,6 +82,7 @@ const DonateBlood = () => {
   const handleRemovePhoto = () => {
     setPhotoFile(null);
     setPhotoPreview(null);
+    setPhotoError("");
     if (photoInputRef.current) photoInputRef.current.value = "";
   };
 
@@ -340,7 +354,12 @@ const DonateBlood = () => {
                     Remove Photo
                   </Button>
                 ) : (
-                  <Typography variant="caption" color="text.secondary">Optional profile photo (max 5 MB)</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Optional profile photo (max {MAX_PHOTO_SIZE / (1024 * 1024)} MB)
+                  </Typography>
+                )}
+                {photoError && (
+                  <Typography variant="caption" color="error" mt={0.5}>{photoError}</Typography>
                 )}
               </Box>
 

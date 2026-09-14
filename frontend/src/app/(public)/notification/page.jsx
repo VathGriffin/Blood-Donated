@@ -8,6 +8,7 @@ import {
 import SendIcon from "@mui/icons-material/Send";
 import ChatIcon from "@mui/icons-material/Chat";
 import LockIcon from "@mui/icons-material/Lock";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import axios from "axios";
 import { useUserAuth } from "@/store/UserAuthContext";
 import API_BASE from "@/lib/config";
@@ -21,6 +22,7 @@ const UserMessages = () => {
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
   const messagesBoxRef = useRef(null);
 
   const headers = { Authorization: `Bearer ${token}` };
@@ -73,6 +75,18 @@ const UserMessages = () => {
     }
   };
 
+  const handleDelete = async (id) => {
+    setDeletingId(id);
+    try {
+      await axios.delete(`${API_BASE}/api/messages/${id}`, { headers });
+      setMessages((prev) => prev.filter((m) => m._id !== id));
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   if (!isAuth) {
     return (
       <Box sx={{ minHeight: "70vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", px: 2, textAlign: "center", backgroundColor: bg }}>
@@ -120,9 +134,23 @@ const UserMessages = () => {
               </Box>
             ) : messages.map((msg) => {
               const isUser = msg.sender === "user";
+              const isDeleting = deletingId === msg._id;
               return (
                 <Box key={msg._id} sx={{ display: "flex", justifyContent: isUser ? "flex-end" : "flex-start", alignItems: "flex-end", gap: 1 }}>
                   {!isUser && <Avatar sx={{ bgcolor: "#b71c1c", width: 30, height: 30, fontSize: "0.7rem", fontWeight: 700, mb: 0.5 }}>AD</Avatar>}
+                  {isUser && (
+                    <IconButton
+                      size="small"
+                      disabled={isDeleting}
+                      onClick={() => handleDelete(msg._id)}
+                      sx={{
+                        width: 26, height: 26, mb: 0.5,
+                        color: "text.disabled", "&:hover": { color: "#b71c1c" },
+                      }}
+                    >
+                      {isDeleting ? <CircularProgress size={13} /> : <DeleteOutlineIcon sx={{ fontSize: 16 }} />}
+                    </IconButton>
+                  )}
                   <Box sx={{ maxWidth: "72%" }}>
                     <Box sx={{
                       px: 2, py: 1.2,

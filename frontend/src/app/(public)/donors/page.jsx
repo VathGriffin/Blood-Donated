@@ -341,18 +341,26 @@ const DonorList = () => {
             <DialogContent dividers>
               <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                 {[
-                  { label: "Phone", value: selectedDonor.phone || "Not provided" },
-                  { label: "Email", value: selectedDonor.email || "Not provided" },
+                  { label: "Phone", value: "Private — hospitals can request this donor via the platform", muted: true },
+                  { label: "Email", value: "Private — hospitals can request this donor via the platform", muted: true },
                   { label: "Location", value: selectedDonor.location },
                   { label: "Last Donation", value: formatDate(selectedDonor.lastDonation) },
                 ].map((item) => (
                   <Box key={item.label} sx={{
-                    display: "flex", justifyContent: "space-between", alignItems: "center",
+                    display: "flex", justifyContent: "space-between", alignItems: "center", gap: 2,
                     p: 1.5, borderRadius: 2,
                     backgroundColor: isDark ? "#2a2a2a" : "#f8f8f8",
                   }}>
-                    <Typography variant="body2" color="text.secondary" fontWeight={600}>{item.label}</Typography>
-                    <Typography variant="body2" fontWeight={700}>{item.value}</Typography>
+                    <Typography variant="body2" color="text.secondary" fontWeight={600} flexShrink={0}>{item.label}</Typography>
+                    <Typography
+                      variant="body2"
+                      fontWeight={item.muted ? 500 : 700}
+                      fontStyle={item.muted ? "italic" : "normal"}
+                      color={item.muted ? "text.disabled" : "text.primary"}
+                      sx={{ textAlign: "right", flex: 1, minWidth: 0 }}
+                    >
+                      {item.value}
+                    </Typography>
                   </Box>
                 ))}
                 <Box sx={{

@@ -1,5 +1,4 @@
 const express = require('express');
-const multer  = require('multer');
 const path    = require('path');
 const fs      = require('fs');
 const { body, validationResult } = require('express-validator');
@@ -7,31 +6,19 @@ const router  = express.Router();
 const BloodRequest = require('./blood-request.model');
 const Inventory     = require('../inventory/inventory.model');
 const { requireRole } = require('../common/middleware/require-role');
+const { BLOOD_TYPES } = require('../common/blood-types');
+const { assertHospitalScope } = require('../common/middleware/assert-hospital-scope');
+const { createImageUpload } = require('../common/upload');
 
 const validateRequest = [
   body('patientName').trim().notEmpty().withMessage('Patient name is required').isLength({ max: 100 }),
-  body('bloodType').isIn(['A+','A-','B+','B-','AB+','AB-','O+','O-']).withMessage('Invalid blood type'),
+  body('bloodType').isIn(BLOOD_TYPES).withMessage('Invalid blood type'),
   body('unitsNeeded').isInt({ min: 1, max: 10 }).withMessage('Units needed must be between 1 and 10'),
   body('hospitalName').trim().notEmpty().withMessage('Hospital name is required'),
   body('urgency').isIn(['Low','Medium','High','Critical']).withMessage('Invalid urgency level'),
 ];
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, path.join(__dirname, '../../uploads')),
-  filename: (req, file, cb) => cb(null, `request-${req.params.id}-${Date.now()}${path.extname(file.originalname)}`),
-});
-const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: (req, file, cb) =>
-    file.mimetype.startsWith('image/') ? cb(null, true) : cb(new Error('Only image files are allowed')),
-});
-
-// A hospital_staff may only act on requests assigned to their own hospital.
-const assertHospitalScope = (req, request) => {
-  if (!req.staff) return true;
-  return request.hospital && String(request.hospital) === String(req.staff.hospitalId);
-};
+const upload = createImageUpload('request');
 
 router.post('/', validateRequest, async (req, res) => {
   const errors = validationResult(req);
@@ -43,7 +30,12 @@ router.post('/', validateRequest, async (req, res) => {
   }
 });
 
-router.post('/:id/photo', requireRole('admin', 'hospital_staff'), upload.single('photo'), async (req, res) => {
+router.post('/:id/photo', requireRole('admin', 'hospital_staff'), (req, res, next) => {
+  upload.single('photo')(req, res, (err) => {
+    if (err) return res.status(400).json({ error: err.message });
+    next();
+  });
+}, async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
     const request = await BloodRequest.findById(req.params.id);

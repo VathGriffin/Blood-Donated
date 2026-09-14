@@ -30,6 +30,20 @@ router.get('/mine', userAuth, async (req, res) => {
   }
 });
 
+// A donor may only delete their own sent messages, never the admin's replies.
+router.delete('/:id', userAuth, async (req, res) => {
+  try {
+    const msg = await Message.findById(req.params.id);
+    if (!msg) return res.status(404).json({ message: 'Message not found' });
+    if (String(msg.userId) !== String(req.user.id) || msg.sender !== 'user')
+      return res.status(403).json({ message: 'You can only delete your own messages' });
+    await msg.deleteOne();
+    res.json({ message: 'Message deleted', id: req.params.id });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 router.get('/conversations', adminAuth, async (req, res) => {
   try {
     const conversations = await Message.aggregate([
