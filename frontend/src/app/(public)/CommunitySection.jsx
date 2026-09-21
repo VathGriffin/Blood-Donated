@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Box, Container, Typography, IconButton, useTheme } from '@mui/material';
 import { keyframes } from '@mui/system';
-import { Caveat } from 'next/font/google';
+import { script } from '@/lib/fonts';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import FavoriteIcon from '@mui/icons-material/Favorite';
@@ -14,7 +14,6 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import DropHeart from '@/components/auth/DropHeart';
 import API_BASE from '@/lib/config';
 
-const script = Caveat({ subsets: ['latin'], weight: ['600', '700'], display: 'swap' });
 const fadeUp = keyframes`from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); }`;
 const GAP_PX = 24;
 

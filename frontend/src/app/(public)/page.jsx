@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from 'next/navigation';
-import { Caveat } from 'next/font/google';
+import { script } from '@/lib/fonts';
 import { Container, Box, Typography, Button, useTheme, Paper, InputBase, Autocomplete } from "@mui/material";
 import API_BASE from "@/lib/config";
 import { PROVINCES } from "@/lib/places";
@@ -23,7 +23,6 @@ import StarIcon from "@mui/icons-material/Star";
 import Diversity3Icon from "@mui/icons-material/Diversity3";
 
 // Handwritten accent used once, on the hero photo.
-const script = Caveat({ subsets: ["latin"], weight: ["600", "700"], display: "swap" });
 
 // A real donation photo (donor's arm on the chair, squeezing a ball).
 const HERO_PHOTO = "https://images.unsplash.com/photo-1536856136534-bb679c52a9aa?w=1600&q=80&auto=format&fit=crop";

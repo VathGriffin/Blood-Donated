@@ -1,9 +1,8 @@
 'use client';
 import { Box, Container, Typography, useTheme } from '@mui/material';
-import { Caveat } from 'next/font/google';
+import { script } from '@/lib/fonts';
 import { HeartArt } from '@/components/auth/AuthArt';
 
-const script = Caveat({ subsets: ['latin'], weight: ['600', '700'], display: 'swap' });
 
 // Title on the left; a heart with a heartbeat line and the slogan on the right (wide screens).
 export default function BookingHero() {

@@ -1,11 +1,10 @@
 'use client';
 import { Box, Typography } from '@mui/material';
-import { Caveat } from 'next/font/google';
+import { script } from '@/lib/fonts';
 import { WaterDrop, Groups, Favorite } from '@mui/icons-material';
 import DropHeart from './DropHeart';
 import { RED } from './authUi';
 
-const script = Caveat({ subsets: ['latin'], weight: ['600', '700'], display: 'swap' });
 
 // A glowing heart with a drop in it, ringed by soft pulses — stands in for a photo so nothing is downloaded.
 export function HeartArt({ size = 300 }) {
