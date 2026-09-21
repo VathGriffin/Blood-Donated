@@ -18,10 +18,10 @@ export default function HospitalAppointments() {
 
   const load = useCallback(() => {
     if (!staff?.hospitalId) return;
-    axios.get(`${API_BASE}/api/appointments?hospital=${staff.hospitalId}`)
+    axios.get(`${API_BASE}/api/appointments?hospital=${staff.hospitalId}`, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => setAppts(res.data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))))
       .catch(() => setError('Failed to load appointments.'));
-  }, [staff]);
+  }, [staff, token]);
 
   useEffect(() => { load(); }, [load]);
 

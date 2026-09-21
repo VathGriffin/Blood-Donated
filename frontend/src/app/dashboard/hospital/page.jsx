@@ -18,7 +18,7 @@ import { formatDate, shortRequestId } from '@/lib/format';
 
 
 export default function HospitalOverview() {
-  const { staff } = useAuth();
+  const { staff, token } = useAuth();
   const [data, setData] = useState(null); // { requests, inventory, appointments }
   const [error, setError] = useState('');
 
@@ -28,11 +28,11 @@ export default function HospitalOverview() {
     Promise.all([
       axios.get(`${API_BASE}/api/requests?hospital=${h}`),
       axios.get(`${API_BASE}/api/inventory?hospital=${h}`),
-      axios.get(`${API_BASE}/api/appointments?hospital=${h}`),
+      axios.get(`${API_BASE}/api/appointments?hospital=${h}`, { headers: { Authorization: `Bearer ${token}` } }),
     ])
       .then(([requests, inventory, appointments]) => setData({ requests: requests.data, inventory: inventory.data, appointments: appointments.data }))
       .catch(() => setError('Failed to load your hospital\'s data.'));
-  }, [staff]);
+  }, [staff, token]);
 
   const totals = useMemo(() => summarize(data?.inventory || []), [data]);
   const pending = data?.requests.filter((r) => r.status === 'Pending').length ?? 0;

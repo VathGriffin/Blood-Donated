@@ -88,11 +88,11 @@ export default function ProfilePage() {
   useEffect(() => {
     if (!isAuth || !user?.email) return;
     setApptLoading(true);
-    axios.get(`${API_BASE}/api/appointments?email=${encodeURIComponent(user.email)}`)
+    axios.get(`${API_BASE}/api/appointments?email=${encodeURIComponent(user.email)}`, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => setAppointments(Array.isArray(res.data) ? res.data : []))
       .catch(() => setAppointments([]))
       .finally(() => setApptLoading(false));
-  }, [isAuth, user?.email]);
+  }, [isAuth, user?.email, token]);
 
   if (!isAuth) {
     return (

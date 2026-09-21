@@ -29,7 +29,8 @@ export default function ScanDonorQr() {
         { headers: { Authorization: `Bearer ${token}` } });
       setResult(data);
 
-      const { data: appts } = await axios.get(`${API_BASE}/api/appointments?hospital=${staff.hospitalId}`);
+      const { data: appts } = await axios.get(`${API_BASE}/api/appointments?hospital=${staff.hospitalId}`,
+        { headers: { Authorization: `Bearer ${token}` } });
       const match = appts.find(a => a.email?.toLowerCase() === data.donor.email.toLowerCase() && ['Pending', 'Confirmed'].includes(a.status));
       if (match) setAppointment(match);
     } catch (err) {

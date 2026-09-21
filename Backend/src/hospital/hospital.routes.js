@@ -1,20 +1,25 @@
 const express = require('express');
 const router = express.Router();
 const Hospital = require('./hospital.model');
-const { requireRole } = require('../common/middleware/require-role');
+const { requireRole, optionalAuth } = require('../common/middleware/require-role');
 const { sendError } = require('../common/middleware/error-handler');
 
-router.get('/', async (req, res) => {
+// The hospital directory is public (the booking page lists centers from it), but only its
+// directory fields: contact email, licence number and timestamps are for admins.
+const PUBLIC_FIELDS = 'name address city phone location';
+const visibleFields = (req) => (req.admin ? '' : PUBLIC_FIELDS); // '' = every field
+
+router.get('/', optionalAuth, async (req, res) => {
   try {
-    res.json(await Hospital.find().sort({ name: 1 }).lean());
+    res.json(await Hospital.find().select(visibleFields(req)).sort({ name: 1 }).lean());
   } catch (err) {
     sendError(res, err, req);
   }
 });
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', optionalAuth, async (req, res) => {
   try {
-    const hospital = await Hospital.findById(req.params.id).lean();
+    const hospital = await Hospital.findById(req.params.id).select(visibleFields(req)).lean();
     if (!hospital) return res.status(404).json({ message: 'Hospital not found' });
     res.json(hospital);
   } catch (err) {

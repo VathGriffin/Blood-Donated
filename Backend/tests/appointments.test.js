@@ -84,7 +84,8 @@ describe('POST /api/appointments (public booking)', () => {
     expect(res.body.location).toBe('Calmette Hospital');
 
     // ...which is what makes it visible to that hospital's staff dashboard
-    const list = await request(app).get(`/api/appointments?hospital=${hospital._id}`);
+    const { token } = await createHospitalStaff(hospital._id);
+    const list = await request(app).get('/api/appointments').set('Authorization', `Bearer ${token}`);
     expect(list.body.map((a) => a._id)).toContain(res.body._id);
   });
 

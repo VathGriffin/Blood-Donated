@@ -48,21 +48,51 @@ router.post('/', async (req, res) => {
   }
 });
 
-router.get('/', async (req, res) => {
+// Appointments hold names, emails and phone numbers, so reading them needs a login and is scoped
+// to what that account may see:
+//   admin           - everything (optionally filtered with ?hospital= / ?email=)
+//   hospital_staff  - their own hospital's appointments only
+//   donor           - their own appointments only (matched on their account email)
+// A filter that points outside the caller's scope is refused rather than silently ignored.
+const readAppointments = requireRole('admin', 'hospital_staff', 'donor');
+
+// Does this caller own / administer the appointment?
+const canRead = (req, appt) => {
+  if (req.admin) return true;
+  if (req.staff) return assertHospitalScope(req, appt);
+  return !!req.user?.email && appt.email === req.user.email.toLowerCase();
+};
+
+router.get('/', readAppointments, async (req, res) => {
   try {
     const filter = {};
-    if (req.query.hospital) filter.hospital = req.query.hospital;
-    if (req.query.email) filter.email = req.query.email.toLowerCase();
+    if (req.staff) {
+      if (!req.staff.hospitalId) return res.status(403).json({ error: 'Your account is not linked to a hospital' });
+      if (req.query.hospital && String(req.query.hospital) !== String(req.staff.hospitalId))
+        return res.status(403).json({ error: "Not your hospital's appointments" });
+      filter.hospital = req.staff.hospitalId;
+    } else if (req.user) {
+      const own = req.user.email.toLowerCase();
+      if (req.query.email && String(req.query.email).toLowerCase() !== own)
+        return res.status(403).json({ error: 'You can only view your own appointments' });
+      if (req.query.hospital) return res.status(403).json({ error: 'Not allowed' });
+      filter.email = own;
+    } else {
+      if (req.query.hospital) filter.hospital = req.query.hospital;
+      if (req.query.email) filter.email = String(req.query.email).toLowerCase();
+    }
     res.json(await Appointment.find(filter).sort({ createdAt: -1 }).lean());
   } catch (err) {
     sendError(res, err, req);
   }
 });
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', readAppointments, async (req, res) => {
   try {
     const appt = await Appointment.findById(req.params.id).lean();
     if (!appt) return res.status(404).json({ error: 'Appointment not found' });
+    // 404 (not 403) for someone else's record, so ids can't be probed for existence
+    if (!canRead(req, appt)) return res.status(404).json({ error: 'Appointment not found' });
     res.json(appt);
   } catch (err) {
     sendError(res, err, req);

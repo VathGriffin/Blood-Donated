@@ -42,11 +42,12 @@ async function loadAdmin(token) {
   ]);
 }
 
-async function loadHospital(hospitalId) {
+async function loadHospital(hospitalId, token) {
   if (!hospitalId) return [];
+  const auth = { headers: { Authorization: `Bearer ${token}` } };
   const [reqs, appts, inv] = await Promise.allSettled([
     axios.get(`${API_BASE}/api/requests?hospital=${hospitalId}`),
-    axios.get(`${API_BASE}/api/appointments?hospital=${hospitalId}`),
+    axios.get(`${API_BASE}/api/appointments?hospital=${hospitalId}`, auth),
     axios.get(`${API_BASE}/api/inventory?hospital=${hospitalId}`),
   ]);
   const r = value(reqs);
@@ -73,7 +74,7 @@ async function loadDonor({ token, account, onMessagesPage }) {
   const email = account?.email;
   const [msgs, appts] = await Promise.allSettled([
     axios.get(`${API_BASE}/api/messages/mine`, auth),
-    email ? axios.get(`${API_BASE}/api/appointments?email=${encodeURIComponent(email)}`) : Promise.reject(new Error('no email')),
+    email ? axios.get(`${API_BASE}/api/appointments?email=${encodeURIComponent(email)}`, auth) : Promise.reject(new Error('no email')),
   ]);
   const m = value(msgs);
   const a = value(appts);
@@ -116,7 +117,7 @@ export function useDashboardNotifications(session) {
     let next = null;
     try {
       if (role === ROLES.ADMIN) next = await loadAdmin(token);
-      else if (role === ROLES.HOSPITAL_STAFF) next = await loadHospital(account?.hospitalId);
+      else if (role === ROLES.HOSPITAL_STAFF) next = await loadHospital(account?.hospitalId, token);
       else if (role === ROLES.DONOR) next = await loadDonor({ token, account, onMessagesPage: pathname.startsWith('/notification') });
     } catch { next = null; }
     if (run !== latest.current) return; // a newer refresh superseded this one
