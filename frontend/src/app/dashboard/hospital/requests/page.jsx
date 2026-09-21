@@ -88,10 +88,10 @@ export default function HospitalRequests() {
 
   const load = useCallback(() => {
     if (!staff?.hospitalId) return;
-    axios.get(`${API_BASE}/api/requests?hospital=${staff.hospitalId}`)
+    axios.get(`${API_BASE}/api/requests?hospital=${staff.hospitalId}`, { headers: { Authorization: `Bearer ${token}` } })
       .then((res) => setRequests([...res.data].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))))
       .catch(() => setError('Failed to load requests.'));
-  }, [staff]);
+  }, [staff, token]);
 
   useEffect(() => { load(); }, [load]);
 

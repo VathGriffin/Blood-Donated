@@ -26,8 +26,9 @@ export default function AdminHospitals() {
   const [saving, setSaving] = useState(false);
 
   const load = useCallback(() => {
-    axios.get(`${API_BASE}/api/hospitals`, { headers }).then(res => setHospitals(res.data)).catch(() => setError('Failed to load hospitals.'));
-    axios.get(`${API_BASE}/api/staff`, { headers }).then(res => setStaff(res.data)).catch(() => {});
+    const auth = { headers: { Authorization: `Bearer ${token}` } };
+    axios.get(`${API_BASE}/api/hospitals`, auth).then(res => setHospitals(res.data)).catch(() => setError('Failed to load hospitals.'));
+    axios.get(`${API_BASE}/api/staff`, auth).then(res => setStaff(res.data)).catch(() => {});
   }, [token]);
 
   useEffect(() => { load(); }, [load]);

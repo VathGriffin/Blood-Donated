@@ -82,7 +82,7 @@ const ThankYou = () => {
               variant="body1"
               sx={{ color: "rgba(255,255,255,0.85)", maxWidth: 360, mx: "auto", lineHeight: 1.6 }}
             >
-              You've successfully registered as a blood donor. Welcome to our life-saving community!
+              You&apos;ve successfully registered as a blood donor. Welcome to our life-saving community!
             </Typography>
           </Box>
 

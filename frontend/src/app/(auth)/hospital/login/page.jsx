@@ -81,7 +81,7 @@ export default function HospitalLogin() {
 
                 <Box>
                     <Typography fontWeight={900} fontSize={{ md: '2rem', lg: '2.3rem' }} color="white" lineHeight={1.2} mb={1.5}>
-                        Your Hospital's<br />Blood Operations
+                        Your Hospital&apos;s<br />Blood Operations
                     </Typography>
                     <Typography fontSize="0.95rem" sx={{ color: 'rgba(255,255,255,0.7)', lineHeight: 1.7, mb: 4 }}>
                         Manage requests, inventory, and donor check-ins for your facility.

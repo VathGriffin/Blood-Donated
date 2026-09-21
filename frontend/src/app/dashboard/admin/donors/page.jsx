@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   IconButton, Dialog, DialogTitle, DialogContent, TextField, DialogActions, Button,
@@ -23,7 +23,7 @@ const ManageDonors = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
   const { token } = useAuth();
-  const authHeader = () => ({ headers: { Authorization: `Bearer ${token}` } });
+  const authHeader = useCallback(() => ({ headers: { Authorization: `Bearer ${token}` } }), [token]);
   const [donors, setDonors] = useState([]);
   const [open, setOpen] = useState(false);
   const [selectedDonor, setSelectedDonor] = useState(null);
@@ -34,18 +34,18 @@ const ManageDonors = () => {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
 
-  const fetchDonors = async () => {
+  const fetchDonors = useCallback(async () => {
     try {
       const res = await axios.get(API, authHeader());
       setDonors(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error("Fetch failed:", err);
     }
-  };
+  }, [authHeader]);
 
   useEffect(() => {
     fetchDonors();
-  }, []);
+  }, [fetchDonors]);
 
   const openDialog = (donor) => {
     setSelectedDonor(donor);

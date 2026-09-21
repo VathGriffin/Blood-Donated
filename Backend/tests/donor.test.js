@@ -77,14 +77,29 @@ describe('donor CRUD', () => {
 
   test('lookup by email', async () => {
     await request(app).post('/api/donors').send(donorBody);
-    const res = await request(app).get(`/api/donors/lookup?email=${donorBody.email}`);
+    const token = signDonor({ id: '64b000000000000000000001', email: donorBody.email, fullName: donorBody.fullName });
+    const res = await request(app).get(`/api/donors/lookup?email=${donorBody.email}`).set('Authorization', `Bearer ${token}`);
     expect(res.body.found).toBe(true);
     expect(res.body.bloodType).toBe('O+');
   });
 
   test('lookup for unknown email returns found:false', async () => {
-    const res = await request(app).get('/api/donors/lookup?email=nobody@test.com');
+    const token = signDonor({ id: '64b000000000000000000002', email: 'nobody@test.com', fullName: 'Nobody' });
+    const res = await request(app).get('/api/donors/lookup?email=nobody@test.com').set('Authorization', `Bearer ${token}`);
     expect(res.body.found).toBe(false);
+  });
+
+  test('lookup is private: it needs a donor login and only answers about your own email', async () => {
+    await request(app).post('/api/donors').send(donorBody);
+    expect((await request(app).get(`/api/donors/lookup?email=${donorBody.email}`)).status).toBe(401);
+
+    const stranger = signDonor({ id: '64b000000000000000000003', email: 'stranger@test.com', fullName: 'Stranger' });
+    const probe = await request(app).get(`/api/donors/lookup?email=${donorBody.email}`).set('Authorization', `Bearer ${stranger}`);
+    expect(probe.status).toBe(403);
+    expect(JSON.stringify(probe.body)).not.toMatch(/O\+|Sok Dara|Phnom Penh/);
+
+    const { token: staffToken } = await createAdmin();
+    expect((await request(app).get(`/api/donors/lookup?email=${donorBody.email}`).set('Authorization', `Bearer ${staffToken}`)).status).toBe(403);
   });
 
   test('rejects a second registration with an already-registered email', async () => {

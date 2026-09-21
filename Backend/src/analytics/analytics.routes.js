@@ -15,7 +15,6 @@ router.get('/', async (req, res) => {
   try {
     const now   = new Date();
     const month = new Date(now.getFullYear(), now.getMonth(), 1);
-    const year  = new Date(now.getFullYear(), 0, 1);
 
     const [
       totalDonors, newDonorsThisMonth, activeDonors,

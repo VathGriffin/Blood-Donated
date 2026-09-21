@@ -82,7 +82,7 @@ const AppointmentConfirmed = () => {
               variant="body1"
               sx={{ color: "rgba(255,255,255,0.85)", maxWidth: 360, mx: "auto", lineHeight: 1.6 }}
             >
-              Thank you for scheduling your blood donation. You're helping save lives!
+              Thank you for scheduling your blood donation. You&apos;re helping save lives!
             </Typography>
           </Box>
 

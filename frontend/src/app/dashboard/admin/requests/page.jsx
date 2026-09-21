@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   IconButton, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField,
@@ -49,7 +49,7 @@ const ManageRequests = () => {
     const theme = useTheme();
     const isDark = theme.palette.mode === "dark";
     const { token } = useAuth();
-    const authHeader = () => ({ headers: { Authorization: `Bearer ${token}` } });
+    const authHeader = useCallback(() => ({ headers: { Authorization: `Bearer ${token}` } }), [token]);
 
     const [requests, setRequests]     = useState([]);
     const [formData, setFormData]     = useState(emptyForm);
@@ -64,16 +64,16 @@ const ManageRequests = () => {
     const [viewProfile, setViewProfile] = useState(null);
     const [actionError, setActionError] = useState("");
 
-    const fetchRequests = async () => {
+    const fetchRequests = useCallback(async () => {
         try {
-            const res = await axios.get(API_BASE);
+            const res = await axios.get(API_BASE, authHeader());
             setRequests(Array.isArray(res.data) ? res.data : []);
         } catch (err) {
             console.error(err);
         }
-    };
+    }, [authHeader]);
 
-    useEffect(() => { fetchRequests(); }, []);
+    useEffect(() => { fetchRequests(); }, [fetchRequests]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;

@@ -26,7 +26,7 @@ export default function HospitalOverview() {
     if (!staff?.hospitalId) return;
     const h = staff.hospitalId;
     Promise.all([
-      axios.get(`${API_BASE}/api/requests?hospital=${h}`),
+      axios.get(`${API_BASE}/api/requests?hospital=${h}`, { headers: { Authorization: `Bearer ${token}` } }),
       axios.get(`${API_BASE}/api/inventory?hospital=${h}`),
       axios.get(`${API_BASE}/api/appointments?hospital=${h}`, { headers: { Authorization: `Bearer ${token}` } }),
     ])

@@ -1,7 +1,7 @@
 const request = require('supertest');
 const app = require('../src/app');
 const Inventory = require('../src/inventory/inventory.model');
-const { createAdmin, createHospital, createHospitalStaff } = require('./helpers');
+const { createHospital, createHospitalStaff } = require('./helpers');
 
 describe('inventory', () => {
   test('GET / auto-seeds the central pool on first call', async () => {

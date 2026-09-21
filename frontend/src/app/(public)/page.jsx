@@ -145,9 +145,6 @@ export default function Home() {
   };
 
   const bg     = isDark ? "#0a0a0a" : "#ffffff";
-  const alt    = isDark ? "#0f0f0f" : "#f7f7f7";
-  const border = isDark ? "#1e1e1e" : "#e8e8e8";
-  const card   = isDark ? "#111111" : "#ffffff";
 
   const statItems = [
     { icon: <PeopleIcon />,      value: pub?.donors,            label: "Registered Donors" },

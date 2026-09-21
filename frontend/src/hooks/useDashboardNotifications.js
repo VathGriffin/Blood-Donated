@@ -46,7 +46,7 @@ async function loadHospital(hospitalId, token) {
   if (!hospitalId) return [];
   const auth = { headers: { Authorization: `Bearer ${token}` } };
   const [reqs, appts, inv] = await Promise.allSettled([
-    axios.get(`${API_BASE}/api/requests?hospital=${hospitalId}`),
+    axios.get(`${API_BASE}/api/requests?hospital=${hospitalId}`, auth),
     axios.get(`${API_BASE}/api/appointments?hospital=${hospitalId}`, auth),
     axios.get(`${API_BASE}/api/inventory?hospital=${hospitalId}`),
   ]);

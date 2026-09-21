@@ -590,8 +590,8 @@ export default function AdminSettings() {
             </Paper>
             <Alert severity="info" sx={{ borderRadius: 3, fontSize: '0.82rem' }}>
               Age (18–60) and weight (45kg+) requirements are shown to donors as guidance text during
-              registration, but are not currently validated server-side — this dashboard shows what's
-              actually enforced in code rather than editable fields that wouldn't do anything.
+              registration, but are not currently validated server-side — this dashboard shows what&apos;s
+              actually enforced in code rather than editable fields that wouldn&apos;t do anything.
             </Alert>
           </Box>
         );
@@ -610,7 +610,7 @@ export default function AdminSettings() {
             </Paper>
             <Alert severity="info" sx={{ borderRadius: 3, fontSize: '0.82rem' }}>
               There is currently no server-side cap on appointments per day, no cancellation window, and
-              no automated reminder system — booking a slot doesn't check how many others already picked it.
+              no automated reminder system — booking a slot doesn&apos;t check how many others already picked it.
             </Alert>
           </Box>
         );
@@ -643,7 +643,7 @@ export default function AdminSettings() {
 
             <Paper elevation={0} sx={cardSx}>
               <Box px={3} py={1} sx={{ borderBottom: `1px solid ${border}`, bgcolor: subBg }}>
-                <Typography fontWeight={700} fontSize="0.85rem" py={1}>What's Actually Enforced</Typography>
+                <Typography fontWeight={700} fontSize="0.85rem" py={1}>What&apos;s Actually Enforced</Typography>
               </Box>
               <Box px={3} py={1}>
                 <Row label="Password storage" value="bcrypt hash" border={border} />
@@ -675,7 +675,7 @@ export default function AdminSettings() {
             System Settings
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            Your profile, and the platform's real configuration
+            Your profile, and the platform&apos;s real configuration
           </Typography>
         </Box>
       </Box>

@@ -414,7 +414,7 @@ const DonateBlood = () => {
                     label={
                       <Box>
                         <Typography variant="body2" fontWeight={600}>Available to Donate</Typography>
-                        <Typography variant="caption" color="text.secondary">Toggle if you're ready now</Typography>
+                        <Typography variant="caption" color="text.secondary">Toggle if you&apos;re ready now</Typography>
                       </Box>
                     }
                   />

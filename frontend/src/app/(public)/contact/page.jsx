@@ -122,7 +122,7 @@ const Contact = () => {
             color: "rgba(255,255,255,0.82)", maxWidth: 560, mx: "auto",
             lineHeight: 1.8, fontWeight: 400, fontSize: { xs: "1rem", md: "1.1rem" },
           }}>
-            Whether you're a donor, patient, or hospital partner — our team is
+            Whether you&apos;re a donor, patient, or hospital partner — our team is
             always ready to assist you.
           </Typography>
 
@@ -176,7 +176,7 @@ const Contact = () => {
                 Get In Touch
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 3.5, lineHeight: 1.7 }}>
-                Whether you're a donor, patient, or hospital partner — our team is here to help.
+                Whether you&apos;re a donor, patient, or hospital partner — our team is here to help.
               </Typography>
 
               <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>

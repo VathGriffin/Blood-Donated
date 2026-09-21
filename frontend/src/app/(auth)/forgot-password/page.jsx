@@ -36,7 +36,7 @@ export default function ForgotPassword() {
             ) : (
               <Box component="form" onSubmit={handleSubmit}>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
-                  Enter your email address and we'll send you a link to reset your password.
+                  Enter your email address and we&apos;ll send you a link to reset your password.
                 </Typography>
                 <TextField fullWidth label="Email Address" type="email" value={email}
                   onChange={(e) => setEmail(e.target.value)} required

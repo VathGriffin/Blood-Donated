@@ -1,11 +1,13 @@
 const request = require('supertest');
 const app = require('../src/app');
 const { sendError } = require('../src/common/middleware/error-handler');
+const { createAdmin } = require('./helpers');
 
 describe('error handling', () => {
   test('a malformed id is a 400 that does not leak Mongoose internals', async () => {
+    const { token } = await createAdmin(); // /api/requests/:id needs a login
     for (const path of ['/api/donors/not-an-id', '/api/hospitals/123', '/api/requests/zzz']) {
-      const res = await request(app).get(path);
+      const res = await request(app).get(path).set('Authorization', `Bearer ${token}`);
       expect(res.status).toBe(400);
       expect(res.body.message).toBe('Invalid id');
       expect(res.body.error).toBe('Invalid id');

@@ -60,7 +60,7 @@ export default function QrScanner({ onDecode }) {
       )}
       <Box display="flex" alignItems="center" gap={0.8} mt={1.5} color="text.secondary">
         <CameraAlt sx={{ fontSize: 16 }} />
-        <Typography fontSize="0.78rem">Point the camera at a donor's QR card.</Typography>
+        <Typography fontSize="0.78rem">Point the camera at a donor&apos;s QR card.</Typography>
       </Box>
     </Box>
   );

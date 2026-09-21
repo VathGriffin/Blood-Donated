@@ -26,5 +26,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
+  },
+  "overrides": {
+    "postcss": "^8.5.23"
   }
 }

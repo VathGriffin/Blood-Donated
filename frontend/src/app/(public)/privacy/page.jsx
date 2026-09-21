@@ -153,7 +153,7 @@ export default function PrivacyPolicy() {
           <Bullet isDark={isDark}><strong>Partner hospitals:</strong> Your contact information may be shared with verified partner hospitals when a blood match is confirmed and you have consented</Bullet>
           <Bullet isDark={isDark}><strong>Legal obligations:</strong> We may disclose data if required by Cambodian law or court order</Bullet>
           <Bullet isDark={isDark}><strong>Service providers:</strong> Cloud infrastructure providers (MongoDB Atlas) under strict data processing agreements</Bullet>
-          <Bullet isDark={isDark}><strong>AI assistant:</strong> Chat messages sent to the AI assistant are processed by Anthropic's API and are not stored on our servers</Bullet>
+          <Bullet isDark={isDark}><strong>AI assistant:</strong> Chat messages sent to the AI assistant are processed by Anthropic&apos;s API and are not stored on our servers</Bullet>
         </Section>
 
         {/* 4. Security */}

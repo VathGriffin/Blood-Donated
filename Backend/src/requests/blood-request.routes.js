@@ -5,7 +5,7 @@ const { body, validationResult } = require('express-validator');
 const router  = express.Router();
 const BloodRequest = require('./blood-request.model');
 const Inventory     = require('../inventory/inventory.model');
-const { requireRole } = require('../common/middleware/require-role');
+const { requireRole, optionalAuth } = require('../common/middleware/require-role');
 const { BLOOD_TYPES } = require('../common/blood-types');
 const { assertHospitalScope } = require('../common/middleware/assert-hospital-scope');
 const { createImageUpload } = require('../common/upload');
@@ -21,11 +21,19 @@ const validateRequest = [
 
 const upload = createImageUpload('request');
 
-router.post('/', validateRequest, async (req, res) => {
+// Anyone may submit a request, but only these fields are read from the body — never status,
+// fulfilledAt/By, photo or the hospital link, which a visitor could otherwise set to "Fulfilled".
+// userEmail (what ties a request to a donor's profile) comes from the login token, not the client,
+// so nobody can file requests into someone else's profile.
+const REQUEST_FIELDS = ['hospitalName', 'patientName', 'bloodType', 'unitsNeeded', 'urgency', 'reason', 'contact'];
+
+router.post('/', optionalAuth, validateRequest, async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
   try {
-    res.status(201).json(await new BloodRequest(req.body).save());
+    const data = Object.fromEntries(REQUEST_FIELDS.filter((key) => req.body[key] !== undefined).map((key) => [key, req.body[key]]));
+    data.userEmail = req.user?.email || '';
+    res.status(201).json(await new BloodRequest(data).save());
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -55,21 +63,48 @@ router.post('/:id/photo', requireRole('admin', 'hospital_staff'), (req, res, nex
   }
 });
 
-router.get('/', async (req, res) => {
+// Blood requests carry patient names, reasons and contact details, so reading them needs a login,
+// scoped to what that account may see (same rules as appointments):
+//   admin - everything (optionally filtered by ?hospital= / ?email=)
+//   hospital_staff - their own hospital's requests only
+//   donor - the requests filed under their own account email
+// A filter outside the caller's scope is refused; someone else's single request is a 404.
+const readRequests = requireRole('admin', 'hospital_staff', 'donor');
+
+const canRead = (req, request) => {
+  if (req.admin) return true;
+  if (req.staff) return assertHospitalScope(req, request);
+  return !!req.user?.email && request.userEmail === req.user.email.toLowerCase();
+};
+
+router.get('/', readRequests, async (req, res) => {
   try {
     const filter = {};
-    if (req.query.email) filter.userEmail = req.query.email.toLowerCase().trim();
-    if (req.query.hospital) filter.hospital = req.query.hospital;
+    if (req.staff) {
+      if (!req.staff.hospitalId) return res.status(403).json({ error: 'Your account is not linked to a hospital' });
+      if (req.query.hospital && String(req.query.hospital) !== String(req.staff.hospitalId))
+        return res.status(403).json({ error: "Not your hospital's requests" });
+      filter.hospital = req.staff.hospitalId;
+    } else if (req.user) {
+      const own = req.user.email.toLowerCase();
+      if (req.query.email && String(req.query.email).toLowerCase().trim() !== own)
+        return res.status(403).json({ error: 'You can only view your own requests' });
+      if (req.query.hospital) return res.status(403).json({ error: 'Not allowed' });
+      filter.userEmail = own;
+    } else {
+      if (req.query.email) filter.userEmail = String(req.query.email).toLowerCase().trim();
+      if (req.query.hospital) filter.hospital = req.query.hospital;
+    }
     res.json(await BloodRequest.find(filter).sort({ createdAt: -1 }).lean());
   } catch (err) {
     sendError(res, err, req);
   }
 });
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', readRequests, async (req, res) => {
   try {
     const request = await BloodRequest.findById(req.params.id).lean();
-    if (!request) return res.status(404).json({ error: 'Request not found' });
+    if (!request || !canRead(req, request)) return res.status(404).json({ error: 'Request not found' });
     res.json(request);
   } catch (err) {
     sendError(res, err, req);

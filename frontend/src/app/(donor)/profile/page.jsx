@@ -74,16 +74,19 @@ export default function ProfilePage() {
     if (!isAuth || !token) return;
     axios.get(`${API_BASE}/api/user/me`, { headers: { Authorization: `Bearer ${token}` } })
       .catch(sessionExpired);
+    // Intentionally keyed to the session only: sessionExpired is re-created on every render, and
+    // depending on it would re-verify the session on each render instead of when it changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuth, token]);
 
   useEffect(() => {
     if (!isAuth || !user?.email) return;
     setLoading(true);
-    axios.get(`${API_BASE}/api/requests?email=${encodeURIComponent(user.email)}`)
+    axios.get(`${API_BASE}/api/requests?email=${encodeURIComponent(user.email)}`, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => setRequests(Array.isArray(res.data) ? res.data : []))
       .catch(() => setRequests([]))
       .finally(() => setLoading(false));
-  }, [isAuth, user?.email]);
+  }, [isAuth, user?.email, token]);
 
   useEffect(() => {
     if (!isAuth || !user?.email) return;

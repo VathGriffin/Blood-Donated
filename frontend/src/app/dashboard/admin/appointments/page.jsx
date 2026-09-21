@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   IconButton, Box, Snackbar, Alert, useTheme, Avatar, Tooltip, InputAdornment, TextField,
@@ -22,23 +22,23 @@ const ManageAppointments = () => {
     const theme = useTheme();
     const isDark = theme.palette.mode === "dark";
     const { token } = useAuth();
-    const authHeader = () => ({ headers: { Authorization: `Bearer ${token}` } });
+    const authHeader = useCallback(() => ({ headers: { Authorization: `Bearer ${token}` } }), [token]);
     const [appointments, setAppointments] = useState([]);
     const [search, setSearch] = useState("");
     const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
 
-    const fetchAppointments = async () => {
+    const fetchAppointments = useCallback(async () => {
         try {
             const res = await axios.get(API, authHeader());
             setAppointments(Array.isArray(res.data) ? res.data : []);
         } catch (err) {
             console.error("Failed to fetch appointments:", err);
         }
-    };
+    }, [authHeader]);
 
     useEffect(() => {
         fetchAppointments();
-    }, []);
+    }, [fetchAppointments]);
 
     const handleStatusChange = async (id, status) => {
         try {

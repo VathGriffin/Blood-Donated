@@ -57,9 +57,12 @@ router.get('/', optionalAuth, async (req, res) => {
   }
 });
 
-router.get('/lookup', async (req, res) => {
-  const { email } = req.query;
-  if (!email) return res.status(400).json({ message: 'Email required' });
+// "Is my account also registered as a donor?" — for the signed-in donor about themselves only.
+// Public access would let anyone test whether an email belongs to a donor and read their details.
+router.get('/lookup', requireRole('donor'), async (req, res) => {
+  const email = req.query.email || req.user.email;
+  if (String(email).toLowerCase().trim() !== req.user.email.toLowerCase())
+    return res.status(403).json({ message: 'You can only look up your own donor record' });
   try {
     const donor = await Donor.findOne({ email: email.toLowerCase().trim() })
       .select('fullName bloodType available lastDonation location')

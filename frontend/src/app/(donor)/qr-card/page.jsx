@@ -40,7 +40,7 @@ export default function QRCardPage() {
   useEffect(() => {
     if (!isAuth || !user?.email) return;
     setLoading(true);
-    axios.get(`${API_BASE}/api/donors/lookup?email=${encodeURIComponent(user.email)}`)
+    axios.get(`${API_BASE}/api/donors/lookup?email=${encodeURIComponent(user.email)}`, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => {
         if (res.data.found) {
           setDonor(res.data);

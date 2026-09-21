@@ -24,6 +24,7 @@ const analyticsRoutes   = require('./analytics/analytics.routes');
 const nearbyRoutes      = require('./nearby/nearby.routes');
 const { notFound, errorHandler } = require('./common/middleware/error-handler');
 const { corsOrigin } = require('./common/cors');
+const { normalizeBody, requireTextFields } = require('./common/middleware/body-guard');
 
 const app = express();
 
@@ -67,6 +68,10 @@ app.use('/api', limiter);
 
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+
+// Always a plain object, and text fields really are text (see body-guard.js)
+app.use(normalizeBody);
+app.use(requireTextFields);
 
 // NoSQL injection sanitization — strips $ and . from req.body, req.params, req.query
 // Express 5 makes req.query a getter-only property, so we sanitize in place

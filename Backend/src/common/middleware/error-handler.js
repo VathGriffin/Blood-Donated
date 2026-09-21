@@ -54,7 +54,7 @@ const notFound = (req, res) => {
   res.status(404).json({ message: text, error: text });
 };
 
-// eslint-disable-next-line no-unused-vars
+// Express recognises an error handler by its four parameters, so `next` must stay in the signature.
 const errorHandler = (err, req, res, next) => sendError(res, err, req);
 
 module.exports = { sendError, notFound, errorHandler };

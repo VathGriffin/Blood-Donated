@@ -62,7 +62,7 @@ export default function Terms() {
 
         <Section title="1. Acceptance of Terms" isDark={isDark} border={border} card={card}>
           <Typography variant="body2" color="text.secondary" lineHeight={1.8}>
-            By accessing or using the BloodLife platform ("Service"), you agree to be bound by these Terms of Service and our Privacy Policy.
+            By accessing or using the BloodLife platform (&quot;Service&quot;), you agree to be bound by these Terms of Service and our Privacy Policy.
             If you do not agree to these terms, please do not use the Service. These terms apply to all visitors, donors, and registered users.
           </Typography>
         </Section>
@@ -86,7 +86,7 @@ export default function Terms() {
           <Bullet>Keep your account credentials confidential and not share your password</Bullet>
           <Bullet>Use the platform only for lawful, legitimate blood donation and request purposes</Bullet>
           <Bullet>Not submit false blood requests or donor registrations</Bullet>
-          <Bullet>Not attempt to scrape, reverse-engineer, or abuse the platform's APIs</Bullet>
+          <Bullet>Not attempt to scrape, reverse-engineer, or abuse the platform&apos;s APIs</Bullet>
           <Bullet warn>Misuse of the blood request system for non-medical purposes may result in permanent account suspension and legal action</Bullet>
         </Section>
 
@@ -116,7 +116,7 @@ export default function Terms() {
         </Section>
 
         <Section title="6. Limitation of Liability" isDark={isDark} border={border} card={card}>
-          <Bullet warn>BloodLife provides the platform "as is" without warranty of any kind</Bullet>
+          <Bullet warn>BloodLife provides the platform &quot;as is&quot; without warranty of any kind</Bullet>
           <Bullet warn>We are not liable for any direct, indirect, or consequential damages arising from use of the Service</Bullet>
           <Bullet warn>We do not guarantee continuous, uninterrupted availability of the platform</Bullet>
           <Bullet warn>We are not responsible for the accuracy of donor or patient information submitted by users</Bullet>
@@ -134,7 +134,7 @@ export default function Terms() {
           <Typography variant="body2" color="text.secondary" lineHeight={1.8}>
             We may update these Terms of Service from time to time. We will notify registered users of material changes via email.
             Continued use of the platform after changes are posted constitutes acceptance of the updated terms.
-            The "Last updated" date at the top of this page will reflect any revisions.
+            The &quot;Last updated&quot; date at the top of this page will reflect any revisions.
           </Typography>
         </Section>
 

@@ -302,8 +302,8 @@ const About = () => {
               </Typography>
               <Typography variant="body1" sx={{ color: "rgba(255,255,255,0.80)", lineHeight: 1.9, mb: 2.5, fontSize: "1.05rem" }}>
                 <strong style={{ color: "#ffcdd2" }}>BloodLife</strong> is a full-stack web application built to solve a
-                real problem — Cambodia's blood supply gap. We connect donors, hospitals,
-                and patients in a single platform that's fast, transparent, and life-saving.
+                real problem — Cambodia&apos;s blood supply gap. We connect donors, hospitals,
+                and patients in a single platform that&apos;s fast, transparent, and life-saving.
               </Typography>
               <Typography variant="body1" sx={{ color: "rgba(255,255,255,0.75)", lineHeight: 1.9, fontSize: "1.05rem" }}>
                 With real-time inventory tracking, donor management, and automated shortage
