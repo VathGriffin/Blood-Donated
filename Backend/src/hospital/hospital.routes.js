@@ -2,12 +2,13 @@ const express = require('express');
 const router = express.Router();
 const Hospital = require('./hospital.model');
 const { requireRole } = require('../common/middleware/require-role');
+const { sendError } = require('../common/middleware/error-handler');
 
 router.get('/', async (req, res) => {
   try {
     res.json(await Hospital.find().sort({ name: 1 }).lean());
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    sendError(res, err, req);
   }
 });
 
@@ -17,7 +18,7 @@ router.get('/:id', async (req, res) => {
     if (!hospital) return res.status(404).json({ message: 'Hospital not found' });
     res.json(hospital);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    sendError(res, err, req);
   }
 });
 
@@ -45,7 +46,7 @@ router.delete('/:id', requireRole('admin'), async (req, res) => {
     if (!deleted) return res.status(404).json({ message: 'Hospital not found' });
     res.json({ message: 'Hospital deleted', id: req.params.id });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    sendError(res, err, req);
   }
 });
 

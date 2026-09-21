@@ -1,10 +1,17 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const path = require('path');
+const fs = require('fs');
 const router = express.Router();
 const StaffUser = require('./staff.model');
 const { requireRole } = require('../common/middleware/require-role');
 const { authLimiter } = require('../common/middleware/auth-limiter');
+const { sendError } = require('../common/middleware/error-handler');
+const { createImageUpload } = require('../common/upload');
+const { sessionClaims } = require('../common/session');
+
+const upload = createImageUpload('staff', (req) => req.auth?.id || 'unknown');
 
 const signToken = (staff) =>
   jwt.sign(
@@ -14,6 +21,7 @@ const signToken = (staff) =>
       fullName: staff.fullName,
       role: staff.role,
       hospitalId: staff.hospital ? staff.hospital.toString() : undefined,
+      ...sessionClaims(staff),
     },
     process.env.JWT_SECRET,
     { expiresIn: '7d' }
@@ -25,6 +33,7 @@ const staffPayload = (staff) => ({
   email: staff.email,
   role: staff.role,
   hospitalId: staff.hospital || null,
+  photo: staff.photo || null,
 });
 
 router.post('/login', authLimiter, async (req, res) => {
@@ -38,7 +47,29 @@ router.post('/login', authLimiter, async (req, res) => {
     if (!valid) return res.status(401).json({ message: 'Invalid credentials' });
     res.json({ token: signToken(staff), staff: staffPayload(staff) });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    sendError(res, err, req);
+  }
+});
+
+// Session check for the dashboard shell. The JWT proves who signed in, but the role
+// and hospital it carries are frozen at login — so this re-reads the account from
+// the database. A deleted account (or one whose role changed) is caught here rather
+// than waiting out the 7-day token.
+router.get('/me', requireRole('admin', 'hospital_staff'), async (req, res) => {
+  try {
+    const staff = await StaffUser.findById(req.auth.id).select('-password').populate('hospital', 'name').lean();
+    if (!staff) return res.status(401).json({ message: 'Account no longer exists' });
+    res.json({
+      id: staff._id,
+      fullName: staff.fullName,
+      email: staff.email,
+      role: staff.role,
+      hospitalId: staff.hospital?._id || null,
+      hospitalName: staff.hospital?.name || null,
+      photo: staff.photo || null,
+    });
+  } catch (err) {
+    sendError(res, err, req);
   }
 });
 
@@ -52,6 +83,49 @@ router.patch('/me', requireRole('admin', 'hospital_staff'), async (req, res) => 
     res.json(staffPayload(staff));
   } catch (err) {
     res.status(400).json({ message: err.message });
+  }
+});
+
+// Deletes an uploaded file by the name stored on the account. basename() keeps a
+// tampered DB value from pointing outside the uploads folder.
+const removeUpload = (photoPath) => {
+  if (!photoPath) return;
+  const file = path.join(__dirname, '../../uploads', path.basename(photoPath));
+  try { fs.unlinkSync(file); } catch { /* already gone */ }
+};
+
+// Self-service: set the logged-in staff member's own profile photo (replaces the old one).
+router.post('/me/photo', requireRole('admin', 'hospital_staff'), (req, res, next) => {
+  upload.single('photo')(req, res, (err) => (err ? sendError(res, err, req) : next()));
+}, async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
+    const existing = await StaffUser.findById(req.auth.id).select('photo').lean();
+    if (!existing) {
+      removeUpload(req.file.filename);
+      return res.status(404).json({ message: 'Account not found' });
+    }
+    const staff = await StaffUser.findByIdAndUpdate(
+      req.auth.id, { photo: `/uploads/${req.file.filename}` }, { new: true }
+    ).select('-password');
+    removeUpload(existing.photo);
+    res.json(staffPayload(staff));
+  } catch (err) {
+    removeUpload(req.file?.filename);
+    sendError(res, err, req);
+  }
+});
+
+// Self-service: remove the logged-in staff member's own profile photo.
+router.delete('/me/photo', requireRole('admin', 'hospital_staff'), async (req, res) => {
+  try {
+    const existing = await StaffUser.findById(req.auth.id).select('photo').lean();
+    if (!existing) return res.status(404).json({ message: 'Account not found' });
+    const staff = await StaffUser.findByIdAndUpdate(req.auth.id, { photo: null }, { new: true }).select('-password');
+    removeUpload(existing.photo);
+    res.json(staffPayload(staff));
+  } catch (err) {
+    sendError(res, err, req);
   }
 });
 
@@ -72,7 +146,7 @@ router.patch('/me/password', requireRole('admin', 'hospital_staff'), async (req,
     await staff.save();
     res.json({ message: 'Password updated successfully.' });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    sendError(res, err, req);
   }
 });
 
@@ -109,7 +183,7 @@ router.get('/', requireRole('admin'), async (req, res) => {
     const staff = await StaffUser.find(filter).select('-password').populate('hospital', 'name').lean();
     res.json(staff);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    sendError(res, err, req);
   }
 });
 
@@ -134,7 +208,7 @@ router.delete('/:id', requireRole('admin'), async (req, res) => {
     if (!staff) return res.status(404).json({ message: 'Staff account not found' });
     res.json({ message: 'Staff account deleted', id: req.params.id });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    sendError(res, err, req);
   }
 });
 

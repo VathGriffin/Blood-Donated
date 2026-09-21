@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { BLOOD_TYPES } = require('../common/blood-types');
 
 const userSchema = new mongoose.Schema(
   {
@@ -15,6 +16,9 @@ const userSchema = new mongoose.Schema(
     facebookId: { type: String, index: { sparse: true } },
     photo: { type: String, default: null },
     phone: { type: String, default: '' },
+    dateOfBirth: { type: Date, default: null },
+    bloodType: { type: String, enum: [...BLOOD_TYPES, ''], default: '' },
+    location: { type: String, default: '', trim: true },
   },
   { timestamps: true }
 );

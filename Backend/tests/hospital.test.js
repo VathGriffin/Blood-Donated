@@ -57,4 +57,14 @@ describe('hospital directory', () => {
     expect(deleted.status).toBe(200);
     expect(await Hospital.findById(hospital._id)).toBeNull();
   });
+
+  test('an admin can save coordinates, and the public list returns them (the booking page uses them for distances)', async () => {
+    const { token } = await createAdmin();
+    const created = await request(app).post('/api/hospitals').set('Authorization', `Bearer ${token}`)
+      .send({ name: 'Located Hospital', city: 'Phnom Penh', location: { lat: 11.5564, lng: 104.9282 } });
+    expect(created.status).toBe(201);
+    const list = await request(app).get('/api/hospitals');
+    const found = list.body.find((h) => h.name === 'Located Hospital');
+    expect(found.location).toEqual({ lat: 11.5564, lng: 104.9282 });
+  });
 });

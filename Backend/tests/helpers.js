@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const StaffUser = require('../src/staff/staff.model');
 const Hospital = require('../src/hospital/hospital.model');
+const { sessionClaims } = require('../src/common/session');
 
 const signStaff = (staff) =>
   jwt.sign(
@@ -11,6 +12,7 @@ const signStaff = (staff) =>
       fullName: staff.fullName,
       role: staff.role,
       hospitalId: staff.hospital ? staff.hospital.toString() : undefined,
+      ...sessionClaims(staff),
     },
     process.env.JWT_SECRET,
     { expiresIn: '7d' }

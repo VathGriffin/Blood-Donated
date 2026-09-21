@@ -9,6 +9,8 @@ const User = require('./user.model');
 const { requireRole } = require('../common/middleware/require-role');
 const { createImageUpload } = require('../common/upload');
 const { authLimiter } = require('../common/middleware/auth-limiter');
+const { sendError } = require('../common/middleware/error-handler');
+const { BLOOD_TYPES } = require('../common/blood-types');
 const userAuth = requireRole('donor');
 
 const upload = createImageUpload('user', (req) => req.user?.id || 'unknown');
@@ -26,7 +28,34 @@ const userPayload = (user) => ({
   email: user.email,
   photo: user.photo || null,
   phone: user.phone || '',
+  bloodType: user.bloodType || '',
+  location: user.location || '',
+  dateOfBirth: user.dateOfBirth || null,
 });
+
+// Optional profile fields collected at sign-up. Returns { value } or { error }.
+function parseSignupProfile({ phone, dateOfBirth, bloodType, location }) {
+  const value = {};
+  if (phone) {
+    const cleaned = String(phone).trim();
+    if (!/^\+?[0-9 ()-]{8,20}$/.test(cleaned)) return { error: 'Please enter a valid phone number.' };
+    value.phone = cleaned;
+  }
+  if (dateOfBirth) {
+    const dob = new Date(dateOfBirth);
+    const now = new Date();
+    const oldest = new Date(now.getFullYear() - 120, now.getMonth(), now.getDate());
+    if (Number.isNaN(dob.getTime()) || dob > now || dob < oldest)
+      return { error: 'Please enter a valid date of birth.' };
+    value.dateOfBirth = dob;
+  }
+  if (bloodType) {
+    if (!BLOOD_TYPES.includes(bloodType)) return { error: 'Please choose a valid blood type.' };
+    value.bloodType = bloodType;
+  }
+  if (location) value.location = String(location).trim().slice(0, 100);
+  return { value };
+}
 
 router.post('/register', authLimiter, async (req, res) => {
   const { fullName, email, password } = req.body;
@@ -34,14 +63,16 @@ router.post('/register', authLimiter, async (req, res) => {
     return res.status(400).json({ message: 'All fields are required.' });
   if (password.length < 6)
     return res.status(400).json({ message: 'Password must be at least 6 characters.' });
+  const profile = parseSignupProfile(req.body);
+  if (profile.error) return res.status(400).json({ message: profile.error });
   try {
     const existing = await User.findOne({ email: email.toLowerCase() });
     if (existing) return res.status(409).json({ message: 'Email is already registered.' });
     const hashed = await bcrypt.hash(password, 10);
-    const user = await User.create({ fullName, email: email.toLowerCase(), password: hashed });
+    const user = await User.create({ fullName, email: email.toLowerCase(), password: hashed, ...profile.value });
     res.status(201).json({ token: signToken(user), user: userPayload(user) });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    sendError(res, err, req);
   }
 });
 
@@ -58,7 +89,7 @@ router.post('/login', authLimiter, async (req, res) => {
     if (!valid) return res.status(401).json({ message: 'Invalid email or password.' });
     res.json({ token: signToken(user), user: userPayload(user) });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    sendError(res, err, req);
   }
 });
 
@@ -114,7 +145,7 @@ router.get('/me', userAuth, async (req, res) => {
     if (!user) return res.status(404).json({ message: 'User not found' });
     res.json(userPayload(user));
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    sendError(res, err, req);
   }
 });
 
@@ -128,7 +159,7 @@ router.put('/profile', userAuth, async (req, res) => {
     if (!user) return res.status(404).json({ message: 'User not found' });
     res.json(userPayload(user));
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    sendError(res, err, req);
   }
 });
 
@@ -153,7 +184,7 @@ router.post('/photo', userAuth, (req, res, next) => {
     if (!user) return res.status(404).json({ message: 'User not found' });
     res.json(userPayload(user));
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    sendError(res, err, req);
   }
 });
 

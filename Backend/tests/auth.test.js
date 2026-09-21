@@ -36,6 +36,34 @@ describe('donor account auth', () => {
     expect(decoded.role).toBe('donor');
   });
 
+  test('register stores the optional profile fields and returns them', async () => {
+    const res = await request(app).post('/api/user/register').send({
+      fullName: 'Sok Dara', email: 'dara@test.com', password: 'secret123',
+      phone: '+855 12 345 678', dateOfBirth: '1999-04-20', bloodType: 'O+', location: 'Phnom Penh',
+    });
+    expect(res.status).toBe(201);
+    expect(res.body.user).toMatchObject({ phone: '+855 12 345 678', bloodType: 'O+', location: 'Phnom Penh' });
+    expect(new Date(res.body.user.dateOfBirth).getUTCFullYear()).toBe(1999);
+    expect(res.body.user.password).toBeUndefined();
+  });
+
+  test('register still works with only name, email and password', async () => {
+    const res = await request(app).post('/api/user/register').send({
+      fullName: 'Plain User', email: 'plain@test.com', password: 'secret123',
+    });
+    expect(res.status).toBe(201);
+    expect(res.body.user).toMatchObject({ bloodType: '', location: '', dateOfBirth: null });
+  });
+
+  test('register rejects an invalid blood type, phone or date of birth', async () => {
+    const base = { fullName: 'X Y', email: 'bad@test.com', password: 'secret123' };
+    const future = new Date(Date.now() + 86400000 * 30).toISOString().slice(0, 10);
+    for (const extra of [{ bloodType: 'Z+' }, { phone: 'abc' }, { dateOfBirth: 'not-a-date' }, { dateOfBirth: future }]) {
+      const res = await request(app).post('/api/user/register').send({ ...base, ...extra });
+      expect(res.status).toBe(400);
+    }
+  });
+
   test('login issues a donor-role token', async () => {
     await request(app).post('/api/user/register').send({
       fullName: 'Jane Donor',

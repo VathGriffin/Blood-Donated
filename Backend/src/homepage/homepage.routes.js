@@ -5,6 +5,7 @@ const router  = express.Router();
 const HomepageProfile = require('./homepage.model');
 const { requireRole } = require('../common/middleware/require-role');
 const { createImageUpload } = require('../common/upload');
+const { sendError } = require('../common/middleware/error-handler');
 const adminAuth = requireRole('admin');
 
 const DEFAULT_PROFILES = [
@@ -36,7 +37,7 @@ router.get('/', async (req, res) => {
     }
     res.json(profiles);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    sendError(res, err, req);
   }
 });
 
@@ -78,7 +79,7 @@ router.delete('/:id', adminAuth, async (req, res) => {
     await HomepageProfile.findByIdAndDelete(req.params.id);
     res.json({ message: 'Profile deleted', id: req.params.id });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    sendError(res, err, req);
   }
 });
 
@@ -105,7 +106,7 @@ router.post('/:id/photo', adminAuth, (req, res, next) => {
     );
     res.json(updated);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    sendError(res, err, req);
   }
 });
 
@@ -121,7 +122,7 @@ router.delete('/:id/photo', adminAuth, async (req, res) => {
     const updated = await HomepageProfile.findByIdAndUpdate(req.params.id, { photo: null }, { new: true });
     res.json(updated);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    sendError(res, err, req);
   }
 });
 

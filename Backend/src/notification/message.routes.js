@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Message = require('./message.model');
 const { requireRole } = require('../common/middleware/require-role');
+const { sendError } = require('../common/middleware/error-handler');
 const userAuth = requireRole('donor');
 const adminAuth = requireRole('admin');
 
@@ -18,7 +19,7 @@ router.post('/', userAuth, async (req, res) => {
     });
     res.status(201).json(msg);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    sendError(res, err, req);
   }
 });
 
@@ -26,7 +27,7 @@ router.get('/mine', userAuth, async (req, res) => {
   try {
     res.json(await Message.find({ userId: req.user.id }).sort({ createdAt: 1 }).lean());
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    sendError(res, err, req);
   }
 });
 
@@ -40,7 +41,7 @@ router.delete('/:id', userAuth, async (req, res) => {
     await msg.deleteOne();
     res.json({ message: 'Message deleted', id: req.params.id });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    sendError(res, err, req);
   }
 });
 
@@ -63,7 +64,7 @@ router.get('/conversations', adminAuth, async (req, res) => {
     ]);
     res.json(conversations);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    sendError(res, err, req);
   }
 });
 
@@ -74,7 +75,7 @@ router.get('/conversation/:userId', adminAuth, async (req, res) => {
     Message.updateMany({ userId: req.params.userId, sender: 'user', read: false }, { $set: { read: true } })
       .catch((err) => console.error('Failed to mark messages as read:', err.message));
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    sendError(res, err, req);
   }
 });
 
@@ -92,7 +93,7 @@ router.post('/reply/:userId', adminAuth, async (req, res) => {
     });
     res.status(201).json(msg);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    sendError(res, err, req);
   }
 });
 

@@ -5,6 +5,7 @@ const BloodRequest = require('../requests/blood-request.model');
 const Appointment  = require('../appointments/appointment.model');
 const Inventory    = require('../inventory/inventory.model');
 const { requireRole } = require('../common/middleware/require-role');
+const { sendError } = require('../common/middleware/error-handler');
 const adminAuth = requireRole('admin');
 
 router.use(adminAuth);
@@ -36,7 +37,7 @@ router.get('/', async (req, res) => {
       BloodRequest.countDocuments({ urgency: 'Critical', status: 'Pending' }),
       Appointment.countDocuments(),
       Appointment.countDocuments({ createdAt: { $gte: month } }),
-      Inventory.find().lean({ virtuals: true }),
+      Inventory.find(),
       Donor.aggregate([{ $group: { _id: '$bloodType', count: { $sum: 1 } } }, { $sort: { count: -1 } }]),
       BloodRequest.aggregate([{ $group: { _id: '$bloodType', count: { $sum: 1 } } }, { $sort: { count: -1 } }]),
       BloodRequest.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]),
@@ -79,7 +80,7 @@ router.get('/', async (req, res) => {
       },
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    sendError(res, err, req);
   }
 });
 

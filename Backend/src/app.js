@@ -21,6 +21,8 @@ const statsRoutes       = require('./dashboard/stats.routes');
 const homepageRoutes    = require('./homepage/homepage.routes');
 const inventoryRoutes   = require('./inventory/inventory.routes');
 const analyticsRoutes   = require('./analytics/analytics.routes');
+const nearbyRoutes      = require('./nearby/nearby.routes');
+const { notFound, errorHandler } = require('./common/middleware/error-handler');
 
 const app = express();
 
@@ -74,8 +76,9 @@ app.use('/uploads', express.static(uploadsDir));
 // Health check
 app.get('/', (req, res) => res.json({ status: 'ok', service: 'BloodLife API', version: '2.0.0' }));
 
-// Chat — no DB required
+// Chat and nearby-hospital lookup — no DB required
 app.use('/api/chat', chatRoutes);
+app.use('/api/nearby', nearbyRoutes);
 
 // Block other API calls when DB is unavailable
 app.use('/api', (req, res, next) => {
@@ -98,19 +101,8 @@ app.use('/api/homepage',     homepageRoutes);
 app.use('/api/inventory',    inventoryRoutes);
 app.use('/api/analytics',    analyticsRoutes);
 
-// Global error handler
-app.use((err, req, res, next) => {
-  console.error(`[ERROR] ${req.method} ${req.path}:`, err.message);
-  // Route handlers are split between `{ message }` and `{ error }` response
-  // shapes, and frontend pages read whichever one their route uses — so an
-  // error that reaches this fallback (multer, bad JSON body, etc.) has to
-  // carry both keys or it silently renders as "undefined" client-side.
-  const text = err.message || 'Internal server error';
-  res.status(err.status || 500).json({
-    message: text,
-    error: text,
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
-  });
-});
+// Unknown routes get JSON (Express's default is an HTML page), then the global handler
+app.use(notFound);
+app.use(errorHandler);
 
 module.exports = app;

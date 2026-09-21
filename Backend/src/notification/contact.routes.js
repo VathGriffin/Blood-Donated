@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const ContactMessage = require('./contact-message.model');
 const { requireRole } = require('../common/middleware/require-role');
+const { sendError } = require('../common/middleware/error-handler');
 const adminAuth = requireRole('admin');
 
 router.post('/', async (req, res) => {
@@ -25,7 +26,7 @@ router.get('/', adminAuth, async (req, res) => {
   try {
     res.json(await ContactMessage.find().sort({ createdAt: -1 }).lean());
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendError(res, err, req);
   }
 });
 
@@ -35,7 +36,7 @@ router.get('/:id', adminAuth, async (req, res) => {
     if (!msg) return res.status(404).json({ error: 'Message not found' });
     res.json(msg);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendError(res, err, req);
   }
 });
 
@@ -53,7 +54,7 @@ router.delete('/:id', adminAuth, async (req, res) => {
     if (!deleted) return res.status(404).json({ error: 'Message not found' });
     res.json({ message: 'Message deleted', id: req.params.id });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendError(res, err, req);
   }
 });
 

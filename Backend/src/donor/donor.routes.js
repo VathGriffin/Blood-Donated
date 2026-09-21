@@ -7,6 +7,8 @@ const Donor = require('./donor.model');
 const { requireRole, optionalAuth } = require('../common/middleware/require-role');
 const { computeEligibility } = require('../common/eligibility');
 const { createImageUpload } = require('../common/upload');
+const { sendError } = require('../common/middleware/error-handler');
+const { verifySessionToken } = require('../common/session');
 
 const PUBLIC_FIELDS = 'fullName bloodType location available photo donationCount lastDonation createdAt';
 const isStaff = (req) => ['admin', 'hospital_staff'].includes(req.auth?.role);
@@ -22,7 +24,7 @@ const canUploadPhoto = (req, donorId) => {
   const header = req.headers.authorization;
   if (!header || !header.startsWith('Bearer ')) return false;
   try {
-    const decoded = jwt.verify(header.slice(7), process.env.JWT_SECRET);
+    const decoded = verifySessionToken(header.slice(7));
     if (isStaff({ auth: decoded })) return true;
     return decoded.type === PHOTO_UPLOAD_TOKEN_TYPE && String(decoded.sub) === String(donorId);
   } catch {
@@ -51,7 +53,7 @@ router.get('/', optionalAuth, async (req, res) => {
     if (!isStaff(req)) query.select(PUBLIC_FIELDS);
     res.json(await query.lean());
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    sendError(res, err, req);
   }
 });
 
@@ -65,7 +67,7 @@ router.get('/lookup', async (req, res) => {
     if (!donor) return res.json({ found: false });
     res.json({ found: true, ...donor });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    sendError(res, err, req);
   }
 });
 
@@ -77,7 +79,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
     if (!donor) return res.status(404).json({ message: 'Donor not found' });
     res.json(donor);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    sendError(res, err, req);
   }
 });
 
@@ -96,7 +98,7 @@ router.get('/:id/qr-token', requireRole('donor'), async (req, res) => {
     );
     res.json({ token });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    sendError(res, err, req);
   }
 });
 
@@ -134,7 +136,7 @@ router.post('/verify-qr', requireRole('admin', 'hospital_staff'), async (req, re
       eligibility: computeEligibility(donor.lastDonation),
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    sendError(res, err, req);
   }
 });
 
@@ -167,7 +169,7 @@ router.post('/:id/photo', (req, res, next) => {
     }
     res.json(await Donor.findByIdAndUpdate(req.params.id, { photo: `/uploads/${req.file.filename}` }, { new: true }));
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    sendError(res, err, req);
   }
 });
 
@@ -181,7 +183,7 @@ router.delete('/:id/photo', requireRole('admin'), async (req, res) => {
     }
     res.json(await Donor.findByIdAndUpdate(req.params.id, { photo: null }, { new: true }));
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    sendError(res, err, req);
   }
 });
 
@@ -195,7 +197,7 @@ router.delete('/:id', requireRole('admin'), async (req, res) => {
     }
     res.json({ message: 'Donor deleted', id: req.params.id });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    sendError(res, err, req);
   }
 });
 

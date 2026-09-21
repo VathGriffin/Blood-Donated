@@ -12,6 +12,7 @@ const staffSchema = new mongoose.Schema(
       match: [/\S+@\S+\.\S+/, 'Invalid email address'],
     },
     password: { type: String, required: true },
+    photo: { type: String, default: null },
     role: { type: String, enum: ['admin', 'hospital_staff'], required: true },
     hospital: {
       type: mongoose.Schema.Types.ObjectId,

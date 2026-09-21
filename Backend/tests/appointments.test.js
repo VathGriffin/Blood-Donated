@@ -68,3 +68,63 @@ describe('appointment confirm + check-in', () => {
     expect(res.status).toBe(403);
   });
 });
+
+describe('POST /api/appointments (public booking)', () => {
+  const future = () => new Date(Date.now() + 5 * 86400000).toISOString().slice(0, 10);
+  const booking = (over = {}) => ({
+    fullName: 'Sok Dara', email: 'dara@test.com', phone: '0912345678', bloodType: 'O+',
+    date: future(), time: '10:00 AM', location: 'Somewhere', ...over,
+  });
+
+  test('links the booking to a real hospital and uses that hospital\'s name as the location', async () => {
+    const hospital = await createHospital({ name: 'Calmette Hospital' });
+    const res = await request(app).post('/api/appointments').send(booking({ hospital: String(hospital._id), location: 'client-typed text' }));
+    expect(res.status).toBe(201);
+    expect(String(res.body.hospital)).toBe(String(hospital._id));
+    expect(res.body.location).toBe('Calmette Hospital');
+
+    // ...which is what makes it visible to that hospital's staff dashboard
+    const list = await request(app).get(`/api/appointments?hospital=${hospital._id}`);
+    expect(list.body.map((a) => a._id)).toContain(res.body._id);
+  });
+
+  test('still accepts a plain center name when no hospital id is given', async () => {
+    const res = await request(app).post('/api/appointments').send(booking({ location: 'Calmette Hospital' }));
+    expect(res.status).toBe(201);
+    expect(res.body.hospital).toBeNull();
+    expect(res.body.location).toBe('Calmette Hospital');
+  });
+
+  test('a visitor cannot set status, check-in fields or an id', async () => {
+    const res = await request(app).post('/api/appointments').send(booking({
+      status: 'CheckedIn', checkedInAt: '2020-01-01', checkedInBy: '64b000000000000000000001', _id: '64b000000000000000000002',
+    }));
+    expect(res.status).toBe(201);
+    expect(res.body.status).toBe('Pending');
+    expect(res.body.checkedInAt).toBeNull();
+    expect(res.body.checkedInBy).toBeNull();
+    expect(res.body._id).not.toBe('64b000000000000000000002');
+  });
+
+  test('rejects an unknown or malformed hospital id', async () => {
+    for (const hospital of ['64b0000000000000000000ff', 'not-an-id']) {
+      const res = await request(app).post('/api/appointments').send(booking({ hospital }));
+      expect(res.status).toBe(400);
+      expect(res.body.error).toMatch(/could not be found/i);
+    }
+  });
+
+  test('rejects past, impossible and malformed dates, and malformed times', async () => {
+    for (const date of ['2020-01-01', '2026-02-30', 'tomorrow', '', undefined]) {
+      expect((await request(app).post('/api/appointments').send(booking({ date }))).status).toBe(400);
+    }
+    for (const time of ['10:00', 'noon', '', undefined]) {
+      expect((await request(app).post('/api/appointments').send(booking({ time }))).status).toBe(400);
+    }
+  });
+
+  test('still enforces the required contact fields', async () => {
+    const res = await request(app).post('/api/appointments').send(booking({ email: undefined }));
+    expect(res.status).toBe(400);
+  });
+});

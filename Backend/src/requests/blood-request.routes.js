@@ -9,6 +9,7 @@ const { requireRole } = require('../common/middleware/require-role');
 const { BLOOD_TYPES } = require('../common/blood-types');
 const { assertHospitalScope } = require('../common/middleware/assert-hospital-scope');
 const { createImageUpload } = require('../common/upload');
+const { sendError } = require('../common/middleware/error-handler');
 
 const validateRequest = [
   body('patientName').trim().notEmpty().withMessage('Patient name is required').isLength({ max: 100 }),
@@ -50,7 +51,7 @@ router.post('/:id/photo', requireRole('admin', 'hospital_staff'), (req, res, nex
     }
     res.json(await BloodRequest.findByIdAndUpdate(req.params.id, { photo: `/uploads/${req.file.filename}` }, { new: true }));
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendError(res, err, req);
   }
 });
 
@@ -61,7 +62,7 @@ router.get('/', async (req, res) => {
     if (req.query.hospital) filter.hospital = req.query.hospital;
     res.json(await BloodRequest.find(filter).sort({ createdAt: -1 }).lean());
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendError(res, err, req);
   }
 });
 
@@ -71,7 +72,7 @@ router.get('/:id', async (req, res) => {
     if (!request) return res.status(404).json({ error: 'Request not found' });
     res.json(request);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendError(res, err, req);
   }
 });
 
@@ -88,7 +89,7 @@ router.patch('/:id/status', requireRole('admin', 'hospital_staff'), async (req, 
     await request.save();
     res.json(request);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendError(res, err, req);
   }
 });
 
@@ -119,7 +120,7 @@ router.patch('/:id/fulfill', requireRole('admin', 'hospital_staff'), async (req,
     await request.save();
     res.json(request);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendError(res, err, req);
   }
 });
 
@@ -142,7 +143,7 @@ router.delete('/:id', requireRole('admin'), async (req, res) => {
     if (!deleted) return res.status(404).json({ error: 'Request not found' });
     res.json({ message: 'Request deleted', id: req.params.id });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendError(res, err, req);
   }
 });
 

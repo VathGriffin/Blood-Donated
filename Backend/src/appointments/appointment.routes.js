@@ -1,13 +1,48 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const router = express.Router();
 const Appointment = require('./appointment.model');
 const Donor = require('../donor/donor.model');
+const Hospital = require('../hospital/hospital.model');
 const { requireRole } = require('../common/middleware/require-role');
 const { assertHospitalScope } = require('../common/middleware/assert-hospital-scope');
+const { sendError } = require('../common/middleware/error-handler');
 
+const SLOT_FORMAT = /^\d{2}:\d{2} (AM|PM)$/;
+
+// YYYY-MM-DD for a real calendar day that is not in the past. One day of slack because the
+// browser's local date can be ahead of this server's (e.g. Cambodia is UTC+7).
+function validateAppointmentDay(date) {
+  if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return 'Please choose a valid date.';
+  const day = new Date(`${date}T00:00:00Z`);
+  if (Number.isNaN(day.getTime()) || day.toISOString().slice(0, 10) !== date) return 'Please choose a valid date.';
+  if (day.getTime() < Date.now() - 2 * 86400000) return 'Appointment dates cannot be in the past.';
+  return null;
+}
+
+// Public booking endpoint. Only the booking fields are read from the request — anything else
+// (status, checkedInAt, checkedInBy …) is ignored, so a visitor can't book themselves in as
+// already checked-in. A hospital id must exist, and its name (not client text) becomes the location.
 router.post('/', async (req, res) => {
+  const { fullName, email, phone, bloodType, date, time, location, hospital, notes } = req.body;
   try {
-    res.status(201).json(await new Appointment(req.body).save());
+    const dateError = validateAppointmentDay(date);
+    if (dateError) return res.status(400).json({ error: dateError });
+    if (typeof time !== 'string' || !SLOT_FORMAT.test(time))
+      return res.status(400).json({ error: 'Please choose a valid time slot.' });
+
+    let hospitalDoc = null;
+    if (hospital) {
+      hospitalDoc = mongoose.isValidObjectId(hospital) ? await Hospital.findById(hospital).select('name').lean() : null;
+      if (!hospitalDoc) return res.status(400).json({ error: 'That donation center could not be found.' });
+    }
+
+    const appointment = await new Appointment({
+      fullName, email, phone, bloodType, date, time, notes,
+      hospital: hospitalDoc?._id ?? null,
+      location: hospitalDoc?.name ?? location,
+    }).save();
+    res.status(201).json(appointment);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -20,7 +55,7 @@ router.get('/', async (req, res) => {
     if (req.query.email) filter.email = req.query.email.toLowerCase();
     res.json(await Appointment.find(filter).sort({ createdAt: -1 }).lean());
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendError(res, err, req);
   }
 });
 
@@ -30,7 +65,7 @@ router.get('/:id', async (req, res) => {
     if (!appt) return res.status(404).json({ error: 'Appointment not found' });
     res.json(appt);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendError(res, err, req);
   }
 });
 
@@ -79,7 +114,7 @@ router.patch('/:id/check-in', requireRole('admin', 'hospital_staff'), async (req
 
     res.json(appt);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendError(res, err, req);
   }
 });
 
@@ -89,7 +124,7 @@ router.delete('/:id', requireRole('admin'), async (req, res) => {
     if (!deleted) return res.status(404).json({ error: 'Appointment not found' });
     res.json({ message: 'Appointment deleted', id: req.params.id });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendError(res, err, req);
   }
 });
 
