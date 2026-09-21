@@ -8,20 +8,22 @@ const { createImageUpload } = require('../common/upload');
 const { sendError } = require('../common/middleware/error-handler');
 const adminAuth = requireRole('admin');
 
+// The frontend's offline FALLBACK_PROFILES (app/(public)/page.jsx) use these same photos — keep them in
+// step, otherwise the cards change from photos to initials the moment the backend is running.
 const DEFAULT_PROFILES = [
   {
     name: 'Sophea Meas', role: 'First-time Donor', initials: 'SM', color: '#dc2626',
-    bloodType: 'A+', donations: 3, badge: 'Active Donor', order: 0,
+    photo: 'https://i.pravatar.cc/640?img=47', bloodType: 'A+', donations: 3, badge: 'Active Donor', order: 0,
     bio: 'Sophea donated blood for the first time and inspired her entire workplace to join. She now volunteers at local donation drives every quarter.',
   },
   {
     name: 'Dara Keo', role: 'Grateful Parent', initials: 'DK', color: '#b91c1c',
-    bloodType: 'O-', donations: 5, badge: 'Community Champion', order: 1,
+    photo: 'https://i.pravatar.cc/640?img=68', bloodType: 'O-', donations: 5, badge: 'Community Champion', order: 1,
     bio: 'After BloodLife connected his daughter with a life-saving donor, Dara became a passionate advocate and registered donor himself.',
   },
   {
     name: 'Dr. Chan Bopha', role: 'Cardiologist, Calmette Hospital', initials: 'CB', color: '#991b1b',
-    bloodType: 'B+', donations: 12, badge: 'Medical Partner', order: 2,
+    photo: 'https://i.pravatar.cc/640?img=32', bloodType: 'B+', donations: 12, badge: 'Medical Partner', order: 2,
     bio: 'Dr. Chan Bopha partners with BloodLife to coordinate blood drives for cardiac patients and educates the public on the importance of donation.',
   },
 ];

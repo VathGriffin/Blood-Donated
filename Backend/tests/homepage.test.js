@@ -13,6 +13,13 @@ describe('homepage profiles', () => {
     expect(again.body.length).toBe(3);
   });
 
+  // The homepage shows photos from its offline fallback; if the API's own defaults had none, the
+  // cards would lose their photos the moment the backend started running.
+  test('seeded default profiles come with a photo', async () => {
+    const res = await request(app).get('/api/homepage');
+    expect(res.body.every((p) => /^https:\/\//.test(p.photo))).toBe(true);
+  });
+
   test('photo upload/delete requires admin', async () => {
     const [profile] = await HomepageProfile.create([
       { name: 'Test Donor', role: 'Donor', initials: 'TD', color: '#dc2626', bloodType: 'O+', donations: 1, badge: 'New', order: 0 },
