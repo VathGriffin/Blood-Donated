@@ -23,8 +23,20 @@ const inventoryRoutes   = require('./inventory/inventory.routes');
 const analyticsRoutes   = require('./analytics/analytics.routes');
 const nearbyRoutes      = require('./nearby/nearby.routes');
 const { notFound, errorHandler } = require('./common/middleware/error-handler');
+const { corsOrigin } = require('./common/cors');
 
 const app = express();
+
+// Behind a host's reverse proxy (Render, Railway, Fly …) every request appears to come from the
+// proxy, so without this all visitors would share ONE rate-limit bucket and get 429s within
+// minutes. TRUST_PROXY overrides the number of proxy hops (default 1 in production).
+const isProduction = process.env.NODE_ENV === 'production';
+if (process.env.TRUST_PROXY) {
+  const hops = Number(process.env.TRUST_PROXY);
+  app.set('trust proxy', Number.isNaN(hops) ? process.env.TRUST_PROXY : hops);
+} else if (isProduction) {
+  app.set('trust proxy', 1);
+}
 
 // Ensure uploads directory exists
 const uploadsDir = path.join(__dirname, '../uploads');
@@ -37,20 +49,16 @@ app.use(compression());
 // Request logging
 if (process.env.NODE_ENV !== 'test') app.use(morgan('combined'));
 
-// CORS
-const allowedOrigins = [
-  'http://localhost:3000',
-  'http://localhost:3002',
-  'http://localhost:3003',
-  process.env.FRONTEND_URL,
-].filter(Boolean);
-app.use(cors({ origin: allowedOrigins }));
+// CORS — localhost in development plus FRONTEND_URL (comma-separated, "*" wildcards allowed)
+app.use(cors({ origin: corsOrigin(process.env.FRONTEND_URL) }));
 
-// Rate limiting — 100 req / 15 min per IP in production, relaxed in development
-const isDev = process.env.NODE_ENV !== 'production';
+// Rate limiting per IP. Pages poll every ~8 s (about 110 requests per open page per 15 minutes),
+// so the production ceiling has to leave room for that; logins have their own, much stricter limiter.
+// RATE_LIMIT_MAX overrides it. Relaxed in development.
+const isDev = !isProduction;
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: isDev ? 10000 : 100,
+  max: isDev ? 10000 : Number(process.env.RATE_LIMIT_MAX) || 1500,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests, please try again later.' },

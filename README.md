@@ -80,7 +80,7 @@ PORT=3001
 ADMIN_EMAIL=admin@example.com
 ADMIN_PASSWORD_HASH=<bcrypt_hash_of_your_password>
 ANTHROPIC_API_KEY=sk-ant-...
-FRONTEND_URL=https://your-app.vercel.app
+FRONTEND_URL=https://your-app.vercel.app   # comma-separated; "*" wildcards allowed (see Deployment)
 ```
 
 ```bash
@@ -116,6 +116,30 @@ npm run dev
 The app runs at `http://localhost:3000`.
 
 ---
+
+## Deployment
+
+The project is **two apps**: the Next.js frontend (fits Vercel) and the Express API, which needs an
+always-on Node host (Render, Railway, Fly.io, a VPS …). Deploying only the frontend leaves it calling
+`http://localhost:3001` — nothing will load. Set them up in this order:
+
+1. **Database** — MongoDB Atlas. Under *Network Access*, allow your API host (most hosts have changing IPs, so `0.0.0.0/0`).
+2. **API host** — root directory `Backend`, install `npm install`, start `npm start`. Set the variables from
+   [`Backend/.env.example`](Backend/.env.example), including `NODE_ENV=production`.
+   Note that `Backend/uploads` (photos) lives on local disk, which most hosts wipe on every deploy or restart —
+   attach a persistent disk mounted at that folder, or uploaded photos will disappear.
+3. **Frontend on Vercel** — *Root Directory* `frontend`. Add `NEXT_PUBLIC_API_URL` = your API's HTTPS URL
+   (no trailing slash), plus the optional Google/Facebook IDs ([`frontend/.env.example`](frontend/.env.example)).
+   These are baked in at build time, so **redeploy after changing them**. The build log warns if it's missing.
+4. **Tell the API about the frontend** — set `FRONTEND_URL` on the API host to your Vercel domain(s), comma-separated.
+   `*` matches one hostname part, so `https://blood-donated-*-your-team.vercel.app` covers every preview deployment.
+5. **Google sign-in** (if used) — add the Vercel domain to the OAuth client's *Authorized JavaScript origins*.
+6. **Check it** — `https://<your-api>/` should answer `{"status":"ok"}`, then load the site and open the browser
+   console: no CORS or `localhost:3001` errors.
+
+Good to know: Vercel *preview* URLs sit behind Vercel Authentication by default (only signed-in team members can
+open them) — share the production domain, or relax protection in the project settings. Admin sessions end whenever
+the API process restarts by design, so hosts that sleep or restart (free tiers) will sign admins out.
 
 ## Project Structure
 
