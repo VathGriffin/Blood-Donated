@@ -64,23 +64,42 @@ This project presents the design and development of an intelligent blood donatio
 - Node.js >= 18
 - MongoDB (local or Atlas)
 
+### Configuration — two env files, one per app
+
+```
+Blood-Donated/
+├── Backend/.env            # API secrets and database   (git-ignored)
+├── frontend/.env.local     # public browser settings    (git-ignored)
+└── .gitignore
+```
+
+Create both by hand; they are never committed. On Render and Vercel there are no files: paste the same names into each dashboard (Render gets the Backend list, Vercel gets the frontend list).
+
+**`Backend/.env`**
+
+| Variable | Required | What it is |
+|---|---|---|
+| `MONGO_URI` | yes | MongoDB connection string, e.g. `mongodb+srv://<user>:<password>@cluster.mongodb.net/blood-donation` (allow your host's IPs in Atlas) |
+| `JWT_SECRET`, `QR_JWT_SECRET` | yes | Two different long random strings (`npm run secrets` prints fresh ones) |
+| `PORT` | no | Defaults to `3001` |
+| `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH` | yes | First admin, created on first start. Hash: `node -e "console.log(require('bcryptjs').hashSync('YourPassword', 10))"` |
+| `ANTHROPIC_API_KEY` | no | AI assistant; without it the assistant uses offline answers |
+| `FRONTEND_URL` | in production | Origins allowed to call the API, comma-separated; `*` matches one hostname part (covers Vercel preview URLs). localhost is always allowed |
+| `NODE_ENV`, `TRUST_PROXY`, `RATE_LIMIT_MAX` | no | Production tuning; see Deployment |
+
+**`frontend/.env.local`** (`NEXT_PUBLIC_*` values are baked in at build time — redeploy after changing them)
+
+| Variable | Required | What it is |
+|---|---|---|
+| `NEXT_PUBLIC_API_URL` | yes | Where the backend lives, no trailing slash (`http://localhost:3001` locally) |
+| `NEXT_PUBLIC_GOOGLE_CLIENT_ID`, `NEXT_PUBLIC_FACEBOOK_APP_ID` | no | Social sign-in buttons appear only when set |
+| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | no | Optional maps key |
+
 ### Backend
 
 ```bash
 cd Backend
 npm install
-```
-
-Create a `.env` file in `Backend/` with real values:
-```
-MONGO_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/blood-donation
-JWT_SECRET=your_jwt_secret_here
-QR_JWT_SECRET=your_separate_qr_jwt_secret_here
-PORT=3001
-ADMIN_EMAIL=admin@example.com
-ADMIN_PASSWORD_HASH=<bcrypt_hash_of_your_password>
-ANTHROPIC_API_KEY=sk-ant-...
-FRONTEND_URL=https://your-app.vercel.app   # comma-separated; "*" wildcards allowed (see Deployment)
 ```
 
 ```bash
@@ -101,13 +120,7 @@ cd frontend
 npm install
 ```
 
-Create a `.env.local` file in `frontend/` with real values:
-```
-NEXT_PUBLIC_API_URL=http://localhost:3001
-NEXT_PUBLIC_GOOGLE_CLIENT_ID=
-NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=
-NEXT_PUBLIC_FACEBOOK_APP_ID=
-```
+Create `frontend/.env.local` first (see [Configuration](#configuration--two-env-files-one-per-app)); Next.js reads it automatically.
 
 ```bash
 npm run dev
@@ -143,7 +156,7 @@ host. Deploying only the frontend leaves it calling `http://localhost:3001` — 
    `NEXT_PUBLIC_API_URL` = the API URL from step 3 (no trailing slash), enabled for **Production and Preview**.
    It is baked in at build time, so then **redeploy** (*Deployments > ⋯ > Redeploy*). The build log no longer shows the warning.
 5. **Google sign-in** (if used) — add the Vercel domain to the OAuth client's *Authorized JavaScript origins*
-   and set `NEXT_PUBLIC_GOOGLE_CLIENT_ID` on Vercel (see [`frontend/.env.example`](frontend/.env.example)).
+   and set `NEXT_PUBLIC_GOOGLE_CLIENT_ID` on Vercel (see the frontend variables in [Configuration](#configuration--two-env-files-one-per-app)).
 6. **Check it** — open the site with the browser console open: no CORS or `localhost:3001` errors, the map and
    hospital lists load, and you can sign in at `/admin/login`.
 

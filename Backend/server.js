@@ -1,5 +1,8 @@
+const path = require('path');
 const dotenv = require('dotenv');
-dotenv.config();
+// Backend/.env (see README). Resolved from this file, so it works from any working directory.
+// On a host there is no file — the dashboard's variables are already in process.env, and dotenv never overrides those.
+dotenv.config({ path: path.join(__dirname, '.env') });
 
 const mongoose = require('mongoose');
 const app = require('./src/app');

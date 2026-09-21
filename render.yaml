@@ -1,5 +1,5 @@
 # Render Blueprint for the API. In Render: New > Blueprint > pick this repo; it asks for the values
-# marked "sync: false" (paste them from Backend/.env.example's list). The Vercel frontend is separate.
+# marked "sync: false" (paste them from the Backend/.env variable list in the README). The Vercel frontend is separate.
 services:
   - type: web
     name: blood-donated-api
