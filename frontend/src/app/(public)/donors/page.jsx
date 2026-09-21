@@ -1,10 +1,8 @@
 'use client';
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
-  Container, Typography, Box, Chip, Avatar, Paper,
-  TextField, MenuItem, InputAdornment, Button,
-  Dialog, DialogTitle, DialogContent, DialogActions,
-  useTheme, CircularProgress,
+  Container, Typography, Box, Chip, Avatar, Paper, TextField, MenuItem, InputAdornment,
+  Button, Dialog, DialogTitle, DialogContent, DialogActions, useTheme, CircularProgress,
 } from "@mui/material";
 import BloodtypeIcon from "@mui/icons-material/Bloodtype";
 import LocationOnIcon from "@mui/icons-material/LocationOn";

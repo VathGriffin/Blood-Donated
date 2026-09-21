@@ -1,20 +1,19 @@
 'use client';
 import { useRouter } from 'next/navigation';
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
-  Container, Typography, TextField, Button, Paper, Box,
-  FormControl, Select, MenuItem, useTheme, Alert, Tabs, Tab,
-  Chip, Avatar, Grid, Skeleton, Divider,
+  Container, Typography, TextField, Button, Paper, Box, FormControl, Select, MenuItem,
+  useTheme, Alert, Tabs, Tab, Chip, Avatar, Grid, Skeleton, Divider,
 } from "@mui/material";
 import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
-import FavoriteIcon       from "@mui/icons-material/Favorite";
-import BloodtypeIcon      from "@mui/icons-material/Bloodtype";
-import AccessTimeIcon     from "@mui/icons-material/AccessTime";
-import CheckCircleIcon    from "@mui/icons-material/CheckCircle";
-import CancelIcon         from "@mui/icons-material/Cancel";
+import FavoriteIcon from "@mui/icons-material/Favorite";
+import BloodtypeIcon from "@mui/icons-material/Bloodtype";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import CancelIcon from "@mui/icons-material/Cancel";
 import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
-import LockOutlinedIcon   from "@mui/icons-material/LockOutlined";
-import Link               from "next/link";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import Link from "next/link";
 import axios from "axios";
 import API_BASE from "@/lib/config";
 import { useUserAuth } from "@/store/UserAuthContext";
@@ -347,7 +346,7 @@ export default function RequestBlood() {
             {reqLoading ? (
               <Grid container spacing={2}>
                 {[...Array(6)].map((_, i) => (
-                  <Grid item xs={12} sm={6} md={4} key={i}>
+                  <Grid size={{ xs: 12, sm: 6, md: 4 }} key={i}>
                     <Skeleton variant="rounded" height={200} sx={{ borderRadius: 3 }} />
                   </Grid>
                 ))}
@@ -364,7 +363,7 @@ export default function RequestBlood() {
                   const urgStyle = URGENCY_STYLES[req.urgency] || URGENCY_STYLES.Low;
                   const stMeta   = STATUS_META[req.status]   || STATUS_META.Pending;
                   return (
-                    <Grid item xs={12} sm={6} md={4} key={req._id}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }} key={req._id}>
                       <Paper elevation={0} sx={{
                         borderRadius: 3, border: `1px solid ${isDark ? "#1f1f1f" : "#e5e5e5"}`,
                         bgcolor: cardBg, overflow: "hidden",

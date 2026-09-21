@@ -8,63 +8,11 @@ import SendIcon from '@mui/icons-material/Send';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import WifiOffIcon from '@mui/icons-material/WifiOff';
-import API_BASE from '@/lib/config';
 import { useUserAuth } from '@/store/UserAuthContext';
-import { detectLanguage, ruleBasedResponse, QUICK_PROMPTS } from '@/lib/chatbot-kb';
-
-// Lightweight markdown: **bold** inline, "- "/"• " bullets, "1. " numbered
-// lines, blank lines as spacing. No raw HTML is ever injected — every node is
-// built as a React element so assistant/user text can never be parsed as markup.
-function renderInline(text, keyPrefix) {
-  return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
-    part.startsWith('**') && part.endsWith('**')
-      ? <strong key={`${keyPrefix}-b-${i}`}>{part.slice(2, -2)}</strong>
-      : <React.Fragment key={`${keyPrefix}-t-${i}`}>{part}</React.Fragment>
-  );
-}
-
-function MessageMarkdown({ text }) {
-  const lines = text.split('\n');
-  const blocks = [];
-  let listBuffer = [];
-  let blockKey = 0;
-
-  const flushList = () => {
-    if (!listBuffer.length) return;
-    const key = blockKey++;
-    blocks.push(
-      <Box component="ul" key={`ul-${key}`} sx={{ m: 0, pl: 2.4, my: 0.4 }}>
-        {listBuffer.map((item, i) => (
-          <Box component="li" key={i} sx={{ fontSize: '0.85rem', lineHeight: 1.7 }}>
-            {renderInline(item, `li-${key}-${i}`)}
-          </Box>
-        ))}
-      </Box>
-    );
-    listBuffer = [];
-  };
-
-  lines.forEach((line) => {
-    const bulletMatch = line.match(/^\s*[-•]\s+(.*)/);
-    const numberedMatch = line.match(/^\s*\d+\.\s+(.*)/);
-    if (bulletMatch) { listBuffer.push(bulletMatch[1]); return; }
-    if (numberedMatch) { listBuffer.push(numberedMatch[1]); return; }
-    flushList();
-    const key = blockKey++;
-    if (line.trim() === '') {
-      blocks.push(<Box key={`sp-${key}`} sx={{ height: 6 }} />);
-    } else {
-      blocks.push(
-        <Typography key={`p-${key}`} variant="body2" sx={{ fontSize: '0.85rem', lineHeight: 1.7 }}>
-          {renderInline(line, `p-${key}`)}
-        </Typography>
-      );
-    }
-  });
-  flushList();
-
-  return <Box>{blocks}</Box>;
-}
+import { detectLanguage, QUICK_PROMPTS } from '@/lib/chatbot-kb';
+import { askAssistant } from '@/lib/chat-client';
+import ChatMessage from '@/components/ChatMessage';
+import { URGENT_STRIP_HEIGHT } from '@/components/Header';
 
 export default function AssistantPage() {
   const theme = useTheme();
@@ -75,11 +23,23 @@ export default function AssistantPage() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [promptLang, setPromptLang] = useState('en');
-  const bottomRef = useRef(null);
+  const chatPanelRef = useRef(null);
+  const messagesRef = useRef(null);
   const inputRef = useRef(null);
 
+  // On arrival, bring the chat panel into view below the fixed header. Deferred a
+  // tick so it runs after Next's own scroll-to-top on route change.
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const t = setTimeout(() => {
+      chatPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 60);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Keep the newest message visible by scrolling only the message list — not the page.
+  useEffect(() => {
+    const el = messagesRef.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
   }, [messages, loading]);
 
   const sendMessage = async (text) => {
@@ -94,30 +54,10 @@ export default function AssistantPage() {
     setInput('');
     setLoading(true);
 
-    try {
-      const res = await fetch(`${API_BASE}/api/chat`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ messages: history, lang }),
-      });
-      const data = await res.json();
-
-      if (!res.ok && data.configured === false) {
-        setMessages(prev => [...prev, { role: 'assistant', content: ruleBasedResponse(content, lang), offline: true }]);
-        return;
-      }
-      if (!res.ok) throw new Error(data.error || 'Request failed');
-
-      setMessages(prev => [...prev, { role: 'assistant', content: data.content, powered: data.powered }]);
-    } catch {
-      setMessages(prev => [...prev, { role: 'assistant', content: ruleBasedResponse(content, lang), offline: true }]);
-    } finally {
-      setLoading(false);
-      inputRef.current?.focus();
-    }
+    const reply = await askAssistant({ history, content, lang, token });
+    setMessages(prev => [...prev, { role: 'assistant', content: reply.content, powered: reply.powered, offline: reply.offline }]);
+    setLoading(false);
+    inputRef.current?.focus();
   };
 
   const handleKeyDown = (e) => {
@@ -178,10 +118,11 @@ export default function AssistantPage() {
           </Paper>
 
           {/* Chat panel */}
-          <Paper elevation={0} sx={{
+          <Paper ref={chatPanelRef} elevation={0} sx={{
             flex: 1, borderRadius: 3, border: `1px solid ${border}`, bgcolor: card,
             display: 'flex', flexDirection: 'column', overflow: 'hidden',
             minHeight: { xs: 520, md: 'auto' },
+            scrollMarginTop: { xs: `${64 + URGENT_STRIP_HEIGHT + 12}px`, md: `${68 + URGENT_STRIP_HEIGHT + 12}px` },
           }}>
             <Box sx={{ px: 3, py: 2, borderBottom: `1px solid ${border}`, display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <Avatar sx={{ bgcolor: '#dc2626', width: 34, height: 34 }}>
@@ -193,7 +134,7 @@ export default function AssistantPage() {
               </Box>
             </Box>
 
-            <Box sx={{ flex: 1, overflowY: 'auto', px: 3, py: 2.5, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Box ref={messagesRef} sx={{ flex: 1, overflowY: 'auto', px: 3, py: 2.5, display: 'flex', flexDirection: 'column', gap: 2 }}>
               {messages.length === 0 && (
                 <Box sx={{ m: 'auto', textAlign: 'center', color: 'text.disabled', px: 3 }}>
                   <SmartToyIcon sx={{ fontSize: 40, mb: 1, opacity: 0.5 }} />
@@ -227,7 +168,7 @@ export default function AssistantPage() {
                       }}>
                         {isUser
                           ? <Typography variant="body2" sx={{ fontSize: '0.85rem', lineHeight: 1.7, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{msg.content}</Typography>
-                          : <MessageMarkdown text={msg.content} />}
+                          : <ChatMessage text={msg.content} />}
                       </Box>
                       {!isUser && (
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, px: 0.5 }}>
@@ -267,8 +208,6 @@ export default function AssistantPage() {
                   </Box>
                 </Box>
               )}
-
-              <div ref={bottomRef} />
             </Box>
 
             <Box sx={{

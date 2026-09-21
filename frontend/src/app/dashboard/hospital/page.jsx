@@ -1,71 +1,96 @@
 'use client';
-import React, { useEffect, useState } from 'react';
-import { Box, Typography, Grid, Paper, CircularProgress } from '@mui/material';
-import { LocalHospital, Inventory2, CalendarMonth, QrCodeScanner } from '@mui/icons-material';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import {
+  Alert, Box, Button, Skeleton, Table, TableBody, TableCell, TableHead, TableRow, Typography,
+} from '@mui/material';
+import DescriptionIcon from '@mui/icons-material/Description';
+import WaterDropIcon from '@mui/icons-material/WaterDrop';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import axios from 'axios';
 import { useAuth } from '@/store/AuthContext';
 import API_BASE from '@/lib/config';
+import { PageHeader, StatCard, StatusBadge, TableCard, EmptyState, ResponsiveGrid } from '@/components/ui';
+import LowStockAlert from '@/components/inventory/LowStockAlert';
+import { summarize } from '@/lib/inventory';
+import { formatDate, shortRequestId } from '@/lib/format';
 
-const StatCard = ({ icon, label, value, color, href }) => (
-  <Paper component={Link} href={href} elevation={0} sx={{
-    p: 3, borderRadius: 3, border: '1px solid', borderColor: 'divider', textDecoration: 'none',
-    display: 'flex', alignItems: 'center', gap: 2, transition: 'all 0.15s',
-    '&:hover': { borderColor: color, boxShadow: `0 4px 16px ${color}22` },
-  }}>
-    <Box sx={{ width: 48, height: 48, borderRadius: 2.5, bgcolor: `${color}18`, color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      {icon}
-    </Box>
-    <Box>
-      <Typography fontSize="1.6rem" fontWeight={800} lineHeight={1.1}>{value}</Typography>
-      <Typography fontSize="0.8rem" color="text.secondary">{label}</Typography>
-    </Box>
-  </Paper>
-);
 
 export default function HospitalOverview() {
-  const { staff, token } = useAuth();
-  const [stats, setStats] = useState(null);
+  const { staff } = useAuth();
+  const [data, setData] = useState(null); // { requests, inventory, appointments }
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (!staff?.hospitalId) return;
-    const headers = { Authorization: `Bearer ${token}` };
+    const h = staff.hospitalId;
     Promise.all([
-      axios.get(`${API_BASE}/api/requests?hospital=${staff.hospitalId}`),
-      axios.get(`${API_BASE}/api/inventory?hospital=${staff.hospitalId}`),
-      axios.get(`${API_BASE}/api/appointments?hospital=${staff.hospitalId}`),
-    ]).then(([requests, inventory, appointments]) => {
-      setStats({
-        pendingRequests: requests.data.filter(r => r.status === 'Pending').length,
-        totalUnits: inventory.data.reduce((s, i) => s + i.units, 0),
-        upcomingAppointments: appointments.data.filter(a => a.status === 'Pending' || a.status === 'Confirmed').length,
-      });
-    }).catch(() => setStats({ pendingRequests: 0, totalUnits: 0, upcomingAppointments: 0 }));
-  }, [staff, token]);
+      axios.get(`${API_BASE}/api/requests?hospital=${h}`),
+      axios.get(`${API_BASE}/api/inventory?hospital=${h}`),
+      axios.get(`${API_BASE}/api/appointments?hospital=${h}`),
+    ])
+      .then(([requests, inventory, appointments]) => setData({ requests: requests.data, inventory: inventory.data, appointments: appointments.data }))
+      .catch(() => setError('Failed to load your hospital\'s data.'));
+  }, [staff]);
+
+  const totals = useMemo(() => summarize(data?.inventory || []), [data]);
+  const pending = data?.requests.filter((r) => r.status === 'Pending').length ?? 0;
+  const critical = data?.requests.filter((r) => r.status === 'Pending' && r.urgency === 'Critical').length ?? 0;
+  const upcoming = data?.appointments.filter((a) => a.status === 'Pending' || a.status === 'Confirmed').length ?? 0;
+  const recent = useMemo(
+    () => [...(data?.requests || [])].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5),
+    [data]
+  );
+  const loading = !data && !error;
 
   return (
     <Box>
-      <Typography variant="h5" fontWeight={800} mb={0.5}>Welcome, {staff?.fullName}</Typography>
-      <Typography color="text.secondary" mb={4}>Here's what's happening at your hospital today.</Typography>
+      <PageHeader title="Hospital Dashboard" subtitle={`Welcome back, ${staff?.fullName || ''}. Here's what's happening at your hospital.`} />
+      {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
-      {!stats ? (
-        <CircularProgress size={28} color="info" />
-      ) : (
-        <Grid container spacing={2.5}>
-          <Grid item xs={12} sm={6} md={3}>
-            <StatCard icon={<LocalHospital />} label="Pending Requests" value={stats.pendingRequests} color="#d32f2f" href="/dashboard/hospital/requests" />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <StatCard icon={<Inventory2 />} label="Total Blood Units" value={stats.totalUnits} color="#1565c0" href="/dashboard/hospital/inventory" />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <StatCard icon={<CalendarMonth />} label="Upcoming Appointments" value={stats.upcomingAppointments} color="#2e7d32" href="/dashboard/hospital/appointments" />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <StatCard icon={<QrCodeScanner />} label="Check In a Donor" value="Scan" color="#6a1b9a" href="/dashboard/hospital/scan" />
-          </Grid>
-        </Grid>
-      )}
+      <ResponsiveGrid min={230}>
+        <StatCard label="Pending Requests" value={pending} loading={loading} icon={<DescriptionIcon />} tone="primary" href="/dashboard/hospital/requests"
+          hint={critical > 0 ? <Box component="span" sx={{ color: 'error.main', fontWeight: 700 }}>{critical} critical</Box> : 'Awaiting review'} />
+        <StatCard label="Total Blood Units" value={totals.totalUnits} loading={loading} icon={<WaterDropIcon />} tone="success" href="/dashboard/hospital/inventory"
+          hint="In your inventory" />
+        <StatCard label="Appointments" value={upcoming} loading={loading} icon={<CalendarMonthIcon />} tone="info" href="/dashboard/hospital/appointments"
+          hint="Upcoming: pending or confirmed" />
+        <StatCard label="Check In a Donor" value="Scan" icon={<QrCodeScannerIcon />} tone="warning" href="/dashboard/hospital/scan" hint="Verify a donor's QR card" />
+      </ResponsiveGrid>
+
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0,1fr)', lg: 'minmax(0,2fr) minmax(0,1fr)' }, gap: { xs: 2, md: 3 }, mt: { xs: 2, md: 3 } }}>
+        <TableCard
+          title="Recent Blood Requests"
+          actions={<Button component={Link} href="/dashboard/hospital/requests" size="small" sx={{ fontWeight: 600 }}>View All</Button>}
+          minWidth={560}
+        >
+          <Table size="small">
+            <TableHead>
+              <TableRow>{['ID', 'Patient', 'Blood Type', 'Units', 'Urgency', 'Status', 'Date'].map((c) => <TableCell key={c}>{c}</TableCell>)}</TableRow>
+            </TableHead>
+            <TableBody>
+              {loading && [0, 1, 2].map((i) => <TableRow key={i}><TableCell colSpan={7}><Skeleton variant="text" /></TableCell></TableRow>)}
+              {data && recent.length === 0 && (
+                <TableRow><TableCell colSpan={7}><EmptyState icon={<DescriptionIcon />} title="No requests yet" description="Requests assigned to your hospital will appear here." /></TableCell></TableRow>
+              )}
+              {recent.map((r) => (
+                <TableRow key={r._id} hover>
+                  <TableCell sx={{ fontWeight: 600 }}>{shortRequestId(r._id)}</TableCell>
+                  <TableCell><Typography noWrap variant="body2" sx={{ maxWidth: 160 }}>{r.patientName}</Typography></TableCell>
+                  <TableCell sx={{ color: 'primary.main', fontWeight: 800 }}>{r.bloodType}</TableCell>
+                  <TableCell>{r.unitsNeeded}</TableCell>
+                  <TableCell><StatusBadge status={r.urgency} size="small" dot={false} /></TableCell>
+                  <TableCell><StatusBadge status={r.status} size="small" /></TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDate(r.createdAt)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableCard>
+
+        <LowStockAlert items={data ? data.inventory : null} href="/dashboard/hospital/inventory" />
+      </Box>
     </Box>
   );
 }

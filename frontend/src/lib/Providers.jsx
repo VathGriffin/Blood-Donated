@@ -1,5 +1,4 @@
 'use client';
-import React from 'react';
 import CssBaseline from '@mui/material/CssBaseline';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { CustomThemeProvider } from '@/lib/ThemeContext';

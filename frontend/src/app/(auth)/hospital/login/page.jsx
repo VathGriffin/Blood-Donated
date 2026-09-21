@@ -1,13 +1,12 @@
 'use client';
 import { useRouter } from 'next/navigation';
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
-    Box, Paper, Typography, TextField, Button,
-    InputAdornment, IconButton, Alert, CircularProgress,
+  Box, Paper, Typography, TextField, Button, InputAdornment, IconButton, Alert, CircularProgress,
 } from '@mui/material';
 import {
-    Visibility, VisibilityOff, Lock, Email,
-    LocalHospital, Favorite, CheckCircle, QrCodeScanner, Inventory2, EventAvailable,
+  Visibility, VisibilityOff, Lock, Email, LocalHospital, Favorite, CheckCircle, QrCodeScanner,
+  Inventory2, EventAvailable,
 } from '@mui/icons-material';
 import axios from 'axios';
 import { useAuth } from '@/store/AuthContext';

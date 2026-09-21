@@ -1,11 +1,10 @@
 'use client';
 import { useRouter } from 'next/navigation';
-import React, { useState, useRef } from "react";
+import { useState, useRef } from "react";
 import {
-  Container, Box, Typography, TextField, Button, Paper,
-  FormControl, InputLabel, Select, MenuItem, Switch,
-  FormControlLabel, Chip, useTheme, Stepper, Step, StepLabel,
-  Alert, Avatar, IconButton, Tooltip,
+  Container, Box, Typography, TextField, Button, Paper, FormControl, InputLabel, Select,
+  MenuItem, Switch, FormControlLabel, Chip, useTheme, Stepper, Step, StepLabel, Alert,
+  Avatar, IconButton, Tooltip,
 } from "@mui/material";
 import API_BASE from "@/lib/config";
 import VolunteerActivismIcon from "@mui/icons-material/VolunteerActivism";
@@ -34,10 +33,10 @@ const eligibilityChecks = [
 const steps = ["Register Online", "Health Screening", "Donate & Save Lives"];
 
 const heroStats = [
-  { icon: <PeopleIcon sx={{ fontSize: 26 }} />, value: "2,400+", label: "Active Donors" },
-  { icon: <FavoriteIcon sx={{ fontSize: 26 }} />, value: "45K+", label: "Lives Saved" },
-  { icon: <LocalHospitalIcon sx={{ fontSize: 26 }} />, value: "50+", label: "Partner Hospitals" },
-  { icon: <SecurityIcon sx={{ fontSize: 26 }} />, value: "100%", label: "Safe & Screened" },
+  { icon: <PeopleIcon sx={{ fontSize: 22 }} />, value: "2,400+", label: "Active Donors" },
+  { icon: <FavoriteIcon sx={{ fontSize: 22 }} />, value: "45K+", label: "Lives Saved" },
+  { icon: <LocalHospitalIcon sx={{ fontSize: 22 }} />, value: "50+", label: "Hospitals" },
+  { icon: <SecurityIcon sx={{ fontSize: 22 }} />, value: "100%", label: "Safe & Screened" },
 ];
 
 const DonateBlood = () => {
@@ -127,7 +126,7 @@ const DonateBlood = () => {
       {/* ── Hero — Photo Background ────────────────────────────────────────── */}
       <Box sx={{
         position: "relative",
-        minHeight: { xs: "74vh", md: "82vh" },
+        minHeight: { xs: 360, md: 380 },
         display: "flex", flexDirection: "column",
         alignItems: "center", justifyContent: "center",
         textAlign: "center",
@@ -144,43 +143,37 @@ const DonateBlood = () => {
           zIndex: 1,
         },
       }}>
-        <Box sx={{ position: "relative", zIndex: 2, px: 3, pt: { xs: 14, md: 8 }, pb: { xs: 6, md: 4 } }}>
-          <Chip
-            icon={<VolunteerActivismIcon sx={{ color: "white !important", fontSize: "18px !important" }} />}
-            label="Save a Life Today"
-            sx={{ backgroundColor: "rgba(255,255,255,0.15)", color: "white", fontWeight: 700, mb: 3, backdropFilter: "blur(4px)", fontSize: "0.82rem" }}
-          />
+        <Box sx={{ position: "relative", zIndex: 2, px: 3, pt: { xs: 12, md: 10 }, pb: { xs: 4, md: 5 }, width: "100%" }}>
           <Typography variant="h2" fontWeight={800} color="white"
-            sx={{ lineHeight: 1.12, mb: 2, fontSize: { xs: "2.4rem", md: "3.6rem" }, textShadow: "0 2px 24px rgba(0,0,0,0.6)" }}>
+            sx={{ lineHeight: 1.1, mb: 1.5, fontSize: { xs: "2.2rem", md: "3rem" }, textShadow: "0 2px 24px rgba(0,0,0,0.6)" }}>
             Donate Blood
           </Typography>
-          <Typography variant="h5" sx={{ color: "#ffcdd2", fontWeight: 700, mb: 2.5, fontSize: { xs: "1.1rem", md: "1.4rem" } }}>
-            Together, we can save lives — one drop at a time.
-          </Typography>
-          <Typography variant="h6" sx={{ color: "rgba(255,255,255,0.82)", maxWidth: 540, mx: "auto", lineHeight: 1.8, fontWeight: 400, fontSize: { xs: "1rem", md: "1.1rem" } }}>
-            Register as a donor and join our life-saving community.
-            Your blood could be the difference between life and death for someone in need.
+          <Typography sx={{ color: "rgba(255,255,255,0.85)", maxWidth: 480, mx: "auto", lineHeight: 1.6, fontSize: { xs: "1rem", md: "1.1rem" } }}>
+            One registration, one drop at a time — your blood can save a life.
           </Typography>
 
-          {/* Stats row */}
+          {/* Stats strip */}
           <Box sx={{
-            display: "flex", justifyContent: "center", flexWrap: "wrap", gap: { xs: 2, md: 4 }, mt: 6,
+            display: "grid",
+            gridTemplateColumns: { xs: "repeat(2, 1fr)", md: "repeat(4, auto)" },
+            justifyContent: "center",
+            columnGap: { xs: 2, md: 5 }, rowGap: 1.5,
+            mt: 4, mx: "auto", width: "fit-content", maxWidth: "100%",
+            px: { xs: 2.5, md: 4 }, py: 1.5,
+            backgroundColor: "rgba(255,255,255,0.10)",
+            backdropFilter: "blur(8px)",
+            border: "1px solid rgba(255,255,255,0.18)",
+            borderRadius: { xs: 4, md: 999 },
           }}>
-            {heroStats.map((stat, i) => (
-              <Box key={i} sx={{
-                textAlign: "center",
-                px: { xs: 2, md: 3 }, py: 1.5,
-                backgroundColor: "rgba(255,255,255,0.10)",
-                backdropFilter: "blur(8px)",
-                border: "1px solid rgba(255,255,255,0.18)",
-                borderRadius: 3,
-                minWidth: 110,
-              }}>
-                <Box sx={{ color: "#ffcdd2", mb: 0.5 }}>{stat.icon}</Box>
-                <Typography variant="h6" fontWeight={800} color="white">{stat.value}</Typography>
-                <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.75)", fontWeight: 600 }}>
-                  {stat.label}
-                </Typography>
+            {heroStats.map((stat) => (
+              <Box key={stat.label} sx={{ display: "flex", alignItems: "center", gap: 1, justifyContent: "flex-start" }}>
+                <Box sx={{ color: "#ffcdd2", display: "flex" }}>{stat.icon}</Box>
+                <Box sx={{ textAlign: "left", lineHeight: 1.2 }}>
+                  <Typography fontWeight={800} color="white" sx={{ fontSize: "1rem", lineHeight: 1.2 }}>{stat.value}</Typography>
+                  <Typography sx={{ color: "rgba(255,255,255,0.75)", fontWeight: 600, fontSize: "0.72rem", lineHeight: 1.2 }}>
+                    {stat.label}
+                  </Typography>
+                </Box>
               </Box>
             ))}
           </Box>

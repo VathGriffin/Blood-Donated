@@ -1,16 +1,16 @@
 'use client';
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
-  Box, Paper, Typography, TextField, IconButton,
-  useTheme, Chip,
+  Box, Paper, Typography, TextField, IconButton, useTheme, Chip,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import SendIcon from "@mui/icons-material/Send";
 import SmartToyIcon from "@mui/icons-material/SmartToy";
 import FavoriteIcon from "@mui/icons-material/Favorite";
-import API_BASE from "@/lib/config";
 import { useUserAuth } from "@/store/UserAuthContext";
-import { detectLanguage, ruleBasedResponse, QUICK_PROMPTS } from "@/lib/chatbot-kb";
+import { detectLanguage, QUICK_PROMPTS } from "@/lib/chatbot-kb";
+import { askAssistant } from "@/lib/chat-client";
+import ChatMessage from "@/components/ChatMessage";
 
 const UI_TEXT = {
   en: {
@@ -68,29 +68,9 @@ export default function ChatBot() {
     setInput("");
     setLoading(true);
 
-    try {
-      const res = await fetch(`${API_BASE}/api/chat`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ messages: history, lang }),
-      });
-      const data = await res.json();
-      if (!res.ok && data.configured === false) {
-        const reply = ruleBasedResponse(content, lang);
-        setTimeout(() => { setMessages(prev => [...prev, { role: "assistant", content: reply }]); setLoading(false); }, 480);
-        return;
-      }
-      if (!res.ok) throw new Error();
-      setMessages(prev => [...prev, { role: "assistant", content: data.content }]);
-    } catch {
-      const reply = ruleBasedResponse(content, lang);
-      setMessages(prev => [...prev, { role: "assistant", content: reply }]);
-    } finally {
-      setLoading(false);
-    }
+    const reply = await askAssistant({ history, content, lang, token });
+    setMessages(prev => [...prev, { role: "assistant", content: reply.content, offline: reply.offline }]);
+    setLoading(false);
   };
 
   const border = isDark ? "#1f1f1f" : "#e5e5e5";
@@ -111,9 +91,15 @@ export default function ChatBot() {
       `}</style>
 
       {/* FAB */}
-      <Box onClick={() => setOpen(v => !v)} sx={{
+      <Box
+        component="button"
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        aria-label={open ? "Close chat assistant" : "Open chat assistant"}
+        aria-expanded={open}
+        sx={{
         position: "fixed", bottom: 28, right: 28, zIndex: 1300,
-        width: 56, height: 56, borderRadius: "50%",
+        width: 56, height: 56, borderRadius: "50%", border: 0, p: 0,
         background: "linear-gradient(135deg, #dc2626 0%, #991b1b 100%)",
         display: "flex", alignItems: "center", justifyContent: "center",
         cursor: "pointer",
@@ -123,6 +109,7 @@ export default function ChatBot() {
           transform: "scale(1.08)",
           boxShadow: "0 8px 32px rgba(220,38,38,0.6), 0 4px 12px rgba(220,38,38,0.4)",
         },
+        "&:focus-visible": { outline: "3px solid #fff", outlineOffset: 2, boxShadow: "0 0 0 5px #b91c1c" },
       }}>
         {open
           ? <CloseIcon sx={{ color: "white", fontSize: 22 }} />
@@ -278,9 +265,13 @@ export default function ChatBot() {
                   color: msg.role === "user" ? "white" : isDark ? "rgba(245,245,245,0.9)" : "#222222",
                   boxShadow: msg.role === "user" ? "0 2px 8px rgba(220,38,38,0.3)" : "none",
                 }}>
-                  <Typography variant="body2" sx={{ fontSize: "0.83rem", lineHeight: 1.65, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-                    {msg.content}
-                  </Typography>
+                  {msg.role === "user" ? (
+                    <Typography variant="body2" sx={{ fontSize: "0.83rem", lineHeight: 1.65, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                      {msg.content}
+                    </Typography>
+                  ) : (
+                    <ChatMessage text={msg.content} fontSize="0.83rem" lineHeight={1.65} />
+                  )}
                 </Box>
               </Box>
             ))}

@@ -1,20 +1,26 @@
 'use client';
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
 
 const AuthContext = createContext({
-    token: null, staff: null, isAuth: false, isAdmin: false, isHospitalStaff: false,
-    login: () => {}, logout: () => {},
+    token: null, staff: null, isAuth: false, isAdmin: false, isHospitalStaff: false, ready: false,
+    login: () => {}, logout: () => {}, updateStaff: () => {},
 });
 
 export const AuthProvider = ({ children }) => {
     const [data, setData] = useState(null);
+    // False until the stored session has been read: without it, "not signed in" and
+    // "not loaded yet" look identical and guards redirect logged-in users to login.
+    const [ready, setReady] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
-        const stored = localStorage.getItem('staffAuth');
-        if (stored) setData(JSON.parse(stored));
+        try {
+            const stored = localStorage.getItem('staffAuth');
+            if (stored) setData(JSON.parse(stored));
+        } catch { localStorage.removeItem('staffAuth'); }
+        setReady(true);
     }, []);
 
     const login = (token, staff) => {
@@ -28,7 +34,18 @@ export const AuthProvider = ({ children }) => {
         setData(null);
     };
 
+    // Merge changed fields (e.g. a new photo) into the signed-in staff record without a re-login.
+    const updateStaff = (fields) => {
+        setData((prev) => {
+            if (!prev) return prev;
+            const next = { ...prev, staff: { ...prev.staff, ...fields } };
+            localStorage.setItem('staffAuth', JSON.stringify(next));
+            return next;
+        });
+    };
+
     const token = data?.token || null;
+    const staffRole = data?.staff?.role || null;
 
     // An expired/invalid staff token otherwise fails silently: isAdmin stays true
     // (it only reflects what's cached in localStorage), so guarded pages keep
@@ -40,17 +57,18 @@ export const AuthProvider = ({ children }) => {
             (res) => res,
             (err) => {
                 if (err.response?.status === 401 && err.config?.headers?.Authorization === `Bearer ${token}`) {
+                    const loginPath = staffRole === 'hospital_staff' ? '/hospital/login' : '/admin/login';
                     localStorage.removeItem('staffAuth');
                     setData(null);
-                    router.replace('/admin/login');
+                    router.replace(loginPath);
                 }
                 return Promise.reject(err);
             }
         );
         return () => axios.interceptors.response.eject(interceptor);
-    }, [token, router]);
+    }, [token, staffRole, router]);
 
-    const role = data?.staff?.role || null;
+    const role = staffRole;
 
     return (
         <AuthContext.Provider value={{
@@ -59,8 +77,10 @@ export const AuthProvider = ({ children }) => {
             isAuth: !!token,
             isAdmin: role === 'admin',
             isHospitalStaff: role === 'hospital_staff',
+            ready,
             login,
             logout,
+            updateStaff,
         }}>
             {children}
         </AuthContext.Provider>

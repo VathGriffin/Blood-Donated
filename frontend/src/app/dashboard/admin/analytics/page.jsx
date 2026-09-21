@@ -1,18 +1,16 @@
 'use client';
 import React, { useEffect, useState, useCallback } from 'react';
 import {
-  Box, Typography, Grid, Paper, useTheme, Skeleton, Alert,
-  Chip, CircularProgress, Divider,
+  Box, Typography, Grid, Paper, useTheme, Skeleton, Alert, Chip,
 } from '@mui/material';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend, LineChart, Line, AreaChart, Area,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart,
+  Pie, Cell, Legend, AreaChart, Area,
 } from 'recharts';
 import PeopleIcon from '@mui/icons-material/People';
 import BloodtypeIcon from '@mui/icons-material/Bloodtype';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import API_BASE from '@/lib/config';
 import { useAuth } from '@/store/AuthContext';
@@ -127,19 +125,19 @@ export default function Analytics() {
 
       {/* KPI Cards */}
       <Grid container spacing={2.5} mb={4}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard icon={<PeopleIcon />} label='Total Donors' loading={loading}
             value={ov.totalDonors} sub={`+${ov.newDonorsThisMonth || 0} this month`} color='#2563eb' />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard icon={<FavoriteIcon />} label='Active Donors' loading={loading}
             value={ov.activeDonors} sub='Available to donate now' color='#16a34a' />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard icon={<BloodtypeIcon />} label='Total Requests' loading={loading}
             value={ov.totalRequests} sub={`${ov.pendingRequests || 0} pending`} color='#dc2626' />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard icon={<WarningAmberIcon />} label='Urgent Pending' loading={loading}
             value={ov.urgentRequests} sub='Critical blood requests' color='#d97706' />
         </Grid>
@@ -148,7 +146,7 @@ export default function Analytics() {
       {/* Charts row 1 */}
       <Grid container spacing={2.5} mb={2.5}>
         {/* Monthly trend */}
-        <Grid item xs={12} md={8}>
+        <Grid size={{ xs: 12, md: 8 }}>
           <Paper elevation={0} sx={{ p: 3, borderRadius: '16px', border: `1px solid ${border}`, bgcolor: card, height: '100%' }}>
             <Typography fontWeight={700} fontSize='0.95rem' mb={0.5}>Monthly Activity</Typography>
             <Typography variant='caption' color='text.secondary' display='block' mb={2.5}>
@@ -181,7 +179,7 @@ export default function Analytics() {
         </Grid>
 
         {/* Request Status Pie */}
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Paper elevation={0} sx={{ p: 3, borderRadius: '16px', border: `1px solid ${border}`, bgcolor: card, height: '100%' }}>
             <Typography fontWeight={700} fontSize='0.95rem' mb={0.5}>Request Status</Typography>
             <Typography variant='caption' color='text.secondary' display='block' mb={2}>
@@ -209,7 +207,7 @@ export default function Analytics() {
       {/* Charts row 2 */}
       <Grid container spacing={2.5} mb={2.5}>
         {/* Donors by blood type */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper elevation={0} sx={{ p: 3, borderRadius: '16px', border: `1px solid ${border}`, bgcolor: card }}>
             <Typography fontWeight={700} fontSize='0.95rem' mb={0.5}>Donors by Blood Type</Typography>
             <Typography variant='caption' color='text.secondary' display='block' mb={2.5}>Registered donor distribution</Typography>
@@ -232,7 +230,7 @@ export default function Analytics() {
         </Grid>
 
         {/* Inventory */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper elevation={0} sx={{ p: 3, borderRadius: '16px', border: `1px solid ${border}`, bgcolor: card }}>
             <Typography fontWeight={700} fontSize='0.95rem' mb={0.5}>Inventory Levels</Typography>
             <Typography variant='caption' color='text.secondary' display='block' mb={2.5}>Current units per blood type</Typography>

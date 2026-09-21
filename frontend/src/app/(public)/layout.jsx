@@ -1,5 +1,4 @@
 'use client';
-import React from 'react';
 import Header, { URGENT_STRIP_HEIGHT } from '@/components/Header';
 import Footer from '@/components/Footer';
 import ChatBotWrapper from '@/components/ChatBotWrapper';

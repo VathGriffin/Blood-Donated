@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Box, Button, Typography, useTheme, Slide } from "@mui/material";
 import CookieIcon from "@mui/icons-material/Cookie";

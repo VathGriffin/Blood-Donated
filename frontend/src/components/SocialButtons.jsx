@@ -1,6 +1,7 @@
 'use client';
-import React, { useEffect } from "react";
-import { Box, Button, Divider, Typography } from "@mui/material";
+import { useEffect } from "react";
+import { Box, Button } from "@mui/material";
+import { OrDivider } from "@/components/auth/authUi";
 import { useGoogleLogin } from "@react-oauth/google";
 import axios from "axios";
 import { useUserAuth } from "@/store/UserAuthContext";
@@ -24,6 +25,12 @@ const FacebookIcon = () => (
         <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
     </svg>
 );
+
+const socialButtonSx = {
+    py: 1.05, borderRadius: "10px", textTransform: "none", fontWeight: 600, fontSize: "0.9rem",
+    borderColor: "divider", color: "text.primary", minWidth: 0,
+    "&:hover": { borderColor: "text.disabled", bgcolor: "action.hover" },
+};
 
 let fbSDKLoaded = false;
 const loadFacebookSDK = (appId) => {
@@ -56,9 +63,8 @@ const GoogleLoginButton = ({ onError }) => {
     });
 
     return (
-        <Button fullWidth variant="outlined" onClick={() => googleLogin()} startIcon={<GoogleIcon />}
-            sx={{ py: 1.3, borderRadius: 3, textTransform: "none", fontWeight: 600, fontSize: "0.92rem", borderColor: "#dadce0", color: "text.primary", "&:hover": { borderColor: "#bbb", bgcolor: "rgba(0,0,0,0.03)" } }}>
-            Continue with Google
+        <Button fullWidth variant="outlined" onClick={() => googleLogin()} startIcon={<GoogleIcon />} sx={socialButtonSx}>
+            Google
         </Button>
     );
 };
@@ -80,9 +86,8 @@ const FacebookLoginButton = ({ onError }) => {
     };
 
     return (
-        <Button fullWidth variant="outlined" onClick={handleFacebookLogin} startIcon={<FacebookIcon />}
-            sx={{ py: 1.3, borderRadius: 3, textTransform: "none", fontWeight: 600, fontSize: "0.92rem", borderColor: "#1877F2", color: "#1877F2", "&:hover": { borderColor: "#1877F2", bgcolor: "rgba(24,119,242,0.05)" } }}>
-            Continue with Facebook
+        <Button fullWidth variant="outlined" onClick={handleFacebookLogin} startIcon={<FacebookIcon />} sx={socialButtonSx}>
+            Facebook
         </Button>
     );
 };
@@ -91,12 +96,8 @@ const SocialButtons = ({ onError }) => {
     if (!GOOGLE_CLIENT_ID && !FACEBOOK_APP_ID) return null;
     return (
         <>
-            <Divider sx={{ my: 2.5 }}>
-                <Typography variant="caption" color="text.secondary" fontWeight={600} letterSpacing="0.08em">
-                    OR CONTINUE WITH
-                </Typography>
-            </Divider>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+            <OrDivider />
+            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 1.25 }}>
                 {GOOGLE_CLIENT_ID && <GoogleLoginButton onError={onError} />}
                 {FACEBOOK_APP_ID && <FacebookLoginButton onError={onError} />}
             </Box>

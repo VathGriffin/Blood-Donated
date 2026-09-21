@@ -1,5 +1,4 @@
 'use client';
-import React from "react";
 import Link from "next/link";
 import { Box, Typography, IconButton, Link as MuiLink, useTheme, Divider, Grid } from "@mui/material";
 import { Facebook, Telegram, Favorite } from "@mui/icons-material";
@@ -28,11 +27,11 @@ function Footer() {
     }}>
       <Box sx={{ maxWidth: "1200px", mx: "auto" }}>
         <Grid container spacing={5}>
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
               <Favorite sx={{ color: "#ffcdd2", fontSize: 28 }} />
               <Typography variant="h6" fontWeight={800} sx={{ color: "#ffeb3b", letterSpacing: "-0.5px" }}>
-                BloodLife
+                Blood Donated
               </Typography>
             </Box>
             <Typography variant="body2" sx={{ lineHeight: 1.85, opacity: 0.9, textAlign: "justify", mb: 3 }}>
@@ -52,7 +51,7 @@ function Footer() {
             </Box>
           </Grid>
 
-          <Grid item xs={6} md={2.5}>
+          <Grid size={{ xs: 6, md: 2.5 }}>
             <Typography variant="subtitle1" sx={{ color: "#ffeb3b", fontWeight: 700, mb: 2.5, textTransform: "uppercase", fontSize: "0.85rem", letterSpacing: "0.08em" }}>
               Quick Links
             </Typography>
@@ -67,7 +66,7 @@ function Footer() {
             </Box>
           </Grid>
 
-          <Grid item xs={6} md={2}>
+          <Grid size={{ xs: 6, md: 2 }}>
             <Typography variant="subtitle1" sx={{ color: "#ffeb3b", fontWeight: 700, mb: 2.5, textTransform: "uppercase", fontSize: "0.85rem", letterSpacing: "0.08em" }}>
               Blood Types
             </Typography>
@@ -80,7 +79,7 @@ function Footer() {
             </Box>
           </Grid>
 
-          <Grid item xs={12} md={3.5}>
+          <Grid size={{ xs: 12, md: 3.5 }}>
             <Typography variant="subtitle1" sx={{ color: "#ffeb3b", fontWeight: 700, mb: 2.5, textTransform: "uppercase", fontSize: "0.85rem", letterSpacing: "0.08em" }}>
               Contact Us
             </Typography>
@@ -102,7 +101,7 @@ function Footer() {
       <Box sx={{ maxWidth: "1200px", mx: "auto" }}>
         <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, justifyContent: "space-between", alignItems: "center", gap: 1.5, mb: 1.5 }}>
           <Typography variant="body2" sx={{ opacity: 0.7, fontSize: "0.82rem" }} suppressHydrationWarning>
-            © {new Date().getFullYear()} BloodLife. All rights reserved.
+            © {new Date().getFullYear()} Blood Donated. All rights reserved.
           </Typography>
           <Typography variant="body2" sx={{ opacity: 0.7, fontSize: "0.82rem", display: "flex", alignItems: "center", gap: 0.5 }}>
             Made with <Favorite sx={{ fontSize: 14, color: "#ffcdd2" }} /> by Data Science Students — ITC Cambodia

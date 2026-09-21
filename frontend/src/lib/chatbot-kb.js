@@ -45,6 +45,68 @@ const KB = [
       vi: "Tạm biệt! Hãy nhớ rằng — một lần hiến máu có thể cứu đến 3 sinh mạng.",
     },
   },
+  // ── Accounts. Order matters: the first entry whose tag appears in the message wins, so the
+  // specific ones (forgot password, staff, "do I need an account") come before the broad ones. ──
+  {
+    tags: {
+      en: ["forgot password","forgot my password","reset password","reset my password","lost password","password reset","can't remember my password"],
+      km: ["ភ្លេចពាក្យសម្ងាត់","ប្ដូរពាក្យសម្ងាត់","កំណត់ពាក្យសម្ងាត់ឡើងវិញ"],
+      vi: ["quên mật khẩu","đặt lại mật khẩu","lấy lại mật khẩu"],
+    },
+    answer: {
+      en: "Automatic password reset isn't available yet. Please [contact the team](/contact) with the email you registered with and we'll help you get back in.\n\nIf you signed up with Google or Facebook, just use that button on the [Login](/login) page — there's no password.",
+      km: "ការកំណត់ពាក្យសម្ងាត់ឡើងវិញដោយស្វ័យប្រវត្តិមិនទាន់មានទេ។ សូម[ទាក់ទងក្រុមការងារ](/contact) ជាមួយអ៊ីមែលដែលអ្នកបានចុះឈ្មោះ ហើយយើងនឹងជួយអ្នក។\n\nប្រសិនបើអ្នកបានចុះឈ្មោះដោយ Google ឬ Facebook សូមប្រើប៊ូតុងនោះនៅទំព័រ [Login](/login) — មិនមានពាក្យសម្ងាត់ទេ។",
+      vi: "Chức năng đặt lại mật khẩu tự động chưa có. Vui lòng [liên hệ đội ngũ](/contact) kèm email bạn đã đăng ký, chúng tôi sẽ giúp bạn truy cập lại.\n\nNếu bạn đăng ký bằng Google hoặc Facebook, hãy dùng nút đó ở trang [Login](/login) — không có mật khẩu.",
+    },
+  },
+  {
+    tags: {
+      en: ["staff account","staff login","hospital staff","hospital account","hospital login","admin account","admin login","admin"],
+      km: ["បុគ្គលិកមន្ទីរពេទ្យ","គណនីបុគ្គលិក","គណនីអ្នកគ្រប់គ្រង","អ្នកគ្រប់គ្រង"],
+      vi: ["nhân viên bệnh viện","tài khoản nhân viên","tài khoản quản trị","quản trị viên"],
+    },
+    answer: {
+      en: "Hospital staff accounts can't be created by signing up — the platform administrator sets them up for each partner hospital. If you already have one, sign in at [Staff Login](/hospital/login).\n\nAdmin accounts are managed by the platform team and can't be self-registered. Want your hospital to join? [Contact us](/contact).",
+      km: "គណនីបុគ្គលិកមន្ទីរពេទ្យមិនអាចបង្កើតដោយការចុះឈ្មោះខ្លួនឯងបានទេ — អ្នកគ្រប់គ្រងប្រព័ន្ធបង្កើតឲ្យមន្ទីរពេទ្យដៃគូនីមួយៗ។ ប្រសិនបើអ្នកមានរួចហើយ សូមចូលនៅ [Staff Login](/hospital/login)។\n\nគណនីអ្នកគ្រប់គ្រងត្រូវបានគ្រប់គ្រងដោយក្រុមការងារប្រព័ន្ធ ហើយមិនអាចចុះឈ្មោះដោយខ្លួនឯងបានទេ។ ចង់ឲ្យមន្ទីរពេទ្យរបស់អ្នកចូលរួម? [ទាក់ទងយើង](/contact)។",
+      vi: "Tài khoản nhân viên bệnh viện không thể tự đăng ký — quản trị viên nền tảng tạo cho từng bệnh viện đối tác. Nếu bạn đã có, hãy đăng nhập tại [Staff Login](/hospital/login).\n\nTài khoản quản trị do đội ngũ nền tảng quản lý và không thể tự đăng ký. Muốn bệnh viện của bạn tham gia? [Liên hệ chúng tôi](/contact).",
+    },
+  },
+  {
+    tags: {
+      en: ["need an account","do i need an account","why create an account","why register","benefit of an account","benefits of an account","account or donor","difference between account","donor account","what is an account","what can i do with an account"],
+      km: ["ត្រូវការគណនី","ហេតុអ្វីត្រូវមានគណនី","គណនី ឬអ្នកបរិច្ចាគ","អត្ថប្រយោជន៍គណនី"],
+      vi: ["cần tài khoản","có cần tài khoản","lợi ích tài khoản","khác nhau giữa tài khoản","tài khoản hay người hiến"],
+    },
+    answer: {
+      en: "An account lets you sign in, see your own blood requests and appointments, get your donor QR card and message the team.\n\nIt's separate from registering as a donor: donors are added on [Donate](/donate) (blood type, availability). Use the same email for both so they link up.\n\nYou don't need an account to donate, request blood or book an appointment.",
+      km: "គណនីអនុញ្ញាតឲ្យអ្នកចូលប្រើ មើលសំណើឈាម និងការណាត់ជួបរបស់អ្នក ទទួលបានកាត QR អ្នកបរិច្ចាគ និងផ្ញើសារទៅក្រុមការងារ។\n\nវាខុសពីការចុះឈ្មោះជាអ្នកបរិច្ចាគ៖ អ្នកបរិច្ចាគត្រូវបានបន្ថែមនៅ [Donate](/donate) (ក្រុមឈាម ភាពអាចបរិច្ចាគ)។ សូមប្រើអ៊ីមែលដូចគ្នាសម្រាប់ទាំងពីរ ដើម្បីភ្ជាប់គ្នា។\n\nអ្នកមិនចាំបាច់មានគណនីដើម្បីបរិច្ចាគ ស្នើសុំឈាម ឬណាត់ជួបទេ។",
+      vi: "Tài khoản giúp bạn đăng nhập, xem các yêu cầu máu và lịch hẹn của mình, nhận thẻ QR người hiến máu và nhắn tin cho đội ngũ.\n\nNó khác với việc đăng ký làm người hiến máu: người hiến được thêm tại [Donate](/donate) (nhóm máu, tình trạng sẵn sàng). Hãy dùng cùng một email cho cả hai để liên kết.\n\nBạn không cần tài khoản để hiến máu, yêu cầu máu hoặc đặt lịch hẹn.",
+    },
+  },
+  {
+    tags: {
+      en: ["log in","login","sign in","signin","sign-in","can't log in","cannot log in","cant login","logged out"],
+      km: ["ចូលគណនី","ចូលប្រើ","ចូលប្រព័ន្ធ"],
+      vi: ["đăng nhập","dang nhap","không đăng nhập được"],
+    },
+    answer: {
+      en: "To log in:\n1. Open [Login](/login)\n2. Enter your email and password, then press **Login**\n3. Tick **Remember me** to stay signed in on this device\n\nNo account yet? [Register](/register). Signed up with Google or Facebook? Use the same button to sign in — there's no password. Forgot your password? Just ask me.",
+      km: "ដើម្បីចូលគណនី៖\n1. បើក [Login](/login)\n2. បញ្ចូលអ៊ីមែល និងពាក្យសម្ងាត់ រួចចុច **Login**\n3. ធីក **Remember me** ដើម្បីនៅតែចូលក្នុងឧបករណ៍នេះ\n\nមិនទាន់មានគណនី? [Register](/register)។ បានចុះឈ្មោះដោយ Google ឬ Facebook? ប្រើប៊ូតុងដដែលដើម្បីចូល — មិនមានពាក្យសម្ងាត់ទេ។ ភ្លេចពាក្យសម្ងាត់? សួរខ្ញុំបាន។",
+      vi: "Để đăng nhập:\n1. Mở [Login](/login)\n2. Nhập email và mật khẩu, rồi nhấn **Login**\n3. Chọn **Remember me** để giữ đăng nhập trên thiết bị này\n\nChưa có tài khoản? [Register](/register). Đăng ký bằng Google hoặc Facebook? Dùng chính nút đó để đăng nhập — không có mật khẩu. Quên mật khẩu? Cứ hỏi tôi.",
+    },
+  },
+  {
+    tags: {
+      en: ["create account","create an account","create a account","new account","make an account","make account","open an account","account","sign up","signup","sign-up","register","registration","how to register","how do i register"],
+      km: ["បង្កើតគណនី","គណនីថ្មី","ចុះឈ្មោះគណនី","ចុះឈ្មោះ","គណនី"],
+      vi: ["tạo tài khoản","tài khoản mới","đăng ký tài khoản","đăng ký","đăng kí","tài khoản"],
+    },
+    answer: {
+      en: "To create an account:\n1. Open [Register](/register) (the \"Register\" button in the top menu)\n2. Fill in your full name, email and a password (at least 6 characters), then confirm it\n3. Optionally add your date of birth, phone, blood type and location\n4. Press **Create Account** — you're signed in right away\n\nYou can also use Google or Facebook if those buttons appear. Want to give blood too? Register as a donor on [Donate](/donate) using the same email.",
+      km: "ដើម្បីបង្កើតគណនី៖\n1. បើក [Register](/register) (ប៊ូតុង «Register» នៅម៉ឺនុយខាងលើ)\n2. បំពេញឈ្មោះពេញ អ៊ីមែល និងពាក្យសម្ងាត់ (យ៉ាងតិច 6 តួអក្សរ) រួចបញ្ជាក់ម្ដងទៀត\n3. បើចង់ អាចបន្ថែមថ្ងៃខែឆ្នាំកំណើត លេខទូរសព្ទ ក្រុមឈាម និងទីតាំង\n4. ចុច **Create Account** — អ្នកនឹងចូលគណនីភ្លាមៗ\n\nអ្នកក៏អាចប្រើ Google ឬ Facebook បានផងប្រសិនបើមានប៊ូតុងទាំងនោះ។ ចង់បរិច្ចាគឈាមដែរឬទេ? សូមចុះឈ្មោះជាអ្នកបរិច្ចាគនៅ [Donate](/donate) ដោយប្រើអ៊ីមែលដូចគ្នា។",
+      vi: "Để tạo tài khoản:\n1. Mở [Register](/register) (nút «Register» trên menu phía trên)\n2. Nhập họ tên, email và mật khẩu (ít nhất 6 ký tự), rồi xác nhận lại mật khẩu\n3. Có thể thêm ngày sinh, số điện thoại, nhóm máu và địa điểm\n4. Nhấn **Create Account** — bạn được đăng nhập ngay\n\nBạn cũng có thể dùng Google hoặc Facebook nếu có các nút đó. Muốn hiến máu? Hãy đăng ký làm người hiến máu tại [Donate](/donate) với cùng một email.",
+    },
+  },
   {
     tags: {
       en: ["eligible","eligibility","qualify","can i donate","requirements","when can i donate","when do i donate","when i donate","when am i eligible","when to donate","when should i donate"],
@@ -95,14 +157,14 @@ const KB = [
   },
   {
     tags: {
-      en: ["register","sign up","become donor","how to donate","want to donate","i want to donate","want donate","donate blood","i want donate","give blood","wanna donate"],
-      km: ["ចុះឈ្មោះ","ក្លាយជា","ជាអ្នកបរិច្ចាគ","ចង់បរិចាគ","ចង់ឲ្យឈាម","បរិចាគឈាម"],
-      vi: ["đăng ký","đăng kí","trở thành người hiến","muốn hiến máu","tôi muốn hiến"],
+      en: ["register as a donor","register as donor","donor registration","become donor","become a donor","how to donate","want to donate","i want to donate","want donate","donate blood","i want donate","give blood","wanna donate"],
+      km: ["ចុះឈ្មោះជាអ្នកបរិច្ចាគ","ក្លាយជា","ជាអ្នកបរិច្ចាគ","ចង់បរិចាគ","ចង់ឲ្យឈាម","បរិចាគឈាម"],
+      vi: ["đăng ký làm người hiến","đăng ký hiến máu","trở thành người hiến","muốn hiến máu","tôi muốn hiến"],
     },
     answer: {
-      en: "To register:\n1. Click \"Donate Blood\" in the nav\n2. Fill in your details and blood type\n3. Confirm eligibility\n4. Submit your registration",
-      km: "ដើម្បីចុះឈ្មោះ:\n1. ចុច «បរិច្ចាគឈាម» នៅម៉ឺនុយ\n2. បំពេញព័ត៌មានរបស់អ្នក និងក្រុមឈាម\n3. បញ្ជាក់គុណសម្បត្តិ\n4. ដាក់ស្នើពាក្យ",
-      vi: "Để đăng ký:\n1. Nhấn «Hiến Máu» trên menu\n2. Điền thông tin và nhóm máu\n3. Xác nhận điều kiện\n4. Gửi đăng ký",
+      en: "To register as a blood donor:\n1. Open [Donate](/donate) in the top menu\n2. Fill in your details and blood type\n3. Confirm eligibility\n4. Submit your registration\n\nNo password needed. (Want a website account too? Just ask me how to create one.)",
+      km: "ដើម្បីចុះឈ្មោះជាអ្នកបរិច្ចាគឈាម:\n1. បើក [Donate](/donate) នៅម៉ឺនុយខាងលើ\n2. បំពេញព័ត៌មានរបស់អ្នក និងក្រុមឈាម\n3. បញ្ជាក់គុណសម្បត្តិ\n4. ដាក់ស្នើពាក្យ\n\nមិនត្រូវការពាក្យសម្ងាត់ទេ។ (ចង់បានគណនីគេហទំព័រដែរឬទេ? សួរខ្ញុំពីរបៀបបង្កើត។)",
+      vi: "Để đăng ký làm người hiến máu:\n1. Mở [Donate](/donate) trên menu phía trên\n2. Điền thông tin và nhóm máu\n3. Xác nhận điều kiện\n4. Gửi đăng ký\n\nKhông cần mật khẩu. (Muốn có tài khoản website? Hãy hỏi tôi cách tạo.)",
     },
   },
   {
@@ -184,9 +246,9 @@ const KB = [
       vi: ["bệnh viện","địa điểm","trung tâm","ở đâu"],
     },
     answer: {
-      en: "Partner hospitals:\n• Calmette Hospital, Phnom Penh\n• Royal Phnom Penh Hospital\n• Khmer Soviet Friendship Hospital\n• National Blood Transfusion Center\n• Angkor Hospital for Children\n• Battambang Provincial Hospital",
-      km: "មន្ទីរពេទ្យដៃគូ:\n• មន្ទីរពេទ្យកាល់ម៉ែត ភ្នំពេញ\n• Royal Phnom Penh Hospital\n• មន្ទីរពេទ្យមិត្តភាពខ្មែរ-សូវៀត\n• មជ្ឈមណ្ឌលជាតិឈាម\n• Angkor Hospital for Children, សៀមរាប\n• មន្ទីរពេទ្យបង្គោលខេត្តបាត់ដំបង",
-      vi: "Bệnh viện đối tác:\n• Bệnh viện Calmette, Phnom Penh\n• Royal Phnom Penh Hospital\n• Bệnh viện Hữu nghị Khmer-Xô Viết\n• Trung tâm Truyền máu Quốc gia\n• Bệnh viện Nhi Angkor, Siem Reap\n• Bệnh viện tỉnh Battambang",
+      en: "To find hospitals and clinics near you, open [Find a Hospital](/map) — search your city or province, or tap the location button. You can also book a donation slot on the [Appointments](/appointments) page.",
+      km: "ដើម្បីស្វែងរកមន្ទីរពេទ្យ និងគ្លីនិកនៅជិតអ្នក សូមបើក [Find a Hospital](/map) — ស្វែងរកតាមទីក្រុង ឬខេត្ត ឬចុចប៊ូតុងទីតាំង។ អ្នកក៏អាចណាត់ជួបបរិច្ចាគនៅទំព័រ [Appointments](/appointments) ផងដែរ។",
+      vi: "Để tìm bệnh viện và phòng khám gần bạn, hãy mở [Find a Hospital](/map) — tìm theo thành phố/tỉnh hoặc nhấn nút vị trí. Bạn cũng có thể đặt lịch hiến máu tại trang [Appointments](/appointments).",
     },
   },
   {
@@ -216,13 +278,14 @@ const KB = [
 ];
 
 const FALLBACK = {
-  en: "I'm not sure about that. Ask me about eligibility, blood types, registration, appointments, or anything related to blood donation!",
-  km: "ខ្ញុំមិនច្បាស់ពីចំណុចនោះ។ សូមសួរខ្ញុំអំពីគុណសម្បត្តិ ក្រុមឈាម ការចុះឈ្មោះ ការណាត់ជួប ឬអ្វីដែលទាក់ទងនឹងការបរិច្ចាគឈាម!",
-  vi: "Tôi không chắc về điều đó. Hãy hỏi tôi về điều kiện, nhóm máu, đăng ký, lịch hẹn, hoặc bất cứ điều gì liên quan đến hiến máu!",
+  en: "I'm not sure about that. Ask me about creating an account, eligibility, blood types, registration, appointments, or anything related to blood donation!",
+  km: "ខ្ញុំមិនច្បាស់ពីចំណុចនោះ។ សូមសួរខ្ញុំអំពីការបង្កើតគណនី គុណសម្បត្តិ ក្រុមឈាម ការចុះឈ្មោះ ការណាត់ជួប ឬអ្វីដែលទាក់ទងនឹងការបរិច្ចាគឈាម!",
+  vi: "Tôi không chắc về điều đó. Hãy hỏi tôi về cách tạo tài khoản, điều kiện, nhóm máu, đăng ký, lịch hẹn, hoặc bất cứ điều gì liên quan đến hiến máu!",
 };
 
 export const QUICK_PROMPTS = {
   en: [
+    "How do I create an account?",
     "Am I eligible to donate?",
     "How long does donation take?",
     "Can I donate with a cold?",
@@ -230,6 +293,7 @@ export const QUICK_PROMPTS = {
     "What to do after donating?",
   ],
   km: [
+    "តើបង្កើតគណនីដោយរបៀបណា?",
     "តើខ្ញុំអាចបរិច្ចាគបានទេ?",
     "ដំណើរការចំណាយពេលប៉ុន្មាន?",
     "ជំងឺផ្ដាសាយ អាចបរិច្ចាគទេ?",
@@ -237,6 +301,7 @@ export const QUICK_PROMPTS = {
     "ក្រោយបរិច្ចាគ ត្រូវធ្វើអ្វី?",
   ],
   vi: [
+    "Làm sao để tạo tài khoản?",
     "Tôi có đủ điều kiện hiến không?",
     "Quá trình mất bao lâu?",
     "Cảm lạnh có thể hiến không?",
@@ -245,15 +310,29 @@ export const QUICK_PROMPTS = {
   ],
 };
 
+// Short plain-ASCII tags ("hi", "cold", "time") must match as whole words: as substrings they hit
+// unrelated words — "hi" inside the Vietnamese "hiến" or the English "this" — and hijack the answer.
+const tagMatches = (lower, tag) => {
+  const t = tag.toLowerCase();
+  if (t.length <= 4 && /^[a-z]+$/.test(t)) return new RegExp(`\\b${t}\\b`).test(lower);
+  return lower.includes(t);
+};
+
+// The entry with the longest matching phrase wins, so "register as a donor" beats the broader
+// "register", and specific questions win over generic ones regardless of their order in KB.
+// Ties go to the earlier entry.
 export function ruleBasedResponse(input, lang) {
   const lower = input.toLowerCase();
+  let best = null;
+  let bestLength = 0;
   for (const entry of KB) {
-    const langTags = entry.tags[lang] || [];
-    const enTags = entry.tags.en || [];
-    const allTags = [...langTags, ...enTags];
-    if (allTags.some(tag => lower.includes(tag.toLowerCase()))) {
-      return entry.answer[lang] || entry.answer.en;
+    const tags = [...(entry.tags[lang] || []), ...(entry.tags.en || [])];
+    for (const tag of tags) {
+      if (tag.length > bestLength && tagMatches(lower, tag)) {
+        best = entry;
+        bestLength = tag.length;
+      }
     }
   }
-  return FALLBACK[lang] || FALLBACK.en;
+  return best ? (best.answer[lang] || best.answer.en) : (FALLBACK[lang] || FALLBACK.en);
 }

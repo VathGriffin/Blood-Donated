@@ -1,6 +1,6 @@
 'use client';
-import React, { useEffect, useRef, useState } from 'react';
-import { Box, Typography, Alert, Button, CircularProgress } from '@mui/material';
+import { useEffect, useRef, useState } from 'react';
+import { Box, Typography, Alert, CircularProgress } from '@mui/material';
 import { CameraAlt } from '@mui/icons-material';
 
 const SCANNER_ELEMENT_ID = 'donor-qr-scanner';

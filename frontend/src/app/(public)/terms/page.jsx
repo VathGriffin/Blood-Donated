@@ -1,5 +1,4 @@
 'use client';
-import React from "react";
 import { Box, Container, Typography, useTheme, Paper, Divider, Chip } from "@mui/material";
 import GavelIcon from "@mui/icons-material/Gavel";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";

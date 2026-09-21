@@ -1,9 +1,9 @@
 'use client';
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
-  Typography, Grid, Card, CardContent, Box, LinearProgress,
-  IconButton, Tooltip, Paper, Dialog, DialogTitle, DialogContent,
-  DialogActions, Button, TextField, useTheme, Skeleton, Alert, Chip,
+  Typography, Grid, Card, CardContent, Box, LinearProgress, IconButton, Tooltip, Paper,
+  Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, useTheme, Skeleton,
+  Alert, Chip,
 } from "@mui/material";
 import BloodtypeIcon from "@mui/icons-material/Bloodtype";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
@@ -11,8 +11,8 @@ import EditIcon from "@mui/icons-material/Edit";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import {
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis,
-  Tooltip as ChartTooltip, CartesianGrid, Cell,
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip as ChartTooltip, CartesianGrid,
+  Cell,
 } from "recharts";
 import API_BASE from "@/lib/config";
 import { useAuth } from "@/store/AuthContext";
@@ -94,7 +94,6 @@ export default function Inventory() {
 
   const totalUnits    = inventory.reduce((s, i) => s + i.units, 0);
   const criticalCount = inventory.filter(i => i.status === "critical" || i.status === "empty").length;
-  const lowCount      = inventory.filter(i => i.status === "low").length;
   const normalCount   = inventory.filter(i => i.status === "adequate").length;
   const chartData     = inventory.map(i => ({ type: i.bloodType, units: i.units }));
 
@@ -102,10 +101,10 @@ export default function Inventory() {
     <Box>
       <Skeleton variant="text" width={220} height={40} sx={{ mb: 1 }} />
       <Grid container spacing={2} mb={4}>
-        {[...Array(4)].map((_, i) => <Grid item xs={6} sm={3} key={i}><Skeleton variant="rounded" height={110} /></Grid>)}
+        {[...Array(4)].map((_, i) => <Grid size={{ xs: 6, sm: 3 }} key={i}><Skeleton variant="rounded" height={110} /></Grid>)}
       </Grid>
       <Grid container spacing={2}>
-        {[...Array(8)].map((_, i) => <Grid item xs={12} sm={6} md={3} key={i}><Skeleton variant="rounded" height={160} /></Grid>)}
+        {[...Array(8)].map((_, i) => <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}><Skeleton variant="rounded" height={160} /></Grid>)}
       </Grid>
     </Box>
   );
@@ -151,7 +150,7 @@ export default function Inventory() {
           { label: "Critical / Empty", value: criticalCount, color: "#dc2626", bg: isDark ? "rgba(220,38,38,0.10)" : "#fff0f0" },
           { label: "Normal",       value: normalCount,   color: "#16a34a", bg: isDark ? "rgba(22,163,74,0.10)" : "#f0fdf4" },
         ].map((s, i) => (
-          <Grid item xs={6} sm={3} key={i}>
+          <Grid size={{ xs: 6, sm: 3 }} key={i}>
             <Paper elevation={0} sx={{
               p: 2.5, borderRadius: "16px", textAlign: "center",
               border: `1px solid ${border}`, bgcolor: cardBg,
@@ -180,7 +179,7 @@ export default function Inventory() {
           const isBad  = item.status === "critical" || item.status === "empty";
 
           return (
-            <Grid item xs={12} sm={6} md={3} key={item.bloodType}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }} key={item.bloodType}>
               <Card elevation={0} sx={{
                 borderRadius: "16px",
                 border: `1px solid ${isBad ? "rgba(220,38,38,0.4)" : border}`,

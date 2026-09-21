@@ -1,9 +1,8 @@
 'use client';
 import Link from 'next/link';
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
-  Box, Typography, Paper, TextField, Button, Avatar,
-  CircularProgress, useTheme, IconButton,
+  Box, Typography, Paper, TextField, Button, Avatar, CircularProgress, useTheme, IconButton,
 } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
 import ChatIcon from "@mui/icons-material/Chat";
@@ -35,7 +34,8 @@ const UserMessages = () => {
       const { data } = await axios.get(`${API_BASE}/api/messages/mine`, { headers });
       setMessages(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error(err);
+      // 401 = expired session; UserAuthContext clears it and the login prompt shows.
+      if (err.response?.status !== 401) console.error(err);
     } finally {
       setLoading(false);
     }
@@ -102,10 +102,10 @@ const UserMessages = () => {
   }
 
   return (
-    <Box sx={{ backgroundColor: bg, minHeight: "100vh" }}>
+    <Box>
       <Box sx={{
         background: isDark ? "linear-gradient(135deg, #1a0000 0%, #2d0505 100%)" : "linear-gradient(135deg, #b71c1c 0%, #7f0000 100%)",
-        color: "white", pt: { xs: 7, md: 9 }, pb: { xs: 5, md: 6 }, textAlign: "center", px: 3,
+        color: "white", pt: { xs: 4, md: 5 }, pb: { xs: 4, md: 5 }, textAlign: "center", px: 3, borderRadius: "14px",
       }}>
         <ChatIcon sx={{ fontSize: 48, mb: 1.5, opacity: 0.9 }} />
         <Typography variant="h4" fontWeight={800} gutterBottom>Message Admin</Typography>

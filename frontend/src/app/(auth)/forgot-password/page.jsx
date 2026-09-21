@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { Box, Paper, Typography, TextField, Button, Alert } from '@mui/material';
 import { Email, Favorite } from '@mui/icons-material';

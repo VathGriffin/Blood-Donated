@@ -1,29 +1,29 @@
 'use client';
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
-  Box, Container, Typography, Avatar, Paper, Chip, Button,
-  useTheme, Grid, Skeleton, Tooltip, IconButton, Dialog,
-  DialogTitle, DialogContent, DialogActions, TextField, CircularProgress,
-  Tabs, Tab,
+  Box, Container, Typography, Avatar, Paper, Chip, Button, useTheme, Grid, Skeleton,
+  Tooltip, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField,
+  CircularProgress, Tabs, Tab,
 } from '@mui/material';
-import BloodtypeIcon      from '@mui/icons-material/Bloodtype';
+import BloodtypeIcon from '@mui/icons-material/Bloodtype';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
-import CheckCircleIcon    from '@mui/icons-material/CheckCircle';
-import CancelIcon         from '@mui/icons-material/Cancel';
-import AccessTimeIcon     from '@mui/icons-material/AccessTime';
-import LocalHospitalIcon  from '@mui/icons-material/LocalHospital';
-import QrCode2Icon        from '@mui/icons-material/QrCode2';
-import AddCircleIcon      from '@mui/icons-material/AddCircle';
-import LockIcon           from '@mui/icons-material/Lock';
-import EditIcon           from '@mui/icons-material/Edit';
-import CameraAltIcon      from '@mui/icons-material/CameraAlt';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CancelIcon from '@mui/icons-material/Cancel';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
+import QrCode2Icon from '@mui/icons-material/QrCode2';
+import AddCircleIcon from '@mui/icons-material/AddCircle';
+import LockIcon from '@mui/icons-material/Lock';
+import EditIcon from '@mui/icons-material/Edit';
+import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import EventAvailableIcon from '@mui/icons-material/EventAvailable';
-import DoneAllIcon        from '@mui/icons-material/DoneAll';
-import axios              from 'axios';
-import API_BASE           from '@/lib/config';
-import { useUserAuth }    from '@/store/UserAuthContext';
+import DoneAllIcon from '@mui/icons-material/DoneAll';
+import axios from 'axios';
+import API_BASE from '@/lib/config';
+import { initialsOf } from '@/lib/format';
+import { useUserAuth } from '@/store/UserAuthContext';
 
 const STATUS_META = {
   Pending:  { color: '#d97706', bg: 'rgba(217,119,6,0.12)',  darkBg: 'rgba(217,119,6,0.15)',  label: 'Pending',  icon: <HourglassEmptyIcon sx={{ fontSize: 13 }} /> },
@@ -111,7 +111,7 @@ export default function ProfilePage() {
     );
   }
 
-  const initials  = user?.fullName?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) ?? '?';
+  const initials  = initialsOf(user?.fullName);
   const statCount = (s) => s === 'All' ? requests.length : requests.filter(r => (r.status || 'Pending') === s).length;
   const apptStatCount = (s) => s === 'All' ? appointments.length : appointments.filter(a => (a.status || 'Pending') === s).length;
   const filteredRequests    = requests.filter(r => reqFilter === 'All' || (r.status || 'Pending') === reqFilter);
@@ -179,7 +179,7 @@ export default function ProfilePage() {
   const photoSrc = user?.photo ? `${API_BASE}${user.photo}` : null;
 
   return (
-    <Box sx={{ bgcolor: isDark ? '#0a0a0a' : '#f4f4f4', minHeight: '100vh', pb: 8 }}>
+    <Box sx={{ pb: 4 }}>
 
       {/* Hidden file input */}
       <input
@@ -195,7 +195,7 @@ export default function ProfilePage() {
         background: isDark
           ? 'linear-gradient(135deg, #1a0000 0%, #2d0505 100%)'
           : 'linear-gradient(135deg, #b71c1c 0%, #7f0000 100%)',
-        pt: { xs: 10, md: 12 }, pb: 8,
+        pt: { xs: 4, md: 5 }, pb: 8, borderRadius: '14px',
       }}>
         <Container maxWidth="md">
           <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'center', sm: 'flex-end' }}
@@ -648,7 +648,7 @@ export default function ProfilePage() {
             { label: 'Find Hospital', desc: 'Locate nearby hospitals',      href: '/map',      icon: <LocalHospitalIcon sx={{ color: '#b71c1c' }} /> },
             { label: 'New Request',   desc: 'Submit a blood request',        href: '/requests', icon: <BloodtypeIcon sx={{ color: '#b71c1c' }} /> },
           ].map(item => (
-            <Grid item xs={12} sm={4} key={item.label}>
+            <Grid size={{ xs: 12, sm: 4 }} key={item.label}>
               <Paper component={Link} href={item.href} elevation={0}
                 sx={{
                   p: 2.5, borderRadius: 3, border: `1px solid ${border}`,

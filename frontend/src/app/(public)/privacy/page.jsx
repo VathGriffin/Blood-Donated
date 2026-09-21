@@ -1,6 +1,6 @@
 'use client';
-import React, { useState } from "react";
-import { Box, Container, Typography, useTheme, Paper, Divider, Chip, List, ListItem, ListItemIcon, ListItemText } from "@mui/material";
+import React from "react";
+import { Box, Container, Typography, useTheme, Paper, Divider, Chip } from "@mui/material";
 import ShieldIcon from "@mui/icons-material/Shield";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import LockIcon from "@mui/icons-material/Lock";

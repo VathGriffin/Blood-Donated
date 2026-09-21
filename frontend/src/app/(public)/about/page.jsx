@@ -9,11 +9,9 @@ import BloodtypeIcon from "@mui/icons-material/Bloodtype";
 import VolunteerActivismIcon from "@mui/icons-material/VolunteerActivism";
 import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
-import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
 import SecurityIcon from "@mui/icons-material/Security";
 import GroupsIcon from "@mui/icons-material/Groups";
 import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
-import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import PersonAddAlt1Icon from "@mui/icons-material/PersonAddAlt1";
 import FactCheckIcon from "@mui/icons-material/FactCheck";
@@ -25,6 +23,7 @@ import BrushIcon from "@mui/icons-material/Brush";
 import EmojiObjectsIcon from "@mui/icons-material/EmojiObjects";
 import SpeedIcon from "@mui/icons-material/Speed";
 import SchoolIcon from "@mui/icons-material/School";
+import HospitalInsights from "./HospitalInsights";
 import AOS from "aos";
 import "aos/dist/aos.css";
 
@@ -73,14 +72,6 @@ const reasons = [
   { icon: <NotificationsActiveIcon sx={{ color: "#b71c1c", fontSize: 22 }} />, text: "Real-time stock updates and instant notifications" },
   { icon: <SecurityIcon sx={{ color: "#b71c1c", fontSize: 22 }} />, text: "Prioritizes user privacy and data security" },
   { icon: <VolunteerActivismIcon sx={{ color: "#b71c1c", fontSize: 22 }} />, text: "Cultivates voluntary blood donation nationwide" },
-];
-
-const timeline = [
-  { year: "2024 Q1", event: "Project Kick-off", desc: "Identified Cambodia's blood supply gap. Team assembled at ITC.", icon: <RocketLaunchIcon sx={{ fontSize: 20, color: "#fff" }} /> },
-  { year: "2024 Q2", event: "MVP Launched", desc: "Donor registration and inventory tracking live. First 200 donors registered.", icon: <BloodtypeIcon sx={{ fontSize: 20, color: "#fff" }} /> },
-  { year: "2024 Q3", event: "Hospital Integrations", desc: "Partnered with 10 hospitals for real-time blood request processing.", icon: <LocalHospitalIcon sx={{ fontSize: 20, color: "#fff" }} /> },
-  { year: "2024 Q4", event: "Automated Alerts", desc: "Push notifications for critical shortages, reaching 1,000+ donors.", icon: <NotificationsActiveIcon sx={{ fontSize: 20, color: "#fff" }} /> },
-  { year: "2025", event: "Scale Nationwide", desc: "Expanding to all provinces with mobile app support planned.", icon: <EmojiEventsIcon sx={{ fontSize: 20, color: "#fff" }} /> },
 ];
 
 const values = [
@@ -263,7 +254,7 @@ const About = () => {
         <Container maxWidth="lg">
           <Grid container spacing={4} justifyContent="center">
             {stats.map((item, idx) => (
-              <Grid item xs={6} sm={3} key={idx} data-aos="zoom-in" data-aos-delay={idx * 80}>
+              <Grid size={{ xs: 6, sm: 3 }} key={idx} data-aos="zoom-in" data-aos-delay={idx * 80}>
                 <Box textAlign="center">
                   <Box sx={{
                     width: 64, height: 64, borderRadius: "50%", mx: "auto", mb: 1.5,
@@ -433,86 +424,8 @@ const About = () => {
         </Container>
       </Box>
 
-      {/* ── Timeline ──────────────────────────────────────────────────────── */}
-      <Box sx={{ backgroundColor: isDark ? "#121212" : "#f9f9f9", py: 12 }}>
-        <Container maxWidth="md">
-          <Box textAlign="center" mb={8} data-aos="fade-up">
-            <Typography variant="overline" color="error" fontWeight={700} letterSpacing="0.15em">Milestones</Typography>
-            <Typography variant="h4" fontWeight={700} color={isDark ? "white" : "text.primary"} mt={0.5}>
-              Our Journey
-            </Typography>
-            <Typography variant="body1" color="text.secondary" mt={1}>
-              From idea to impact — key milestones in our project's evolution.
-            </Typography>
-          </Box>
-
-          <Box sx={{ position: "relative" }}>
-            {/* Vertical line */}
-            <Box sx={{
-              position: "absolute",
-              left: 21, top: 6, bottom: 6, width: 2,
-              background: isDark
-                ? "linear-gradient(180deg, #4a1515 0%, #4a1515 85%, transparent 100%)"
-                : "linear-gradient(180deg, #ffcdd2 0%, #ffcdd2 85%, transparent 100%)",
-            }} />
-
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              {timeline.map((item, idx) => {
-                const isLast = idx === timeline.length - 1;
-                return (
-                  <Box
-                    key={idx}
-                    data-aos="fade-up"
-                    data-aos-delay={idx * 80}
-                    sx={{ display: "flex", gap: 3, alignItems: "flex-start", position: "relative" }}
-                  >
-                    {/* Dot */}
-                    <Box sx={{
-                      width: 44, height: 44, borderRadius: "50%", flexShrink: 0,
-                      background: "linear-gradient(135deg, #b71c1c 0%, #d32f2f 100%)",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      boxShadow: isLast
-                        ? `0 0 0 5px ${isDark ? "#121212" : "#f9f9f9"}, 0 0 0 9px rgba(183,28,28,0.25), 0 4px 16px rgba(183,28,28,0.4)`
-                        : `0 0 0 5px ${isDark ? "#121212" : "#f9f9f9"}, 0 4px 16px rgba(183,28,28,0.4)`,
-                      zIndex: 2,
-                    }}>
-                      {item.icon}
-                    </Box>
-
-                    {/* Card */}
-                    <Paper elevation={isDark ? 0 : 3} sx={{
-                      flex: 1, p: 3, borderRadius: 3, mt: 0.5,
-                      backgroundColor: isDark ? "#1f1f1f" : "#fff",
-                      border: isDark ? "1px solid #2a2a2a" : "none",
-                      transition: "0.3s",
-                      "&:hover": { transform: "translateY(-3px)", boxShadow: 5 },
-                    }}>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap", mb: 1 }}>
-                        <Chip
-                          label={item.year}
-                          size="small"
-                          sx={{ backgroundColor: "#b71c1c", color: "white", fontWeight: 700, fontSize: "0.75rem" }}
-                        />
-                        {isLast && (
-                          <Chip
-                            label="In Progress"
-                            size="small"
-                            variant="outlined"
-                            color="error"
-                            sx={{ fontWeight: 700, fontSize: "0.7rem" }}
-                          />
-                        )}
-                      </Box>
-                      <Typography variant="subtitle1" fontWeight={700} gutterBottom>{item.event}</Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.7 }}>{item.desc}</Typography>
-                    </Paper>
-                  </Box>
-                );
-              })}
-            </Box>
-          </Box>
-        </Container>
-      </Box>
+      {/* ── Hospital Insights (live, anonymous figures) ───────────────────── */}
+      <HospitalInsights />
 
       {/* ── Team Cards ────────────────────────────────────────────────────── */}
       <Box id="team-section" sx={{ backgroundColor: isDark ? "#121212" : "#f4f4f4", py: 12 }}>

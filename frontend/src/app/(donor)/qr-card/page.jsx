@@ -1,22 +1,23 @@
 'use client';
-import React, { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import {
-  Box, Typography, Button, Avatar, Chip, useTheme,
-  ToggleButtonGroup, ToggleButton, Tooltip, CircularProgress,
+  Box, Typography, Button, Avatar, Chip, useTheme, ToggleButtonGroup, ToggleButton,
+  Tooltip, CircularProgress,
 } from '@mui/material';
-import DownloadIcon    from '@mui/icons-material/Download';
-import PrintIcon       from '@mui/icons-material/Print';
-import BloodtypeIcon   from '@mui/icons-material/Bloodtype';
-import FavoriteIcon    from '@mui/icons-material/Favorite';
-import VerifiedIcon    from '@mui/icons-material/Verified';
-import LockIcon        from '@mui/icons-material/Lock';
-import PersonOffIcon   from '@mui/icons-material/PersonOff';
+import DownloadIcon from '@mui/icons-material/Download';
+import PrintIcon from '@mui/icons-material/Print';
+import BloodtypeIcon from '@mui/icons-material/Bloodtype';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import VerifiedIcon from '@mui/icons-material/Verified';
+import LockIcon from '@mui/icons-material/Lock';
+import PersonOffIcon from '@mui/icons-material/PersonOff';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import Link            from 'next/link';
-import QRCode          from 'react-qr-code';
-import axios           from 'axios';
+import Link from 'next/link';
+import QRCode from 'react-qr-code';
+import axios from 'axios';
 import { useUserAuth } from '@/store/UserAuthContext';
-import API_BASE        from '@/lib/config';
+import API_BASE from '@/lib/config';
+import { initialsOf } from '@/lib/format';
 
 const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
@@ -88,16 +89,16 @@ export default function QRCardPage() {
     );
   }
 
-  const initials = user?.fullName?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) ?? '?';
+  const initials = initialsOf(user?.fullName);
 
   return (
-    <Box sx={{ backgroundColor: isDark ? '#121212' : '#f4f4f4', minHeight: '100vh', pb: 8 }}>
+    <Box sx={{ pb: 4 }}>
       {/* Hero */}
       <Box sx={{
         background: isDark
           ? 'linear-gradient(135deg, #1a0000 0%, #2d0505 100%)'
           : 'linear-gradient(135deg, #b71c1c 0%, #7f0000 100%)',
-        color: 'white', pt: { xs: 7, md: 9 }, pb: { xs: 5, md: 6 }, textAlign: 'center', px: 3,
+        color: 'white', pt: { xs: 4, md: 5 }, pb: { xs: 4, md: 5 }, textAlign: 'center', px: 3, borderRadius: '14px',
       }}>
         <BloodtypeIcon sx={{ fontSize: 48, mb: 1.5, opacity: 0.9 }} />
         <Typography variant="h4" fontWeight={800} gutterBottom>Your Donor QR Card</Typography>

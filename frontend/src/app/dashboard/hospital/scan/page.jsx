@@ -1,5 +1,5 @@
 'use client';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import dynamic from 'next/dynamic';
 import {
   Box, Typography, Paper, Avatar, Chip, Alert, Button, CircularProgress, Divider,

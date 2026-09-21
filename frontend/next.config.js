@@ -7,7 +7,6 @@ const nextConfig = {
       '@mui/icons-material',
       '@mui/system',
       'recharts',
-      'lucide-react',
     ],
   },
   images: {

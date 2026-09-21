@@ -3,14 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@emotion/cache": "^11.14.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
-    "@heroicons/react": "^2.2.0",
     "@mui/icons-material": "^7.1.0",
     "@mui/material": "^7.1.0",
-    "@mui/material-nextjs": "^7.1.0",
-    "@react-google-maps/api": "^2.20.8",
     "@react-oauth/google": "^0.13.5",
     "aos": "^2.3.4",
     "axios": "^1.9.0",
@@ -18,28 +14,17 @@
     "html2canvas": "^1.4.1",
     "html5-qrcode": "^2.3.8",
     "leaflet": "^1.9.4",
-    "lucide-react": "^0.511.0",
     "next": "^15.3.3",
     "react": "^19.1.0",
-    "react-countup": "^6.5.3",
     "react-dom": "^19.1.0",
-    "react-icons": "^5.5.0",
     "react-leaflet": "^5.0.0",
     "react-qr-code": "^2.2.0",
-    "react-slick": "^0.30.3",
-    "recharts": "^2.15.3",
-    "slick-carousel": "^1.8.1",
-    "web-vitals": "^2.1.4"
+    "recharts": "^2.15.3"
   },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next dev",
+    "start": "next start",
     "lint": "next lint"
-  },
-  "devDependencies": {
-    "autoprefixer": "^10.4.21",
-    "postcss": "^8.5.3",
-    "tailwindcss": "^4.1.7"
   }
 }

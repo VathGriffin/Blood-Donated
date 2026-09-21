@@ -1,9 +1,9 @@
 'use client';
-import React, { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
-  Box, Typography, Paper, Table, TableHead, TableBody, TableRow, TableCell,
-  Button, TextField, Grid, Dialog, DialogTitle, DialogContent, DialogActions,
-  MenuItem, Alert, Chip, IconButton, CircularProgress,
+  Box, Typography, Paper, Table, TableHead, TableBody, TableRow, TableCell, Button,
+  TextField, Grid, Dialog, DialogTitle, DialogContent, DialogActions, MenuItem, Alert,
+  Chip, IconButton, CircularProgress,
 } from '@mui/material';
 import { Add, Delete, PersonAdd } from '@mui/icons-material';
 import axios from 'axios';
@@ -18,7 +18,8 @@ export default function AdminHospitals() {
   const [error, setError] = useState('');
 
   const [hospitalDialog, setHospitalDialog] = useState(false);
-  const [hospitalForm, setHospitalForm] = useState({ name: '', address: '', city: '', phone: '', email: '' });
+  const EMPTY_HOSPITAL = { name: '', address: '', city: '', phone: '', email: '', lat: '', lng: '' };
+  const [hospitalForm, setHospitalForm] = useState(EMPTY_HOSPITAL);
 
   const [staffDialog, setStaffDialog] = useState(false);
   const [staffForm, setStaffForm] = useState({ fullName: '', email: '', password: '', hospital: '' });
@@ -35,9 +36,20 @@ export default function AdminHospitals() {
     setSaving(true);
     setError('');
     try {
-      await axios.post(`${API_BASE}/api/hospitals`, hospitalForm, { headers });
+      // Coordinates are optional; when given they let the booking page show "km away" and sort nearest first.
+      const { lat, lng, ...details } = hospitalForm;
+      const payload = { ...details };
+      if (lat !== '' || lng !== '') {
+        const latN = Number(lat), lngN = Number(lng);
+        if (lat === '' || lng === '' || !Number.isFinite(latN) || !Number.isFinite(lngN) || Math.abs(latN) > 90 || Math.abs(lngN) > 180) {
+          setError('Enter both latitude (-90 to 90) and longitude (-180 to 180), or leave both empty.');
+          return;
+        }
+        payload.location = { lat: latN, lng: lngN };
+      }
+      await axios.post(`${API_BASE}/api/hospitals`, payload, { headers });
       setHospitalDialog(false);
-      setHospitalForm({ name: '', address: '', city: '', phone: '', email: '' });
+      setHospitalForm(EMPTY_HOSPITAL);
       load();
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to create hospital.');
@@ -119,11 +131,13 @@ export default function AdminHospitals() {
         <DialogTitle>Add Hospital</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} mt={0.5}>
-            <Grid item xs={12}><TextField fullWidth label="Name" value={hospitalForm.name} onChange={e => setHospitalForm(f => ({ ...f, name: e.target.value }))} /></Grid>
-            <Grid item xs={6}><TextField fullWidth label="City" value={hospitalForm.city} onChange={e => setHospitalForm(f => ({ ...f, city: e.target.value }))} /></Grid>
-            <Grid item xs={6}><TextField fullWidth label="Phone" value={hospitalForm.phone} onChange={e => setHospitalForm(f => ({ ...f, phone: e.target.value }))} /></Grid>
-            <Grid item xs={12}><TextField fullWidth label="Address" value={hospitalForm.address} onChange={e => setHospitalForm(f => ({ ...f, address: e.target.value }))} /></Grid>
-            <Grid item xs={12}><TextField fullWidth label="Email" value={hospitalForm.email} onChange={e => setHospitalForm(f => ({ ...f, email: e.target.value }))} /></Grid>
+            <Grid size={{ xs: 12 }}><TextField fullWidth label="Name" value={hospitalForm.name} onChange={e => setHospitalForm(f => ({ ...f, name: e.target.value }))} /></Grid>
+            <Grid size={{ xs: 6 }}><TextField fullWidth label="City" value={hospitalForm.city} onChange={e => setHospitalForm(f => ({ ...f, city: e.target.value }))} /></Grid>
+            <Grid size={{ xs: 6 }}><TextField fullWidth label="Phone" value={hospitalForm.phone} onChange={e => setHospitalForm(f => ({ ...f, phone: e.target.value }))} /></Grid>
+            <Grid size={{ xs: 12 }}><TextField fullWidth label="Address" value={hospitalForm.address} onChange={e => setHospitalForm(f => ({ ...f, address: e.target.value }))} /></Grid>
+            <Grid size={{ xs: 12 }}><TextField fullWidth label="Email" value={hospitalForm.email} onChange={e => setHospitalForm(f => ({ ...f, email: e.target.value }))} /></Grid>
+            <Grid size={{ xs: 6 }}><TextField fullWidth type="number" label="Latitude (optional)" placeholder="11.5564" value={hospitalForm.lat} onChange={e => setHospitalForm(f => ({ ...f, lat: e.target.value }))} slotProps={{ htmlInput: { step: 'any', min: -90, max: 90 } }} /></Grid>
+            <Grid size={{ xs: 6 }}><TextField fullWidth type="number" label="Longitude (optional)" placeholder="104.9282" value={hospitalForm.lng} onChange={e => setHospitalForm(f => ({ ...f, lng: e.target.value }))} slotProps={{ htmlInput: { step: 'any', min: -180, max: 180 } }} helperText="Right-click the place in Google Maps to copy these" /></Grid>
           </Grid>
         </DialogContent>
         <DialogActions>
@@ -138,10 +152,10 @@ export default function AdminHospitals() {
         <DialogTitle>Add Hospital Staff Account</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} mt={0.5}>
-            <Grid item xs={12}><TextField fullWidth label="Full Name" value={staffForm.fullName} onChange={e => setStaffForm(f => ({ ...f, fullName: e.target.value }))} /></Grid>
-            <Grid item xs={12}><TextField fullWidth label="Email" value={staffForm.email} onChange={e => setStaffForm(f => ({ ...f, email: e.target.value }))} /></Grid>
-            <Grid item xs={12}><TextField fullWidth type="password" label="Password" value={staffForm.password} onChange={e => setStaffForm(f => ({ ...f, password: e.target.value }))} /></Grid>
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}><TextField fullWidth label="Full Name" value={staffForm.fullName} onChange={e => setStaffForm(f => ({ ...f, fullName: e.target.value }))} /></Grid>
+            <Grid size={{ xs: 12 }}><TextField fullWidth label="Email" value={staffForm.email} onChange={e => setStaffForm(f => ({ ...f, email: e.target.value }))} /></Grid>
+            <Grid size={{ xs: 12 }}><TextField fullWidth type="password" label="Password" value={staffForm.password} onChange={e => setStaffForm(f => ({ ...f, password: e.target.value }))} /></Grid>
+            <Grid size={{ xs: 12 }}>
               <TextField fullWidth select label="Hospital" value={staffForm.hospital} onChange={e => setStaffForm(f => ({ ...f, hospital: e.target.value }))}>
                 {(hospitals || []).map(h => <MenuItem key={h._id} value={h._id}>{h.name}</MenuItem>)}
               </TextField>

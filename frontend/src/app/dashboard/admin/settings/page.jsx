@@ -24,7 +24,8 @@ const SECTIONS = [
 ];
 
 const ROLE_LABEL = { admin: 'Administrator', hospital_staff: 'Hospital Staff' };
-const MAX_PHOTO_SIZE = 10 * 1024 * 1024; // must match Backend/src/homepage/homepage.routes.js multer limit
+const MAX_PHOTO_SIZE = 10 * 1024 * 1024; // must match the multer limit in Backend/src/common/upload.js
+const PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']; // same list the server accepts
 
 // Label/value row used inside every settings card — takes `children` for an
 // interactive control (TextField, Chip) or a plain `value` for read-only text.
@@ -68,7 +69,7 @@ async function withSaving(setSaving, setMsg, action) {
 export default function AdminSettings() {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const { token, staff, login } = useAuth();
+  const { token, staff, login, updateStaff } = useAuth();
 
   const [section, setSection] = useState('profile');
 
@@ -96,6 +97,40 @@ export default function AdminSettings() {
       if (!res.ok) throw new Error(data.message || 'Failed to update profile.');
       login(token, { ...staff, fullName: data.fullName });
       setProfileMsg({ type: 'success', text: 'Profile updated.' });
+    });
+  };
+
+  // Profile photo: POST /api/staff/me/photo replaces it, DELETE removes it. The server returns
+  // the updated account, and updateStaff() pushes the new photo into the sidebar and menu.
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const adminPhotoInput = React.useRef(null);
+  const adminPhotoSrc = staff?.photo ? `${API_BASE}${staff.photo}` : undefined;
+  const initials = (staff?.fullName || 'A').split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase();
+
+  const changePhoto = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // allow re-selecting the same file later
+    if (!file) return;
+    if (!PHOTO_TYPES.includes(file.type)) { setProfileMsg({ type: 'error', text: 'Please choose a JPG, PNG, WebP or GIF image.' }); return; }
+    if (file.size > MAX_PHOTO_SIZE) { setProfileMsg({ type: 'error', text: `Image is too large — max ${MAX_PHOTO_SIZE / (1024 * 1024)} MB.` }); return; }
+    await withSaving(setPhotoBusy, setProfileMsg, async () => {
+      const form = new FormData();
+      form.append('photo', file);
+      const res = await fetch(`${API_BASE}/api/staff/me/photo`, { method: 'POST', headers: authHeader, body: form });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || 'Photo upload failed.');
+      updateStaff({ photo: data.photo });
+      setProfileMsg({ type: 'success', text: 'Profile photo updated.' });
+    });
+  };
+
+  const removePhoto = async () => {
+    await withSaving(setPhotoBusy, setProfileMsg, async () => {
+      const res = await fetch(`${API_BASE}/api/staff/me/photo`, { method: 'DELETE', headers: authHeader });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || 'Could not remove the photo.');
+      updateStaff({ photo: null });
+      setProfileMsg({ type: 'success', text: 'Profile photo removed.' });
     });
   };
 
@@ -281,6 +316,29 @@ export default function AdminSettings() {
             <SectionTitle sub="Your own admin account details">My Profile</SectionTitle>
             <Paper elevation={0} sx={{ ...cardSx, mb: 2.5 }}>
               <Box px={3} py={2}>
+                <Row label="Profile Photo" border={border}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Avatar src={adminPhotoSrc} alt="" sx={{ width: 64, height: 64, bgcolor: '#b71c1c', fontWeight: 800, opacity: photoBusy ? 0.5 : 1 }}>
+                      {initials}
+                    </Avatar>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, alignItems: 'flex-start' }}>
+                      <Button size="small" variant="outlined" color="error" disabled={photoBusy}
+                        startIcon={photoBusy ? <CircularProgress size={14} color="inherit" /> : <AddAPhoto sx={{ fontSize: 16 }} />}
+                        onClick={() => adminPhotoInput.current?.click()}
+                        sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2 }}>
+                        {photoBusy ? 'Working…' : staff?.photo ? 'Change photo' : 'Upload photo'}
+                      </Button>
+                      {staff?.photo && (
+                        <Button size="small" color="inherit" disabled={photoBusy} startIcon={<Delete sx={{ fontSize: 15 }} />}
+                          onClick={removePhoto} sx={{ textTransform: 'none', color: 'text.secondary', fontWeight: 600, p: 0, minWidth: 0 }}>
+                          Remove
+                        </Button>
+                      )}
+                      <Typography variant="caption" color="text.secondary">JPG, PNG, WebP or GIF · up to 10 MB</Typography>
+                    </Box>
+                    <input ref={adminPhotoInput} type="file" hidden accept={PHOTO_TYPES.join(',')} onChange={changePhoto} />
+                  </Box>
+                </Row>
                 <Row label="Display Name" border={border}>
                   <TextField size="small" value={fullName} onChange={e => setFullName(e.target.value)} sx={{ width: 240 }} />
                 </Row>

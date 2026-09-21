@@ -1,14 +1,7 @@
 'use client';
 import Link from 'next/link';
-import React, { useEffect, useState } from "react";
-import {
-  Box,
-  Container,
-  Typography,
-  Button,
-  Paper,
-  useTheme,
-} from "@mui/material";
+import { useEffect, useState } from "react";
+import { Box, Container, Typography, Button, Paper, useTheme } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import VolunteerActivismIcon from "@mui/icons-material/VolunteerActivism";
 import GroupIcon from "@mui/icons-material/Group";
