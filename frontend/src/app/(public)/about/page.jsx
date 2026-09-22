@@ -1,86 +1,58 @@
 'use client';
 import Link from 'next/link';
-import React, { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
-  Container, Typography, Box, Grid, Chip, Avatar,
-  Button, Paper, useTheme,
+  Container, Typography, Box, Chip, Avatar, Button, Paper, useTheme,
 } from "@mui/material";
-import BloodtypeIcon from "@mui/icons-material/Bloodtype";
+import axios from "axios";
+import API_BASE from "@/lib/config";
+import { script } from '@/lib/fonts';
 import VolunteerActivismIcon from "@mui/icons-material/VolunteerActivism";
-import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
-import LocalShippingIcon from "@mui/icons-material/LocalShipping";
-import SecurityIcon from "@mui/icons-material/Security";
 import GroupsIcon from "@mui/icons-material/Groups";
-import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
+import PeopleIcon from "@mui/icons-material/People";
+import ShieldIcon from "@mui/icons-material/Shield";
 import FavoriteIcon from "@mui/icons-material/Favorite";
-import PersonAddAlt1Icon from "@mui/icons-material/PersonAddAlt1";
-import FactCheckIcon from "@mui/icons-material/FactCheck";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import MonitorHeartIcon from "@mui/icons-material/MonitorHeart";
+import FormatQuoteIcon from "@mui/icons-material/FormatQuote";
+import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
+import TaskAltIcon from "@mui/icons-material/TaskAlt";
+import BloodtypeIcon from "@mui/icons-material/Bloodtype";
+import TrackChangesIcon from "@mui/icons-material/TrackChanges";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import CodeIcon from "@mui/icons-material/Code";
 import StorageIcon from "@mui/icons-material/Storage";
 import ApiIcon from "@mui/icons-material/Api";
 import BrushIcon from "@mui/icons-material/Brush";
-import EmojiObjectsIcon from "@mui/icons-material/EmojiObjects";
-import SpeedIcon from "@mui/icons-material/Speed";
-import SchoolIcon from "@mui/icons-material/School";
-import HospitalInsights from "./HospitalInsights";
-import AOS from "aos";
-import "aos/dist/aos.css";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 
 const HERO_IMG =
-  "https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=1920&q=80";
-const MISSION_IMG =
-  "https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=1920&q=80";
-const MID_IMG =
-  "https://images.unsplash.com/photo-1551601651-2a8555f1a136?auto=format&fit=crop&w=1920&q=80";
-const CTA_IMG =
-  "https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=1920&q=80";
+  "https://images.unsplash.com/photo-1615461066841-6116e61058f4?auto=format&fit=crop&w=1200&q=80";
+const PURPOSE_IMG =
+  "https://images.unsplash.com/photo-1565687363630-7a81809a199c?auto=format&fit=crop&w=1200&q=80";
 
-const stats = [
-  { icon: <BloodtypeIcon sx={{ fontSize: 30 }} />, label: "15,000+", desc: "Units of Blood Tracked" },
-  { icon: <VolunteerActivismIcon sx={{ fontSize: 30 }} />, label: "5,000+", desc: "Registered Donors" },
-  { icon: <LocalHospitalIcon sx={{ fontSize: 30 }} />, label: "50+", desc: "Partner Hospitals" },
-  { icon: <LocalShippingIcon sx={{ fontSize: 30 }} />, label: "20+", desc: "Annual Blood Drives" },
+const heroFeatures = [
+  { icon: <ShieldIcon />, title: "Trusted Platform", subtitle: "Safe, secure, and transparent" },
+  { icon: <GroupsIcon />, title: "Connecting Communities", subtitle: "Donors, hospitals, and patients" },
+  { icon: <FavoriteIcon />, title: "Saving Lives", subtitle: "A stronger, healthier Cambodia" },
 ];
 
-const howItWorks = [
+const purposeCards = [
   {
-    icon: <PersonAddAlt1Icon sx={{ fontSize: 26, color: "#fff" }} />,
-    title: "1. Register",
-    desc: "Donors sign up in minutes, sharing blood type, location, and availability.",
+    icon: <TrackChangesIcon />,
+    title: "Our Mission",
+    desc: "To make blood donation easier, safer, and more accessible for everyone in Cambodia using technology and community support.",
   },
   {
-    icon: <NotificationsActiveIcon sx={{ fontSize: 26, color: "#fff" }} />,
-    title: "2. Get Matched",
-    desc: "When a hospital reports a shortage, matching donors nearby get an instant alert.",
+    icon: <VisibilityIcon />,
+    title: "Our Vision",
+    desc: "A Cambodia where no patient suffers due to a lack of blood, and where voluntary blood donation becomes a regular part of life.",
   },
   {
-    icon: <FactCheckIcon sx={{ fontSize: 26, color: "#fff" }} />,
-    title: "3. Donate & Track",
-    desc: "Book an appointment, donate, and see the inventory update in real time.",
+    icon: <TrendingUpIcon />,
+    title: "Our Impact",
+    desc: "Connecting people, supporting hospitals, and helping save lives across Cambodia through innovation and collaboration.",
   },
-  {
-    icon: <FavoriteIcon sx={{ fontSize: 26, color: "#fff" }} />,
-    title: "4. Save a Life",
-    desc: "Your donation reaches a patient in need, tracked from vein to vein.",
-  },
-];
-
-const reasons = [
-  { icon: <GroupsIcon sx={{ color: "#b71c1c", fontSize: 22 }} />, text: "Bridges hospitals, donors, and the community" },
-  { icon: <BloodtypeIcon sx={{ color: "#b71c1c", fontSize: 22 }} />, text: "Enables data-driven blood inventory management" },
-  { icon: <NotificationsActiveIcon sx={{ color: "#b71c1c", fontSize: 22 }} />, text: "Real-time stock updates and instant notifications" },
-  { icon: <SecurityIcon sx={{ color: "#b71c1c", fontSize: 22 }} />, text: "Prioritizes user privacy and data security" },
-  { icon: <VolunteerActivismIcon sx={{ color: "#b71c1c", fontSize: 22 }} />, text: "Cultivates voluntary blood donation nationwide" },
-];
-
-const values = [
-  { icon: "❤️", title: "Save Lives", desc: "Every feature we build is measured by one metric — lives saved." },
-  { icon: "🔒", title: "Privacy First", desc: "Donor data is encrypted and never shared without consent." },
-  { icon: "🌏", title: "Nationwide Access", desc: "Designed to scale from Phnom Penh to every province in Cambodia." },
-  { icon: "🤝", title: "Community", desc: "A platform built on trust between donors, patients, and hospitals." },
-  { icon: "⚡", title: "Real-time", desc: "Live inventory and instant shortage alerts keep hospitals ready." },
-  { icon: "🎓", title: "Open Science", desc: "Built by Data Science students at ITC using industry best practices." },
 ];
 
 const teamMembers = [
@@ -130,579 +102,361 @@ const teamMembers = [
   },
 ];
 
-const techStack = [
-  { group: "Frontend", tools: ["Next.js", "React", "Material UI"] },
-  { group: "Backend", tools: ["Node.js", "Express", "REST API"] },
-  { group: "Database", tools: ["MongoDB", "Mongoose"] },
-  { group: "Tooling", tools: ["Vercel", "Git", "npm"] },
-];
-
-const principles = [
-  {
-    icon: <EmojiObjectsIcon sx={{ fontSize: 36, color: "#fff" }} />,
-    title: "Purpose-Driven",
-    desc: "Every line of code we write is motivated by one goal — making blood donation faster, safer, and more accessible across Cambodia.",
-  },
-  {
-    icon: <GroupsIcon sx={{ fontSize: 36, color: "#fff" }} />,
-    title: "Built as a Team",
-    desc: "We pair complementary skills across frontend, backend, and design to ship a cohesive product that works for everyone.",
-  },
-  {
-    icon: <SpeedIcon sx={{ fontSize: 36, color: "#fff" }} />,
-    title: "Move Fast",
-    desc: "Agile sprints, CI/CD pipelines, and real-time feedback loops keep the platform improving week over week.",
-  },
-  {
-    icon: <SchoolIcon sx={{ fontSize: 36, color: "#fff" }} />,
-    title: "Student-Led",
-    desc: "4th-year Data Science students at ITC Cambodia — applying classroom knowledge to solve a national health challenge.",
-  },
-];
+const cardSx = (isDark) => ({
+  borderRadius: 4,
+  backgroundColor: isDark ? "#1a1a1a" : "#fff",
+  border: `1px solid ${isDark ? "#2a2a2a" : "#efefef"}`,
+  boxShadow: isDark ? "none" : "0 4px 24px rgba(0,0,0,0.06)",
+});
 
 const About = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
+  const [stats, setStats] = useState(null);
 
-  useEffect(() => { AOS.init({ duration: 900, once: true }); }, []);
+  useEffect(() => {
+    axios.get(`${API_BASE}/api/stats/public`)
+      .then((res) => setStats(res.data))
+      .catch((err) => console.error("Failed to fetch platform stats:", err));
+  }, []);
+
+  const statCards = [
+    { icon: <PeopleIcon />, value: stats ? stats.donors : "…", label: "Registered Donors", caption: "People in our community" },
+    { icon: <BloodtypeIcon />, value: stats ? stats.donations : "…", label: "Total Donations", caption: "Contributions to save lives" },
+    { icon: <LocalHospitalIcon />, value: stats ? `${stats.hospitals}` : "…", label: "Partner Hospitals", caption: "Working across Cambodia" },
+    { icon: <TaskAltIcon />, value: stats ? stats.fulfilledRequests : "…", label: "Blood Requests Fulfilled", caption: "Patients received help" },
+  ];
 
   return (
-    <Box sx={{ backgroundColor: isDark ? "#121212" : "#f9f9f9" }}>
+    <Box sx={{ backgroundColor: isDark ? "#121212" : "#f4f4f4" }}>
 
-      {/* ── Hero — Hospital Photo Background ──────────────────────────────── */}
+      {/* ── Hero — split layout: copy left, photo right ─────────────────────── */}
       <Box sx={{
-        position: "relative",
-        minHeight: { xs: "70vh", md: "80vh" },
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        textAlign: "center",
-        backgroundImage: `url('${HERO_IMG}')`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundAttachment: { xs: "scroll", md: "fixed" },
-        "&::before": {
-          content: '""',
-          position: "absolute",
-          inset: 0,
-          background: isDark
-            ? "linear-gradient(135deg, rgba(10,0,0,0.93) 0%, rgba(70,0,0,0.85) 100%)"
-            : "linear-gradient(135deg, rgba(90,0,0,0.90) 0%, rgba(183,28,28,0.82) 100%)",
-          zIndex: 1,
-        },
+        position: "relative", overflow: "hidden",
+        background: isDark
+          ? "linear-gradient(135deg, #161112 0%, #121212 100%)"
+          : "linear-gradient(135deg, #fdf3f3 0%, #f9fafb 100%)",
       }}>
-        <Box sx={{ position: "relative", zIndex: 2, px: 3, pt: { xs: 12, md: 8 }, pb: { xs: 8, md: 6 } }} data-aos="fade-up">
-          <Chip
-            icon={<LocalHospitalIcon sx={{ color: "white !important", fontSize: "18px !important" }} />}
-            label="Cambodia's Blood Donation Platform"
-            sx={{ backgroundColor: "rgba(255,255,255,0.15)", color: "white", fontWeight: 700, mb: 3, backdropFilter: "blur(4px)", fontSize: "0.82rem" }}
-          />
-          <Typography variant="h2" fontWeight={800} color="white"
-            sx={{ lineHeight: 1.15, mb: 2, fontSize: { xs: "2.4rem", md: "3.6rem" }, textShadow: "0 2px 24px rgba(0,0,0,0.6)" }}>
-            About BloodLife
-          </Typography>
-          <Typography variant="h5" sx={{ color: "#ffcdd2", fontWeight: 700, mb: 2, fontSize: { xs: "1.2rem", md: "1.5rem" } }}>
-            Revolutionizing Blood Donation Across Cambodia
-          </Typography>
-          <Typography variant="h6" sx={{
-            color: "rgba(255,255,255,0.82)", maxWidth: 620, mx: "auto", lineHeight: 1.8,
-            fontWeight: 400, fontSize: { xs: "0.95rem", md: "1.1rem" },
+        <Box aria-hidden="true" sx={{
+          position: "absolute", left: "-10%", top: "-25%", width: 480, height: 480, borderRadius: "50%",
+          background: `radial-gradient(circle, ${isDark ? "rgba(183,28,28,0.10)" : "rgba(198,40,40,0.08)"} 0%, transparent 68%)`,
+          pointerEvents: "none",
+        }} />
+
+        <Container maxWidth="lg" sx={{ position: "relative", py: { xs: 7, md: 9 } }}>
+          <Box sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+            gap: { xs: 5, md: 7 },
+            alignItems: "center",
           }}>
-            A platform connecting donors, hospitals, and patients — built by 4th-year Data
-            Science students at the Institute of Technology of Cambodia.
-          </Typography>
+            {/* Left: copy */}
+            <Box>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+                <Typography variant="overline" color="error" fontWeight={700} letterSpacing="0.12em">
+                  People · Community · A Healthier Cambodia
+                </Typography>
+                <Box sx={{ width: 36, height: 3, borderRadius: 2, backgroundColor: "error.main", flexShrink: 0 }} />
+              </Box>
+              <Typography sx={{
+                fontWeight: 800, lineHeight: 1.1, mb: 1.5,
+                fontSize: { xs: "2.2rem", md: "2.9rem" },
+                color: isDark ? "#fff" : "#161a23",
+              }}>
+                About
+                <Box component="span" sx={{ display: "block", color: "error.main" }}>Blood Donated</Box>
+              </Typography>
+              <Typography sx={{
+                fontWeight: 700, mb: 2, fontSize: { xs: "1.05rem", md: "1.2rem" },
+                color: isDark ? "#fff" : "#161a23",
+              }}>
+                Revolutionizing Blood Donation Across Cambodia
+              </Typography>
+              <Typography color="text.secondary" sx={{ fontSize: "1.02rem", lineHeight: 1.75, mb: 3.5 }}>
+                We are a community-driven platform connecting donors, hospitals, and
+                patients — built by 4th-year Data Science students at the Institute of
+                Technology of Cambodia, to make blood donation more accessible,
+                transparent, and impactful.
+              </Typography>
 
-          <Box sx={{ display: "flex", gap: 2, justifyContent: "center", flexWrap: "wrap", mt: 5 }}>
-            <Button component={Link} href="/donate" variant="contained" size="large" sx={{
-              backgroundColor: "white", color: "#b71c1c", fontWeight: 800, px: 4.5, py: 1.5, borderRadius: 3,
-              boxShadow: "0 8px 32px rgba(0,0,0,0.35)",
-              "&:hover": { backgroundColor: "#ffcdd2", transform: "translateY(-2px)" }, transition: "all 0.25s",
-            }}>
-              Become a Donor
-            </Button>
-            <Button component={Link} href="#team-section" variant="outlined" size="large" sx={{
-              borderColor: "rgba(255,255,255,0.7)", color: "white", fontWeight: 700, px: 4.5, py: 1.5, borderRadius: 3,
-              backdropFilter: "blur(4px)",
-              "&:hover": { backgroundColor: "rgba(255,255,255,0.15)", borderColor: "white", transform: "translateY(-2px)" }, transition: "all 0.25s",
-            }}>
-              Meet the Team
-            </Button>
-          </Box>
-        </Box>
-
-        <Box sx={{
-          position: "absolute", bottom: 24, left: "50%", transform: "translateX(-50%)",
-          zIndex: 2, display: { xs: "none", sm: "flex" }, flexDirection: "column",
-          alignItems: "center", color: "rgba(255,255,255,0.7)",
-          animation: "aboutBounce 2s ease-in-out infinite",
-          "@keyframes aboutBounce": {
-            "0%, 100%": { transform: "translateX(-50%) translateY(0)" },
-            "50%": { transform: "translateX(-50%) translateY(8px)" },
-          },
-        }}>
-          <KeyboardArrowDownIcon fontSize="large" />
-        </Box>
-      </Box>
-
-      {/* ── Stats Strip ───────────────────────────────────────────────────── */}
-      <Box sx={{
-        backgroundColor: isDark ? "#1a1a1a" : "#fff", py: 8,
-        borderBottom: `1px solid ${isDark ? "#2a2a2a" : "#eee"}`,
-        boxShadow: isDark ? "none" : "0 4px 24px rgba(0,0,0,0.05)",
-      }}>
-        <Container maxWidth="lg">
-          <Grid container spacing={4} justifyContent="center">
-            {stats.map((item, idx) => (
-              <Grid size={{ xs: 6, sm: 3 }} key={idx} data-aos="zoom-in" data-aos-delay={idx * 80}>
-                <Box textAlign="center">
-                  <Box sx={{
-                    width: 64, height: 64, borderRadius: "50%", mx: "auto", mb: 1.5,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    backgroundColor: isDark ? "rgba(211,47,47,0.15)" : "#fdecea",
-                    color: "#b71c1c",
+              <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 4 }}>
+                <Button component={Link} href="/donate" variant="contained" color="error" size="large"
+                  startIcon={<FavoriteIcon />} endIcon={<ArrowForwardIcon />}
+                  sx={{
+                    fontWeight: 700, px: 3.5, py: 1.3, borderRadius: 3,
+                    background: "linear-gradient(135deg, #b71c1c 0%, #d32f2f 100%)",
+                    boxShadow: "0 6px 20px rgba(183,28,28,0.4)",
+                    "&:hover": { boxShadow: "0 8px 28px rgba(183,28,28,0.55)" },
                   }}>
-                    {item.icon}
-                  </Box>
-                  <Typography variant="h4" fontWeight={800} color="error.main">{item.label}</Typography>
-                  <Typography variant="body2" color="text.secondary">{item.desc}</Typography>
-                </Box>
-              </Grid>
-            ))}
-          </Grid>
-        </Container>
-      </Box>
+                  Become a Donor
+                </Button>
+                <Button component={Link} href="#team-section" variant="outlined" color="error" size="large"
+                  startIcon={<GroupsIcon />}
+                  sx={{ fontWeight: 700, px: 3.5, py: 1.3, borderRadius: 3 }}>
+                  Meet the Team
+                </Button>
+              </Box>
 
-      {/* ── Mission — Photo Background ─────────────────────────────────────── */}
-      <Box sx={{
-        position: "relative",
-        py: { xs: 10, md: 14 },
-        backgroundImage: `url('${MISSION_IMG}')`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundAttachment: { xs: "scroll", md: "fixed" },
-        "&::before": {
-          content: '""',
-          position: "absolute",
-          inset: 0,
-          background: "linear-gradient(135deg, rgba(10,10,10,0.93) 0%, rgba(50,0,0,0.88) 100%)",
-        },
-      }}>
-        <Container maxWidth="lg" sx={{ position: "relative", zIndex: 1 }}>
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 6, alignItems: "center" }}>
-
-            {/* Left text */}
-            <Box data-aos="fade-right">
-              <Typography variant="overline" sx={{ color: "#ffcdd2", fontWeight: 700, letterSpacing: "0.15em" }}>
-                Our Purpose
-              </Typography>
-              <Typography variant="h3" fontWeight={800} color="white" mt={0.5} gutterBottom
-                sx={{ fontSize: { xs: "2rem", md: "2.6rem" }, lineHeight: 1.2 }}>
-                Our Mission
-              </Typography>
-              <Typography variant="body1" sx={{ color: "rgba(255,255,255,0.80)", lineHeight: 1.9, mb: 2.5, fontSize: "1.05rem" }}>
-                <strong style={{ color: "#ffcdd2" }}>BloodLife</strong> is a full-stack web application built to solve a
-                real problem — Cambodia&apos;s blood supply gap. We connect donors, hospitals,
-                and patients in a single platform that&apos;s fast, transparent, and life-saving.
-              </Typography>
-              <Typography variant="body1" sx={{ color: "rgba(255,255,255,0.75)", lineHeight: 1.9, fontSize: "1.05rem" }}>
-                With real-time inventory tracking, donor management, and automated shortage
-                alerts, no life should be lost due to a lack of blood.
-              </Typography>
-
-              <Box sx={{ display: "flex", gap: 3, mt: 4, flexWrap: "wrap" }}>
-                {stats.map((item, i) => (
-                  <Box key={i} textAlign="center">
-                    <Typography variant="h4" fontWeight={800} color="#ffcdd2">{item.label}</Typography>
-                    <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.65)", fontWeight: 600 }}>{item.desc}</Typography>
+              <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(3, auto)" }, gap: { xs: 2.5, sm: 4 } }}>
+                {heroFeatures.map((f) => (
+                  <Box key={f.title} sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
+                    <Box sx={{ color: "error.main", mt: 0.2, "& svg": { fontSize: 22 } }}>{f.icon}</Box>
+                    <Box>
+                      <Typography fontWeight={700} sx={{ fontSize: "0.9rem", lineHeight: 1.3 }}>{f.title}</Typography>
+                      <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.3, display: "block" }}>
+                        {f.subtitle}
+                      </Typography>
+                    </Box>
                   </Box>
                 ))}
               </Box>
             </Box>
 
-            {/* Right: Why This Matters */}
-            <Box data-aos="fade-left">
-              <Box sx={{
-                backgroundColor: "rgba(255,255,255,0.07)",
-                backdropFilter: "blur(12px)",
-                border: "1px solid rgba(255,255,255,0.15)",
-                borderRadius: 4, p: 4,
-              }}>
-                <Typography variant="h6" fontWeight={700} color="white" gutterBottom>
-                  Why This Matters
-                </Typography>
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 2 }}>
-                  {reasons.map((r, i) => (
-                    <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                      <Box sx={{
-                        width: 40, height: 40, borderRadius: 2, flexShrink: 0,
-                        background: "linear-gradient(135deg, #b71c1c 0%, #d32f2f 100%)",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        boxShadow: "0 4px 12px rgba(183,28,28,0.4)",
-                      }}>
-                        {React.cloneElement(r.icon, { sx: { color: "#fff", fontSize: 22 } })}
-                      </Box>
-                      <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.80)", lineHeight: 1.6 }}>
-                        {r.text}
-                      </Typography>
-                    </Box>
-                  ))}
+            {/* Right: photo */}
+            <Box sx={{ justifySelf: { xs: "center", md: "end" }, width: "100%", maxWidth: 460 }}>
+              <Box sx={{ position: "relative" }}>
+                <Box component="img" src={HERO_IMG} alt="A nurse caring for a blood donor"
+                  sx={{
+                    width: "100%", height: { xs: 320, md: 400 }, objectFit: "cover", display: "block",
+                    borderRadius: 5, boxShadow: "0 20px 50px rgba(0,0,0,0.25)",
+                  }}
+                />
+
+                {/* Top-left overlay */}
+                <Box sx={{ position: "absolute", top: 20, left: 20, maxWidth: 150 }}>
+                  <FavoriteIcon sx={{ color: "#fff", fontSize: 22, mb: 0.5, filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }} />
+                  <Typography sx={{
+                    color: "#fff", fontWeight: 800, fontSize: "1.05rem", lineHeight: 1.25,
+                    textShadow: "0 2px 6px rgba(0,0,0,0.7)",
+                  }}>
+                    A Brighter Cambodia Through Your Blood
+                  </Typography>
                 </Box>
+
+                {/* Top-right overlay */}
+                <Box sx={{ position: "absolute", top: 20, right: 20, maxWidth: 140, textAlign: "right" }}>
+                  <MonitorHeartIcon sx={{ color: "#fff", fontSize: 22, mb: 0.5, filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }} />
+                  <Typography sx={{
+                    color: "#fff", fontWeight: 700, fontSize: "0.92rem", lineHeight: 1.25,
+                    textShadow: "0 2px 6px rgba(0,0,0,0.7)",
+                  }}>
+                    Donate Today, A Healthier Tomorrow
+                  </Typography>
+                </Box>
+
+                {/* Handwritten accent */}
+                <Typography className={script.className} sx={{
+                  position: "absolute", bottom: 22, left: 20, maxWidth: 180,
+                  color: "#fff", fontSize: "1.5rem", lineHeight: 1.2,
+                  transform: "rotate(-3deg)", textShadow: "0 2px 6px rgba(0,0,0,0.7)",
+                }}>
+                  Real People<br />Real Impact<br />In Cambodia ♡
+                </Typography>
               </Box>
+
+              {/* Quote card, overlapping the photo's bottom-right */}
+              <Paper elevation={0} sx={{
+                ...cardSx(isDark), mt: -3.5, mr: { xs: 0, md: 2 }, ml: "auto", maxWidth: 260,
+                position: "relative", p: 2.5, display: "flex", alignItems: "center", gap: 1.5,
+              }}>
+                <FormatQuoteIcon sx={{ fontSize: 30, color: "error.main", flexShrink: 0, transform: "scaleX(-1)" }} />
+                <Typography fontWeight={800} sx={{ fontSize: "0.95rem", lineHeight: 1.3 }}>
+                  Together<br />We Save Lives
+                </Typography>
+              </Paper>
             </Box>
           </Box>
         </Container>
       </Box>
 
-      {/* ── Our Values ────────────────────────────────────────────────────── */}
-      <Box sx={{ backgroundColor: isDark ? "#121212" : "#f9f9f9", py: 12 }}>
+      {/* ── Stats row ─────────────────────────────────────────────────────── */}
+      <Container maxWidth="lg" sx={{ py: { xs: 5, md: 6 } }}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(4, 1fr)" }, gap: 2.5 }}>
+          {statCards.map((s) => (
+            <Paper key={s.label} elevation={0} sx={{ ...cardSx(isDark), p: 2.5, display: "flex", alignItems: "center", gap: 1.75 }}>
+              <Box sx={{
+                width: 48, height: 48, borderRadius: "50%", flexShrink: 0,
+                backgroundColor: isDark ? "rgba(183,28,28,0.16)" : "#fdeaea",
+                color: "error.main", display: "flex", alignItems: "center", justifyContent: "center",
+                "& svg": { fontSize: 22 },
+              }}>
+                {s.icon}
+              </Box>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography fontWeight={800} color="error.main" sx={{ fontSize: "1.4rem", lineHeight: 1.15 }}>{s.value}</Typography>
+                <Typography fontWeight={700} sx={{ fontSize: "0.85rem", lineHeight: 1.25 }}>{s.label}</Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>{s.caption}</Typography>
+              </Box>
+            </Paper>
+          ))}
+        </Box>
+      </Container>
+
+      {/* ── Our Purpose ───────────────────────────────────────────────────── */}
+      <Container maxWidth="lg" sx={{ pb: { xs: 8, md: 10 } }}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: { xs: 5, md: 7 }, alignItems: "center" }}>
+          {/* Photo + quote */}
+          <Box sx={{ position: "relative" }}>
+            <Box component="img" src={PURPOSE_IMG} alt="Angkor Wat, Cambodia"
+              sx={{ width: "100%", height: { xs: 280, md: 340 }, objectFit: "cover", borderRadius: 4, display: "block", boxShadow: "0 16px 40px rgba(0,0,0,0.18)" }}
+            />
+            <Paper elevation={0} sx={{
+              ...cardSx(isDark), position: "absolute", top: 20, right: -16,
+              maxWidth: 200, p: 2.5, display: { xs: "none", sm: "block" },
+            }}>
+              <FormatQuoteIcon sx={{ fontSize: 26, color: "error.main", transform: "scaleX(-1)", display: "block", mb: 0.5 }} />
+              <Typography fontWeight={800} sx={{ fontSize: "0.95rem", lineHeight: 1.35 }}>
+                A stronger Cambodia is built by people who care.
+              </Typography>
+              <Box sx={{ width: 32, height: 3, borderRadius: 2, backgroundColor: "error.main", mt: 1.5 }} />
+            </Paper>
+          </Box>
+
+          {/* Copy + mini cards */}
+          <Box>
+            <Typography variant="overline" color="error" fontWeight={700} letterSpacing="0.12em">
+              Our Purpose
+            </Typography>
+            <Typography sx={{
+              fontWeight: 800, mt: 0.5, mb: 2, lineHeight: 1.25,
+              fontSize: { xs: "1.6rem", md: "1.9rem" },
+              color: isDark ? "#fff" : "#161a23",
+            }}>
+              A Healthier Cambodia Through Blood Donation
+            </Typography>
+            <Typography color="text.secondary" sx={{ fontSize: "1rem", lineHeight: 1.75, mb: 3.5 }}>
+              We believe that everyone has the power to save lives. Our platform
+              bridges the gap between donors, hospitals, and patients to create a
+              stronger, healthier Cambodia.
+            </Typography>
+
+            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(3, 1fr)" }, gap: 2 }}>
+              {purposeCards.map((c) => (
+                <Paper key={c.title} elevation={0} sx={{ ...cardSx(isDark), p: 2.5 }}>
+                  <Box sx={{
+                    width: 38, height: 38, borderRadius: 2, mb: 1.5,
+                    backgroundColor: isDark ? "rgba(183,28,28,0.16)" : "#fdeaea",
+                    color: "error.main", display: "flex", alignItems: "center", justifyContent: "center",
+                    "& svg": { fontSize: 19 },
+                  }}>
+                    {c.icon}
+                  </Box>
+                  <Typography fontWeight={700} sx={{ fontSize: "0.9rem", mb: 0.75 }}>{c.title}</Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.6, display: "block" }}>{c.desc}</Typography>
+                </Paper>
+              ))}
+            </Box>
+          </Box>
+        </Box>
+      </Container>
+
+      {/* ── Team ──────────────────────────────────────────────────────────── */}
+      <Box id="team-section" sx={{ backgroundColor: isDark ? "#0f0f0f" : "#fff", py: { xs: 8, md: 10 } }}>
         <Container maxWidth="lg">
-          <Box textAlign="center" mb={8} data-aos="fade-up">
-            <Typography variant="overline" color="error" fontWeight={700} letterSpacing="0.15em">What We Stand For</Typography>
-            <Typography variant="h4" fontWeight={700} color={isDark ? "white" : "text.primary"} mt={0.5}>
-              Our Values
+          <Box textAlign="center" mb={6}>
+            <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1.5, mb: 1 }}>
+              <Typography variant="overline" color="error" fontWeight={700} letterSpacing="0.12em">
+                The People
+              </Typography>
+              <Box sx={{ width: 32, height: 3, borderRadius: 2, backgroundColor: "error.main" }} />
+            </Box>
+            <Typography sx={{
+              fontWeight: 800, fontSize: { xs: "1.7rem", md: "2.1rem" },
+              color: isDark ? "#fff" : "#161a23", mb: 1,
+            }}>
+              The Builders Behind It
+            </Typography>
+            <Typography color="text.secondary" sx={{ maxWidth: 560, mx: "auto", lineHeight: 1.7 }}>
+              A passionate team of final-year Data Science students at the Institute of
+              Technology of Cambodia, working together to create real impact in healthcare.
             </Typography>
           </Box>
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(3, 1fr)" }, gap: 3 }}>
-            {values.map((v, idx) => (
-              <Paper key={idx} data-aos="fade-up" data-aos-delay={idx * 80} elevation={isDark ? 0 : 2} sx={{
-                p: 3.5, borderRadius: 4, textAlign: "center", transition: "0.3s",
-                backgroundColor: isDark ? "#1a1a1a" : "#fff",
-                border: isDark ? "1px solid #2a2a2a" : "none",
-                "&:hover": { transform: "translateY(-6px)", boxShadow: 6 },
+
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", lg: "repeat(4, 1fr)" }, gap: 3 }}>
+            {teamMembers.map((member) => (
+              <Paper key={member.name} elevation={0} sx={{
+                ...cardSx(isDark), overflow: "hidden", display: "flex", flexDirection: "column",
+                transition: "all 0.25s ease",
+                "&:hover": { transform: "translateY(-6px)", boxShadow: `0 16px 36px ${member.color}30` },
               }}>
-                <Typography fontSize="2.4rem" mb={1.5}>{v.icon}</Typography>
-                <Typography variant="subtitle1" fontWeight={700} gutterBottom>{v.title}</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.7 }}>{v.desc}</Typography>
+                <Box sx={{ height: 5, background: `linear-gradient(90deg, ${member.color} 0%, ${member.color}88 100%)` }} />
+                <Box sx={{ pt: 4, pb: 2.5, display: "flex", flexDirection: "column", alignItems: "center" }}>
+                  <Box sx={{ position: "relative", mb: 1.5 }}>
+                    <Avatar src={member.image} alt={member.name} sx={{
+                      width: 84, height: 84, border: `3px solid ${member.color}`,
+                      boxShadow: `0 0 0 4px ${member.color}22, 0 8px 20px rgba(0,0,0,0.15)`,
+                      fontSize: "1.4rem", fontWeight: 800, bgcolor: member.color,
+                    }}>
+                      {member.initials}
+                    </Avatar>
+                    <Box sx={{
+                      position: "absolute", bottom: -2, right: -4, width: 28, height: 28, borderRadius: "50%",
+                      bgcolor: member.color, display: "flex", alignItems: "center", justifyContent: "center",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.25)", "& svg": { fontSize: 14, color: "#fff" },
+                    }}>
+                      {member.icon}
+                    </Box>
+                  </Box>
+                  <Chip label={member.specialty} size="small" sx={{ backgroundColor: member.color, color: "white", fontWeight: 700, fontSize: "0.7rem" }} />
+                </Box>
+                <Box sx={{ px: 3, pb: 3, textAlign: "center", flexGrow: 1 }}>
+                  <Typography fontWeight={800} sx={{ fontSize: "1rem" }}>{member.name}</Typography>
+                  <Typography fontWeight={600} sx={{ color: member.color, fontSize: "0.82rem", mb: 1.25 }}>{member.role}</Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.7, fontSize: "0.83rem", mb: 2 }}>{member.bio}</Typography>
+                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, justifyContent: "center" }}>
+                    {member.skills.map((skill) => (
+                      <Chip key={skill} label={skill} size="small" sx={{
+                        fontSize: "0.68rem", fontWeight: 600,
+                        bgcolor: isDark ? `${member.color}22` : `${member.color}12`,
+                        color: member.color, border: `1px solid ${member.color}40`,
+                      }} />
+                    ))}
+                  </Box>
+                </Box>
               </Paper>
             ))}
           </Box>
         </Container>
       </Box>
 
-      {/* ── How It Works ──────────────────────────────────────────────────── */}
-      <Box sx={{ backgroundColor: isDark ? "#1a1a1a" : "#fff", py: 12 }}>
-        <Container maxWidth="lg">
-          <Box textAlign="center" mb={7} data-aos="fade-up">
-            <Typography variant="overline" color="error" fontWeight={700} letterSpacing="0.15em">The Process</Typography>
-            <Typography variant="h4" fontWeight={700} color={isDark ? "white" : "text.primary"} mt={0.5}>
-              How BloodLife Works
-            </Typography>
-            <Typography variant="body1" color="text.secondary" mt={1} maxWidth={560} mx="auto">
-              From sign-up to saving a life — four simple steps.
-            </Typography>
-          </Box>
-          <Box sx={{
-            position: "relative",
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "repeat(4, 1fr)" },
-            gap: 4,
-          }}>
-            {/* Connector line for md+ */}
+      {/* ── CTA strip ─────────────────────────────────────────────────────── */}
+      <Container maxWidth="lg" sx={{ py: { xs: 6, md: 8 } }}>
+        <Paper elevation={0} sx={{
+          borderRadius: 4, p: { xs: 3.5, md: 5 },
+          backgroundColor: isDark ? "rgba(183,28,28,0.08)" : "#fdeaea",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          flexWrap: "wrap", gap: 3,
+        }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 3, flexWrap: "wrap" }}>
             <Box sx={{
-              display: { xs: "none", md: "block" },
-              position: "absolute", top: 28, left: "12.5%", right: "12.5%", height: 2,
-              backgroundColor: isDark ? "#3a1515" : "#ffcdd2", zIndex: 0,
-            }} />
-            {howItWorks.map((step, idx) => (
-              <Box key={idx} data-aos="fade-up" data-aos-delay={idx * 100} sx={{ position: "relative", textAlign: "center", zIndex: 1 }}>
-                <Box sx={{
-                  width: 56, height: 56, borderRadius: "50%", mx: "auto", mb: 2.5,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  background: "linear-gradient(135deg, #b71c1c 0%, #d32f2f 100%)",
-                  boxShadow: `0 0 0 6px ${isDark ? "#1a1a1a" : "#fff"}, 0 6px 18px rgba(183,28,28,0.35)`,
-                }}>
-                  {step.icon}
-                </Box>
-                <Typography variant="subtitle1" fontWeight={700} gutterBottom>{step.title}</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.7, px: { xs: 1, md: 0 } }}>
-                  {step.desc}
-                </Typography>
-              </Box>
-            ))}
-          </Box>
-        </Container>
-      </Box>
-
-      {/* ── Hospital Insights (live, anonymous figures) ───────────────────── */}
-      <HospitalInsights />
-
-      {/* ── Team Cards ────────────────────────────────────────────────────── */}
-      <Box id="team-section" sx={{ backgroundColor: isDark ? "#121212" : "#f4f4f4", py: 12 }}>
-        <Container maxWidth="lg">
-          <Box textAlign="center" mb={8} data-aos="fade-up">
-            <Typography variant="overline" color="error" fontWeight={700} letterSpacing="0.15em">The People</Typography>
-            <Typography variant="h4" fontWeight={700} color={isDark ? "white" : "text.primary"} mt={0.5}>
-              The Builders Behind It
-            </Typography>
-          </Box>
-
-          <Box sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", lg: "repeat(4, 1fr)" },
-            gap: 3,
-          }}>
-            {teamMembers.map((member, idx) => (
-              <Box
-                key={idx}
-                data-aos="fade-up"
-                data-aos-delay={idx * 100}
-                sx={{
-                  borderRadius: 4,
-                  overflow: "hidden",
-                  backgroundColor: isDark ? "#1a1a1a" : "#fff",
-                  border: `1px solid ${isDark ? "#2a2a2a" : "#efefef"}`,
-                  boxShadow: isDark ? "none" : "0 4px 24px rgba(0,0,0,0.07)",
-                  transition: "all 0.3s ease",
-                  display: "flex",
-                  flexDirection: "column",
-                  "&:hover": {
-                    transform: "translateY(-10px)",
-                    boxShadow: `0 20px 48px ${member.color}33`,
-                    border: `1px solid ${member.color}55`,
-                  },
-                }}
-              >
-                <Box sx={{ height: 5, background: `linear-gradient(90deg, ${member.color} 0%, ${member.color}88 100%)` }} />
-
-                <Box sx={{
-                  pt: 5, pb: 3,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  background: isDark
-                    ? `linear-gradient(180deg, ${member.color}20 0%, transparent 100%)`
-                    : `linear-gradient(180deg, ${member.color}10 0%, transparent 100%)`,
-                }}>
-                  <Box sx={{ position: "relative", mb: 2 }}>
-                    <Avatar
-                      src={member.image}
-                      alt={member.name}
-                      sx={{
-                        width: 96, height: 96,
-                        border: `3px solid ${member.color}`,
-                        boxShadow: `0 0 0 5px ${member.color}22, 0 8px 24px rgba(0,0,0,0.15)`,
-                        fontSize: "1.6rem", fontWeight: 800, bgcolor: member.color,
-                      }}
-                    >
-                      {member.initials}
-                    </Avatar>
-                    <Box sx={{
-                      position: "absolute", bottom: 0, right: -4,
-                      width: 30, height: 30, borderRadius: "50%",
-                      bgcolor: member.color,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
-                      "& svg": { fontSize: "15px", color: "#fff" },
-                    }}>
-                      {member.icon}
-                    </Box>
-                  </Box>
-
-                  <Chip label={member.specialty} size="small" sx={{ backgroundColor: member.color, color: "white", fontWeight: 700, fontSize: "0.72rem" }} />
-                </Box>
-
-                <Box sx={{ px: 3, pb: 3.5, flexGrow: 1, textAlign: "center" }}>
-                  <Typography variant="h6" fontWeight={800} gutterBottom sx={{ fontSize: "1rem" }}>{member.name}</Typography>
-                  <Typography variant="body2" fontWeight={600} sx={{ color: member.color, mb: 1.5, fontSize: "0.82rem" }}>{member.role}</Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.75, mb: 2.5, fontSize: "0.83rem" }}>{member.bio}</Typography>
-
-                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.8, justifyContent: "center" }}>
-                    {member.skills.map((skill) => (
-                      <Chip
-                        key={skill}
-                        label={skill}
-                        size="small"
-                        sx={{
-                          fontSize: "0.7rem", fontWeight: 600,
-                          bgcolor: isDark ? `${member.color}22` : `${member.color}12`,
-                          color: member.color,
-                          border: `1px solid ${member.color}40`,
-                        }}
-                      />
-                    ))}
-                  </Box>
-                </Box>
-              </Box>
-            ))}
-          </Box>
-        </Container>
-      </Box>
-
-      {/* ── Tech Stack ────────────────────────────────────────────────────── */}
-      <Box sx={{ backgroundColor: isDark ? "#1a1a1a" : "#fff", py: 10 }}>
-        <Container maxWidth="lg">
-          <Box textAlign="center" mb={6} data-aos="fade-up">
-            <Typography variant="overline" color="error" fontWeight={700} letterSpacing="0.15em">What We Build With</Typography>
-            <Typography variant="h4" fontWeight={700} color={isDark ? "white" : "text.primary"} mt={0.5}>
-              Our Tech Stack
-            </Typography>
-          </Box>
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(4, 1fr)" }, gap: 3 }}>
-            {techStack.map((group, idx) => (
-              <Box key={group.group} data-aos="fade-up" data-aos-delay={idx * 80} sx={{ textAlign: "center" }}>
-                <Typography variant="subtitle2" fontWeight={700} color="text.secondary" sx={{ mb: 1.5, letterSpacing: "0.06em" }}>
-                  {group.group.toUpperCase()}
-                </Typography>
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 1, alignItems: "center" }}>
-                  {group.tools.map((tool) => (
-                    <Chip
-                      key={tool}
-                      label={tool}
-                      size="small"
-                      sx={{
-                        fontWeight: 600,
-                        bgcolor: isDark ? "rgba(211,47,47,0.15)" : "#fdecea",
-                        color: "#b71c1c",
-                        border: `1px solid ${isDark ? "rgba(211,47,47,0.3)" : "#ffcdd2"}`,
-                      }}
-                    />
-                  ))}
-                </Box>
-              </Box>
-            ))}
-          </Box>
-        </Container>
-      </Box>
-
-      {/* ── How We Work — Photo Background ────────────────────────────────── */}
-      <Box sx={{
-        position: "relative",
-        py: 13,
-        backgroundImage: `url('${MID_IMG}')`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundAttachment: { xs: "scroll", md: "fixed" },
-        "&::before": {
-          content: '""',
-          position: "absolute",
-          inset: 0,
-          background: "linear-gradient(135deg, rgba(10,10,10,0.93) 0%, rgba(50,0,0,0.88) 100%)",
-        },
-      }}>
-        <Container maxWidth="lg" sx={{ position: "relative", zIndex: 1 }}>
-          <Box textAlign="center" mb={8} data-aos="fade-up">
-            <Typography variant="overline" sx={{ color: "#ffcdd2", fontWeight: 700, letterSpacing: "0.15em" }}>
-              Our Approach
-            </Typography>
-            <Typography variant="h4" fontWeight={700} color="white" mt={0.5}>How We Work</Typography>
-            <Typography variant="body1" sx={{ color: "rgba(255,255,255,0.72)", maxWidth: 500, mx: "auto", mt: 1 }}>
-              The principles that guide our team every day.
-            </Typography>
-          </Box>
-
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 3 }}>
-            {principles.map((p, idx) => (
-              <Box
-                key={idx}
-                data-aos="fade-up"
-                data-aos-delay={idx * 100}
-                sx={{
-                  display: "flex", gap: 2.5, alignItems: "flex-start",
-                  backgroundColor: "rgba(255,255,255,0.07)",
-                  backdropFilter: "blur(10px)",
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  borderRadius: 4, p: 3.5, transition: "0.3s",
-                  "&:hover": { backgroundColor: "rgba(183,28,28,0.28)", transform: "translateY(-4px)" },
-                }}
-              >
-                <Box sx={{
-                  width: 60, height: 60, borderRadius: 3, flexShrink: 0,
-                  background: "linear-gradient(135deg, #b71c1c 0%, #d32f2f 100%)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  boxShadow: "0 6px 20px rgba(183,28,28,0.4)",
-                }}>
-                  {p.icon}
-                </Box>
-                <Box>
-                  <Typography variant="h6" fontWeight={700} color="white" gutterBottom sx={{ fontSize: "1rem" }}>{p.title}</Typography>
-                  <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.72)", lineHeight: 1.75 }}>{p.desc}</Typography>
-                </Box>
-              </Box>
-            ))}
-          </Box>
-        </Container>
-      </Box>
-
-      {/* ── Advisor / Institution Strip ────────────────────────────────────── */}
-      <Box sx={{ backgroundColor: isDark ? "#1a1a1a" : "#fff", py: 10 }}>
-        <Container maxWidth="md">
-          <Paper
-            elevation={0}
-            data-aos="fade-up"
-            sx={{
-              p: { xs: 4, md: 6 }, borderRadius: 4, textAlign: "center",
-              background: isDark
-                ? "linear-gradient(135deg, #1f1f1f 0%, #2a1a1a 100%)"
-                : "linear-gradient(135deg, #fff5f5 0%, #fdecea 100%)",
-              border: `1px solid ${isDark ? "#3a2020" : "#ffcdd2"}`,
-            }}
-          >
-            <SchoolIcon sx={{ fontSize: 52, color: "#b71c1c", mb: 2 }} />
-            <Typography variant="h5" fontWeight={800} color="error.main" gutterBottom>
-              Institute of Technology of Cambodia
-            </Typography>
-            <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.85, maxWidth: 540, mx: "auto", mb: 3 }}>
-              This project is a final-year capstone for the Department of Data Science.
-              Supervised by faculty, built by students — combining academic rigor with
-              real-world healthcare impact.
-            </Typography>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, justifyContent: "center" }}>
-              {["Data Science", "Final Year Project", "ITC Cambodia", "2024–2025"].map((tag) => (
-                <Chip key={tag} label={tag} variant="outlined" color="error" size="small" sx={{ fontWeight: 700 }} />
-              ))}
+              width: 64, height: 64, borderRadius: "50%", flexShrink: 0,
+              background: "linear-gradient(135deg, #b71c1c 0%, #7f0000 100%)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              boxShadow: "0 8px 24px rgba(183,28,28,0.4)",
+            }}>
+              <VolunteerActivismIcon sx={{ color: "white", fontSize: 30 }} />
             </Box>
-          </Paper>
-        </Container>
-      </Box>
-
-      {/* ── CTA — Photo Background ─────────────────────────────────────────── */}
-      <Box sx={{
-        position: "relative",
-        py: 14,
-        textAlign: "center",
-        backgroundImage: `url('${CTA_IMG}')`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundAttachment: { xs: "scroll", md: "fixed" },
-        "&::before": {
-          content: '""',
-          position: "absolute",
-          inset: 0,
-          background: "linear-gradient(135deg, rgba(80,0,0,0.90) 0%, rgba(183,28,28,0.82) 50%, rgba(40,0,0,0.90) 100%)",
-        },
-      }} data-aos="fade-up">
-        <Container maxWidth="md" sx={{ position: "relative", zIndex: 1 }}>
-          <FavoriteIcon sx={{ fontSize: 60, color: "#ffcdd2", mb: 2 }} />
-          <Typography variant="h3" fontWeight={800} color="white" gutterBottom
-            sx={{ textShadow: "0 2px 20px rgba(0,0,0,0.5)", fontSize: { xs: "2rem", md: "2.8rem" } }}>
-            Ready to Make a Difference?
-          </Typography>
-          <Typography variant="h6" sx={{
-            color: "rgba(255,255,255,0.85)", mb: 6, lineHeight: 1.8,
-            maxWidth: 540, mx: "auto", fontWeight: 400,
-          }}>
-            Join thousands of donors across Cambodia and help us build a future
-            where no life is lost due to a lack of blood.
-          </Typography>
-          <Box sx={{ display: "flex", justifyContent: "center", gap: 2.5, flexWrap: "wrap" }}>
-            <Button component={Link} href="/donate" variant="contained" size="large" sx={{
-              backgroundColor: "white", color: "#b71c1c", fontWeight: 800, px: 5, py: 1.7, borderRadius: 3, fontSize: "1rem",
-              boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
-              "&:hover": { backgroundColor: "#ffcdd2", transform: "translateY(-3px)" }, transition: "all 0.25s",
-            }}>
-              Become a Donor
-            </Button>
-            <Button component={Link} href="/contact" variant="outlined" size="large" sx={{
-              borderColor: "rgba(255,255,255,0.7)", color: "white", fontWeight: 700, px: 5, py: 1.7, borderRadius: 3, fontSize: "1rem",
-              backdropFilter: "blur(4px)",
-              "&:hover": { backgroundColor: "rgba(255,255,255,0.15)", borderColor: "white", transform: "translateY(-3px)" }, transition: "all 0.25s",
-            }}>
-              Contact Us
-            </Button>
+            <Box>
+              <Typography fontWeight={800} sx={{ fontSize: { xs: "1.15rem", md: "1.3rem" } }}>
+                Be Part of a Stronger, Healthier Cambodia
+              </Typography>
+              <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+                Whether you&apos;re a donor, hospital, or supporter — together we can save more lives.
+              </Typography>
+            </Box>
           </Box>
-        </Container>
-      </Box>
+          <Button component={Link} href="/donate" variant="contained" color="error" size="large"
+            startIcon={<FavoriteIcon />} endIcon={<ArrowForwardIcon />}
+            sx={{
+              fontWeight: 700, px: 4, py: 1.4, borderRadius: 3, flexShrink: 0,
+              background: "linear-gradient(135deg, #b71c1c 0%, #d32f2f 100%)",
+              boxShadow: "0 6px 20px rgba(183,28,28,0.4)",
+              "&:hover": { boxShadow: "0 8px 28px rgba(183,28,28,0.55)" },
+            }}>
+            Join Us Today
+          </Button>
+        </Paper>
+      </Container>
 
     </Box>
   );

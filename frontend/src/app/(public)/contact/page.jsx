@@ -1,79 +1,114 @@
 'use client';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useState } from "react";
 import {
-  Container, Typography, Box, Paper, TextField, Button, useTheme, Avatar, Chip,
+  Container, Typography, Box, Paper, TextField, Button, useTheme, Chip,
+  FormControl, InputLabel, Select, MenuItem, Alert,
 } from "@mui/material";
 import EmailIcon from "@mui/icons-material/Email";
 import PhoneIcon from "@mui/icons-material/Phone";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import SendIcon from "@mui/icons-material/Send";
-import LockIcon from "@mui/icons-material/Lock";
 import ChatIcon from "@mui/icons-material/Chat";
-import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
+import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
+import ShieldIcon from "@mui/icons-material/Shield";
 import FavoriteIcon from "@mui/icons-material/Favorite";
+import GroupsIcon from "@mui/icons-material/Groups";
+import RoomIcon from "@mui/icons-material/Room";
+import AddIcon from "@mui/icons-material/Add";
+import RemoveIcon from "@mui/icons-material/Remove";
 import axios from "axios";
 import API_BASE from "@/lib/config";
-import { useUserAuth } from "@/store/UserAuthContext";
+import { script } from '@/lib/fonts';
 
 const HERO_IMG =
   "https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&w=1920&q=80";
-const CTA_IMG =
-  "https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=1920&q=80";
 
-const contactInfo = [
-  {
-    icon: <EmailIcon sx={{ fontSize: 22, color: "#fff" }} />,
-    label: "Email",
-    value: "Vath.V211006@sis.hust.edu.vn",
-    href: "mailto:Vath.V211006@sis.hust.edu.vn",
-    color: "#b71c1c",
-  },
-  {
-    icon: <PhoneIcon sx={{ fontSize: 22, color: "#fff" }} />,
-    label: "Phone",
-    value: "+855 12 345 678",
-    href: "tel:+85512345678",
-    color: "#ad1457",
-  },
-  {
-    icon: <LocationOnIcon sx={{ fontSize: 22, color: "#fff" }} />,
-    label: "Address",
-    value: "Institute of Technology of Cambodia, Phnom Penh",
-    color: "#6a1b9a",
-  },
-  {
-    icon: <AccessTimeIcon sx={{ fontSize: 22, color: "#fff" }} />,
-    label: "Office Hours",
-    value: "Mon – Fri: 8:00 AM – 5:00 PM",
-    color: "#1565c0",
-  },
+const CONTACT_EMAIL = "Vath.V211006@sis.hust.edu.vn";
+const CONTACT_PHONE_DISPLAY = "+855 12 345 678";
+const CONTACT_PHONE_HREF = "tel:+85512345678";
+const CONTACT_ADDRESS = "Institute of Technology of Cambodia, Phnom Penh";
+
+const heroFeatures = [
+  { icon: <ChatBubbleOutlineIcon />, title: "Quick Response", subtitle: "We usually reply within 24 hours" },
+  { icon: <ShieldIcon />, title: "Trusted Support", subtitle: "Your privacy is our priority" },
+  { icon: <FavoriteIcon />, title: "Stronger Together", subtitle: "Building a healthier Cambodia" },
 ];
+
+const topInfoCards = [
+  { icon: <EmailIcon />, title: "Email Us", value: CONTACT_EMAIL, caption: "We'll get back to you soon", href: `mailto:${CONTACT_EMAIL}` },
+  { icon: <PhoneIcon />, title: "Call Us", value: CONTACT_PHONE_DISPLAY, caption: "Mon – Fri, 8AM–5PM", href: CONTACT_PHONE_HREF },
+  { icon: <LocationOnIcon />, title: "Visit Us", value: "Phnom Penh, Cambodia", caption: "Our main office" },
+  { icon: <GroupsIcon />, title: "General Inquiries", value: "We're happy to help", caption: "Any questions or suggestions" },
+];
+
+const findUsDetails = [
+  { icon: <LocationOnIcon sx={{ fontSize: 18 }} />, label: "Address", value: CONTACT_ADDRESS },
+  { icon: <PhoneIcon sx={{ fontSize: 18 }} />, label: "Phone", value: CONTACT_PHONE_DISPLAY, href: CONTACT_PHONE_HREF },
+  { icon: <EmailIcon sx={{ fontSize: 18 }} />, label: "Email", value: CONTACT_EMAIL, href: `mailto:${CONTACT_EMAIL}` },
+  { icon: <AccessTimeIcon sx={{ fontSize: 18 }} />, label: "Working Hours", value: "Mon – Fri, 8AM–5PM" },
+];
+
+const subjectOptions = [
+  "General Inquiry", "Donation Question", "Hospital Partnership", "Technical Support", "Feedback / Suggestion", "Other",
+];
+
+const cardSx = (isDark) => ({
+  borderRadius: 4,
+  backgroundColor: isDark ? "#1a1a1a" : "#fff",
+  border: `1px solid ${isDark ? "#2a2a2a" : "#efefef"}`,
+  boxShadow: isDark ? "none" : "0 4px 24px rgba(0,0,0,0.06)",
+});
+
+const iconBoxSx = {
+  width: 48, height: 48, borderRadius: "50%", flexShrink: 0,
+  background: "linear-gradient(135deg, #b71c1c 0%, #d32f2f 100%)",
+  display: "flex", alignItems: "center", justifyContent: "center",
+  boxShadow: "0 4px 12px rgba(183,28,28,0.35)",
+  color: "white",
+  "& svg": { fontSize: 22 },
+};
 
 const Contact = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
-  const router = useRouter();
-  const { isAuth, user, token } = useUserAuth();
-  const [message, setMessage] = useState("");
+  const [form, setForm] = useState({ fullName: "", email: "", subject: "", phone: "", message: "" });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!message.trim()) return;
+    setError("");
+    setSuccess(false);
+    if (!form.fullName.trim() || !form.email.trim() || !form.subject || !form.message.trim()) {
+      setError("Please fill in your name, email, subject, and message.");
+      return;
+    }
     setLoading(true);
     try {
-      await axios.post(
-        `${API_BASE}/api/messages`,
-        { content: message },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      router.push("/notification");
+      const composedMessage = [
+        `Subject: ${form.subject}`,
+        form.phone.trim() && `Phone: ${form.phone.trim()}`,
+        "",
+        form.message.trim(),
+      ].filter((line) => line !== false).join("\n");
+
+      await axios.post(`${API_BASE}/api/contacts`, {
+        fullName: form.fullName.trim(),
+        email: form.email.trim(),
+        message: composedMessage,
+      });
+      setSuccess(true);
+      setForm({ fullName: "", email: "", subject: "", phone: "", message: "" });
     } catch (err) {
-      console.error(err);
-      alert("Failed to send. Please try again.");
+      setError(err.response?.data?.error || "Failed to send your message. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -84,221 +119,192 @@ const Contact = () => {
 
       {/* ── Hero — Photo Background ────────────────────────────────────────── */}
       <Box sx={{
-        position: "relative",
-        minHeight: { xs: "68vh", md: "76vh" },
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        textAlign: "center",
+        position: "relative", overflow: "hidden",
         backgroundImage: `url('${HERO_IMG}')`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundAttachment: { xs: "scroll", md: "fixed" },
         "&::before": {
           content: '""',
-          position: "absolute",
-          inset: 0,
+          position: "absolute", inset: 0,
           background: isDark
-            ? "linear-gradient(135deg, rgba(10,0,0,0.93) 0%, rgba(70,0,0,0.87) 100%)"
-            : "linear-gradient(135deg, rgba(90,0,0,0.90) 0%, rgba(183,28,28,0.83) 100%)",
-          zIndex: 1,
+            ? "linear-gradient(100deg, rgba(10,0,0,0.96) 0%, rgba(10,0,0,0.9) 52%, rgba(70,0,0,0.55) 68%, rgba(70,0,0,0.35) 100%)"
+            : "linear-gradient(100deg, rgba(255,255,255,0.97) 0%, rgba(255,255,255,0.9) 52%, rgba(183,28,28,0.5) 68%, rgba(90,0,0,0.4) 100%)",
         },
       }}>
-        <Box sx={{ position: "relative", zIndex: 2, px: 3, pt: { xs: 14, md: 8 }, pb: { xs: 8, md: 6 } }}>
-          <Chip
-            icon={<ChatIcon sx={{ color: "white !important", fontSize: "18px !important" }} />}
-            label="We're Here to Help"
-            sx={{ backgroundColor: "rgba(255,255,255,0.15)", color: "white", fontWeight: 700, mb: 3, backdropFilter: "blur(4px)", fontSize: "0.82rem" }}
-          />
-          <Typography variant="h2" fontWeight={800} color="white"
-            sx={{ lineHeight: 1.12, mb: 2, fontSize: { xs: "2.4rem", md: "3.6rem" }, textShadow: "0 2px 24px rgba(0,0,0,0.6)" }}>
-            Contact Us
-          </Typography>
-          <Typography variant="h5" sx={{ color: "#ffcdd2", fontWeight: 700, mb: 2.5, fontSize: { xs: "1.1rem", md: "1.4rem" } }}>
-            Have a question or need help?
-          </Typography>
-          <Typography variant="h6" sx={{
-            color: "rgba(255,255,255,0.82)", maxWidth: 560, mx: "auto",
-            lineHeight: 1.8, fontWeight: 400, fontSize: { xs: "1rem", md: "1.1rem" },
-          }}>
-            Whether you&apos;re a donor, patient, or hospital partner — our team is
-            always ready to assist you.
-          </Typography>
+        <Container maxWidth="lg" sx={{ position: "relative", pt: { xs: 7, md: 9 }, pb: { xs: 11, md: 15 } }}>
+          <Box sx={{ maxWidth: 640 }}>
+            <Chip
+              icon={<ChatIcon sx={{ color: "#b71c1c !important", fontSize: "18px !important" }} />}
+              label="We're Here to Help"
+              sx={{
+                backgroundColor: isDark ? "rgba(183,28,28,0.18)" : "#fdeaea",
+                color: "error.main", fontWeight: 700, mb: 3, fontSize: "0.82rem",
+              }}
+            />
+            <Typography sx={{
+              fontWeight: 800, lineHeight: 1.1, mb: 1.5,
+              fontSize: { xs: "2.4rem", md: "3.2rem" },
+              color: isDark ? "#fff" : "#161a23",
+            }}>
+              Contact <Box component="span" sx={{ color: "error.main" }}>Us</Box>
+            </Typography>
+            <Typography sx={{
+              fontWeight: 700, mb: 2, fontSize: { xs: "1.15rem", md: "1.3rem" },
+              color: isDark ? "#fff" : "#161a23",
+            }}>
+              Have a question or need help?
+            </Typography>
+            <Typography sx={{
+              fontSize: "1.05rem", lineHeight: 1.7, mb: 5,
+              color: isDark ? "rgba(255,255,255,0.75)" : "rgba(40,30,30,0.72)",
+            }}>
+              Whether you&apos;re a donor, patient, or hospital partner — our team is
+              always ready to assist you.
+            </Typography>
 
-          {/* Quick info chips */}
-          <Box sx={{ display: "flex", gap: 2, justifyContent: "center", flexWrap: "wrap", mt: 5 }}>
-            {[
-              { icon: "📧", label: "Email Support" },
-              { icon: "📞", label: "Phone: +855 12 345 678" },
-              { icon: "🕐", label: "Mon–Fri, 8AM–5PM" },
-            ].map((item, i) => (
-              <Chip
-                key={i}
-                label={`${item.icon} ${item.label}`}
-                sx={{
-                  backgroundColor: "rgba(255,255,255,0.13)",
-                  color: "white",
-                  fontWeight: 600,
-                  backdropFilter: "blur(6px)",
-                  border: "1px solid rgba(255,255,255,0.2)",
-                  fontSize: "0.82rem",
-                }}
-              />
-            ))}
+            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(3, auto)" }, gap: { xs: 2.5, sm: 4 } }}>
+              {heroFeatures.map((f) => (
+                <Box key={f.title} sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
+                  <Box sx={{ color: "error.main", mt: 0.2, "& svg": { fontSize: 24 } }}>{f.icon}</Box>
+                  <Box>
+                    <Typography fontWeight={700} sx={{
+                      fontSize: "0.95rem", lineHeight: 1.3, color: isDark ? "#fff" : "#161a23",
+                    }}>
+                      {f.title}
+                    </Typography>
+                    <Typography variant="caption" sx={{
+                      lineHeight: 1.3, display: "block",
+                      color: isDark ? "rgba(255,255,255,0.65)" : "rgba(40,30,30,0.65)",
+                    }}>
+                      {f.subtitle}
+                    </Typography>
+                  </Box>
+                </Box>
+              ))}
+            </Box>
           </Box>
-        </Box>
+
+          <Typography className={script.className} sx={{
+            position: "absolute", right: { xs: 24, md: 56 }, bottom: { xs: 24, md: 40 },
+            fontSize: "2rem", lineHeight: 1.25, color: "#fff", textAlign: "right",
+            textShadow: "0 2px 4px rgba(0,0,0,0.5), 0 6px 18px rgba(0,0,0,0.35)",
+            display: { xs: "none", sm: "block" },
+          }}>
+            Together<br />We Save Lives ♡
+          </Typography>
+        </Container>
       </Box>
 
-      {/* ── Main Content ──────────────────────────────────────────────────── */}
-      <Container maxWidth="lg" sx={{ py: 10 }}>
+      {/* ── Quick info strip ──────────────────────────────────────────────── */}
+      <Container maxWidth="lg" sx={{ mt: { xs: -3, md: -4 }, position: "relative", zIndex: 3 }}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "repeat(4, 1fr)" }, gap: 2.5 }}>
+          {topInfoCards.map((card) => (
+            <Paper key={card.title} elevation={0} sx={{ ...cardSx(isDark), p: 3, display: "flex", alignItems: "center", gap: 2 }}>
+              <Box sx={{
+                width: 48, height: 48, borderRadius: "50%", flexShrink: 0,
+                backgroundColor: isDark ? "rgba(183,28,28,0.16)" : "#fdeaea",
+                color: "error.main", display: "flex", alignItems: "center", justifyContent: "center",
+                "& svg": { fontSize: 22 },
+              }}>
+                {card.icon}
+              </Box>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography fontWeight={700} sx={{ fontSize: "0.95rem" }}>{card.title}</Typography>
+                {card.href ? (
+                  <Typography component="a" href={card.href} variant="body2" fontWeight={600}
+                    sx={{ color: "text.primary", textDecoration: "none", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", "&:hover": { color: "error.main" } }}>
+                    {card.value}
+                  </Typography>
+                ) : (
+                  <Typography variant="body2" fontWeight={600} noWrap>{card.value}</Typography>
+                )}
+                <Typography variant="caption" color="text.secondary">{card.caption}</Typography>
+              </Box>
+            </Paper>
+          ))}
+        </Box>
+      </Container>
+
+      {/* ── Main Content: form + location ───────────────────────────────── */}
+      <Container maxWidth="lg" sx={{ py: { xs: 6, md: 8 } }}>
         <Box sx={{
           display: "grid",
-          gridTemplateColumns: { xs: "1fr", md: "1fr 2fr" },
-          gap: 4,
-          alignItems: "start",
+          gridTemplateColumns: { xs: "1fr", md: "1.4fr 1fr" },
+          gap: 4, alignItems: "start",
         }}>
 
-          {/* ── Left: Contact Info ─────────────────────────────────────────── */}
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-
-            {/* Info cards */}
-            <Paper elevation={0} sx={{
-              p: 4, borderRadius: 4,
-              backgroundColor: isDark ? "#1a1a1a" : "#fff",
-              border: `1px solid ${isDark ? "#2a2a2a" : "#efefef"}`,
-              boxShadow: isDark ? "none" : "0 4px 24px rgba(0,0,0,0.06)",
-            }}>
-              <Typography variant="overline" color="error" fontWeight={700} letterSpacing="0.12em">
-                Reach Us
-              </Typography>
-              <Typography variant="h6" fontWeight={700} mt={0.5} mb={0.5}>
-                Get In Touch
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 3.5, lineHeight: 1.7 }}>
-                Whether you&apos;re a donor, patient, or hospital partner — our team is here to help.
-              </Typography>
-
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
-                {contactInfo.map((info, idx) => (
-                  <Box key={idx} sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}>
-                    <Box sx={{
-                      width: 44, height: 44, borderRadius: 2.5, flexShrink: 0,
-                      background: `linear-gradient(135deg, ${info.color} 0%, ${info.color}cc 100%)`,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      boxShadow: `0 4px 12px ${info.color}44`,
-                    }}>
-                      {info.icon}
-                    </Box>
-                    <Box>
-                      <Typography variant="caption" color="text.disabled" fontWeight={700}
-                        sx={{ textTransform: "uppercase", letterSpacing: "0.08em", display: "block" }}>
-                        {info.label}
-                      </Typography>
-                      {info.href ? (
-                        <Typography component="a" href={info.href} variant="body2" fontWeight={600}
-                          sx={{ color: "text.primary", textDecoration: "none", "&:hover": { color: "error.main" }, transition: "color 0.2s" }}>
-                          {info.value}
-                        </Typography>
-                      ) : (
-                        <Typography variant="body2" fontWeight={600}>{info.value}</Typography>
-                      )}
-                    </Box>
-                  </Box>
-                ))}
-              </Box>
-            </Paper>
-
-            {/* Emergency card */}
-            <Paper elevation={0} sx={{
-              p: 3.5, borderRadius: 4,
-              background: "linear-gradient(135deg, #b71c1c 0%, #7f0000 100%)",
-              color: "white",
-              boxShadow: "0 8px 32px rgba(183,28,28,0.35)",
-            }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.5 }}>
-                <LocalHospitalIcon sx={{ fontSize: 26 }} />
-                <Typography variant="subtitle1" fontWeight={800}>
-                  Emergency Blood Request?
+          {/* ── Left: Contact form ────────────────────────────────────────── */}
+          <Paper elevation={0} sx={{ ...cardSx(isDark), p: { xs: 3.5, md: 5 } }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1 }}>
+              <Box sx={iconBoxSx}><SendIcon sx={{ fontSize: 20 }} /></Box>
+              <Box>
+                <Typography variant="overline" color="error" fontWeight={700} letterSpacing="0.12em" sx={{ lineHeight: 1 }}>
+                  Send Us a Message
+                </Typography>
+                <Typography variant="h5" fontWeight={800} sx={{ lineHeight: 1.2 }}>
+                  Contact Form
                 </Typography>
               </Box>
-              <Typography variant="body2" sx={{ opacity: 0.9, lineHeight: 1.75, mb: 2.5 }}>
-                For urgent blood needs, use our dedicated request form for immediate processing by our team.
-              </Typography>
-              <Button
-                component={Link} href="/requests"
-                variant="outlined" size="small" fullWidth
-                sx={{
-                  borderColor: "rgba(255,255,255,0.7)", color: "white", fontWeight: 700,
-                  borderRadius: 2.5, py: 1,
-                  "&:hover": { borderColor: "white", backgroundColor: "rgba(255,255,255,0.15)" },
-                }}>
-                Request Blood Now →
-              </Button>
-            </Paper>
-          </Box>
+            </Box>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3.5, mt: 1.5, lineHeight: 1.7 }}>
+              Fill out the form below and we&apos;ll get back to you as soon as possible.
+            </Typography>
 
-          {/* ── Right: Message Form or Login Prompt ───────────────────────── */}
-          {isAuth ? (
-            <Paper elevation={0} sx={{
-              p: { xs: 3.5, md: 5 }, borderRadius: 4,
-              backgroundColor: isDark ? "#1a1a1a" : "#fff",
-              border: `1px solid ${isDark ? "#2a2a2a" : "#efefef"}`,
-              boxShadow: isDark ? "none" : "0 4px 24px rgba(0,0,0,0.06)",
-            }}>
-              {/* Form header */}
-              <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1 }}>
-                <Avatar sx={{
-                  width: 48, height: 48,
-                  background: "linear-gradient(135deg, #b71c1c 0%, #d32f2f 100%)",
-                  boxShadow: "0 4px 14px rgba(183,28,28,0.4)",
-                }}>
-                  <ChatIcon />
-                </Avatar>
-                <Box>
-                  <Typography variant="overline" color="error" fontWeight={700} letterSpacing="0.12em" sx={{ lineHeight: 1 }}>
-                    Direct Message
-                  </Typography>
-                  <Typography variant="h5" fontWeight={800} sx={{ lineHeight: 1.2 }}>
-                    Send a Message
-                  </Typography>
-                </Box>
+            <Box component="form" onSubmit={handleSubmit} noValidate autoComplete="off">
+              <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
+                <TextField
+                  fullWidth label="Full Name" name="fullName" value={form.fullName}
+                  onChange={handleChange} required placeholder="Enter your full name"
+                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2.5 } }}
+                />
+                <TextField
+                  fullWidth label="Email Address" name="email" type="email" value={form.email}
+                  onChange={handleChange} required placeholder="Enter your email"
+                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2.5 } }}
+                />
+                <FormControl fullWidth required>
+                  <InputLabel id="contact-subject-label">Subject</InputLabel>
+                  <Select
+                    labelId="contact-subject-label" name="subject" value={form.subject}
+                    onChange={handleChange} label="Subject"
+                    sx={{ borderRadius: 2.5 }}
+                  >
+                    {subjectOptions.map((s) => (
+                      <MenuItem key={s} value={s}>{s}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <TextField
+                  fullWidth label="Phone Number" name="phone" type="tel" value={form.phone}
+                  onChange={handleChange} placeholder="Enter your phone number"
+                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2.5 } }}
+                />
+                <TextField
+                  fullWidth label="Message" name="message" value={form.message}
+                  onChange={handleChange} required multiline minRows={6}
+                  placeholder="Type your message here..."
+                  sx={{ gridColumn: "1 / -1", "& .MuiOutlinedInput-root": { borderRadius: 2.5 } }}
+                />
               </Box>
 
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 4, mt: 1.5, lineHeight: 1.7 }}>
-                Sending as <strong>{user?.fullName}</strong> — your message goes directly to our admin team.
-                View your full conversation in{" "}
-                <Typography component={Link} href="/notification" variant="body2"
-                  color="error.main" sx={{ textDecoration: "none", fontWeight: 700 }}>
-                  My Messages
-                </Typography>.
-              </Typography>
+              {error && (
+                <Alert severity="error" sx={{ mt: 3, borderRadius: "10px" }} onClose={() => setError("")}>
+                  {error}
+                </Alert>
+              )}
+              {success && (
+                <Alert severity="success" sx={{ mt: 3, borderRadius: "10px" }} onClose={() => setSuccess(false)}>
+                  Your message has been sent — we&apos;ll get back to you soon.
+                </Alert>
+              )}
 
-              <Box component="form" onSubmit={handleSubmit} noValidate>
-                <TextField
-                  fullWidth
-                  label="Your Message"
-                  multiline
-                  rows={7}
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  required
-                  placeholder="Tell us how we can help you..."
-                  sx={{
-                    mb: 3,
-                    "& .MuiOutlinedInput-root": { borderRadius: 3 },
-                  }}
-                />
+              <Box mt={3}>
                 <Button
-                  type="submit"
-                  variant="contained"
-                  color="error"
-                  size="large"
-                  fullWidth
-                  disabled={loading || !message.trim()}
-                  startIcon={<SendIcon />}
+                  type="submit" variant="contained" color="error" size="large"
+                  disabled={loading} startIcon={<SendIcon />}
                   sx={{
-                    py: 1.6, fontWeight: 700, fontSize: "1rem", borderRadius: 3,
+                    py: 1.6, px: 5, fontWeight: 700, fontSize: "1rem", borderRadius: 3,
                     background: "linear-gradient(135deg, #b71c1c 0%, #d32f2f 100%)",
                     boxShadow: "0 6px 20px rgba(183,28,28,0.4)",
                     "&:hover": { boxShadow: "0 8px 28px rgba(183,28,28,0.55)", transform: "translateY(-1px)" },
@@ -308,110 +314,104 @@ const Contact = () => {
                 >
                   {loading ? "Sending…" : "Send Message"}
                 </Button>
-                <Typography variant="caption" color="text.disabled" display="block" textAlign="center" mt={1.5}>
-                  We respect your privacy and will never share your information.
+              </Box>
+            </Box>
+          </Paper>
+
+          {/* ── Right: Find Us ───────────────────────────────────────────── */}
+          <Paper elevation={0} sx={{ ...cardSx(isDark), p: { xs: 3.5, md: 4 } }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1 }}>
+              <Box sx={iconBoxSx}><RoomIcon sx={{ fontSize: 20 }} /></Box>
+              <Box>
+                <Typography variant="overline" color="error" fontWeight={700} letterSpacing="0.12em" sx={{ lineHeight: 1 }}>
+                  Our Location
+                </Typography>
+                <Typography variant="h5" fontWeight={800} sx={{ lineHeight: 1.2 }}>
+                  Find Us
                 </Typography>
               </Box>
-            </Paper>
-          ) : (
-            <Paper elevation={0} sx={{
-              p: { xs: 4, md: 6 }, borderRadius: 4,
-              backgroundColor: isDark ? "#1a1a1a" : "#fff",
-              border: `1px solid ${isDark ? "#2a2a2a" : "#efefef"}`,
-              boxShadow: isDark ? "none" : "0 4px 24px rgba(0,0,0,0.06)",
-              display: "flex", flexDirection: "column",
-              alignItems: "center", justifyContent: "center",
-              textAlign: "center", minHeight: 380,
-            }}>
+            </Box>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3, mt: 1.5, lineHeight: 1.7 }}>
+              Visit our office or get in touch through the details below.
+            </Typography>
+
+            {/* Stylized map preview */}
+            <Box
+              component={Link} href="/map"
+              sx={{
+                position: "relative", display: "block", height: 200, borderRadius: 3, overflow: "hidden",
+                mb: 3, textDecoration: "none",
+                backgroundColor: isDark ? "#20291f" : "#e7efe3",
+                backgroundImage: isDark
+                  ? "linear-gradient(0deg, rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)"
+                  : "linear-gradient(0deg, rgba(0,0,0,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px)",
+                backgroundSize: "28px 28px",
+                border: `1px solid ${isDark ? "#2a2a2a" : "#dbe6d6"}`,
+              }}
+            >
+              {/* decorative "roads" */}
+              <Box sx={{ position: "absolute", left: 0, right: 0, top: "38%", height: 10, backgroundColor: isDark ? "#333" : "#fff", boxShadow: "0 0 0 1px rgba(0,0,0,0.04)" }} />
+              <Box sx={{ position: "absolute", top: 0, bottom: 0, left: "62%", width: 8, backgroundColor: isDark ? "#333" : "#fff", boxShadow: "0 0 0 1px rgba(0,0,0,0.04)" }} />
+
+              {/* marker card */}
               <Box sx={{
-                width: 80, height: 80, borderRadius: "50%", mb: 3,
-                background: "linear-gradient(135deg, #b71c1c 0%, #7f0000 100%)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                boxShadow: "0 8px 28px rgba(183,28,28,0.4)",
+                position: "absolute", top: 22, left: 22, zIndex: 2,
+                display: "flex", alignItems: "center", gap: 1, px: 1.5, py: 1, borderRadius: 2.5,
+                backgroundColor: isDark ? "#1a1a1a" : "#fff",
+                boxShadow: "0 6px 18px rgba(0,0,0,0.18)",
               }}>
-                <LockIcon sx={{ fontSize: 38, color: "white" }} />
+                <LocationOnIcon color="error" sx={{ fontSize: 22 }} />
+                <Box>
+                  <Typography sx={{ fontSize: "0.8rem", fontWeight: 700, lineHeight: 1.2 }}>Blood Donated</Typography>
+                  <Typography variant="caption" color="text.secondary">Phnom Penh, Cambodia</Typography>
+                </Box>
               </Box>
-              <Typography variant="h5" fontWeight={800} gutterBottom>
-                Log In to Send a Message
+
+              <Typography sx={{
+                position: "absolute", bottom: 18, left: 22, fontWeight: 800, fontSize: "1.15rem",
+                color: isDark ? "rgba(255,255,255,0.5)" : "rgba(30,30,30,0.35)",
+              }}>
+                Phnom Penh
               </Typography>
-              <Typography variant="body1" color="text.secondary" sx={{ mb: 4, maxWidth: 360, lineHeight: 1.75 }}>
-                Create an account or log in to chat directly with our admin team.
-                Your full conversation history is saved.
-              </Typography>
-              <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", justifyContent: "center" }}>
-                <Button
-                  variant="contained" color="error"
-                  component={Link} href="/login"
-                  size="large"
-                  sx={{ borderRadius: 3, fontWeight: 700, px: 4, py: 1.4,
-                    background: "linear-gradient(135deg, #b71c1c 0%, #d32f2f 100%)",
-                    boxShadow: "0 6px 20px rgba(183,28,28,0.4)",
-                    "&:hover": { transform: "translateY(-2px)" }, transition: "all 0.25s",
+
+              {/* zoom controls */}
+              <Box sx={{ position: "absolute", right: 12, bottom: 12, display: "flex", flexDirection: "column", borderRadius: 1.5, overflow: "hidden", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
+                {[AddIcon, RemoveIcon].map((Icon, i) => (
+                  <Box key={i} sx={{
+                    width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center",
+                    backgroundColor: isDark ? "#1a1a1a" : "#fff",
+                    borderBottom: i === 0 ? `1px solid ${isDark ? "#2a2a2a" : "#eee"}` : "none",
                   }}>
-                  Log In
-                </Button>
-                <Button
-                  variant="outlined" color="error"
-                  component={Link} href="/register"
-                  size="large"
-                  sx={{ borderRadius: 3, fontWeight: 700, px: 4, py: 1.4,
-                    "&:hover": { transform: "translateY(-2px)" }, transition: "all 0.25s",
-                  }}>
-                  Sign Up
-                </Button>
+                    <Icon sx={{ fontSize: 16, color: "text.secondary" }} />
+                  </Box>
+                ))}
               </Box>
-            </Paper>
-          )}
+            </Box>
+
+            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", rowGap: 2.5, columnGap: 2 }}>
+              {findUsDetails.map((d) => (
+                <Box key={d.label} sx={{ display: "flex", alignItems: "flex-start", gap: 1.2 }}>
+                  <Box sx={{ color: "error.main", mt: 0.2 }}>{d.icon}</Box>
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography variant="caption" color="text.disabled" fontWeight={700}
+                      sx={{ textTransform: "uppercase", letterSpacing: "0.06em", display: "block" }}>
+                      {d.label}
+                    </Typography>
+                    {d.href ? (
+                      <Typography component="a" href={d.href} variant="body2" fontWeight={600}
+                        sx={{ color: "text.primary", textDecoration: "none", "&:hover": { color: "error.main" } }}>
+                        {d.value}
+                      </Typography>
+                    ) : (
+                      <Typography variant="body2" fontWeight={600}>{d.value}</Typography>
+                    )}
+                  </Box>
+                </Box>
+              ))}
+            </Box>
+          </Paper>
         </Box>
       </Container>
-
-      {/* ── CTA — Photo Background ─────────────────────────────────────────── */}
-      <Box sx={{
-        position: "relative",
-        py: 13,
-        textAlign: "center",
-        backgroundImage: `url('${CTA_IMG}')`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundAttachment: { xs: "scroll", md: "fixed" },
-        "&::before": {
-          content: '""',
-          position: "absolute",
-          inset: 0,
-          background: "linear-gradient(135deg, rgba(80,0,0,0.90) 0%, rgba(183,28,28,0.82) 50%, rgba(40,0,0,0.90) 100%)",
-        },
-      }}>
-        <Container maxWidth="md" sx={{ position: "relative", zIndex: 1 }}>
-          <FavoriteIcon sx={{ fontSize: 58, color: "#ffcdd2", mb: 2 }} />
-          <Typography variant="h3" fontWeight={800} color="white" gutterBottom
-            sx={{ textShadow: "0 2px 20px rgba(0,0,0,0.5)", fontSize: { xs: "2rem", md: "2.8rem" } }}>
-            Ready to Save a Life?
-          </Typography>
-          <Typography variant="h6" sx={{
-            color: "rgba(255,255,255,0.85)", mb: 6,
-            lineHeight: 1.8, maxWidth: 520, mx: "auto", fontWeight: 400,
-          }}>
-            Every donation matters. Join thousands of donors across Cambodia and
-            help ensure no life is lost due to a lack of blood.
-          </Typography>
-          <Box sx={{ display: "flex", justifyContent: "center", gap: 2.5, flexWrap: "wrap" }}>
-            <Button component={Link} href="/donate" variant="contained" size="large" sx={{
-              backgroundColor: "white", color: "#b71c1c", fontWeight: 800, px: 5, py: 1.7, borderRadius: 3, fontSize: "1rem",
-              boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
-              "&:hover": { backgroundColor: "#ffcdd2", transform: "translateY(-3px)" }, transition: "all 0.25s",
-            }}>
-              Become a Donor
-            </Button>
-            <Button component={Link} href="/appointments" variant="outlined" size="large" sx={{
-              borderColor: "rgba(255,255,255,0.7)", color: "white", fontWeight: 700, px: 5, py: 1.7, borderRadius: 3, fontSize: "1rem",
-              backdropFilter: "blur(4px)",
-              "&:hover": { backgroundColor: "rgba(255,255,255,0.15)", borderColor: "white", transform: "translateY(-3px)" }, transition: "all 0.25s",
-            }}>
-              Book Appointment
-            </Button>
-          </Box>
-        </Container>
-      </Box>
 
     </Box>
   );

@@ -1,23 +1,38 @@
 'use client';
+import Link from 'next/link';
 import { useEffect, useState } from "react";
 import {
   Container, Typography, Box, Chip, Avatar, Paper, TextField, MenuItem, InputAdornment,
   Button, Dialog, DialogTitle, DialogContent, DialogActions, useTheme, CircularProgress,
 } from "@mui/material";
 import BloodtypeIcon from "@mui/icons-material/Bloodtype";
+import WaterDropIcon from "@mui/icons-material/WaterDrop";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import PeopleIcon from "@mui/icons-material/People";
+import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
+import FavoriteIcon from "@mui/icons-material/Favorite";
 import SearchIcon from "@mui/icons-material/Search";
+import SortIcon from "@mui/icons-material/Sort";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import ForumIcon from "@mui/icons-material/Forum";
 import axios from "axios";
 import API_BASE from "@/lib/config";
 import { formatDistanceToNow } from "date-fns";
+import { script } from '@/lib/fonts';
 
 const HERO_IMG =
-  "https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=1920&q=80";
+  "https://images.unsplash.com/photo-1615461066841-6116e61058f4?auto=format&fit=crop&w=1200&q=80";
 
 const BLOOD_TYPES = ["All", "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const ITEMS_PER_PAGE = 6;
+
+const SORT_OPTIONS = [
+  { value: "recent", label: "Recently Registered" },
+  { value: "name", label: "Name (A–Z)" },
+  { value: "donations", label: "Most Donations" },
+  { value: "lastDonation", label: "Recently Donated" },
+];
 
 const formatDate = (date) => {
   if (!date || isNaN(new Date(date).getTime())) return "N/A";
@@ -29,12 +44,28 @@ const BLOOD_COLORS = {
   "AB+": "#6a1b9a", "AB-": "#4a148c", "O+": "#1565c0", "O-": "#0d47a1",
 };
 
+const sortDonors = (list, sortBy) => {
+  const sorted = [...list];
+  switch (sortBy) {
+    case "name":
+      return sorted.sort((a, b) => (a.fullName || "").localeCompare(b.fullName || ""));
+    case "donations":
+      return sorted.sort((a, b) => (b.donationCount || 0) - (a.donationCount || 0));
+    case "lastDonation":
+      return sorted.sort((a, b) => new Date(b.lastDonation || 0) - new Date(a.lastDonation || 0));
+    case "recent":
+    default:
+      return sorted.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+  }
+};
+
 const DonorList = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
   const [donors, setDonors] = useState([]);
   const [selectedType, setSelectedType] = useState("All");
   const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState("recent");
   const [page, setPage] = useState(1);
   const [selectedDonor, setSelectedDonor] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -46,11 +77,14 @@ const DonorList = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  const filtered = donors.filter((d) => {
-    const matchType = selectedType === "All" || d.bloodType === selectedType;
-    const matchSearch = !search || d.fullName?.toLowerCase().includes(search.toLowerCase()) || d.location?.toLowerCase().includes(search.toLowerCase());
-    return matchType && matchSearch;
-  });
+  const filtered = sortDonors(
+    donors.filter((d) => {
+      const matchType = selectedType === "All" || d.bloodType === selectedType;
+      const matchSearch = !search || d.fullName?.toLowerCase().includes(search.toLowerCase()) || d.location?.toLowerCase().includes(search.toLowerCase());
+      return matchType && matchSearch;
+    }),
+    sortBy
+  );
 
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const paginated = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
@@ -59,66 +93,131 @@ const DonorList = () => {
   const handleTypeChange = (val) => { setSelectedType(val); setPage(1); };
   const handleSearchChange = (e) => { setSearch(e.target.value); setPage(1); };
 
+  const heroStats = [
+    { icon: <PeopleIcon />, value: loading ? "…" : donors.length, label: "Registered Donors", color: "#b71c1c" },
+    { icon: <BloodtypeIcon />, value: loading ? "…" : availableCount, label: "Available Now", color: "#ad1457" },
+    { icon: <WaterDropIcon />, value: "8", label: "Blood Types", color: "#6a1b9a" },
+    { icon: <LocalHospitalIcon />, value: "50+", label: "Partner Hospitals", color: "#1565c0" },
+  ];
+
   return (
     <Box sx={{ backgroundColor: isDark ? "#121212" : "#f4f4f4" }}>
 
-      {/* ── Hero ────────────────────────────────────────────────────────────── */}
+      {/* ── Hero — split layout: copy left, photo right ─────────────────────── */}
       <Box sx={{
-        position: "relative",
-        display: "flex", flexDirection: "column",
-        alignItems: "center", justifyContent: "center", textAlign: "center",
-        backgroundImage: `url('${HERO_IMG}')`,
-        backgroundSize: "cover", backgroundPosition: "center",
-        "&::before": {
-          content: '""', position: "absolute", inset: 0,
-          background: isDark
-            ? "linear-gradient(135deg, rgba(10,0,0,0.93) 0%, rgba(70,0,0,0.87) 100%)"
-            : "linear-gradient(135deg, rgba(80,0,0,0.90) 0%, rgba(183,28,28,0.84) 100%)",
-          zIndex: 1,
-        },
+        position: "relative", overflow: "hidden",
+        background: isDark
+          ? "linear-gradient(135deg, #161112 0%, #121212 100%)"
+          : "linear-gradient(135deg, #fdf3f3 0%, #f9fafb 100%)",
       }}>
-        <Box sx={{ position: "relative", zIndex: 2, px: 3, pt: { xs: 12, md: 8 }, pb: { xs: 4, md: 4 } }}>
-          <Chip
-            icon={<PeopleIcon sx={{ color: "white !important", fontSize: "16px !important" }} />}
-            label="Verified Donor Network"
-            sx={{ backgroundColor: "rgba(255,255,255,0.15)", color: "white", fontWeight: 700, mb: 2, backdropFilter: "blur(4px)", fontSize: "0.75rem" }}
-          />
-          <Typography variant="h3" fontWeight={800} color="white"
-            sx={{ lineHeight: 1.12, mb: 1.5, fontSize: { xs: "1.8rem", md: "2.6rem" }, textShadow: "0 2px 24px rgba(0,0,0,0.6)" }}>
-            Find a Donor
-          </Typography>
-          <Typography variant="body1" sx={{ color: "#ffcdd2", fontWeight: 700, mb: 1, fontSize: { xs: "0.95rem", md: "1.05rem" } }}>
-            Every donor here is a potential lifesaver.
-          </Typography>
-          <Typography variant="body2" sx={{
-            color: "rgba(255,255,255,0.82)", maxWidth: 480, mx: "auto",
-            lineHeight: 1.7, fontWeight: 400, fontSize: { xs: "0.85rem", md: "0.92rem" },
-          }}>
-            Browse our network of registered blood donors. Filter by blood type or
-            search by name to find the right match quickly.
-          </Typography>
+        <Box aria-hidden="true" sx={{
+          position: "absolute", left: "-10%", top: "-25%", width: 480, height: 480, borderRadius: "50%",
+          background: `radial-gradient(circle, ${isDark ? "rgba(183,28,28,0.10)" : "rgba(198,40,40,0.08)"} 0%, transparent 68%)`,
+          pointerEvents: "none",
+        }} />
+        <Box aria-hidden="true" sx={{
+          position: "absolute", left: "-8%", bottom: "-30%", width: 380, height: 380, borderRadius: "50%",
+          background: `radial-gradient(circle, ${isDark ? "rgba(183,28,28,0.08)" : "rgba(198,40,40,0.06)"} 0%, transparent 70%)`,
+          pointerEvents: "none",
+        }} />
 
-          {/* Live stats */}
-          <Box sx={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: { xs: 1.5, md: 2 }, mt: 3 }}>
-            {[
-              { value: loading ? "…" : donors.length, label: "Registered Donors" },
-              { value: loading ? "…" : availableCount, label: "Available Now" },
-              { value: "8", label: "Blood Types" },
-              { value: "50+", label: "Partner Hospitals" },
-            ].map((s, i) => (
-              <Box key={i} sx={{
-                textAlign: "center", px: { xs: 1.5, md: 2 }, py: 1,
-                backgroundColor: "rgba(255,255,255,0.10)",
-                backdropFilter: "blur(8px)",
-                border: "1px solid rgba(255,255,255,0.18)",
-                borderRadius: 2.5, minWidth: 90,
-              }}>
-                <Typography variant="subtitle1" fontWeight={800} color="white" sx={{ fontSize: "1rem", lineHeight: 1.2 }}>{s.value}</Typography>
-                <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.75)", fontWeight: 600, fontSize: "0.68rem" }}>{s.label}</Typography>
+        <Container maxWidth="lg" sx={{ position: "relative", py: { xs: 7, md: 9 } }}>
+          <Box sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", md: "1.1fr 0.9fr" },
+            gap: { xs: 5, md: 7 },
+            alignItems: "center",
+          }}>
+            {/* Left: copy */}
+            <Box>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+                <Typography variant="overline" color="error" fontWeight={700} letterSpacing="0.12em">
+                  Verified Donor Network
+                </Typography>
+                <Box sx={{ width: 36, height: 3, borderRadius: 2, backgroundColor: "error.main" }} />
               </Box>
-            ))}
+              <Typography sx={{
+                fontWeight: 800, lineHeight: 1.1, mb: 1.5,
+                fontSize: { xs: "2.4rem", md: "3rem" },
+                color: isDark ? "#fff" : "#161a23",
+              }}>
+                Find a <Box component="span" sx={{ color: "error.main" }}>Donor</Box>
+              </Typography>
+              <Typography sx={{
+                fontWeight: 700, mb: 2, fontSize: { xs: "1.1rem", md: "1.25rem" },
+                color: isDark ? "#fff" : "#161a23",
+              }}>
+                Every donor here is a potential lifesaver.
+              </Typography>
+              <Typography color="text.secondary" sx={{ fontSize: "1.02rem", lineHeight: 1.7, maxWidth: 460, mb: 4 }}>
+                Browse our network of registered blood donors. Filter by blood type
+                or search by name to find the right match quickly.
+              </Typography>
+
+              <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", sm: "repeat(4, 1fr)" }, gap: 1.5 }}>
+                {heroStats.map((s) => (
+                  <Paper key={s.label} elevation={0} sx={{
+                    p: 1.75, borderRadius: 3, display: "flex", alignItems: "center", gap: 1.25,
+                    backgroundColor: isDark ? "#1a1a1a" : "#fff",
+                    border: `1px solid ${isDark ? "#2a2a2a" : "#efefef"}`,
+                  }}>
+                    <Box sx={{
+                      width: 38, height: 38, borderRadius: 2, flexShrink: 0,
+                      backgroundColor: isDark ? `${s.color}33` : `${s.color}18`,
+                      color: s.color,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      "& svg": { fontSize: 19 },
+                    }}>
+                      {s.icon}
+                    </Box>
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography fontWeight={800} sx={{ fontSize: "1.15rem", lineHeight: 1.15 }}>{s.value}</Typography>
+                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.68rem", lineHeight: 1.2, display: "block" }} noWrap>
+                        {s.label}
+                      </Typography>
+                    </Box>
+                  </Paper>
+                ))}
+              </Box>
+            </Box>
+
+            {/* Right: photo */}
+            <Box sx={{ justifySelf: { xs: "center", md: "end" }, width: "100%", maxWidth: 440 }}>
+              <Typography className={script.className} sx={{
+                fontSize: "1.7rem", lineHeight: 1.25, color: "error.main",
+                transform: "rotate(-4deg)", textAlign: "right", pr: 1, mb: 1,
+              }}>
+                Small Donors<br />Big Impact ♥
+              </Typography>
+
+              <Box sx={{ position: "relative" }}>
+                <Box sx={{
+                  position: "relative", borderRadius: 5, overflow: "hidden",
+                  boxShadow: "0 20px 50px rgba(0,0,0,0.25)",
+                  aspectRatio: "4 / 5",
+                }}>
+                  <Box component="img" src={HERO_IMG} alt="Hands holding a heart, representing blood donation"
+                    sx={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                  />
+                  <Box sx={{
+                    position: "absolute", top: "50%", left: "50%", zIndex: 2,
+                    transform: "translate(-50%, -50%)",
+                    display: "flex", flexDirection: "column", alignItems: "center",
+                    width: 168, height: 168, borderRadius: "50%",
+                    background: "linear-gradient(135deg, #b71c1c 0%, #7f0000 100%)",
+                    boxShadow: "0 16px 40px rgba(0,0,0,0.4)",
+                    border: `5px solid ${isDark ? "#121212" : "#fdf3f3"}`,
+                    justifyContent: "center", textAlign: "center", color: "white",
+                  }}>
+                    <WaterDropIcon sx={{ fontSize: 34, mb: 0.5 }} />
+                    <Typography sx={{ fontWeight: 800, fontSize: "0.95rem", lineHeight: 1.25 }}>Donate Blood</Typography>
+                    <Typography sx={{ fontWeight: 800, fontSize: "0.95rem", lineHeight: 1.25 }}>Save Lives</Typography>
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
           </Box>
-        </Box>
+        </Container>
       </Box>
 
       {/* ── Filter Bar ──────────────────────────────────────────────────────── */}
@@ -131,7 +230,7 @@ const DonorList = () => {
           display: "flex", flexWrap: "wrap", gap: 2, alignItems: "center",
         }}>
           <TextField
-            placeholder="Search by name or location…"
+            placeholder="Search by name, city, or location…"
             value={search}
             onChange={handleSearchChange}
             size="small"
@@ -144,7 +243,7 @@ const DonorList = () => {
             select label="Blood Type" value={selectedType}
             onChange={(e) => handleTypeChange(e.target.value)}
             size="small"
-            sx={{ flex: "0 0 180px", "& .MuiOutlinedInput-root": { borderRadius: 2.5 } }}
+            sx={{ flex: "0 0 160px", "& .MuiOutlinedInput-root": { borderRadius: 2.5 } }}
             InputProps={{
               startAdornment: <InputAdornment position="start"><BloodtypeIcon color="error" sx={{ fontSize: 18 }} /></InputAdornment>,
             }}
@@ -153,33 +252,52 @@ const DonorList = () => {
           </TextField>
 
           <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-            {BLOOD_TYPES.filter((t) => t !== "All").map((t) => (
+            {BLOOD_TYPES.map((t) => (
               <Chip key={t} label={t} size="small" clickable
                 onClick={() => handleTypeChange(t)}
                 variant={selectedType === t ? "filled" : "outlined"}
                 sx={{
                   fontWeight: 700, fontSize: "0.78rem",
                   ...(selectedType === t
-                    ? { backgroundColor: BLOOD_COLORS[t] || "#b71c1c", color: "white", borderColor: "transparent" }
+                    ? { backgroundColor: t === "All" ? "error.main" : (BLOOD_COLORS[t] || "#b71c1c"), color: "white", borderColor: "transparent" }
                     : { borderColor: isDark ? "#444" : "#ddd" }),
                 }}
               />
             ))}
           </Box>
 
-          {(selectedType !== "All" || search) && (
-            <Button size="small" color="error" onClick={() => { handleTypeChange("All"); setSearch(""); }}>
-              Clear
-            </Button>
-          )}
-
-          <Typography variant="body2" color="text.secondary" sx={{ ml: "auto" }}>
-            {filtered.length} donor{filtered.length !== 1 ? "s" : ""} found
-          </Typography>
+          <TextField
+            select label="Sort by" value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            size="small"
+            sx={{ flex: "0 0 190px", ml: "auto", "& .MuiOutlinedInput-root": { borderRadius: 2.5 } }}
+            InputProps={{
+              startAdornment: <InputAdornment position="start"><SortIcon sx={{ fontSize: 18, color: "text.disabled" }} /></InputAdornment>,
+            }}
+          >
+            {SORT_OPTIONS.map((o) => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
+          </TextField>
         </Paper>
 
+        {/* ── Result count + legend ──────────────────────────────────────── */}
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1.5, mt: 4, mb: 2 }}>
+          <Typography variant="h6" fontWeight={800} color="error.main">
+            {filtered.length} Donor{filtered.length !== 1 ? "s" : ""} Found
+          </Typography>
+          <Box sx={{ display: "flex", gap: 2.5 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.7 }}>
+              <Box sx={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: isDark ? "#66bb6a" : "#2e7d32" }} />
+              <Typography variant="caption" color="text.secondary">Available to donate</Typography>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.7 }}>
+              <Box sx={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: "#9e9e9e" }} />
+              <Typography variant="caption" color="text.secondary">Not available</Typography>
+            </Box>
+          </Box>
+        </Box>
+
         {/* ── Donor Cards ─────────────────────────────────────────────────── */}
-        <Box sx={{ mt: 4 }}>
+        <Box>
           {loading ? (
             <Box display="flex" justifyContent="center" py={10}>
               <CircularProgress color="error" size={48} />
@@ -225,7 +343,7 @@ const DonorList = () => {
 
                     <Box sx={{ p: 3 }}>
                       {/* Avatar + name */}
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2.5 }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
                         <Box sx={{ position: "relative", flexShrink: 0 }}>
                           <Avatar
                             src={donor.photo ? `${API_BASE}${donor.photo}` : undefined}
@@ -255,34 +373,54 @@ const DonorList = () => {
                             <LocationOnIcon sx={{ fontSize: 13, color: "text.disabled" }} />
                             <Typography variant="caption" color="text.secondary" noWrap>{donor.location || "Unknown"}</Typography>
                           </Box>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.6, mt: 0.5 }}>
+                            <Box sx={{ width: 7, height: 7, borderRadius: "50%", backgroundColor: donor.available ? (isDark ? "#66bb6a" : "#2e7d32") : "#9e9e9e", flexShrink: 0 }} />
+                            <Typography variant="caption" fontWeight={600} sx={{ color: donor.available ? (isDark ? "#66bb6a" : "#2e7d32") : "text.disabled" }}>
+                              {donor.available ? "Available to donate" : "Currently unavailable"}
+                            </Typography>
+                          </Box>
                         </Box>
                       </Box>
 
                       {/* Info row */}
-                      <Box sx={{ display: "flex", flexDirection: "column", gap: 1, mb: 2.5 }}>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                          <CalendarTodayIcon sx={{ fontSize: 14, color: "text.disabled" }} />
-                          <Typography variant="caption" color="text.secondary">
-                            Last donation: <strong>{formatDate(donor.lastDonation)}</strong>
-                          </Typography>
+                      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1.25, mb: 2.5 }}>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 1, borderRadius: 2, backgroundColor: isDark ? "rgba(183,28,28,0.1)" : "#fdeaea" }}>
+                          <CalendarTodayIcon sx={{ fontSize: 15, color: "error.main", flexShrink: 0 }} />
+                          <Box sx={{ minWidth: 0 }}>
+                            <Typography variant="caption" color="text.secondary" sx={{ display: "block", fontSize: "0.65rem" }}>Last donation</Typography>
+                            <Typography variant="caption" fontWeight={700} noWrap sx={{ display: "block" }}>{formatDate(donor.lastDonation)}</Typography>
+                          </Box>
                         </Box>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                          <Box sx={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: donor.available ? (isDark ? "#66bb6a" : "#2e7d32") : "#9e9e9e", flexShrink: 0 }} />
-                          <Typography variant="caption" fontWeight={600} sx={{ color: donor.available ? (isDark ? "#66bb6a" : "#2e7d32") : "text.disabled" }}>
-                            {donor.available ? "Available to donate" : "Currently unavailable"}
-                          </Typography>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 1, borderRadius: 2, backgroundColor: isDark ? "rgba(183,28,28,0.1)" : "#fdeaea" }}>
+                          <FavoriteIcon sx={{ fontSize: 15, color: "error.main", flexShrink: 0 }} />
+                          <Box sx={{ minWidth: 0 }}>
+                            <Typography variant="caption" color="text.secondary" sx={{ display: "block", fontSize: "0.65rem" }}>Total donations</Typography>
+                            <Typography variant="caption" fontWeight={700} noWrap sx={{ display: "block" }}>{donor.donationCount || 0}</Typography>
+                          </Box>
                         </Box>
                       </Box>
 
-                      <Button fullWidth variant="outlined" size="small"
-                        onClick={() => setSelectedDonor(donor)}
-                        sx={{
-                          borderRadius: 2.5, fontWeight: 700, borderColor: btColor, color: btColor,
-                          "&:hover": { backgroundColor: btColor, color: "white", borderColor: btColor },
-                          transition: "all 0.2s",
-                        }}>
-                        View Details
-                      </Button>
+                      <Box sx={{ display: "flex", gap: 1.25 }}>
+                        <Button fullWidth variant="outlined" size="small" startIcon={<VisibilityIcon sx={{ fontSize: 16 }} />}
+                          onClick={() => setSelectedDonor(donor)}
+                          sx={{
+                            borderRadius: 2.5, fontWeight: 700, borderColor: btColor, color: btColor,
+                            "&:hover": { backgroundColor: btColor, color: "white", borderColor: btColor },
+                            transition: "all 0.2s",
+                          }}>
+                          View Details
+                        </Button>
+                        <Button fullWidth variant="contained" size="small" component={Link} href="/contact"
+                          startIcon={<ForumIcon sx={{ fontSize: 16 }} />}
+                          sx={{
+                            borderRadius: 2.5, fontWeight: 700,
+                            background: `linear-gradient(135deg, ${btColor} 0%, ${btColor}cc 100%)`,
+                            boxShadow: `0 4px 12px ${btColor}44`,
+                            "&:hover": { background: btColor },
+                          }}>
+                          Contact
+                        </Button>
+                      </Box>
                     </Box>
                   </Paper>
                 );
@@ -343,6 +481,7 @@ const DonorList = () => {
                   { label: "Email", value: "Private — hospitals can request this donor via the platform", muted: true },
                   { label: "Location", value: selectedDonor.location },
                   { label: "Last Donation", value: formatDate(selectedDonor.lastDonation) },
+                  { label: "Total Donations", value: selectedDonor.donationCount || 0 },
                 ].map((item) => (
                   <Box key={item.label} sx={{
                     display: "flex", justifyContent: "space-between", alignItems: "center", gap: 2,
@@ -388,6 +527,13 @@ const DonorList = () => {
                 sx={{ borderRadius: 2.5, fontWeight: 700, borderColor: btColor, color: btColor,
                   "&:hover": { backgroundColor: btColor, color: "white" } }}>
                 Close
+              </Button>
+              <Button component={Link} href="/contact" variant="contained"
+                startIcon={<ForumIcon sx={{ fontSize: 16 }} />}
+                sx={{ borderRadius: 2.5, fontWeight: 700,
+                  background: `linear-gradient(135deg, ${btColor} 0%, ${btColor}cc 100%)`,
+                  "&:hover": { background: btColor } }}>
+                Contact
               </Button>
             </DialogActions>
           </Dialog>
