@@ -15,7 +15,7 @@ describe('public homepage stats', () => {
 
     const res = await request(app).get('/api/stats/public');
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ donors: 2, donations: 5, hospitals: 3, fulfilledRequests: 2 });
+    expect(res.body).toEqual({ donors: 2, availableDonors: 0, donations: 5, hospitals: 3, fulfilledRequests: 2, units: 0 });
     // nothing personal leaks
     const text = JSON.stringify(res.body);
     expect(text).not.toMatch(/Private Person|private@test|Secret Patient|0911111111/);
@@ -23,7 +23,22 @@ describe('public homepage stats', () => {
 
   test('returns zeros on an empty database', async () => {
     const res = await request(app).get('/api/stats/public');
-    expect(res.body).toEqual({ donors: 0, donations: 0, hospitals: 0, fulfilledRequests: 0 });
+    expect(res.body).toEqual({ donors: 0, availableDonors: 0, donations: 0, hospitals: 0, fulfilledRequests: 0, units: 0 });
+  });
+
+  test('counts available donors and sums blood units on hand across all inventory rows', async () => {
+    const Inventory = require('../src/inventory/inventory.model');
+    const hospital = await createHospital();
+    await Donor.create({ fullName: 'A', email: 'a@test.com', phone: '0911111111', bloodType: 'O+', location: 'PP', available: true });
+    await Donor.create({ fullName: 'B', email: 'b@test.com', phone: '0922222222', bloodType: 'A-', location: 'PP', available: false });
+    await Inventory.create([
+      { bloodType: 'O+', hospital: null, units: 20 },
+      { bloodType: 'A-', hospital: null, units: 5 },
+      { bloodType: 'O+', hospital: hospital._id, units: 7 },
+    ]);
+
+    const res = await request(app).get('/api/stats/public');
+    expect(res.body).toMatchObject({ donors: 2, availableDonors: 1, units: 32 });
   });
 
   test('the admin stats endpoint is still protected', async () => {

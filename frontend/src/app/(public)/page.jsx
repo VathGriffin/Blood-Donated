@@ -199,7 +199,7 @@ export default function Home() {
           <FavoriteIcon sx={{ fontSize: 30, color: "primary.main", ml: 0.75, transform: "rotate(12deg)", verticalAlign: "top" }} />
         </Box>
 
-        <Container maxWidth="lg" sx={{ position: "relative", zIndex: 2, pt: { xs: 4, md: 7 }, pb: { xs: 3, md: 14 } }}>
+        <Container maxWidth="lg" sx={{ position: "relative", zIndex: 2, pt: { xs: 4, md: 7 }, pb: { xs: 3, md: 8 } }}>
           <Box sx={{ maxWidth: { md: 640 } }}>
             <Typography sx={{ fontSize: { xs: "0.78rem", md: "0.9rem" }, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", color: "text.secondary", mb: 1.5 }}>
               A small act makes a big difference
@@ -238,8 +238,8 @@ export default function Home() {
         </Container>
       </Box>
 
-      {/* ── Stats bar (real, public totals) ────────────────────────────── */}
-      <Container maxWidth="lg" sx={{ position: "relative", zIndex: 3, mt: { xs: 0, md: -7 } }}>
+      {/* ── Stats bar (real, public totals) — sits below the hero, not over its photo ── */}
+      <Container maxWidth="lg" sx={{ position: "relative", zIndex: 3, mt: { xs: 5, md: 7 } }}>
         <Paper
           ref={statsRef}
           variant="outlined"

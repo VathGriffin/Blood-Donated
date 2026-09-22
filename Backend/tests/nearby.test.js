@@ -36,6 +36,40 @@ describe('GET /api/nearby/hospitals', () => {
     expect(options.headers['User-Agent']).toMatch(/BloodLife/);
   });
 
+  test('classifies blood centres and passes on only the extra details that are actually mapped', async () => {
+    fetchSpy.mockResolvedValueOnce(overpassReply([
+      { type: 'node', id: 10, lat: 11.55, lon: 104.92, tags: {
+        amenity: 'hospital', name: 'Khmer Name', 'name:en': 'Full Details Hospital', 'addr:housenumber': '12', 'addr:street': 'Street 51',
+        website: 'https://example.org/h', image: 'https://example.org/h.jpg', opening_hours: '24/7', emergency: 'yes',
+        wheelchair: 'yes', operator: 'Ministry of Health', 'operator:type': 'government', description: 'A 300-bed referral hospital.',
+      } },
+      { type: 'node', id: 11, lat: 11.56, lon: 104.93, tags: { healthcare: 'blood_donation', name: 'National Blood Center' } },
+      { type: 'node', id: 12, lat: 11.57, lon: 104.94, tags: { amenity: 'blood_bank', name: 'Old-tag Blood Bank' } },
+      { type: 'node', id: 13, lat: 11.58, lon: 104.95, tags: { healthcare: 'blood_donation' } }, // unnamed blood point → kept
+      { type: 'node', id: 14, lat: 11.59, lon: 104.96, tags: { amenity: 'clinic' } }, // unnamed clinic → dropped
+    ]));
+    const { body } = await request(app).get(URL_OK);
+
+    expect(body.hospitals[0]).toMatchObject({
+      name: 'Full Details Hospital', address: '12 Street 51', website: 'https://example.org/h', image: 'https://example.org/h.jpg',
+      hours: '24/7', emergency: true, wheelchair: true, operator: 'Ministry of Health', ownership: 'Public',
+      description: 'A 300-bed referral hospital.',
+    });
+    expect(body.hospitals[1]).toMatchObject({ type: 'Blood Center', website: '', hours: '', description: '', emergency: false, ownership: '' });
+    expect(body.hospitals[2].type).toBe('Blood Center');
+    expect(body.hospitals).toHaveLength(4);
+    expect(body.hospitals[3]).toMatchObject({ name: 'Blood donation point', type: 'Blood Center' });
+    expect(fetchSpy.mock.calls[0][1].body).toContain(encodeURIComponent('healthcare'));
+  });
+
+  test('never passes on a link the browser could run as a script', async () => {
+    fetchSpy.mockResolvedValueOnce(overpassReply([
+      { type: 'node', id: 20, lat: 11.55, lon: 104.92, tags: { amenity: 'clinic', name: 'Sneaky Clinic', website: 'javascript:alert(1)', image: 'data:text/html,<script>1</script>' } },
+    ]));
+    const { body } = await request(app).get(URL_OK);
+    expect(body.hospitals[0]).toMatchObject({ name: 'Sneaky Clinic', website: '', image: '' });
+  });
+
   test('falls back to the next server when the first fails', async () => {
     fetchSpy
       .mockResolvedValueOnce({ ok: false, status: 429, json: async () => ({}) })

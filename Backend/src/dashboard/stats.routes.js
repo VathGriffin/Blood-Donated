@@ -7,6 +7,7 @@ const BloodRequest = require('../requests/blood-request.model');
 const Appointment = require('../appointments/appointment.model');
 const ContactMessage = require('../notification/contact-message.model');
 const Hospital = require('../hospital/hospital.model');
+const Inventory = require('../inventory/inventory.model');
 const { buildHospitalInsights } = require('./hospital-insights');
 const { sendError } = require('../common/middleware/error-handler');
 
@@ -14,13 +15,18 @@ const { sendError } = require('../common/middleware/error-handler');
 // so it is safe without authentication. (The admin dashboard uses GET / below.)
 router.get('/public', async (req, res) => {
   try {
-    const [donors, donationTotals, hospitals, fulfilledRequests] = await Promise.all([
+    const [donors, availableDonors, donationTotals, hospitals, fulfilledRequests, unitTotals] = await Promise.all([
       Donor.countDocuments(),
+      Donor.countDocuments({ available: true }),
       Donor.aggregate([{ $group: { _id: null, total: { $sum: '$donationCount' } } }]),
       Hospital.countDocuments(),
       BloodRequest.countDocuments({ status: 'Fulfilled' }),
+      Inventory.aggregate([{ $group: { _id: null, total: { $sum: '$units' } } }]),
     ]);
-    res.json({ donors, donations: donationTotals[0]?.total || 0, hospitals, fulfilledRequests });
+    res.json({
+      donors, availableDonors, donations: donationTotals[0]?.total || 0, hospitals, fulfilledRequests,
+      units: unitTotals[0]?.total || 0, // blood units on hand, summed across every inventory row
+    });
   } catch (err) {
     sendError(res, err, req);
   }

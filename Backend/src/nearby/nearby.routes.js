@@ -26,8 +26,25 @@ const failedAt = new Map(); // endpoint -> time of its last failure
 let lastGood = null;        // endpoint that answered most recently
 
 // nwr: hospitals are often mapped as buildings (ways), not just points.
+// Blood centres are tagged healthcare=blood_donation (older maps: amenity=blood_bank).
 const buildQuery = (lat, lng) =>
-  `[out:json][timeout:20];(nwr["amenity"="hospital"](around:15000,${lat},${lng});nwr["amenity"="clinic"](around:10000,${lat},${lng}););out tags center 150;`;
+  `[out:json][timeout:20];(nwr["amenity"="hospital"](around:15000,${lat},${lng});nwr["amenity"="clinic"](around:10000,${lat},${lng});` +
+  `nwr["healthcare"="blood_donation"](around:15000,${lat},${lng});nwr["amenity"="blood_bank"](around:15000,${lat},${lng}););out tags center 200;`;
+
+// OSM values are free text from volunteers: only ever pass on a plain http(s) URL, and cap lengths,
+// because the browser renders these as links and images.
+const cleanUrl = (value) => {
+  const url = String(value || '').split(';')[0].trim();
+  return /^https?:\/\/[^\s"'<>]{4,300}$/i.test(url) ? url : '';
+};
+const cleanText = (value, max = 120) => String(value || '').replace(/\s+/g, ' ').trim().slice(0, max);
+
+const OWNERSHIP = { government: 'Public', public: 'Public', private: 'Private', community: 'Community', charitable: 'Charity', ngo: 'Charity' };
+
+function placeType(tags) {
+  if (tags.healthcare === 'blood_donation' || tags.amenity === 'blood_bank' || tags.amenity === 'blood_donation') return 'Blood Center';
+  return tags.amenity === 'hospital' ? 'Hospital' : 'Clinic';
+}
 
 function parseHospitals(elements = []) {
   const seen = new Set();
@@ -36,17 +53,31 @@ function parseHospitals(elements = []) {
     const lat = el.lat ?? el.center?.lat;
     const lon = el.lon ?? el.center?.lon;
     const tags = el.tags;
-    if (lat == null || lon == null || !tags?.name) continue;
-    const dedupe = `${tags.name.toLowerCase()}|${lat.toFixed(3)}|${lon.toFixed(3)}`;
+    if (lat == null || lon == null || !tags) continue;
+    const type = placeType(tags);
+    // Blood-donation sites are often mapped without a name; they are still real places worth showing.
+    const name = cleanText(tags['name:en'] || tags.name, 100) || (type === 'Blood Center' ? 'Blood donation point' : '');
+    if (!name) continue;
+    const dedupe = `${name.toLowerCase()}|${lat.toFixed(3)}|${lon.toFixed(3)}`;
     if (seen.has(dedupe)) continue;
     seen.add(dedupe);
+    const street = [tags['addr:housenumber'], tags['addr:street']].filter(Boolean).join(' ');
     out.push({
       id: `${el.type}-${el.id}`,
-      name: tags.name,
+      name,
       pos: [lat, lon],
-      address: [tags['addr:street'], tags['addr:city']].filter(Boolean).join(', ') || tags['addr:full'] || '',
+      address: [street, tags['addr:city']].filter(Boolean).join(', ') || tags['addr:full'] || '',
       phone: tags.phone || tags['contact:phone'] || '',
-      type: tags.amenity === 'hospital' ? 'Hospital' : 'Clinic',
+      type,
+      // Optional extras — present only when someone has mapped them, never guessed.
+      website: cleanUrl(tags.website || tags['contact:website']),
+      image: cleanUrl(tags.image),
+      hours: cleanText(tags.opening_hours),
+      description: cleanText(tags['description:en'] || tags.description, 300),
+      emergency: tags.emergency === 'yes' || tags['healthcare:emergency'] === 'yes',
+      wheelchair: tags.wheelchair === 'yes',
+      operator: cleanText(tags.operator, 80),
+      ownership: OWNERSHIP[String(tags['operator:type'] || '').toLowerCase()] || '',
     });
   }
   return out;
