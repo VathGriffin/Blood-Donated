@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useEffect, useState } from "react";
 import {
   Container, Typography, Box, Chip, Avatar, Button, Paper, useTheme,
@@ -214,12 +215,12 @@ const About = () => {
 
             {/* Right: photo */}
             <Box sx={{ justifySelf: { xs: "center", md: "end" }, width: "100%", maxWidth: 460 }}>
-              <Box sx={{ position: "relative" }}>
-                <Box component="img" src={HERO_IMG} alt="A nurse caring for a blood donor"
-                  sx={{
-                    width: "100%", height: { xs: 320, md: 400 }, objectFit: "cover", display: "block",
-                    borderRadius: 5, boxShadow: "0 20px 50px rgba(0,0,0,0.25)",
-                  }}
+              <Box sx={{
+                position: "relative", height: { xs: 320, md: 400 }, overflow: "hidden",
+                borderRadius: 5, boxShadow: "0 20px 50px rgba(0,0,0,0.25)",
+              }}>
+                <Image src={HERO_IMG} alt="A nurse caring for a blood donor" fill
+                  sizes="(max-width: 900px) 100vw, 460px" style={{ objectFit: "cover" }} priority
                 />
 
                 {/* Top-left overlay */}
@@ -297,9 +298,14 @@ const About = () => {
         <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: { xs: 5, md: 7 }, alignItems: "center" }}>
           {/* Photo + quote */}
           <Box sx={{ position: "relative" }}>
-            <Box component="img" src={PURPOSE_IMG} alt="Angkor Wat, Cambodia"
-              sx={{ width: "100%", height: { xs: 280, md: 340 }, objectFit: "cover", borderRadius: 4, display: "block", boxShadow: "0 16px 40px rgba(0,0,0,0.18)" }}
-            />
+            <Box sx={{
+              position: "relative", height: { xs: 280, md: 340 }, overflow: "hidden",
+              borderRadius: 4, boxShadow: "0 16px 40px rgba(0,0,0,0.18)",
+            }}>
+              <Image src={PURPOSE_IMG} alt="Angkor Wat, Cambodia" fill
+                sizes="(max-width: 900px) 100vw, 600px" style={{ objectFit: "cover" }}
+              />
+            </Box>
             <Paper elevation={0} sx={{
               ...cardSx(isDark), position: "absolute", top: 20, right: -16,
               maxWidth: 200, p: 2.5, display: { xs: "none", sm: "block" },
@@ -382,7 +388,7 @@ const About = () => {
                 <Box sx={{ height: 5, background: `linear-gradient(90deg, ${member.color} 0%, ${member.color}88 100%)` }} />
                 <Box sx={{ pt: 4, pb: 2.5, display: "flex", flexDirection: "column", alignItems: "center" }}>
                   <Box sx={{ position: "relative", mb: 1.5 }}>
-                    <Avatar src={member.image} alt={member.name} sx={{
+                    <Avatar src={member.image} alt={member.name} slotProps={{ img: { loading: "lazy" } }} sx={{
                       width: 84, height: 84, border: `3px solid ${member.color}`,
                       boxShadow: `0 0 0 4px ${member.color}22, 0 8px 20px rgba(0,0,0,0.15)`,
                       fontSize: "1.4rem", fontWeight: 800, bgcolor: member.color,

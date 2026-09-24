@@ -102,6 +102,38 @@ describe('donor CRUD', () => {
     expect((await request(app).get(`/api/donors/lookup?email=${donorBody.email}`).set('Authorization', `Bearer ${staffToken}`)).status).toBe(403);
   });
 
+  test('a donor can flip their own availability, but not an unregistered email', async () => {
+    const created = await request(app).post('/api/donors').send(donorBody);
+    expect(created.body.available).toBe(false);
+    const token = signDonor({ id: created.body._id, email: donorBody.email, fullName: donorBody.fullName });
+
+    const flipped = await request(app)
+      .patch('/api/donors/me/availability')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ available: true });
+    expect(flipped.status).toBe(200);
+    expect(flipped.body.available).toBe(true);
+    expect((await Donor.findById(created.body._id)).available).toBe(true);
+
+    const rejected = await request(app)
+      .patch('/api/donors/me/availability')
+      .send({ available: false });
+    expect(rejected.status).toBe(401);
+
+    const ghost = signDonor({ id: '64b000000000000000000009', email: 'ghost@test.com', fullName: 'Ghost' });
+    const notRegistered = await request(app)
+      .patch('/api/donors/me/availability')
+      .set('Authorization', `Bearer ${ghost}`)
+      .send({ available: true });
+    expect(notRegistered.status).toBe(404);
+
+    const badBody = await request(app)
+      .patch('/api/donors/me/availability')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ available: 'yes' });
+    expect(badBody.status).toBe(400);
+  });
+
   test('rejects a second registration with an already-registered email', async () => {
     const first = await request(app).post('/api/donors').send(donorBody);
     expect(first.status).toBe(201);

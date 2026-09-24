@@ -1,6 +1,7 @@
 'use client';
 import { useRouter } from 'next/navigation';
-import { useState, useRef } from "react";
+import Image from 'next/image';
+import { useEffect, useState, useRef } from "react";
 import {
   Container, Box, Typography, TextField, Button, Paper, FormControl, InputLabel, Select,
   MenuItem, Switch, FormControlLabel, useTheme, Alert, Avatar, IconButton, Tooltip,
@@ -120,6 +121,14 @@ const DonateBlood = () => {
     setPhotoPreview(URL.createObjectURL(file));
   };
 
+  // Revoke the previous object URL whenever it's replaced or the component unmounts,
+  // otherwise each selected photo leaks its blob until the tab is closed.
+  useEffect(() => {
+    return () => {
+      if (photoPreview) URL.revokeObjectURL(photoPreview);
+    };
+  }, [photoPreview]);
+
   const handleRemovePhoto = () => {
     setPhotoFile(null);
     setPhotoPreview(null);
@@ -234,8 +243,8 @@ const DonateBlood = () => {
                   boxShadow: "0 20px 50px rgba(0,0,0,0.25)",
                   aspectRatio: "4 / 5",
                 }}>
-                  <Box component="img" src={HERO_IMG} alt="A donor giving blood"
-                    sx={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                  <Image src={HERO_IMG} alt="A donor giving blood" fill
+                    sizes="(max-width: 900px) 100vw, 480px" style={{ objectFit: "cover" }} priority
                   />
                   <Typography className={script.className} sx={{
                     position: "absolute", top: "50%", left: "50%", zIndex: 2,

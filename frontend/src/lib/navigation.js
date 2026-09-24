@@ -3,7 +3,6 @@ import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import WaterDropIcon from '@mui/icons-material/WaterDrop';
 import DescriptionIcon from '@mui/icons-material/Description';
-import HomeIcon from '@mui/icons-material/Home';
 import DomainIcon from '@mui/icons-material/Domain';
 import ChatIcon from '@mui/icons-material/Chat';
 import AssessmentIcon from '@mui/icons-material/Assessment';
@@ -12,8 +11,6 @@ import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import PersonIcon from '@mui/icons-material/Person';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
 import EventAvailableIcon from '@mui/icons-material/EventAvailable';
-import PlaceIcon from '@mui/icons-material/Place';
-import SmartToyIcon from '@mui/icons-material/SmartToy';
 
 /**
  * Dashboard roles. These are the front-end names; the API's role strings are
@@ -77,22 +74,22 @@ export const ROLE_CONFIG = {
 
   [ROLES.DONOR]: {
     label: 'Donor Portal',
+    backToWebsite: true,
     homePath: '/profile',
     loginPath: '/login',
     signOutPath: '/',
     sections: [
       {
-        // Home, Appointments, Make a Request, Find Hospitals and Chat with AI are public
-        // pages — they open outside the dashboard chrome.
+        // My Profile hosts Availability Status and Request History as sections/tabs of
+        // that one page, rather than separate rows, so the sidebar never highlights more
+        // than one row for the same page. Blood Request and Appointment are public pages —
+        // they open outside the dashboard chrome.
         items: [
-          { label: 'Home',             href: '/',             icon: HomeIcon, exact: true },
-          { label: 'My Profile',       href: '/profile',      icon: PersonIcon },
+          { label: 'My Profile',       href: '/profile',      icon: PersonIcon, exact: true },
           { label: 'My QR Card',       href: '/qr-card',      icon: QrCode2Icon },
-          { label: 'Appointments',     href: '/appointments', icon: EventAvailableIcon },
-          { label: 'Make a Request',   href: '/requests',     icon: DescriptionIcon },
-          { label: 'Find Hospitals',   href: '/map',          icon: PlaceIcon },
-          { label: 'Chat with AI',     href: '/assistant',    icon: SmartToyIcon },
-          { label: 'Messages',         href: '/notification', icon: ChatIcon },
+          { label: 'Blood Request',    href: '/requests',     icon: DescriptionIcon },
+          { label: 'Appointment',      href: '/appointments', icon: EventAvailableIcon },
+          { label: 'Notifications',    href: '/notification', icon: ChatIcon },
         ],
       },
     ],

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import {
   Box, Container, Typography, Avatar, Paper, Chip, Button, useTheme, Grid, Skeleton,
   Tooltip, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField,
-  CircularProgress, Tabs, Tab,
+  CircularProgress, Tabs, Tab, Switch, FormControlLabel,
 } from '@mui/material';
 import BloodtypeIcon from '@mui/icons-material/Bloodtype';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
@@ -67,6 +67,9 @@ export default function ProfilePage() {
   const [tab,          setTab]          = useState(0); // 0 = requests, 1 = appointments
   const [reqFilter,    setReqFilter]    = useState('All');
   const [apptFilter,   setApptFilter]   = useState('All');
+  const [donorStatus,  setDonorStatus]  = useState(null); // null = loading, { found, available, ... } once checked
+  const [availSaving,  setAvailSaving]  = useState(false);
+  const [availError,   setAvailError]   = useState('');
 
   const fileInputRef = useRef(null);
 
@@ -95,6 +98,15 @@ export default function ProfilePage() {
       .then(res => setAppointments(Array.isArray(res.data) ? res.data : []))
       .catch(() => setAppointments([]))
       .finally(() => setApptLoading(false));
+  }, [isAuth, user?.email, token]);
+
+  useEffect(() => {
+    if (!isAuth || !user?.email) return;
+    axios.get(`${API_BASE}/api/donors/lookup?email=${encodeURIComponent(user.email)}`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => setDonorStatus(res.data))
+      // A failed lookup is not the same as "not registered" — don't send an existing donor
+      // to the registration form just because the request errored.
+      .catch(() => setDonorStatus({ found: false, error: true }));
   }, [isAuth, user?.email, token]);
 
   if (!isAuth) {
@@ -176,6 +188,20 @@ export default function ProfilePage() {
       if (!sessionExpired(err)) setSaveError(err.response?.data?.message || 'Failed to save. Please try again.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleToggleAvailability = async (e) => {
+    const available = e.target.checked;
+    setAvailSaving(true);
+    setAvailError('');
+    try {
+      await axios.patch(`${API_BASE}/api/donors/me/availability`, { available }, authHeader());
+      setDonorStatus((prev) => ({ ...prev, available }));
+    } catch (err) {
+      if (!sessionExpired(err)) setAvailError(err.response?.data?.message || 'Failed to update availability.');
+    } finally {
+      setAvailSaving(false);
     }
   };
 
@@ -283,6 +309,52 @@ export default function ProfilePage() {
       </Box>
 
       <Container maxWidth="md" sx={{ mt: -3 }}>
+
+        {/* Availability Status */}
+        <Paper id="availability" elevation={0} sx={{
+          borderRadius: 3, border: `1px solid ${border}`, bgcolor: card, mb: 3,
+          p: 2.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap',
+        }}>
+          <Box display="flex" alignItems="center" gap={1.5}>
+            <Box sx={{
+              width: 44, height: 44, borderRadius: 2, flexShrink: 0,
+              bgcolor: isDark ? 'rgba(183,28,28,0.12)' : '#fff0f0',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <BloodtypeIcon sx={{ color: '#b71c1c' }} />
+            </Box>
+            <Box>
+              <Typography fontWeight={800} fontSize="0.95rem">Availability Status</Typography>
+              <Typography variant="caption" color="text.secondary">
+                {donorStatus === null
+                  ? 'Checking your donor record…'
+                  : donorStatus.error
+                    ? 'Could not load your donor record. Please refresh to try again.'
+                  : donorStatus.found
+                    ? (donorStatus.available ? 'You are marked available to donate' : 'You are marked unavailable to donate')
+                    : 'Register as a donor to appear in the public directory'}
+              </Typography>
+              {availError && (
+                <Typography variant="caption" color="error" display="block" mt={0.3}>{availError}</Typography>
+              )}
+            </Box>
+          </Box>
+          {donorStatus?.found ? (
+            <FormControlLabel
+              control={
+                <Switch checked={!!donorStatus.available} onChange={handleToggleAvailability} disabled={availSaving} color="success" />
+              }
+              label={<Typography variant="body2" fontWeight={700}>{donorStatus.available ? 'Available' : 'Unavailable'}</Typography>}
+            />
+          ) : donorStatus?.error ? null : donorStatus && !donorStatus.found ? (
+            <Button component={Link} href="/donate" variant="outlined" color="error" size="small"
+              sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2 }}>
+              Register as Donor
+            </Button>
+          ) : (
+            <CircularProgress size={20} color="error" />
+          )}
+        </Paper>
 
         {/* Tabs + status filters */}
         <Paper elevation={0} sx={{ borderRadius: 3, border: `1px solid ${border}`, bgcolor: card, overflow: 'hidden', mb: 3 }}>

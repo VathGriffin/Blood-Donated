@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
-import { useEffect, useState } from "react";
+import Image from 'next/image';
+import { useEffect, useMemo, useState } from "react";
 import {
   Container, Typography, Box, Chip, Avatar, Paper, TextField, MenuItem, InputAdornment,
   Button, Dialog, DialogTitle, DialogContent, DialogActions, useTheme, CircularProgress,
@@ -77,18 +78,24 @@ const DonorList = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  const filtered = sortDonors(
-    donors.filter((d) => {
-      const matchType = selectedType === "All" || d.bloodType === selectedType;
-      const matchSearch = !search || d.fullName?.toLowerCase().includes(search.toLowerCase()) || d.location?.toLowerCase().includes(search.toLowerCase());
-      return matchType && matchSearch;
-    }),
-    sortBy
-  );
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase();
+    return sortDonors(
+      donors.filter((d) => {
+        const matchType = selectedType === "All" || d.bloodType === selectedType;
+        const matchSearch = !q || d.fullName?.toLowerCase().includes(q) || d.location?.toLowerCase().includes(q);
+        return matchType && matchSearch;
+      }),
+      sortBy
+    );
+  }, [donors, selectedType, search, sortBy]);
 
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
-  const paginated = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
-  const availableCount = donors.filter((d) => d.available).length;
+  const paginated = useMemo(
+    () => filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE),
+    [filtered, page]
+  );
+  const availableCount = useMemo(() => donors.filter((d) => d.available).length, [donors]);
 
   const handleTypeChange = (val) => { setSelectedType(val); setPage(1); };
   const handleSearchChange = (e) => { setSearch(e.target.value); setPage(1); };
@@ -196,8 +203,8 @@ const DonorList = () => {
                   boxShadow: "0 20px 50px rgba(0,0,0,0.25)",
                   aspectRatio: "4 / 5",
                 }}>
-                  <Box component="img" src={HERO_IMG} alt="Hands holding a heart, representing blood donation"
-                    sx={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                  <Image src={HERO_IMG} alt="Hands holding a heart, representing blood donation" fill
+                    sizes="(max-width: 900px) 100vw, 440px" style={{ objectFit: "cover" }} priority
                   />
                   <Box sx={{
                     position: "absolute", top: "50%", left: "50%", zIndex: 2,
@@ -347,6 +354,7 @@ const DonorList = () => {
                         <Box sx={{ position: "relative", flexShrink: 0 }}>
                           <Avatar
                             src={donor.photo ? `${API_BASE}${donor.photo}` : undefined}
+                            slotProps={{ img: { loading: "lazy" } }}
                             sx={{
                               width: 56, height: 56, fontWeight: 800, fontSize: "1.1rem",
                               background: `linear-gradient(135deg, ${btColor} 0%, ${btColor}cc 100%)`,
