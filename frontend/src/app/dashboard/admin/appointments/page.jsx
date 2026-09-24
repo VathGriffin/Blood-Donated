@@ -47,7 +47,7 @@ const ManageAppointments = () => {
                 prev.map((a) => (a._id === id ? { ...a, status } : a))
             );
             setSnackbar({ open: true, message: `Status updated to ${status}`, severity: "success" });
-        } catch (err) {
+        } catch {
             setSnackbar({ open: true, message: "Update failed!", severity: "error" });
         }
     };
@@ -58,7 +58,7 @@ const ManageAppointments = () => {
             await axios.delete(`${API}/${id}`, authHeader());
             setAppointments((prev) => prev.filter((a) => a._id !== id));
             setSnackbar({ open: true, message: "Appointment deleted.", severity: "info" });
-        } catch (err) {
+        } catch {
             setSnackbar({ open: true, message: "Delete failed!", severity: "error" });
         }
     };
@@ -150,7 +150,7 @@ const ManageAppointments = () => {
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            filtered.map((appt, idx) => (
+                            filtered.map((appt) => (
                                 <TableRow
                                     key={appt._id}
                                     hover

@@ -22,7 +22,10 @@ import { formatDate, shortRequestId } from '@/lib/format';
 
 
 // recharts is large and the charts sit below the stat cards, so load them on demand.
-const chartSlot = (h) => () => <Skeleton variant="rounded" height={h} />;
+const chartSlot = (h) => {
+    const ChartSlot = () => <Skeleton variant="rounded" height={h} />;
+    return ChartSlot;
+};
 const StockBarChart = dynamic(() => import('@/components/inventory/StockCharts').then((m) => m.StockBarChart), { ssr: false, loading: chartSlot(300) });
 const StockDonut = dynamic(() => import('@/components/inventory/StockCharts').then((m) => m.StockDonut), { ssr: false, loading: chartSlot(200) });
 

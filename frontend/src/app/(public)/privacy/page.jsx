@@ -46,7 +46,7 @@ function Section({ id, icon, title, children, isDark, border, card }) {
   );
 }
 
-function Bullet({ children, isDark }) {
+function Bullet({ children }) {
   return (
     <Box display="flex" gap={1.5} mb={1}>
       <CheckCircleIcon sx={{ fontSize: 16, color: "#dc2626", mt: 0.3, flexShrink: 0 }} />

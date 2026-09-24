@@ -1,6 +1,6 @@
 'use client';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Container, Typography, TextField, Button, Paper, Box, FormControl, Select, MenuItem,
   useTheme, Alert, Tabs, Tab, Chip, Avatar, Grid, Skeleton, Divider,
@@ -63,21 +63,22 @@ export default function RequestBlood() {
   const [filterType,  setFilterType]  = useState("All");
   const [filterStatus, setFilterStatus] = useState("All");
 
-  const fetchRequests = async () => {
+  const fetchRequests = useCallback(async () => {
     setReqLoading(true);
     try {
-      const res = await axios.get(`${API_BASE}/api/requests`, authHeader);
+      const res = await axios.get(`${API_BASE}/api/requests`,
+        token ? { headers: { Authorization: `Bearer ${token}` } } : undefined);
       setRequests(Array.isArray(res.data) ? res.data : []);
     } catch {
       setRequests([]);
     } finally {
       setReqLoading(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     if (pageTab === 1) fetchRequests();
-  }, [pageTab]);
+  }, [pageTab, fetchRequests]);
 
   const handleChange = (field) => (e) => {
     setForm(f => ({ ...f, [field]: e.target.value }));
