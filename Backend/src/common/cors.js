@@ -4,7 +4,9 @@
 // matches exactly one hostname label (letters, digits, hyphens) — that is what Vercel's per-deploy
 // preview URLs need, e.g.  https://blood-donated-*-yourteam.vercel.app  — while still refusing
 // look-alikes such as https://blood-donated-x.evil.com or a different scheme.
-const DEV_ORIGINS = ['http://localhost:3000', 'http://localhost:3002', 'http://localhost:3003'];
+// localhost and 127.0.0.1 are different origins to a browser, so both spellings are listed.
+const DEV_PORTS = [3000, 3002, 3003];
+const DEV_ORIGINS = DEV_PORTS.flatMap((port) => [`http://localhost:${port}`, `http://127.0.0.1:${port}`]);
 
 const escapeRegex = (text) => text.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
 

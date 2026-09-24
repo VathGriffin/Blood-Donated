@@ -9,6 +9,7 @@ describe('buildOriginChecker', () => {
   test('always allows local development and requests without an Origin header', () => {
     const allowed = buildOriginChecker('');
     expect(allowed('http://localhost:3000')).toBe(true);
+    expect(allowed('http://127.0.0.1:3000')).toBe(true);
     expect(allowed(undefined)).toBe(true);
     expect(allowed('https://evil.com')).toBe(false);
   });

@@ -7,6 +7,7 @@ import { MailOutline, LockOutlined } from '@mui/icons-material';
 import axios from 'axios';
 import { useUserAuth } from '@/store/UserAuthContext';
 import API_BASE from '@/lib/config';
+import { apiErrorMessage } from '@/lib/api-error';
 import SocialButtons from '@/components/SocialButtons';
 import DropHeart from '@/components/auth/DropHeart';
 import { LoginArt } from '@/components/auth/AuthArt';
@@ -41,7 +42,7 @@ const UserLogin = () => {
       login(data.token, data.user, { remember });
       router.push('/');
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Please try again.');
+      setError(apiErrorMessage(err, 'Login failed. Please try again.'));
     } finally {
       setLoading(false);
     }

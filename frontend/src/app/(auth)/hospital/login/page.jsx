@@ -11,6 +11,7 @@ import {
 import axios from 'axios';
 import { useAuth } from '@/store/AuthContext';
 import API_BASE from '@/lib/config';
+import { apiErrorMessage } from '@/lib/api-error';
 
 const capabilities = [
     { icon: <EventAvailable sx={{ fontSize: 17 }} />, text: 'Confirm and check in appointments' },
@@ -50,7 +51,7 @@ export default function HospitalLogin() {
             login(data.token, data.staff);
             router.push('/dashboard/hospital', { replace: true });
         } catch (err) {
-            setError(err.response?.data?.message || 'Login failed. Try again.');
+            setError(apiErrorMessage(err, 'Login failed. Try again.'));
         } finally {
             setLoading(false);
         }

@@ -11,6 +11,7 @@ import {
 import axios from 'axios';
 import { useAuth } from '@/store/AuthContext';
 import API_BASE from '@/lib/config';
+import { apiErrorMessage } from '@/lib/api-error';
 
 const SIDE_IMG =
     'https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&w=1200&q=80';
@@ -54,7 +55,7 @@ const AdminLogin = () => {
             login(data.token, data.staff);
             router.push('/dashboard/admin', { replace: true });
         } catch (err) {
-            setError(err.response?.data?.message || 'Login failed. Try again.');
+            setError(apiErrorMessage(err, 'Login failed. Try again.'));
         } finally {
             setLoading(false);
         }
