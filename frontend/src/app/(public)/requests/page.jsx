@@ -41,7 +41,8 @@ export default function RequestBlood() {
   const theme  = useTheme();
   const isDark = theme.palette.mode === "dark";
   const router = useRouter();
-  const { user: loggedInUser, isAuth } = useUserAuth();
+  const { token, isAuth } = useUserAuth();
+  const authHeader = token ? { headers: { Authorization: `Bearer ${token}` } } : undefined;
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
@@ -65,7 +66,7 @@ export default function RequestBlood() {
   const fetchRequests = async () => {
     setReqLoading(true);
     try {
-      const res = await axios.get(`${API_BASE}/api/requests`);
+      const res = await axios.get(`${API_BASE}/api/requests`, authHeader);
       setRequests(Array.isArray(res.data) ? res.data : []);
     } catch {
       setRequests([]);
@@ -95,6 +96,8 @@ export default function RequestBlood() {
     setLoading(true);
     setError("");
     try {
+      // The backend files the request under the email in the login token, so the token must be
+      // sent for the request to show up on the requester's profile.
       await axios.post(`${API_BASE}/api/requests`, {
         hospitalName: form.hospitalName,
         patientName:  form.patientName,
@@ -103,8 +106,7 @@ export default function RequestBlood() {
         urgency:      form.urgency,
         reason:       form.reason,
         contact:      form.notes,
-        userEmail:    loggedInUser?.email || "",
-      });
+      }, authHeader);
       router.push("/requests/thank-you");
     } catch (err) {
       setError(err.response?.data?.error || err.response?.data?.message || "Submission failed. Please try again.");
