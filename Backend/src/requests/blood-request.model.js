@@ -24,5 +24,7 @@ bloodRequestSchema.index({ status: 1, urgency: 1 });
 bloodRequestSchema.index({ bloodType: 1 });
 bloodRequestSchema.index({ createdAt: -1 });
 bloodRequestSchema.index({ userEmail: 1 });
+// Hospital staff list their own hospital's requests, newest first.
+bloodRequestSchema.index({ hospital: 1, createdAt: -1 });
 
 module.exports = mongoose.model('BloodRequest', bloodRequestSchema);

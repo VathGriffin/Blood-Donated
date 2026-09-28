@@ -10,12 +10,13 @@ import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import EditIcon from "@mui/icons-material/Edit";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import RefreshIcon from "@mui/icons-material/Refresh";
-import {
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip as ChartTooltip, CartesianGrid,
-  Cell,
-} from "recharts";
+import dynamic from "next/dynamic";
 import API_BASE from "@/lib/config";
 import { useAuth } from "@/store/AuthContext";
+
+// recharts is large and the chart sits below the stock cards, so load it on demand.
+const ChartSlot = () => <Skeleton variant="rounded" height={200} />;
+const InventoryTypeChart = dynamic(() => import("@/components/inventory/InventoryTypeChart"), { ssr: false, loading: ChartSlot });
 
 const MAX_UNITS = 200;
 
@@ -248,20 +249,7 @@ export default function Inventory() {
         <Typography variant="caption" color="text.secondary" display="block" mb={2.5}>
           Units per blood type — live data from database
         </Typography>
-        <ResponsiveContainer width="100%" height={200}>
-          <BarChart data={chartData} barSize={28}>
-            <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#1f1f1f" : "#f0f0f0"} vertical={false} />
-            <XAxis dataKey="type" tick={{ fontSize: 11, fontWeight: 700 }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
-            <ChartTooltip contentStyle={{ borderRadius: 10, fontSize: 12, border: `1px solid ${border}`, backgroundColor: cardBg }}
-              cursor={{ fill: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)" }} />
-            <Bar dataKey="units" radius={[5, 5, 0, 0]}>
-              {chartData.map((entry, i) => (
-                <Cell key={i} fill={BLOOD_COLORS[entry.type] || "#dc2626"} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+        <InventoryTypeChart data={chartData} colors={BLOOD_COLORS} />
       </Paper>
 
       {/* Edit Dialog */}
