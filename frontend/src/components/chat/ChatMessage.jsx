@@ -26,7 +26,13 @@ function renderInline(text, keyPrefix, linkColor) {
   });
 }
 
-export default function ChatMessage({ text, fontSize = '0.85rem', lineHeight = 1.7 }) {
+// Same-site links in a reply, in order — used to turn them into action buttons under the bubble.
+export function replyLinks(text) {
+  return [...String(text || '').matchAll(/\[([^\]]+)\]\((\/(?!\/)[^)\s\\]*)\)/g)].map(([, label, href]) => ({ label, href }));
+}
+
+// `stepBadges` shows numbered lists as red numbered circles instead of "1." markers.
+export default function ChatMessage({ text, fontSize = '0.85rem', lineHeight = 1.7, stepBadges = false }) {
   const isDark = useTheme().palette.mode === 'dark';
   const linkColor = isDark ? '#ef9a9a' : '#b71c1c';
   const blocks = [];
@@ -37,6 +43,23 @@ export default function ChatMessage({ text, fontSize = '0.85rem', lineHeight = 1
   const flushList = () => {
     if (!listBuffer.length) return;
     const key = blockKey++;
+    if (stepBadges && listType === 'ol') {
+      blocks.push(
+        <Box component="ol" key={`ol-${key}`} sx={{ listStyle: 'none', m: 0, p: 0, my: 0.75, display: 'flex', flexDirection: 'column', gap: 0.9 }}>
+          {listBuffer.map((item, i) => (
+            <Box component="li" key={i} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.1, fontSize, lineHeight }}>
+              <Box aria-hidden="true" sx={{
+                width: 22, height: 22, mt: '1px', flexShrink: 0, borderRadius: '50%', bgcolor: '#B91C2C', color: '#fff',
+                fontSize: '0.72rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>{i + 1}</Box>
+              <Box sx={{ minWidth: 0 }}>{renderInline(item, `li-${key}-${i}`, linkColor)}</Box>
+            </Box>
+          ))}
+        </Box>
+      );
+      listBuffer = [];
+      return;
+    }
     blocks.push(
       <Box component={listType} key={`${listType}-${key}`} sx={{ m: 0, pl: 2.6, my: 0.4 }}>
         {listBuffer.map((item, i) => (

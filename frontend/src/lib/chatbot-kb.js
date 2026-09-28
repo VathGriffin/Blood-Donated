@@ -48,6 +48,7 @@ const KB = [
   // ── Accounts. Order matters: the first entry whose tag appears in the message wins, so the
   // specific ones (forgot password, staff, "do I need an account") come before the broad ones. ──
   {
+    ask: { en: "I forgot my password", km: "ខ្ញុំភ្លេចពាក្យសម្ងាត់", vi: "Tôi quên mật khẩu" },
     tags: {
       en: ["forgot password","forgot my password","reset password","reset my password","lost password","password reset","can't remember my password"],
       km: ["ភ្លេចពាក្យសម្ងាត់","ប្ដូរពាក្យសម្ងាត់","កំណត់ពាក្យសម្ងាត់ឡើងវិញ"],
@@ -84,6 +85,7 @@ const KB = [
     },
   },
   {
+    ask: { en: "How do I log in?", km: "តើចូលគណនីដោយរបៀបណា?", vi: "Làm sao để đăng nhập?" },
     tags: {
       en: ["log in","login","sign in","signin","sign-in","can't log in","cannot log in","cant login","logged out"],
       km: ["ចូលគណនី","ចូលប្រើ","ចូលប្រព័ន្ធ"],
@@ -96,6 +98,7 @@ const KB = [
     },
   },
   {
+    ask: { en: "How do I create an account?", km: "តើបង្កើតគណនីដោយរបៀបណា?", vi: "Làm sao để tạo tài khoản?" },
     tags: {
       en: ["create account","create an account","create a account","new account","make an account","make account","open an account","account","sign up","signup","sign-up","register","registration","how to register","how do i register"],
       km: ["បង្កើតគណនី","គណនីថ្មី","ចុះឈ្មោះគណនី","ចុះឈ្មោះ","គណនី"],
@@ -108,10 +111,12 @@ const KB = [
     },
   },
   {
+    ask: { en: "Am I eligible to donate?", km: "តើខ្ញុំអាចបរិច្ចាគបានទេ?", vi: "Tôi có đủ điều kiện hiến không?" },
+    popular: true,
     tags: {
-      en: ["eligible","eligibility","qualify","can i donate","requirements","when can i donate","when do i donate","when i donate","when am i eligible","when to donate","when should i donate"],
-      km: ["គុណសម្បត្តិ","តម្រូវការ","អាចបរិច្ចាគ","ផ្ដល់ឈាម","ពេលណាអាចបរិច្ចាគ"],
-      vi: ["đủ điều kiện","điều kiện","yêu cầu","có thể hiến","khi nào có thể hiến","khi nào tôi hiến"],
+      en: ["eligible","eligibility","qualify","can i donate","pregnant","pregnancy","breastfeeding","requirements","when can i donate","when do i donate","when i donate","when am i eligible","when to donate","when should i donate"],
+      km: ["គុណសម្បត្តិ","តម្រូវការ","អាចបរិច្ចាគ","មានផ្ទៃពោះ","បំបៅដោះ","ផ្ដល់ឈាម","ពេលណាអាចបរិច្ចាគ"],
+      vi: ["đủ điều kiện","điều kiện","yêu cầu","có thể hiến","mang thai","có thai","cho con bú","khi nào có thể hiến","khi nào tôi hiến"],
     },
     answer: {
       en: "To donate blood you need to be:\n• Age 18–60\n• Weight at least 45 kg\n• In good health with no active infection\n• No donation in the past 3 months\n• Not pregnant or breastfeeding",
@@ -120,6 +125,7 @@ const KB = [
     },
   },
   {
+    ask: { en: "What are the blood types?", km: "តើមានក្រុមឈាមអ្វីខ្លះ?", vi: "Có những nhóm máu nào?" },
     tags: {
       en: ["blood type","blood group","compatible","compatibility"],
       km: ["ក្រុមឈាម","ប្រភេទឈាម","ជំនួស"],
@@ -132,10 +138,12 @@ const KB = [
     },
   },
   {
+    priority: true,
+    ask: { en: "Can I donate with a cold?", km: "ជំងឺផ្ដាសាយ អាចបរិច្ចាគទេ?", vi: "Cảm lạnh có thể hiến không?" },
     tags: {
-      en: ["cold","sick","fever","flu"],
-      km: ["ផ្ដាសាយ","គ្រុន","ជំងឺ","ក្ដៅ"],
-      vi: ["cảm lạnh","bệnh","sốt","cúm"],
+      en: ["cold","fever","flu","have a cold","have a fever","have the flu"],
+      km: ["ផ្ដាសាយ","គ្រុន","គ្រុនក្ដៅ"],
+      vi: ["cảm lạnh","sốt","cúm","bị cảm","bị sốt","bị cúm","đang ốm"],
     },
     answer: {
       en: "If you have a mild cold without fever, you may be able to donate. However if you have a fever or sore throat, wait until you're fully recovered — at least 7 days symptom-free.",
@@ -144,8 +152,10 @@ const KB = [
     },
   },
   {
+    priority: true,
+    ask: { en: "How often can I donate?", km: "បរិច្ចាគបានប៉ុន្មានខែម្ដង?", vi: "Tôi có thể hiến bao lâu một lần?" },
     tags: {
-      en: ["how often","frequency","how many times","interval"],
+      en: ["how often","frequency","how many times","interval","donate again"],
       km: ["ប៉ុន្មានដង","ញឹកញាប់","ប៉ុន្មានខែ"],
       vi: ["bao nhiêu lần","tần suất","bao lâu một lần"],
     },
@@ -156,9 +166,11 @@ const KB = [
     },
   },
   {
+    ask: { en: "How do I register as a donor?", km: "តើចុះឈ្មោះជាអ្នកបរិច្ចាគដោយរបៀបណា?", vi: "Làm sao để đăng ký hiến máu?" },
+    popular: true,
     tags: {
       en: ["register as a donor","register as donor","donor registration","become donor","become a donor","how to donate","want to donate","i want to donate","want donate","donate blood","i want donate","give blood","wanna donate"],
-      km: ["ចុះឈ្មោះជាអ្នកបរិច្ចាគ","ក្លាយជា","ជាអ្នកបរិច្ចាគ","ចង់បរិចាគ","ចង់ឲ្យឈាម","បរិចាគឈាម"],
+      km: ["ចុះឈ្មោះជាអ្នកបរិច្ចាគ","ក្លាយជា","ជាអ្នកបរិច្ចាគ","ចង់បរិច្ចាគ","ចង់ឲ្យឈាម","បរិច្ចាគឈាម"],
       vi: ["đăng ký làm người hiến","đăng ký hiến máu","trở thành người hiến","muốn hiến máu","tôi muốn hiến"],
     },
     answer: {
@@ -168,6 +180,7 @@ const KB = [
     },
   },
   {
+    ask: { en: "How do I request blood?", km: "តើស្នើសុំឈាមដោយរបៀបណា?", vi: "Làm sao để yêu cầu máu?" },
     tags: {
       en: ["request blood","need blood","how to request"],
       km: ["សុំឈាម","ត្រូវការឈាម","ស្នើ"],
@@ -180,6 +193,8 @@ const KB = [
     },
   },
   {
+    ask: { en: "How do I book an appointment?", km: "តើណាត់ជួបដោយរបៀបណា?", vi: "Làm sao để đặt lịch hẹn?" },
+    popular: true,
     tags: {
       en: ["appointment","book","schedule"],
       km: ["ណាត់ជួប","កក់","កាលវិភាគ"],
@@ -192,6 +207,7 @@ const KB = [
     },
   },
   {
+    ask: { en: "How should I prepare?", km: "តើត្រូវរៀបចំខ្លួនដូចម្ដេច?", vi: "Tôi nên chuẩn bị thế nào?" },
     tags: {
       en: ["prepare","preparation","before","eat before"],
       km: ["រៀបចំ","មុន","ត្រៀម","ហូបអ្វី"],
@@ -204,6 +220,7 @@ const KB = [
     },
   },
   {
+    ask: { en: "What to do after donating?", km: "ក្រោយបរិច្ចាគ ត្រូវធ្វើអ្វី?", vi: "Sau khi hiến cần làm gì?" },
     tags: {
       en: ["after","recovery","rest after"],
       km: ["ក្រោយ","ការសម្រាក","ក្រោយបរិច្ចាគ"],
@@ -216,6 +233,7 @@ const KB = [
     },
   },
   {
+    ask: { en: "Is donating blood safe?", km: "តើការបរិច្ចាគឈាមមានសុវត្ថិភាពទេ?", vi: "Hiến máu có an toàn không?" },
     tags: {
       en: ["safe","side effect","danger","risk","pain"],
       km: ["សុវត្ថិភាព","ផលប៉ះពាល់","គ្រោះថ្នាក់"],
@@ -228,6 +246,7 @@ const KB = [
     },
   },
   {
+    ask: { en: "How long does donation take?", km: "ដំណើរការចំណាយពេលប៉ុន្មាន?", vi: "Quá trình mất bao lâu?" },
     tags: {
       en: ["how long","duration","process","time"],
       km: ["ប៉ុន្មានម៉ោង","រយៈពេល","ចំណាយ"],
@@ -240,6 +259,7 @@ const KB = [
     },
   },
   {
+    ask: { en: "Where can I donate?", km: "តើអាចបរិច្ចាគនៅឯណា?", vi: "Tôi có thể hiến máu ở đâu?" },
     tags: {
       en: ["hospital","location","center","where"],
       km: ["មន្ទីរពេទ្យ","ទីតាំង","ណា"],
@@ -252,6 +272,8 @@ const KB = [
     },
   },
   {
+    priority: true,
+    ask: { en: "Can I donate after a tattoo?", km: "ក្រោយសាក់ អាចបរិច្ចាគទេ?", vi: "Xăm hình có hiến được không?" },
     tags: {
       en: ["tattoo","piercing"],
       km: ["សាក់","ចោះ","គំនូរលើស្បែក"],
@@ -264,6 +286,8 @@ const KB = [
     },
   },
   {
+    priority: true,
+    ask: { en: "Can I donate while taking medicine?", km: "ពេលលេបថ្នាំ អាចបរិច្ចាគទេ?", vi: "Đang uống thuốc có hiến được không?" },
     tags: {
       en: ["medication","medicine","drug"],
       km: ["ថ្នាំ","ឱសថ"],
@@ -273,6 +297,46 @@ const KB = [
       en: "It depends on the medication. Always disclose all medications during your health screening. Blood thinners and some antibiotics may require a waiting period.",
       km: "អាស្រ័យលើថ្នាំ។ ចែករំលែកព័ត៌មានអំពីថ្នាំទាំងអស់ពេលពិនិត្យសុខភាព។ ថ្នាំស្ដើងឈាម និងថ្នាំអង់ទីប៊ីយ៉ូទិកខ្លះអាចត្រូវការពេលរង់ចាំ។",
       vi: "Tùy thuộc vào loại thuốc. Luôn khai báo tất cả các loại thuốc trong quá trình kiểm tra sức khỏe. Thuốc làm loãng máu và một số kháng sinh có thể yêu cầu thời gian chờ.",
+    },
+  },
+  // ── Why donate, request status, contact ──
+  {
+    ask: { en: "Why should I donate blood?", km: "ហេតុអ្វីគួរបរិច្ចាគឈាម?", vi: "Vì sao nên hiến máu?" },
+    tags: {
+      en: ["why donate","why should i donate","why give blood","benefit of donating","benefits of donating","who needs blood","why is blood donation important"],
+      km: ["ហេតុអ្វីបរិច្ចាគ","ហេតុអ្វីគួរបរិច្ចាគ","អត្ថប្រយោជន៍នៃការបរិច្ចាគ","អ្នកណាត្រូវការឈាម"],
+      vi: ["tại sao hiến máu","vì sao nên hiến","vì sao hiến máu","lợi ích hiến máu","lợi ích của hiến máu","ai cần máu"],
+    },
+    answer: {
+      en: "Why donate blood?\n• One donation can help save up to 3 lives\n• Blood can't be manufactured — patients depend entirely on donors\n• It's needed for surgery, accidents, childbirth, cancer treatment and anaemia\n• Each visit includes a quick free health check (blood pressure and haemoglobin)\n\nReady to help? Register as a donor at [Donate](/donate).",
+      km: "ហេតុអ្វីគួរបរិច្ចាគឈាម?\n• ការបរិច្ចាគម្ដងអាចជួយសង្រ្គោះជីវិតបានរហូតដល់ 3 នាក់\n• ឈាមមិនអាចផលិតបានទេ — អ្នកជំងឺពឹងផ្អែកទាំងស្រុងលើអ្នកបរិច្ចាគ\n• ឈាមត្រូវការសម្រាប់ការវះកាត់ គ្រោះថ្នាក់ ការសម្រាលកូន ការព្យាបាលជំងឺមហារីក និងភាពស្លេកស្លាំង\n• រាល់ពេលបរិច្ចាគ អ្នកទទួលបានការពិនិត្យសុខភាពខ្លីដោយឥតគិតថ្លៃ (សម្ពាធឈាម និងអេម៉ូក្លូប៊ីន)\n\nរួចរាល់ហើយឬនៅ? ចុះឈ្មោះជាអ្នកបរិច្ចាគនៅ [Donate](/donate)។",
+      vi: "Vì sao nên hiến máu?\n• Một lần hiến có thể giúp cứu đến 3 người\n• Máu không thể sản xuất nhân tạo — bệnh nhân hoàn toàn phụ thuộc vào người hiến\n• Máu cần cho phẫu thuật, tai nạn, sinh nở, điều trị ung thư và thiếu máu\n• Mỗi lần hiến bạn được kiểm tra sức khỏe nhanh miễn phí (huyết áp và huyết sắc tố)\n\nSẵn sàng giúp đỡ? Đăng ký hiến máu tại [Donate](/donate).",
+    },
+  },
+  {
+    ask: { en: "How do I check my request status?", km: "តើពិនិត្យស្ថានភាពសំណើដោយរបៀបណា?", vi: "Làm sao xem trạng thái yêu cầu?" },
+    tags: {
+      en: ["request status","status of my request","my request","my blood request","track my request","check my request","was my request approved"],
+      km: ["ស្ថានភាពសំណើ","សំណើរបស់ខ្ញុំ","តាមដានសំណើ","ពិនិត្យសំណើ"],
+      vi: ["trạng thái yêu cầu","yêu cầu của tôi","theo dõi yêu cầu","kiểm tra yêu cầu"],
+    },
+    answer: {
+      en: "To check your blood request:\n1. [Log in](/login) with the same email you used on the request form\n2. Open your [Profile](/profile) — your requests and their status (Pending, Approved, Rejected or Fulfilled) are listed there\n\nThe hospital team reviews every request and handles urgent ones first. In an emergency, call the hospital directly.",
+      km: "ដើម្បីពិនិត្យសំណើឈាមរបស់អ្នក៖\n1. [ចូលគណនី](/login) ដោយប្រើអ៊ីមែលដូចគ្នានឹងអ៊ីមែលក្នុងទម្រង់សំណើ\n2. បើក [Profile](/profile) — សំណើ និងស្ថានភាពរបស់វា (Pending, Approved, Rejected ឬ Fulfilled) បង្ហាញនៅទីនោះ\n\nក្រុមការងារមន្ទីរពេទ្យពិនិត្យរាល់សំណើ ហើយដោះស្រាយសំណើបន្ទាន់មុន។ ក្នុងករណីបន្ទាន់ សូមទូរសព្ទទៅមន្ទីរពេទ្យដោយផ្ទាល់។",
+      vi: "Để kiểm tra yêu cầu máu của bạn:\n1. [Đăng nhập](/login) bằng email bạn đã dùng trong mẫu yêu cầu\n2. Mở [Profile](/profile) — các yêu cầu và trạng thái (Pending, Approved, Rejected hoặc Fulfilled) được liệt kê ở đó\n\nĐội ngũ bệnh viện xem xét mọi yêu cầu và ưu tiên các trường hợp khẩn cấp. Nếu khẩn cấp, hãy gọi trực tiếp cho bệnh viện.",
+    },
+  },
+  {
+    ask: { en: "How do I contact the team?", km: "តើទាក់ទងក្រុមការងារដោយរបៀបណា?", vi: "Làm sao liên hệ với đội ngũ?" },
+    tags: {
+      en: ["contact","support","talk to someone","talk to a person","customer service","phone number","email address"],
+      km: ["ទាក់ទង","លេខទូរសព្ទ","អ៊ីមែល","ជំនួយពីក្រុមការងារ"],
+      vi: ["liên hệ","hỗ trợ","số điện thoại","địa chỉ email"],
+    },
+    answer: {
+      en: "You can reach the BloodLife team through the [Contact](/contact) page — send a message and an administrator will reply.\n\nEmail: support@bloodlife.kh · Phone: +855 12 345 678 (Mon–Fri, 8:00 AM – 5:00 PM).",
+      km: "អ្នកអាចទាក់ទងក្រុមការងារ BloodLife តាមទំព័រ [Contact](/contact) — ផ្ញើសារ ហើយអ្នកគ្រប់គ្រងនឹងឆ្លើយតប។\n\nអ៊ីមែល៖ support@bloodlife.kh · ទូរសព្ទ៖ +855 12 345 678 (ថ្ងៃចន្ទ–សុក្រ ម៉ោង 8:00 ព្រឹក – 5:00 ល្ងាច)។",
+      vi: "Bạn có thể liên hệ đội ngũ BloodLife qua trang [Contact](/contact) — gửi tin nhắn và quản trị viên sẽ trả lời.\n\nEmail: support@bloodlife.kh · Điện thoại: +855 12 345 678 (Thứ 2–Thứ 6, 8:00 – 17:00).",
     },
   },
 ];
@@ -312,27 +376,122 @@ export const QUICK_PROMPTS = {
 
 // Short plain-ASCII tags ("hi", "cold", "time") must match as whole words: as substrings they hit
 // unrelated words — "hi" inside the Vietnamese "hiến" or the English "this" — and hijack the answer.
-const tagMatches = (lower, tag) => {
-  const t = tag.toLowerCase();
-  if (t.length <= 4 && /^[a-z]+$/.test(t)) return new RegExp(`\\b${t}\\b`).test(lower);
-  return lower.includes(t);
+const KHMER = /[ក-៿]/;
+
+// Khmer is often typed with spelling variants and optional spaces/zero-width spaces between words,
+// so both the question and Khmer tags are folded to one form before comparing:
+//   បរិច្ចាក / បរិចាគ / បរិចាក → បរិច្ចាគ (donate), ឱ្យ → ឲ្យ (give), subscript ្ត → ្ដ.
+const normalizeKhmer = (s) => s
+  .replace(/[\s​-‍﻿]+/g, '')
+  .replace(/បរិ(?:ច្ចា|ចា)[គក]/g, 'បរិច្ចាគ')
+  .replace(/ឱ្យ/g, 'ឲ្យ')
+  .replace(/្ត/g, '្ដ');
+
+// Vietnamese is often typed without accents ("hien mau bao lau"): fold both sides to plain letters.
+const stripAccents = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd');
+
+const words = (s) => s.split(/[^\p{L}\p{N}']+/u).filter(Boolean);
+
+// Edit distance counting a swap of two neighbouring letters as one edit ("centre" ~ "center").
+function editDistance(a, b) {
+  const d = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
+  for (let j = 1; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost);
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+    }
+  }
+  return d[a.length][b.length];
+}
+
+// A tag word of 6+ letters may be misspelled by one edit (10+ letters: two). Shorter words must be
+// exact, since one edit turns everyday words into tags ("look" → "book", "there" → "where"), and
+// two edits are kept for long words because at 8 letters they confuse "donation" with "duration".
+const fuzzyWord = (tagWord, inputWords) => {
+  if (tagWord.length < 6) return inputWords.includes(tagWord);
+  const max = tagWord.length >= 10 ? 2 : 1;
+  return inputWords.some((w) => Math.abs(w.length - tagWord.length) <= max && editDistance(w, tagWord) <= max);
 };
+
+const exactMatch = (text, tag) => {
+  if (tag.length <= 4 && /^[a-z]+$/.test(tag)) return new RegExp(`\\b${tag}\\b`).test(text);
+  return text.includes(tag);
+};
+
+// How well `tag` matches the question: its length for an exact match, a little less for an
+// accent-free or misspelled one (so an exact match of the same tag always wins), 0 for none.
+function tagScore(tag, q) {
+  const t = tag.toLowerCase();
+  if (KHMER.test(t)) return q.khmer.includes(normalizeKhmer(t)) ? t.length : 0;
+  if (exactMatch(q.lower, t)) return t.length;
+  const plain = stripAccents(t);
+  if (plain !== t && exactMatch(q.plain, plain)) return t.length - 0.5;
+  const tagWords = words(plain);
+  if (tagWords.some((w) => w.length >= 6) && tagWords.every((w) => fuzzyWord(w, q.plainWords))) return t.length - 2;
+  return 0;
+}
 
 // The entry with the longest matching phrase wins, so "register as a donor" beats the broader
 // "register", and specific questions win over generic ones regardless of their order in KB.
-// Ties go to the earlier entry.
-export function ruleBasedResponse(input, lang) {
-  const lower = input.toLowerCase();
+// Ties go to the earlier entry. `priority` entries (a cold, how often, tattoos, medication) beat
+// every other match: those questions usually also contain "can I donate", which would otherwise
+// pull them into the general eligibility answer.
+function bestEntry(q, lang) {
   let best = null;
-  let bestLength = 0;
+  let bestScore = 0;
   for (const entry of KB) {
     const tags = [...(entry.tags[lang] || []), ...(entry.tags.en || [])];
     for (const tag of tags) {
-      if (tag.length > bestLength && tagMatches(lower, tag)) {
-        best = entry;
-        bestLength = tag.length;
-      }
+      const s = tagScore(tag, q);
+      const score = s && s + (entry.priority ? 1000 : 0);
+      if (score > bestScore) { best = entry; bestScore = score; }
     }
   }
-  return best ? (best.answer[lang] || best.answer.en) : (FALLBACK[lang] || FALLBACK.en);
+  return best;
+}
+
+const prepare = (input) => {
+  const lower = input.toLowerCase();
+  const plain = stripAccents(lower);
+  return { lower, plain, plainWords: words(plain), khmer: normalizeKhmer(lower) };
+};
+
+// Up to three topics the question partly touches (any distinctive tag word in it), offered as
+// "try one of these" when nothing matched outright. Falls back to the most-asked topics.
+function suggestFor(q, lang) {
+  const scored = KB.filter((e) => e.ask).map((entry) => {
+    let hits = 0;
+    for (const tag of [...(entry.tags[lang] || []), ...(entry.tags.en || [])]) {
+      const t = tag.toLowerCase();
+      if (KHMER.test(t)) { if (q.khmer.includes(normalizeKhmer(t))) hits += 1; continue; }
+      hits += words(stripAccents(t)).filter((w) => w.length >= 5 && fuzzyWord(w, q.plainWords)).length;
+    }
+    return { entry, hits };
+  }).filter((x) => x.hits > 0).sort((a, b) => b.hits - a.hits);
+  const picked = (scored.length ? scored.map((x) => x.entry) : KB.filter((e) => e.popular)).slice(0, 3);
+  return picked.map((e) => e.ask[lang] || e.ask.en);
+}
+
+/**
+ * Offline answer for `input`. Returns `{ content, lang, suggestions }`: `lang` can differ from
+ * the detected one when an accent-free Vietnamese question is recognised, and `suggestions`
+ * (questions the guide can answer) is filled only when it didn't understand the question.
+ */
+export function guideReply(input, lang) {
+  const q = prepare(input);
+  let entry = bestEntry(q, lang);
+  let answerLang = lang;
+  // "hien mau bao lau" has no accents, so it was detected as English — try the Vietnamese tags too.
+  if (!entry && lang === 'en') {
+    entry = bestEntry(q, 'vi');
+    if (entry) answerLang = 'vi';
+  }
+  if (entry) return { content: entry.answer[answerLang] || entry.answer.en, lang: answerLang, suggestions: [] };
+  return { content: FALLBACK[lang] || FALLBACK.en, lang, suggestions: suggestFor(q, lang) };
+}
+
+export function ruleBasedResponse(input, lang) {
+  return guideReply(input, lang).content;
 }
