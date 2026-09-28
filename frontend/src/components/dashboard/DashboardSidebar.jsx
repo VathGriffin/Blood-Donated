@@ -8,7 +8,7 @@ import {
 } from '@mui/material';
 import BrandLogo from './BrandLogo';
 import API_BASE from '@/lib/config';
-import { BRAND } from '@/lib/brand';
+import { DASHBOARD_BRAND } from '@/lib/brand';
 import { ROLE_CONFIG, isItemActive } from '@/lib/navigation';
 
 function UserCard({ profile }) {
@@ -39,7 +39,7 @@ function SidebarContent({ role, profile, onNavigate }) {
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', background: sb.bgGradient, color: sb.text }}>
       <Box sx={{ px: 2.5, height: 76, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-        <BrandLogo href={cfg.homePath} caption={BRAND.tagline} onClick={onNavigate} />
+        <BrandLogo href={cfg.homePath} name={DASHBOARD_BRAND.name} caption={DASHBOARD_BRAND.tagline} wrapCaption onClick={onNavigate} />
       </Box>
 
       <Box

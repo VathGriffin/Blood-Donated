@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Alert, Box, Button, CircularProgress, Typography } from '@mui/material';
 import BrandLogo from './BrandLogo';
+import { DASHBOARD_BRAND } from '@/lib/brand';
 import DashboardSidebar from './DashboardSidebar';
 import DashboardTopBar from './DashboardTopBar';
 import { useDashboardSession } from '@/hooks/useDashboardSession';
@@ -21,7 +22,7 @@ function ShellStatus({ children }) {
       }}
     >
       <Box sx={{ bgcolor: 'primary.dark', borderRadius: 3, px: 2, py: 1.5 }}>
-        <BrandLogo />
+        <BrandLogo name={DASHBOARD_BRAND.name} />
       </Box>
       {children}
     </Box>

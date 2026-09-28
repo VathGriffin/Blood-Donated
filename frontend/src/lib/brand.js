@@ -1,6 +1,11 @@
-// Single place for the product name shown in dashboard chrome. (The public site
-// header/footer still say "BloodLife" — change that there if the two should match.)
+// Product names. BRAND is shown on the public site and auth pages; DASHBOARD_BRAND
+// is the admin / hospital dashboard sidebar.
 export const BRAND = {
   name: 'Blood Donated',
   tagline: 'Save Lives Together',
+};
+
+export const DASHBOARD_BRAND = {
+  name: 'BloodLife AI',
+  tagline: 'Intelligent Blood Donation Management',
 };

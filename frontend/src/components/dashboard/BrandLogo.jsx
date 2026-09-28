@@ -6,17 +6,18 @@ import logoMark from '@/assets/logo-mark.png';
 import { BRAND } from '@/lib/brand';
 
 /**
- * Logo mark + product name, with an optional caption (e.g. "Admin Panel").
+ * Logo mark + product name (`name`, default BRAND.name), with an optional caption.
+ * `wrapCaption` lets a long caption run onto two lines instead of being cut off.
  * The mark sits on a white tile so it reads on the dark-red sidebar; pass
  * `onDark={false}` for use on a light surface.
  */
-export default function BrandLogo({ href = '/', caption, onDark = true, onClick }) {
+export default function BrandLogo({ href = '/', name = BRAND.name, caption, wrapCaption = false, onDark = true, onClick }) {
   return (
     <Box
       component={Link}
       href={href}
       onClick={onClick}
-      aria-label={`${BRAND.name} — ${caption || 'home'}`}
+      aria-label={`${name} — ${caption || 'home'}`}
       sx={{ display: 'flex', alignItems: 'center', gap: 1.5, textDecoration: 'none', minWidth: 0 }}
     >
       <Box
@@ -36,13 +37,13 @@ export default function BrandLogo({ href = '/', caption, onDark = true, onClick 
           noWrap
           sx={{ fontWeight: 800, fontSize: '1.05rem', lineHeight: 1.15, letterSpacing: '-0.02em', color: onDark ? '#FFFFFF' : 'text.primary' }}
         >
-          {BRAND.name}
+          {name}
         </Typography>
         {caption && (
           <Typography
-            noWrap
+            noWrap={!wrapCaption}
             sx={{
-              fontSize: '0.72rem', fontWeight: 500, lineHeight: 1.5,
+              fontSize: wrapCaption ? '0.68rem' : '0.72rem', fontWeight: 500, lineHeight: wrapCaption ? 1.3 : 1.5, mt: wrapCaption ? 0.25 : 0,
               color: onDark ? 'rgba(255,255,255,0.72)' : 'text.secondary',
             }}
           >
