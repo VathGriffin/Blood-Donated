@@ -41,23 +41,39 @@ const OLD_SEED_BIOS = [
 
 const upload = createImageUpload('homepage');
 
-// GET all profiles — seeds defaults on first call
+// Loads every profile, seeding the defaults on first call and upgrading untouched old seeds.
+async function loadProfiles() {
+  let profiles = await HomepageProfile.find().sort({ order: 1 }).lean();
+  if (profiles.length === 0) {
+    return HomepageProfile.insertMany(DEFAULT_PROFILES);
+  }
+  const stale = profiles.filter(p => OLD_SEED_BIOS.findIndex(b => p.bio?.startsWith(b)) !== -1);
+  if (stale.length) {
+    await Promise.all(stale.map((p) => {
+      const { order, photo, ...fresh } = DEFAULT_PROFILES[OLD_SEED_BIOS.findIndex(b => p.bio.startsWith(b))];
+      return HomepageProfile.updateOne({ _id: p._id }, fresh);
+    }));
+    profiles = await HomepageProfile.find().sort({ order: 1 }).lean();
+  }
+  return profiles;
+}
+
+const initialsOf = (name) => name.trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2);
+
+// GET profiles shown on the public homepage (hidden ones are left out)
 router.get('/', async (req, res) => {
   try {
-    let profiles = await HomepageProfile.find().sort({ order: 1 }).lean();
-    if (profiles.length === 0) {
-      profiles = await HomepageProfile.insertMany(DEFAULT_PROFILES);
-    } else {
-      const stale = profiles.filter(p => OLD_SEED_BIOS.findIndex(b => p.bio?.startsWith(b)) !== -1);
-      if (stale.length) {
-        await Promise.all(stale.map((p) => {
-          const { order, photo, ...fresh } = DEFAULT_PROFILES[OLD_SEED_BIOS.findIndex(b => p.bio.startsWith(b))];
-          return HomepageProfile.updateOne({ _id: p._id }, fresh);
-        }));
-        profiles = await HomepageProfile.find().sort({ order: 1 }).lean();
-      }
-    }
-    res.json(profiles);
+    const profiles = await loadProfiles();
+    res.json(profiles.filter(p => p.visible !== false));
+  } catch (err) {
+    sendError(res, err, req);
+  }
+});
+
+// GET every profile, hidden ones included — admin only (settings page)
+router.get('/all', adminAuth, async (req, res) => {
+  try {
+    res.json(await loadProfiles());
   } catch (err) {
     sendError(res, err, req);
   }
@@ -66,11 +82,11 @@ router.get('/', async (req, res) => {
 // POST create profile — admin only
 router.post('/', adminAuth, async (req, res) => {
   try {
-    const { name, role, bloodType, bio, donations, badge, color, location, quote } = req.body;
+    const { name, role, bloodType, bio, donations, badge, color, location, quote, visible } = req.body;
     if (!name?.trim() || !role?.trim())
       return res.status(400).json({ message: 'Name and role are required' });
 
-    const initials = name.trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2);
+    const initials = initialsOf(name);
     const order = await HomepageProfile.countDocuments();
     const profile = await new HomepageProfile({
       name: name.trim(),
@@ -83,11 +99,36 @@ router.post('/', adminAuth, async (req, res) => {
       badge: badge || '',
       location: location?.trim() || '',
       quote: quote?.trim() || '',
+      visible: visible !== false,
       order,
     }).save();
     res.status(201).json(profile);
   } catch (err) {
     res.status(400).json({ message: err.message });
+  }
+});
+
+// PUT update profile — admin only. Only the fields sent are changed.
+const EDITABLE = ['name', 'role', 'bloodType', 'bio', 'badge', 'color', 'location', 'quote'];
+router.put('/:id', adminAuth, async (req, res) => {
+  try {
+    const update = {};
+    for (const key of EDITABLE) {
+      if (typeof req.body[key] === 'string') update[key] = req.body[key].trim();
+    }
+    if ('name' in update || 'role' in update) {
+      if (update.name === '' || update.role === '')
+        return res.status(400).json({ message: 'Name and role are required' });
+    }
+    if (update.name) update.initials = initialsOf(update.name);
+    if (req.body.donations !== undefined) update.donations = Number(req.body.donations) || 0;
+    if (typeof req.body.visible === 'boolean') update.visible = req.body.visible;
+
+    const profile = await HomepageProfile.findByIdAndUpdate(req.params.id, update, { new: true, runValidators: true });
+    if (!profile) return res.status(404).json({ message: 'Profile not found' });
+    res.json(profile);
+  } catch (err) {
+    sendError(res, err, req);
   }
 });
 

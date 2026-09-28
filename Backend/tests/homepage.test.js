@@ -44,4 +44,34 @@ describe('homepage profiles', () => {
     expect(deleted.status).toBe(200);
     expect(deleted.body.photo).toBeNull();
   });
+  test('admin can edit a profile and hide it from the public list', async () => {
+    const [profile] = await HomepageProfile.create([
+      { name: 'Test Donor', role: 'Donor', initials: 'TD', order: 0 },
+    ]);
+    const { token: adminToken } = await createAdmin();
+
+    const anon = await request(app).put(`/api/homepage/${profile._id}`).send({ name: 'X' });
+    expect(anon.status).toBe(401);
+
+    const edited = await request(app)
+      .put(`/api/homepage/${profile._id}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ name: 'Sok Dara', role: 'Volunteer', bio: 'Helps at drives', visible: false });
+    expect(edited.status).toBe(200);
+    expect(edited.body).toMatchObject({ name: 'Sok Dara', initials: 'SD', role: 'Volunteer', bio: 'Helps at drives', visible: false });
+
+    const blank = await request(app)
+      .put(`/api/homepage/${profile._id}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ name: '  ' });
+    expect(blank.status).toBe(400);
+
+    const pub = await request(app).get('/api/homepage');
+    expect(pub.body.map((p) => p.name)).not.toContain('Sok Dara');
+
+    const all = await request(app).get('/api/homepage/all').set('Authorization', `Bearer ${adminToken}`);
+    expect(all.status).toBe(200);
+    expect(all.body.map((p) => p.name)).toContain('Sok Dara');
+    expect((await request(app).get('/api/homepage/all')).status).toBe(401);
+  });
 });

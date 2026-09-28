@@ -12,6 +12,7 @@ const homepageProfileSchema = new mongoose.Schema({
   badge:     { type: String, default: '' },
   location:  { type: String, default: '' },
   quote:     { type: String, default: '' },
+  visible:   { type: Boolean, default: true }, // false hides the profile from the public homepage
   order:     { type: Number, default: 0 },
 }, { timestamps: true });
 

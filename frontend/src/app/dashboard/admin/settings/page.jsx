@@ -5,11 +5,12 @@ import {
   ListItemIcon, ListItemText, TextField, Button,
   Chip, Alert, IconButton, Tooltip, CircularProgress,
   Dialog, DialogTitle, DialogContent, DialogActions,
-  MenuItem, FormControl, InputLabel, Select,
+  MenuItem, FormControl, InputLabel, Select, Menu, Switch,
 } from '@mui/material';
 import {
   Settings, SmartToy, Bloodtype, CalendarMonth,
   Security, Person, Delete, AddAPhoto, Lock, PersonAdd,
+  MoreVert, Edit, Visibility, VisibilityOff, HideImage,
 } from '@mui/icons-material';
 import API_BASE from '@/lib/config';
 import { useAuth } from '@/store/AuthContext';
@@ -26,6 +27,15 @@ const SECTIONS = [
 const ROLE_LABEL = { admin: 'Administrator', hospital_staff: 'Hospital Staff' };
 const MAX_PHOTO_SIZE = 10 * 1024 * 1024; // must match the multer limit in Backend/src/common/upload.js
 const PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']; // same list the server accepts
+
+// Role choices for homepage profiles. Each also sets the badge, which picks the card's icon on the homepage.
+const HP_ROLES = [
+  { label: 'Blood Donor',             badge: 'Blood Donor' },
+  { label: 'Volunteer',               badge: 'Community Volunteer' },
+  { label: 'Hospital Representative', badge: 'Healthcare Partner' },
+];
+
+const hpPhotoUrl = (photo) => (photo ? (photo.startsWith('http') ? photo : `${API_BASE}${photo}`) : null);
 
 // Label/value row used inside every settings card — takes `children` for an
 // interactive control (TextField, Chip) or a plain `value` for read-only text.
@@ -134,45 +144,53 @@ export default function AdminSettings() {
     });
   };
 
-  // ── Homepage profiles (real, unchanged) ─────────────────────────────────
+  // ── Homepage profiles ───────────────────────────────────────────────────
   const [hpProfiles, setHpProfiles]     = useState([]);
   const [hpLoading, setHpLoading]       = useState(false);
   const [hpUploading, setHpUploading]   = useState({});
   const [hpError, setHpError]           = useState('');
   const photoInputRefs = React.useRef({});
 
+  // /all includes profiles hidden from the homepage, so the admin can switch them back on.
   const loadHpProfiles = React.useCallback(() => {
     setHpLoading(true);
     setHpError('');
-    getJson(`${API_BASE}/api/homepage`)
+    getJson(`${API_BASE}/api/homepage/all`, { headers: authHeader })
       .then(data => setHpProfiles(Array.isArray(data) ? data : []))
       .catch(err => setHpError(err.message || 'Failed to load profiles.'))
       .finally(() => setHpLoading(false));
-  }, []);
+  }, [authHeader]);
 
   React.useEffect(() => {
     if (section !== 'homepage') return;
     loadHpProfiles();
   }, [section, loadHpProfiles]);
 
-  const handlePhotoUpload = async (profileId, file) => {
-    if (!file) return;
-    if (file.size > MAX_PHOTO_SIZE) {
-      setHpError(`Image is too large — max ${MAX_PHOTO_SIZE / (1024 * 1024)} MB.`);
-      return;
-    }
-    setHpUploading(p => ({ ...p, [profileId]: true }));
+  const replaceHpProfile = (updated) => setHpProfiles(prev => prev.map(p => p._id === updated._id ? updated : p));
+
+  // Returns an error message, or '' when the file is fine to upload.
+  const photoFileError = (file) => {
+    if (!PHOTO_TYPES.includes(file.type)) return 'Please choose a JPG, PNG, WebP or GIF image.';
+    if (file.size > MAX_PHOTO_SIZE) return `Image is too large — max ${MAX_PHOTO_SIZE / (1024 * 1024)} MB.`;
+    return '';
+  };
+
+  const uploadHpPhoto = async (profileId, file) => {
     const form = new FormData();
     form.append('photo', file);
+    const res = await fetch(`${API_BASE}/api/homepage/${profileId}/photo`, { method: 'POST', headers: authHeader, body: form });
+    const updated = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(updated.message || 'Photo upload failed.');
+    return updated;
+  };
+
+  const handlePhotoUpload = async (profileId, file) => {
+    if (!file) return;
+    const invalid = photoFileError(file);
+    if (invalid) { setHpError(invalid); return; }
+    setHpUploading(p => ({ ...p, [profileId]: true }));
     try {
-      const res = await fetch(`${API_BASE}/api/homepage/${profileId}/photo`, {
-        method: 'POST',
-        headers: authHeader,
-        body: form,
-      });
-      const updated = await res.json();
-      if (!res.ok) throw new Error(updated.message || 'Upload failed');
-      setHpProfiles(prev => prev.map(p => p._id === profileId ? { ...p, photo: updated.photo } : p));
+      replaceHpProfile(await uploadHpPhoto(profileId, file));
     } catch (err) {
       setHpError(err.message);
     } finally {
@@ -196,41 +214,103 @@ export default function AdminSettings() {
     }
   };
 
-  const emptyHpForm = { name: '', role: '', bloodType: '', donations: '', badge: '', bio: '', location: '', quote: '' };
-  const [hpAddOpen, setHpAddOpen]   = useState(false);
-  const [hpForm, setHpForm]         = useState(emptyHpForm);
-  const [hpSaving, setHpSaving]     = useState(false);
-  const [hpFormError, setHpFormError] = useState('');
-  const [hpDeleting, setHpDeleting] = useState({});
+  const updateHpProfile = async (profileId, body) => {
+    const res = await fetch(`${API_BASE}/api/homepage/${profileId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', ...authHeader },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.message || 'Failed to save profile.');
+    return data;
+  };
 
-  const openHpAdd = () => { setHpForm(emptyHpForm); setHpFormError(''); setHpAddOpen(true); };
+  const toggleHpVisible = async (profile) => {
+    setHpError('');
+    setHpUploading(p => ({ ...p, [profile._id]: true }));
+    try {
+      replaceHpProfile(await updateHpProfile(profile._id, { visible: profile.visible === false }));
+    } catch (err) {
+      setHpError(err.message);
+    } finally {
+      setHpUploading(p => ({ ...p, [profile._id]: false }));
+    }
+  };
 
-  const handleAddProfile = async () => {
+  // Add / Edit dialog. editingId is null when adding a new profile.
+  const emptyHpForm = { name: '', role: HP_ROLES[0].label, bio: '', visible: true };
+  const [hpDialogOpen, setHpDialogOpen] = useState(false);
+  const [hpEditingId, setHpEditingId]   = useState(null);
+  const [hpForm, setHpForm]             = useState(emptyHpForm);
+  const [hpPhotoFile, setHpPhotoFile]   = useState(null);
+  const [hpPhotoPreview, setHpPhotoPreview] = useState(null);
+  const [hpSaving, setHpSaving]         = useState(false);
+  const [hpFormError, setHpFormError]   = useState('');
+  const [hpDeleting, setHpDeleting]     = useState({});
+  const [hpMenu, setHpMenu]             = useState(null); // { anchor, profile }; anchor is null while closing
+  const hpDialogPhotoInput = React.useRef(null);
+  // Keep the profile while the menu fades out, so its labels don't flip mid-animation.
+  const closeHpMenu = () => setHpMenu(m => m && { ...m, anchor: null });
+
+  // Free the object URL made for the dialog's photo preview once it's replaced or closed.
+  React.useEffect(() => () => { if (hpPhotoPreview?.startsWith('blob:')) URL.revokeObjectURL(hpPhotoPreview); }, [hpPhotoPreview]);
+
+  const openHpDialog = (profile = null) => {
+    setHpEditingId(profile?._id || null);
+    setHpForm(profile
+      ? { name: profile.name, role: profile.role, bio: profile.bio || '', visible: profile.visible !== false }
+      : emptyHpForm);
+    setHpPhotoFile(null);
+    setHpPhotoPreview(profile ? hpPhotoUrl(profile.photo) : null);
+    setHpFormError('');
+    setHpDialogOpen(true);
+  };
+
+  const pickHpDialogPhoto = (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    const invalid = photoFileError(file);
+    if (invalid) { setHpFormError(invalid); return; }
+    setHpFormError('');
+    setHpPhotoFile(file);
+    setHpPhotoPreview(URL.createObjectURL(file));
+  };
+
+  const handleSaveProfile = async () => {
     if (!hpForm.name.trim() || !hpForm.role.trim()) {
-      setHpFormError('Name and role are required.');
+      setHpFormError('Full name and role are required.');
       return;
     }
     setHpSaving(true);
     setHpFormError('');
+    // The preset roles also set the badge, which picks the card's icon on the homepage.
+    const preset = HP_ROLES.find(r => r.label === hpForm.role);
+    const body = {
+      name: hpForm.name.trim(),
+      role: hpForm.role.trim(),
+      bio: hpForm.bio.trim(),
+      visible: hpForm.visible,
+      ...(preset && { badge: preset.badge }),
+    };
     try {
-      const res = await fetch(`${API_BASE}/api/homepage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...authHeader },
-        body: JSON.stringify({
-          name: hpForm.name.trim(),
-          role: hpForm.role.trim(),
-          bloodType: hpForm.bloodType,
-          donations: hpForm.donations ? Number(hpForm.donations) : 0,
-          badge: hpForm.badge.trim(),
-          bio: hpForm.bio.trim(),
-          location: hpForm.location.trim(),
-          quote: hpForm.quote.trim(),
-        }),
-      });
-      const created = await res.json();
-      if (!res.ok) throw new Error(created.message || 'Failed to add profile.');
-      setHpProfiles(prev => [...prev, created]);
-      setHpAddOpen(false);
+      let saved;
+      if (hpEditingId) {
+        saved = await updateHpProfile(hpEditingId, body);
+      } else {
+        const res = await fetch(`${API_BASE}/api/homepage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...authHeader },
+          body: JSON.stringify(body),
+        });
+        saved = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(saved.message || 'Failed to add profile.');
+        setHpProfiles(prev => [...prev, saved]);
+        setHpEditingId(saved._id); // a failed photo upload below then retries as an edit, not a duplicate
+      }
+      if (hpPhotoFile) saved = await uploadHpPhoto(saved._id, hpPhotoFile);
+      replaceHpProfile(saved);
+      setHpDialogOpen(false);
     } catch (err) {
       setHpFormError(err.message);
     } finally {
@@ -368,122 +448,106 @@ export default function AdminSettings() {
         return (
           <Box>
             <Box display="flex" alignItems="flex-start" justifyContent="space-between" gap={2}>
-              <SectionTitle sub="Add, remove, and update profiles shown in the 'People Behind the Mission' section">
+              <SectionTitle sub="Add, edit, and choose which profiles appear in the 'People Behind the Mission' section">
                 Homepage Profiles
               </SectionTitle>
               <Button variant="contained" color="error" startIcon={<PersonAdd sx={{ fontSize: 18 }} />}
-                onClick={openHpAdd}
+                onClick={() => openHpDialog()}
                 sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2, flexShrink: 0 }}>
                 Add Profile
               </Button>
             </Box>
             {hpError && (
-              <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}
+              <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }} onClose={() => setHpError('')}
                 action={
                   <Button color="error" size="small" onClick={loadHpProfiles} sx={{ fontWeight: 700, textTransform: 'none' }}>
                     Retry
                   </Button>
                 }
               >
-                {hpError} — make sure the backend server is running.
+                {hpError}
               </Alert>
             )}
             {hpLoading ? (
               <Typography color="text.secondary" fontSize="0.9rem">Loading profiles…</Typography>
             ) : (
-              <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: 'repeat(3, 1fr)' }} gap={2.5}>
+              <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }} gap={2.5}>
                 {hpProfiles.map(p => {
-                  const photoUrl = p.photo
-                    ? (p.photo.startsWith('http') ? p.photo : `${API_BASE}${p.photo}`)
-                    : null;
+                  const photoUrl = hpPhotoUrl(p.photo);
                   const isUploading = !!hpUploading[p._id];
                   const isDeleting  = !!hpDeleting[p._id];
+                  const hidden = p.visible === false;
                   return (
                     <Paper key={p._id} elevation={0} sx={{
-                      p: 3, borderRadius: 3, border: `1px solid ${border}`, bgcolor: card,
-                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5, textAlign: 'center',
-                      position: 'relative',
+                      borderRadius: 3, border: `1px solid ${border}`, bgcolor: card, overflow: 'hidden',
+                      display: 'flex', flexDirection: 'column',
                     }}>
-                      <Tooltip title="Delete profile">
-                        <IconButton
-                          size="small"
-                          disabled={isDeleting}
-                          onClick={() => {
-                            if (window.confirm(`Remove "${p.name}" from the homepage?`)) handleDeleteProfile(p._id);
-                          }}
-                          sx={{ position: 'absolute', top: 8, right: 8, color: 'text.disabled', '&:hover': { color: '#dc2626' } }}
-                        >
-                          {isDeleting ? <CircularProgress size={14} /> : <Delete sx={{ fontSize: 16 }} />}
+                      {/* Profile photo, with the ⋮ menu over its corner */}
+                      <Box sx={{ position: 'relative', height: 180, bgcolor: subBg,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {photoUrl ? (
+                          <Box component="img" src={photoUrl} alt={p.name}
+                            sx={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 25%', opacity: hidden ? 0.5 : 1 }} />
+                        ) : (
+                          <Avatar sx={{ width: 88, height: 88, fontSize: '1.6rem', fontWeight: 900, bgcolor: p.color || '#dc2626', opacity: hidden ? 0.5 : 1 }}>
+                            {p.initials}
+                          </Avatar>
+                        )}
+                        {isUploading && (
+                          <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'rgba(0,0,0,0.35)' }}>
+                            <CircularProgress size={26} sx={{ color: '#fff' }} />
+                          </Box>
+                        )}
+                        {hidden && (
+                          <Chip icon={<VisibilityOff sx={{ fontSize: 14 }} />} label="Hidden" size="small"
+                            sx={{ position: 'absolute', top: 10, left: 10, fontWeight: 700, bgcolor: 'rgba(0,0,0,0.65)', color: '#fff', '& .MuiChip-icon': { color: '#fff' } }} />
+                        )}
+                        <IconButton size="small" aria-label={`More actions for ${p.name}`}
+                          onClick={(e) => setHpMenu({ anchor: e.currentTarget, profile: p })}
+                          sx={{ position: 'absolute', top: 8, right: 8, bgcolor: 'rgba(255,255,255,0.9)', color: '#333',
+                            '&:hover': { bgcolor: '#fff' } }}>
+                          <MoreVert sx={{ fontSize: 18 }} />
                         </IconButton>
-                      </Tooltip>
-
-                      {/* Avatar */}
-                      <Box sx={{ position: 'relative' }}>
-                        <Avatar
-                          src={photoUrl || undefined}
-                          sx={{
-                            width: 88, height: 88, fontSize: '1.4rem', fontWeight: 900,
-                            bgcolor: p.color,
-                            border: '3px solid',
-                            borderColor: isDark ? '#2a2a2a' : '#f5f5f5',
-                            boxShadow: `0 6px 20px ${p.color}44`,
-                          }}
-                        >
-                          {p.initials}
-                        </Avatar>
-                        <Tooltip title="Upload photo">
-                          <IconButton
-                            size="small"
-                            disabled={isUploading}
-                            onClick={() => photoInputRefs.current[p._id]?.click()}
-                            sx={{
-                              position: 'absolute', bottom: 0, right: -4,
-                              bgcolor: '#dc2626', color: 'white', width: 28, height: 28,
-                              '&:hover': { bgcolor: '#b91c1c' },
-                              '&.Mui-disabled': { bgcolor: '#ccc' },
-                            }}
-                          >
-                            <AddAPhoto sx={{ fontSize: 14 }} />
-                          </IconButton>
-                        </Tooltip>
                         <input
-                          type="file" accept="image/*" hidden
+                          type="file" accept={PHOTO_TYPES.join(',')} hidden
                           ref={el => { photoInputRefs.current[p._id] = el; }}
-                          onChange={e => handlePhotoUpload(p._id, e.target.files[0])}
+                          onChange={e => { handlePhotoUpload(p._id, e.target.files[0]); e.target.value = ''; }}
                         />
                       </Box>
 
-                      <Box>
-                        <Typography fontWeight={700} fontSize="0.92rem">{p.name}</Typography>
-                        <Typography variant="caption" color="text.disabled">{p.role}</Typography>
-                      </Box>
+                      <Box sx={{ p: 2.5, display: 'flex', flexDirection: 'column', gap: 0.5, flex: 1 }}>
+                        <Typography fontWeight={800} fontSize="1rem">{p.name}</Typography>
+                        <Typography fontSize="0.8rem" fontWeight={600} color="#dc2626">{p.role}</Typography>
+                        <Typography fontSize="0.82rem" color="text.secondary" sx={{
+                          mt: 0.5, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                        }}>
+                          {p.bio || 'No description yet.'}
+                        </Typography>
 
-                      <Chip
-                        label={p.badge} size="small"
-                        sx={{ bgcolor: isDark ? 'rgba(220,38,38,0.12)' : '#fff1f2', color: '#dc2626', fontWeight: 700, fontSize: '0.7rem' }}
-                      />
-
-                      <Box display="flex" gap={1} mt={0.5} width="100%">
-                        <Button
-                          fullWidth size="small" variant="outlined" color="error"
-                          disabled={isUploading}
-                          onClick={() => photoInputRefs.current[p._id]?.click()}
-                          sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2, fontSize: '0.78rem' }}
-                        >
-                          {isUploading ? 'Uploading…' : 'Change Photo'}
-                        </Button>
-                        {photoUrl && (
-                          <Tooltip title="Remove photo">
-                            <IconButton
-                              size="small" color="error"
-                              disabled={isUploading}
-                              onClick={() => handlePhotoRemove(p._id)}
-                              sx={{ border: `1px solid ${border}`, borderRadius: 2, flexShrink: 0 }}
-                            >
-                              <Delete sx={{ fontSize: 16 }} />
-                            </IconButton>
+                        <Box display="flex" alignItems="center" gap={1} mt="auto" pt={2}>
+                          <Button size="small" variant="contained" color="error" startIcon={<Edit sx={{ fontSize: 15 }} />}
+                            onClick={() => openHpDialog(p)}
+                            sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2, fontSize: '0.78rem', boxShadow: 'none' }}>
+                            Edit
+                          </Button>
+                          <Button size="small" variant="outlined" color="error" startIcon={<AddAPhoto sx={{ fontSize: 15 }} />}
+                            disabled={isUploading}
+                            onClick={() => photoInputRefs.current[p._id]?.click()}
+                            sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2, fontSize: '0.78rem' }}>
+                            Change Photo
+                          </Button>
+                          <Tooltip title="Delete profile">
+                            <span style={{ marginLeft: 'auto' }}>
+                              <IconButton size="small" disabled={isDeleting} aria-label={`Delete ${p.name}`}
+                                onClick={() => {
+                                  if (window.confirm(`Delete "${p.name}"? This can't be undone.`)) handleDeleteProfile(p._id);
+                                }}
+                                sx={{ color: 'text.secondary', '&:hover': { color: '#dc2626' } }}>
+                                {isDeleting ? <CircularProgress size={16} /> : <Delete sx={{ fontSize: 19 }} />}
+                              </IconButton>
+                            </span>
                           </Tooltip>
-                        )}
+                        </Box>
                       </Box>
                     </Paper>
                   );
@@ -491,49 +555,82 @@ export default function AdminSettings() {
               </Box>
             )}
             <Typography variant="caption" color="text.disabled" display="block" mt={2.5}>
-              Photos are shown on the public homepage. Max file size: {MAX_PHOTO_SIZE / (1024 * 1024)} MB. Supported formats: JPG, PNG, WebP.
+              Photos are shown on the public homepage. Max file size: {MAX_PHOTO_SIZE / (1024 * 1024)} MB. Supported formats: JPG, PNG, WebP, GIF.
             </Typography>
 
-            <Dialog open={hpAddOpen} onClose={() => setHpAddOpen(false)} maxWidth="xs" fullWidth
+            <Menu anchorEl={hpMenu?.anchor} open={!!hpMenu?.anchor} onClose={closeHpMenu}
+              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} transformOrigin={{ vertical: 'top', horizontal: 'right' }}>
+              <MenuItem onClick={() => { openHpDialog(hpMenu.profile); closeHpMenu(); }}>
+                <ListItemIcon><Edit fontSize="small" /></ListItemIcon>Edit profile
+              </MenuItem>
+              <MenuItem onClick={() => { toggleHpVisible(hpMenu.profile); closeHpMenu(); }}>
+                <ListItemIcon>{hpMenu?.profile.visible === false ? <Visibility fontSize="small" /> : <VisibilityOff fontSize="small" />}</ListItemIcon>
+                {hpMenu?.profile.visible === false ? 'Show on homepage' : 'Hide from homepage'}
+              </MenuItem>
+              {hpMenu?.profile.photo && (
+                <MenuItem onClick={() => { handlePhotoRemove(hpMenu.profile._id); closeHpMenu(); }}>
+                  <ListItemIcon><HideImage fontSize="small" /></ListItemIcon>Remove photo
+                </MenuItem>
+              )}
+            </Menu>
+
+            <Dialog open={hpDialogOpen} onClose={() => !hpSaving && setHpDialogOpen(false)} maxWidth="xs" fullWidth
               PaperProps={{ sx: { borderRadius: 3, bgcolor: isDark ? '#111' : '#fff' } }}>
-              <DialogTitle sx={{ fontWeight: 800, fontSize: '1rem', pb: 1 }}>Add Homepage Profile</DialogTitle>
-              <DialogContent sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <TextField label="Name" value={hpForm.name} required fullWidth size="small"
+              <DialogTitle sx={{ fontWeight: 800, fontSize: '1.05rem', pb: 1 }}>
+                {hpEditingId ? 'Edit Profile' : 'Add Profile'}
+              </DialogTitle>
+              <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.25, pt: '8px !important' }}>
+                <Box>
+                  <Typography fontSize="0.8rem" fontWeight={700} color="text.secondary" mb={1}>Photo</Typography>
+                  <Box display="flex" alignItems="center" gap={2}>
+                    <Avatar src={hpPhotoPreview || undefined} sx={{ width: 64, height: 64, bgcolor: '#dc2626', fontWeight: 800 }}>
+                      {(hpForm.name.trim() || '?').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase()}
+                    </Avatar>
+                    <Button size="small" variant="outlined" color="error" startIcon={<AddAPhoto sx={{ fontSize: 16 }} />}
+                      onClick={() => hpDialogPhotoInput.current?.click()}
+                      sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2 }}>
+                      {hpPhotoPreview ? 'Change Photo' : 'Upload Photo'}
+                    </Button>
+                    <input ref={hpDialogPhotoInput} type="file" hidden accept={PHOTO_TYPES.join(',')} onChange={pickHpDialogPhoto} />
+                  </Box>
+                </Box>
+                <TextField label="Full Name" value={hpForm.name} required fullWidth size="small"
                   onChange={e => setHpForm(f => ({ ...f, name: e.target.value }))} />
-                <TextField label="Role" value={hpForm.role} required fullWidth size="small"
-                  placeholder="e.g. First-time Donor"
-                  onChange={e => setHpForm(f => ({ ...f, role: e.target.value }))} />
-                <FormControl fullWidth size="small">
-                  <InputLabel>Blood Type</InputLabel>
-                  <Select label="Blood Type" value={hpForm.bloodType}
-                    onChange={e => setHpForm(f => ({ ...f, bloodType: e.target.value }))}>
-                    <MenuItem value="">—</MenuItem>
-                    {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(bt => (
-                      <MenuItem key={bt} value={bt}>{bt}</MenuItem>
-                    ))}
+                <FormControl fullWidth size="small" required>
+                  <InputLabel>Role</InputLabel>
+                  <Select label="Role" value={hpForm.role}
+                    onChange={e => setHpForm(f => ({ ...f, role: e.target.value }))}>
+                    {HP_ROLES.map(r => <MenuItem key={r.label} value={r.label}>{r.label}</MenuItem>)}
+                    {/* Keep an older free-text role selectable so editing doesn't silently change it */}
+                    {hpForm.role && !HP_ROLES.some(r => r.label === hpForm.role) && (
+                      <MenuItem value={hpForm.role}>{hpForm.role}</MenuItem>
+                    )}
                   </Select>
                 </FormControl>
-                <TextField label="Donations" type="number" value={hpForm.donations} fullWidth size="small"
-                  onChange={e => setHpForm(f => ({ ...f, donations: e.target.value }))} />
-                <TextField label="Badge" value={hpForm.badge} fullWidth size="small"
-                  placeholder="e.g. Community Champion"
-                  onChange={e => setHpForm(f => ({ ...f, badge: e.target.value }))} />
-                <TextField label="Bio" value={hpForm.bio} fullWidth multiline rows={3} size="small"
+                <TextField label="Short Description" value={hpForm.bio} fullWidth multiline minRows={3} size="small"
+                  inputProps={{ maxLength: 300 }} helperText={`${hpForm.bio.length}/300`}
                   onChange={e => setHpForm(f => ({ ...f, bio: e.target.value }))} />
-                <TextField label="Location" value={hpForm.location} fullWidth size="small"
-                  placeholder="e.g. Phnom Penh"
-                  onChange={e => setHpForm(f => ({ ...f, location: e.target.value }))} />
-                <TextField label="Quote" value={hpForm.quote} fullWidth multiline rows={2} size="small"
-                  onChange={e => setHpForm(f => ({ ...f, quote: e.target.value }))} />
+                <Box display="flex" alignItems="center" justifyContent="space-between"
+                  sx={{ px: 1.5, py: 1, borderRadius: 2, border: `1px solid ${border}` }}>
+                  <Box>
+                    <Typography fontSize="0.88rem" fontWeight={700}>Display on Homepage</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {hpForm.visible ? 'Visible to everyone' : 'Hidden — only admins see it'}
+                    </Typography>
+                  </Box>
+                  <Switch color="error" checked={hpForm.visible}
+                    onChange={e => setHpForm(f => ({ ...f, visible: e.target.checked }))}
+                    inputProps={{ 'aria-label': 'Display on homepage' }} />
+                </Box>
                 {hpFormError && <Alert severity="error" sx={{ borderRadius: 2 }}>{hpFormError}</Alert>}
               </DialogContent>
               <DialogActions sx={{ px: 3, pb: 2.5 }}>
-                <Button onClick={() => setHpAddOpen(false)} color="inherit" sx={{ textTransform: 'none', fontWeight: 600 }}>
+                <Button onClick={() => setHpDialogOpen(false)} color="inherit" disabled={hpSaving} sx={{ textTransform: 'none', fontWeight: 600 }}>
                   Cancel
                 </Button>
-                <Button onClick={handleAddProfile} variant="contained" color="error" disabled={hpSaving}
-                  sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2, minWidth: 90 }}>
-                  {hpSaving ? <CircularProgress size={16} sx={{ color: 'white' }} /> : 'Add'}
+                <Button onClick={handleSaveProfile} variant="contained" color="error" disabled={hpSaving}
+                  sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2, minWidth: 120 }}>
+                  {hpSaving ? <CircularProgress size={16} sx={{ color: 'white' }} /> : 'Save Profile'}
                 </Button>
               </DialogActions>
             </Dialog>
