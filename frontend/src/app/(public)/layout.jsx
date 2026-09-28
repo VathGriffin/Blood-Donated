@@ -1,8 +1,8 @@
 'use client';
-import Header, { URGENT_STRIP_HEIGHT } from '@/components/Header';
-import Footer from '@/components/Footer';
-import ChatBotWrapper from '@/components/ChatBotWrapper';
-import CookieConsent from '@/components/CookieConsent';
+import Header, { URGENT_STRIP_HEIGHT } from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
+import ChatBotWrapper from '@/components/chat/ChatBotWrapper';
+import CookieConsent from '@/components/layout/CookieConsent';
 import { Box, useTheme } from '@mui/material';
 
 export default function PublicLayout({ children }) {

@@ -10,7 +10,7 @@ import FavoriteIcon from "@mui/icons-material/Favorite";
 import { useUserAuth } from "@/store/UserAuthContext";
 import { detectLanguage, QUICK_PROMPTS } from "@/lib/chatbot-kb";
 import { askAssistant } from "@/lib/chat-client";
-import ChatMessage from "@/components/ChatMessage";
+import ChatMessage from "./ChatMessage";
 
 const UI_TEXT = {
   en: {

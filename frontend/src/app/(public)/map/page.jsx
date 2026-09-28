@@ -2,7 +2,7 @@
 import dynamic from 'next/dynamic';
 import { Box, CircularProgress } from '@mui/material';
 
-const Maps = dynamic(() => import('./MapClient'), {
+const Maps = dynamic(() => import('./_components/MapClient'), {
   ssr: false,
   loading: () => (
     <Box sx={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

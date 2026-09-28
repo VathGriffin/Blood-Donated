@@ -6,8 +6,8 @@ import { script } from '@/lib/fonts';
 import { Container, Box, Typography, Button, useTheme, Paper, InputBase, Autocomplete } from "@mui/material";
 import API_BASE from "@/lib/config";
 import { PROVINCES } from "@/lib/places";
-import HelpSection from "./HelpSection";
-import CommunitySection from "./CommunitySection";
+import HelpSection from "./_components/HelpSection";
+import CommunitySection from "./_components/CommunitySection";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import GroupsIcon from "@mui/icons-material/Groups";
 import PeopleIcon from "@mui/icons-material/People";
@@ -28,15 +28,18 @@ import Diversity3Icon from "@mui/icons-material/Diversity3";
 const HERO_PHOTO = "https://images.unsplash.com/photo-1536856136534-bb679c52a9aa?w=1600&q=80&auto=format&fit=crop";
 
 const FALLBACK_PROFILES = [
-  { name: "Sophea Meas", role: "First-time Donor", initials: "SM", color: "#dc2626",
-    photo: "https://i.pravatar.cc/640?img=47", bloodType: "A+", donations: 3, badge: "Active Donor",
-    bio: "Sophea donated blood for the first time and inspired her entire workplace to join. She now volunteers at local donation drives every quarter." },
-  { name: "Dara Keo", role: "Grateful Parent", initials: "DK", color: "#b91c1c",
-    photo: "https://i.pravatar.cc/640?img=68", bloodType: "O-", donations: 5, badge: "Community Champion",
-    bio: "After BloodLife connected his daughter with a life-saving donor, Dara became a passionate advocate and registered donor himself." },
-  { name: "Dr. Chan Bopha", role: "Cardiologist, Calmette Hospital", initials: "CB", color: "#991b1b",
-    photo: "https://i.pravatar.cc/640?img=32", bloodType: "B+", donations: 12, badge: "Medical Partner",
-    bio: "Dr. Chan Bopha partners with BloodLife to coordinate blood drives for cardiac patients and educates the public on the importance of donation." },
+  { name: "Sophea Meas", role: "Regular Blood Donor (Demo)", initials: "SM", color: "#dc2626",
+    photo: "https://i.pravatar.cc/640?img=47", bloodType: "A+", donations: 3, badge: "Blood Donor", location: "Phnom Penh",
+    quote: "I donate blood because it can give someone else a second chance at life.",
+    bio: "A demo profile representing a typical blood donor on BloodLife AI. This donor regularly donates blood and supports local blood drives." },
+  { name: "Dara Keo", role: "Volunteer & Blood Drive Support (Demo)", initials: "DK", color: "#dc2626",
+    photo: "https://i.pravatar.cc/640?img=68", bloodType: "O-", donations: 5, badge: "Community Volunteer", location: "Kandal",
+    quote: "I believe a stronger community can save more lives through awareness and action.",
+    bio: "A demo profile representing a community volunteer who helps organize blood donation campaigns, raises awareness, and supports donors." },
+  { name: "Chan Bopha", role: "Hospital Representative (Demo)", initials: "CB", color: "#dc2626",
+    photo: "https://i.pravatar.cc/640?img=32", bloodType: "B+", donations: 2, badge: "Healthcare Partner", location: "Siem Reap",
+    quote: "Our hospital relies on the support of donors and the community to save more lives.",
+    bio: "A demo profile representing a partner hospital on BloodLife AI. Hospitals can request blood units, manage inventory, and connect with donors." },
 ];
 
 const bloodTypes = [

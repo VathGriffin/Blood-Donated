@@ -176,7 +176,7 @@ Blood Donated/
 │   ├── src/
 │   │   ├── app.js          # Express app + middleware wiring (testable without a real server)
 │   │   ├── config/         # Database connection
-│   │   ├── common/         # Shared middleware (requireRole, optionalAuth)
+│   │   ├── common/         # Shared helpers + middleware (requireRole, CORS, uploads)
 │   │   ├── users/          # Donor-facing user accounts (register/login/profile)
 │   │   ├── staff/          # StaffUser accounts — admin & hospital_staff roles
 │   │   ├── hospital/       # Hospital records
@@ -185,28 +185,37 @@ Blood Donated/
 │   │   ├── appointments/   # Appointment booking + QR check-in
 │   │   ├── inventory/      # Per-hospital blood stock
 │   │   ├── analytics/      # Dashboard analytics
-│   │   ├── dashboard/      # Admin stats endpoint
-│   │   ├── notification/   # Contact form + messaging
+│   │   ├── dashboard/      # Admin stats + hospital insights
+│   │   ├── contact/        # Contact form messages
+│   │   ├── notification/   # Donor/staff messaging
+│   │   ├── nearby/         # Nearby hospitals & blood banks
 │   │   ├── homepage/       # Homepage content endpoint
 │   │   └── chatbot/        # Claude chat route + tool-calling functions
 │   ├── tests/               # Jest + Supertest, in-memory MongoDB
 │   └── server.js            # Process entry point (connects DB, starts app.js)
 └── frontend/
     └── src/
-        ├── app/
-        │   ├── (public)/      # Landing, Donors, Appointments, Requests, About (incl. Team), Contact
-        │   ├── (auth)/        # Donor login/register, Admin login, Hospital login
+        ├── app/                       # Pages (one folder per URL)
+        │   ├── (public)/              # Landing, Donors, Appointments, Requests, Map, About, Contact
+        │   │   └── _components/       # Landing-page sections
+        │   ├── (auth)/                # Donor login/register, Admin login, Hospital login
+        │   ├── (donor)/               # Donor profile, notifications, QR card
         │   └── dashboard/
-        │       ├── admin/     # Dashboard, Donors, Inventory, Requests, Appointments, Hospitals, Contacts, Analytics
-        │       └── hospital/  # Scoped dashboard, Appointments, Inventory, Requests, QR Scan
+        │       ├── admin/             # Dashboard, Donors, Inventory, Requests, Appointments, Hospitals, Contacts, Analytics
+        │       └── hospital/          # Scoped dashboard, Appointments, Inventory, Requests, QR Scan
         ├── components/
-        │   ├── Header.jsx / Footer.jsx
-        │   ├── ChatBot.jsx    # AI chatbot panel
-        │   ├── admin/         # Admin navbar/sidebar
-        │   └── hospital/      # Hospital navbar/sidebar/QR scanner
+        │   ├── layout/                # Header, Footer, CookieConsent
+        │   ├── chat/                  # AI chatbot panel + messages
+        │   ├── auth/                  # Login/register art + social buttons
+        │   ├── dashboard/             # Dashboard shell, sidebar, top bar
+        │   ├── ui/                    # Reusable cards, badges, headers
+        │   ├── inventory/             # Stock charts + low-stock alert
+        │   └── hospital/              # QR scanner
+        ├── hooks/                     # Dashboard session + notifications
+        ├── lib/                       # API config, theme, formatting, helpers
         └── store/
-            ├── AuthContext.jsx      # Staff (admin/hospital_staff) session
-            └── UserAuthContext.jsx  # Donor session
+            ├── AuthContext.jsx        # Staff (admin/hospital_staff) session
+            └── UserAuthContext.jsx    # Donor session
 ```
 
 ---

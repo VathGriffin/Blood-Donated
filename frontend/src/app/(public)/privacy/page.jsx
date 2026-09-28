@@ -198,9 +198,9 @@ export default function PrivacyPolicy() {
           ))}
           <Typography variant="body2" color="text.secondary" mt={2} lineHeight={1.8}>
             To exercise any of these rights, contact us at{" "}
-            <Box component="a" href="mailto:Vath.V211006@sis.hust.edu.vn"
+            <Box component="a" href="mailto:support@bloodlife.kh"
               sx={{ color: "#dc2626", textDecoration: "none", fontWeight: 600 }}>
-              Vath.V211006@sis.hust.edu.vn
+              support@bloodlife.kh
             </Box>. We will respond within 30 days.
           </Typography>
         </Section>
@@ -225,9 +225,9 @@ export default function PrivacyPolicy() {
               Institute of Technology of Cambodia<br />
               Phnom Penh, Cambodia<br />
               Email:{" "}
-              <Box component="a" href="mailto:Vath.V211006@sis.hust.edu.vn"
+              <Box component="a" href="mailto:support@bloodlife.kh"
                 sx={{ color: "#dc2626", textDecoration: "none", fontWeight: 600 }}>
-                Vath.V211006@sis.hust.edu.vn
+                support@bloodlife.kh
               </Box>
             </Typography>
           </Box>

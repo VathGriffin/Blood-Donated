@@ -196,7 +196,7 @@ export default function AdminSettings() {
     }
   };
 
-  const emptyHpForm = { name: '', role: '', bloodType: '', donations: '', badge: '', bio: '' };
+  const emptyHpForm = { name: '', role: '', bloodType: '', donations: '', badge: '', bio: '', location: '', quote: '' };
   const [hpAddOpen, setHpAddOpen]   = useState(false);
   const [hpForm, setHpForm]         = useState(emptyHpForm);
   const [hpSaving, setHpSaving]     = useState(false);
@@ -223,6 +223,8 @@ export default function AdminSettings() {
           donations: hpForm.donations ? Number(hpForm.donations) : 0,
           badge: hpForm.badge.trim(),
           bio: hpForm.bio.trim(),
+          location: hpForm.location.trim(),
+          quote: hpForm.quote.trim(),
         }),
       });
       const created = await res.json();
@@ -518,6 +520,11 @@ export default function AdminSettings() {
                   onChange={e => setHpForm(f => ({ ...f, badge: e.target.value }))} />
                 <TextField label="Bio" value={hpForm.bio} fullWidth multiline rows={3} size="small"
                   onChange={e => setHpForm(f => ({ ...f, bio: e.target.value }))} />
+                <TextField label="Location" value={hpForm.location} fullWidth size="small"
+                  placeholder="e.g. Phnom Penh"
+                  onChange={e => setHpForm(f => ({ ...f, location: e.target.value }))} />
+                <TextField label="Quote" value={hpForm.quote} fullWidth multiline rows={2} size="small"
+                  onChange={e => setHpForm(f => ({ ...f, quote: e.target.value }))} />
                 {hpFormError && <Alert severity="error" sx={{ borderRadius: 2 }}>{hpFormError}</Alert>}
               </DialogContent>
               <DialogActions sx={{ px: 3, pb: 2.5 }}>

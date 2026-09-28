@@ -18,7 +18,6 @@ import axios from 'axios';
 import { useUserAuth } from '@/store/UserAuthContext';
 import API_BASE from '@/lib/config';
 import { initialsOf } from '@/lib/format';
-
 const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
 const BLOOD_COLORS = {

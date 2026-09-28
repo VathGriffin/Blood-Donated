@@ -10,6 +10,8 @@ const homepageProfileSchema = new mongoose.Schema({
   bio:       { type: String, default: '' },
   donations: { type: Number, default: 0 },
   badge:     { type: String, default: '' },
+  location:  { type: String, default: '' },
+  quote:     { type: String, default: '' },
   order:     { type: Number, default: 0 },
 }, { timestamps: true });
 

@@ -12,20 +12,31 @@ const adminAuth = requireRole('admin');
 // step, otherwise the cards change from photos to initials the moment the backend is running.
 const DEFAULT_PROFILES = [
   {
-    name: 'Sophea Meas', role: 'First-time Donor', initials: 'SM', color: '#dc2626',
-    photo: 'https://i.pravatar.cc/640?img=47', bloodType: 'A+', donations: 3, badge: 'Active Donor', order: 0,
-    bio: 'Sophea donated blood for the first time and inspired her entire workplace to join. She now volunteers at local donation drives every quarter.',
+    name: 'Sophea Meas', role: 'Regular Blood Donor (Demo)', initials: 'SM', color: '#dc2626',
+    photo: 'https://i.pravatar.cc/640?img=47', bloodType: 'A+', donations: 3, badge: 'Blood Donor', order: 0,
+    location: 'Phnom Penh', quote: 'I donate blood because it can give someone else a second chance at life.',
+    bio: 'A demo profile representing a typical blood donor on BloodLife AI. This donor regularly donates blood and supports local blood drives.',
   },
   {
-    name: 'Dara Keo', role: 'Grateful Parent', initials: 'DK', color: '#b91c1c',
-    photo: 'https://i.pravatar.cc/640?img=68', bloodType: 'O-', donations: 5, badge: 'Community Champion', order: 1,
-    bio: 'After BloodLife connected his daughter with a life-saving donor, Dara became a passionate advocate and registered donor himself.',
+    name: 'Dara Keo', role: 'Volunteer & Blood Drive Support (Demo)', initials: 'DK', color: '#dc2626',
+    photo: 'https://i.pravatar.cc/640?img=68', bloodType: 'O-', donations: 5, badge: 'Community Volunteer', order: 1,
+    location: 'Kandal', quote: 'I believe a stronger community can save more lives through awareness and action.',
+    bio: 'A demo profile representing a community volunteer who helps organize blood donation campaigns, raises awareness, and supports donors.',
   },
   {
-    name: 'Dr. Chan Bopha', role: 'Cardiologist, Calmette Hospital', initials: 'CB', color: '#991b1b',
-    photo: 'https://i.pravatar.cc/640?img=32', bloodType: 'B+', donations: 12, badge: 'Medical Partner', order: 2,
-    bio: 'Dr. Chan Bopha partners with BloodLife to coordinate blood drives for cardiac patients and educates the public on the importance of donation.',
+    name: 'Chan Bopha', role: 'Hospital Representative (Demo)', initials: 'CB', color: '#dc2626',
+    photo: 'https://i.pravatar.cc/640?img=32', bloodType: 'B+', donations: 2, badge: 'Healthcare Partner', order: 2,
+    location: 'Siem Reap', quote: 'Our hospital relies on the support of donors and the community to save more lives.',
+    bio: 'A demo profile representing a partner hospital on BloodLife AI. Hospitals can request blood units, manage inventory, and connect with donors.',
   },
+];
+
+// Opening words of the bios the earlier seed wrote. A stored profile whose bio still starts this way was never
+// edited by an admin, so it's safe to replace with the current default (which adds location and quote).
+const OLD_SEED_BIOS = [
+  'Sophea donated blood for the first time',
+  'After BloodLife connected his daughter',
+  'Dr. Chan Bopha partners with BloodLife',
 ];
 
 const upload = createImageUpload('homepage');
@@ -36,6 +47,15 @@ router.get('/', async (req, res) => {
     let profiles = await HomepageProfile.find().sort({ order: 1 }).lean();
     if (profiles.length === 0) {
       profiles = await HomepageProfile.insertMany(DEFAULT_PROFILES);
+    } else {
+      const stale = profiles.filter(p => OLD_SEED_BIOS.findIndex(b => p.bio?.startsWith(b)) !== -1);
+      if (stale.length) {
+        await Promise.all(stale.map((p) => {
+          const { order, photo, ...fresh } = DEFAULT_PROFILES[OLD_SEED_BIOS.findIndex(b => p.bio.startsWith(b))];
+          return HomepageProfile.updateOne({ _id: p._id }, fresh);
+        }));
+        profiles = await HomepageProfile.find().sort({ order: 1 }).lean();
+      }
     }
     res.json(profiles);
   } catch (err) {
@@ -46,7 +66,7 @@ router.get('/', async (req, res) => {
 // POST create profile — admin only
 router.post('/', adminAuth, async (req, res) => {
   try {
-    const { name, role, bloodType, bio, donations, badge, color } = req.body;
+    const { name, role, bloodType, bio, donations, badge, color, location, quote } = req.body;
     if (!name?.trim() || !role?.trim())
       return res.status(400).json({ message: 'Name and role are required' });
 
@@ -61,6 +81,8 @@ router.post('/', adminAuth, async (req, res) => {
       bio: bio || '',
       donations: donations || 0,
       badge: badge || '',
+      location: location?.trim() || '',
+      quote: quote?.trim() || '',
       order,
     }).save();
     res.status(201).json(profile);

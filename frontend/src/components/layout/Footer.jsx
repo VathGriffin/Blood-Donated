@@ -85,8 +85,8 @@ function Footer() {
             </Typography>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
               <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                📧 <MuiLink href="mailto:Vath.V211006@sis.hust.edu.vn" sx={{ color: "#fff", textDecoration: "underline dotted", "&:hover": { color: "#ffeb3b" } }}>
-                  Vath.V211006@sis.hust.edu.vn
+                📧 <MuiLink href="mailto:support@bloodlife.kh" sx={{ color: "#fff", textDecoration: "underline dotted", "&:hover": { color: "#ffeb3b" } }}>
+                  support@bloodlife.kh
                 </MuiLink>
               </Typography>
               <Typography variant="body2" sx={{ opacity: 0.9 }}>📍 Institute of Technology of Cambodia, Phnom Penh</Typography>

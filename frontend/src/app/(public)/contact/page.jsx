@@ -25,7 +25,7 @@ import { script } from '@/lib/fonts';
 const HERO_IMG =
   "https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&w=1920&q=80";
 
-const CONTACT_EMAIL = "Vath.V211006@sis.hust.edu.vn";
+const CONTACT_EMAIL = "support@bloodlife.kh";
 const CONTACT_PHONE_DISPLAY = "+855 12 345 678";
 const CONTACT_PHONE_HREF = "tel:+85512345678";
 const CONTACT_ADDRESS = "Institute of Technology of Cambodia, Phnom Penh";

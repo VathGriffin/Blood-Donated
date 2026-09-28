@@ -11,8 +11,8 @@ import WifiOffIcon from '@mui/icons-material/WifiOff';
 import { useUserAuth } from '@/store/UserAuthContext';
 import { detectLanguage, QUICK_PROMPTS } from '@/lib/chatbot-kb';
 import { askAssistant } from '@/lib/chat-client';
-import ChatMessage from '@/components/ChatMessage';
-import { URGENT_STRIP_HEIGHT } from '@/components/Header';
+import ChatMessage from '@/components/chat/ChatMessage';
+import { URGENT_STRIP_HEIGHT } from '@/components/layout/Header';
 
 export default function AssistantPage() {
   const theme = useTheme();
