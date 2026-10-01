@@ -19,6 +19,8 @@ const userSchema = new mongoose.Schema(
     dateOfBirth: { type: Date, default: null },
     bloodType: { type: String, enum: [...BLOOD_TYPES, ''], default: '' },
     location: { type: String, default: '', trim: true },
+    // When the donor last opened their notifications; anything newer counts as unread.
+    notificationsSeenAt: { type: Date, default: null },
   },
   { timestamps: true }
 );

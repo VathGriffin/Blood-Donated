@@ -10,8 +10,10 @@ import {
 } from "@mui/material";
 import {
   Menu as MenuIcon, Close as CloseIcon, Favorite, LocalHospital, Group, ContactMail,
-  Info, SmartToy, Chat, Brightness4, Brightness7, Logout, QrCode2, Person,
+  Info, SmartToy, Brightness4, Brightness7, Logout, QrCode2, Person,
+  KeyboardArrowDown,
 } from "@mui/icons-material";
+import DonorNotifications from "./DonorNotifications";
 import { ColorModeContext } from "@/lib/ThemeContext";
 import { useUserAuth } from "@/store/UserAuthContext";
 import API_BASE from "@/lib/config";
@@ -63,8 +65,10 @@ const Header = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Booking an appointment is part of donating, so "Donate" stays highlighted there.
   const isActive = (path) =>
-    path === "/" ? pathname === "/" : pathname.startsWith(path);
+    path === "/" ? pathname === "/"
+      : pathname.startsWith(path) || (path === "/donate" && pathname.startsWith("/appointments"));
 
   const handleUserMenuOpen = (e) => setAnchorEl(e.currentTarget);
   const handleUserMenuClose = () => setAnchorEl(null);
@@ -133,26 +137,27 @@ const Header = () => {
               <Box sx={{ display: "flex", alignItems: "center", gap: 1, ml: 1.5 }}>
                 {isAuth ? (
                   <>
-                    <Tooltip title="Messages">
-                      <IconButton component={Link} href="/notification" size="small"
-                        sx={{ color: isDark ? "rgba(245,245,245,0.6)" : "#666666" }}>
-                        <Chat fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title={user?.fullName}>
-                      <IconButton onClick={handleUserMenuOpen} sx={{ p: 0.4 }}>
-                        <Avatar
-                          src={user?.photo ? `${API_BASE}${user.photo}` : undefined}
-                          sx={{
-                            width: 32, height: 32, bgcolor: "#dc2626",
-                            fontSize: "0.8rem", fontWeight: 700,
-                            boxShadow: "0 2px 8px rgba(220,38,38,0.4)",
-                          }}
-                        >
-                          {!user?.photo && user?.fullName?.charAt(0)?.toUpperCase()}
-                        </Avatar>
-                      </IconButton>
-                    </Tooltip>
+                    <DonorNotifications />
+                    <Box component="button" type="button" onClick={handleUserMenuOpen}
+                      aria-haspopup="menu" aria-expanded={Boolean(anchorEl)} aria-label={`Account menu for ${user?.fullName || "your account"}`}
+                      sx={{
+                        display: "flex", alignItems: "center", gap: 1, ml: 0.5, pl: 0.5, pr: 0.75, py: 0.5, border: 0, borderRadius: "999px",
+                        bgcolor: "transparent", color: "text.primary", font: "inherit", cursor: "pointer", textAlign: "left",
+                        "&:hover": { bgcolor: isDark ? "rgba(255,255,255,0.06)" : "#F1F5F9" },
+                        "&:focus-visible": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: 2 },
+                      }}>
+                      <Avatar
+                        src={user?.photo ? `${API_BASE}${user.photo}` : undefined}
+                        sx={{ width: 34, height: 34, bgcolor: "#B91C2C", fontSize: "0.82rem", fontWeight: 700 }}
+                      >
+                        {!user?.photo && user?.fullName?.charAt(0)?.toUpperCase()}
+                      </Avatar>
+                      <Box sx={{ display: { md: "none", lg: "block" }, maxWidth: 140 }}>
+                        <Typography noWrap sx={{ fontWeight: 700, fontSize: "0.85rem", lineHeight: 1.2, color: isDark ? "#F5F5F5" : "#0F172A" }}>{user?.fullName}</Typography>
+                        <Typography sx={{ color: isDark ? "rgba(245,245,245,0.6)" : "#64748B", fontSize: "0.72rem", lineHeight: 1.2 }}>Donor</Typography>
+                      </Box>
+                      <KeyboardArrowDown sx={{ fontSize: 20, color: isDark ? "rgba(245,245,245,0.6)" : "#64748B" }} />
+                    </Box>
                     <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleUserMenuClose}
                       slotProps={{ paper: { sx: {
                         borderRadius: "14px", minWidth: 190, mt: 1.2,
@@ -206,6 +211,7 @@ const Header = () => {
           ) : (
             /* ── Mobile right section ── */
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              {isAuth && <DonorNotifications size={36} />}
               {isAuth && (
                 <Tooltip title={user?.fullName}>
                   <IconButton onClick={handleUserMenuOpen} sx={{ p: 0.4 }}>
