@@ -3,9 +3,9 @@ import { useEffect, useState, useCallback } from 'react';
 import {
   Box, Typography, Paper, Table, TableHead, TableBody, TableRow, TableCell, Button,
   TextField, Grid, Dialog, DialogTitle, DialogContent, DialogActions, MenuItem, Alert,
-  Chip, IconButton, CircularProgress,
+  Chip, IconButton, CircularProgress, Avatar, Tooltip,
 } from '@mui/material';
-import { Add, Delete, PersonAdd } from '@mui/icons-material';
+import { Add, Delete, PersonAdd, AddPhotoAlternateOutlined, LocalHospital } from '@mui/icons-material';
 import axios from 'axios';
 import { useAuth } from '@/store/AuthContext';
 import API_BASE from '@/lib/config';
@@ -57,6 +57,33 @@ export default function AdminHospitals() {
     } finally { setSaving(false); }
   };
 
+  // Hospital photo, shown on the public booking page. Uploaded files are served by the API.
+  const [photoBusy, setPhotoBusy] = useState(null); // id of the hospital whose photo is changing
+  const imageSrc = (image) => (image?.startsWith('/uploads/') ? `${API_BASE}${image}` : image || undefined);
+  const uploadPhoto = async (id, file) => {
+    if (!file) return;
+    setPhotoBusy(id);
+    setError('');
+    try {
+      const body = new FormData();
+      body.append('image', file);
+      await axios.post(`${API_BASE}/api/hospitals/${id}/image`, body, { headers });
+      load();
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to upload the photo.');
+    } finally { setPhotoBusy(null); }
+  };
+  const removePhoto = async (id) => {
+    if (!confirm('Remove this hospital photo?')) return;
+    setPhotoBusy(id);
+    try {
+      await axios.delete(`${API_BASE}/api/hospitals/${id}/image`, { headers });
+      load();
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to remove the photo.');
+    } finally { setPhotoBusy(null); }
+  };
+
   const deleteHospital = async (id) => {
     if (!confirm('Delete this hospital? This does not delete its staff accounts.')) return;
     try {
@@ -97,6 +124,7 @@ export default function AdminHospitals() {
           <Table size="small">
             <TableHead>
               <TableRow>
+                <TableCell>Photo</TableCell>
                 <TableCell>Name</TableCell>
                 <TableCell>City</TableCell>
                 <TableCell>Phone</TableCell>
@@ -106,10 +134,31 @@ export default function AdminHospitals() {
             </TableHead>
             <TableBody>
               {hospitals.length === 0 && (
-                <TableRow><TableCell colSpan={5} align="center" sx={{ py: 4, color: 'text.secondary' }}>No hospitals yet.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} align="center" sx={{ py: 4, color: 'text.secondary' }}>No hospitals yet.</TableCell></TableRow>
               )}
               {hospitals.map((h) => (
                 <TableRow key={h._id} hover>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                    <Box display="flex" alignItems="center" gap={1}>
+                      <Avatar variant="rounded" src={imageSrc(h.image)} alt={h.image ? `Photo of ${h.name}` : ''} sx={{ width: 56, height: 40, bgcolor: 'action.hover', color: 'text.disabled' }}>
+                        <LocalHospital fontSize="small" />
+                      </Avatar>
+                      {photoBusy === h._id ? <CircularProgress size={18} /> : (
+                        <>
+                          <Tooltip title={h.image ? 'Replace photo' : 'Upload photo'}>
+                            <IconButton size="small" component="label" aria-label={`${h.image ? 'Replace' : 'Upload'} photo for ${h.name}`}>
+                              <AddPhotoAlternateOutlined fontSize="small" />
+                              <input hidden type="file" accept="image/jpeg,image/png,image/webp,image/gif"
+                                onChange={e => { uploadPhoto(h._id, e.target.files?.[0]); e.target.value = ''; }} />
+                            </IconButton>
+                          </Tooltip>
+                          {h.image && (
+                            <Button size="small" color="inherit" onClick={() => removePhoto(h._id)} sx={{ minWidth: 0, textTransform: 'none', color: 'text.secondary' }}>Remove</Button>
+                          )}
+                        </>
+                      )}
+                    </Box>
+                  </TableCell>
                   <TableCell>{h.name}</TableCell>
                   <TableCell>{h.city || '—'}</TableCell>
                   <TableCell>{h.phone || '—'}</TableCell>

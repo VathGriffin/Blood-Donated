@@ -12,6 +12,17 @@ const hospitalSchema = new mongoose.Schema(
       lat: { type: Number, default: null },
       lng: { type: Number, default: null },
     },
+    // Photo shown on the booking page: an uploaded file (/uploads/...) or an http(s) URL an admin
+    // entered. Anything else (javascript:, data: …) is refused so it can't end up in an <img src>.
+    image: {
+      type: String,
+      default: '',
+      trim: true,
+      validate: {
+        validator: (v) => !v || /^\/uploads\/[\w.-]+$/.test(v) || /^https?:\/\/\S+$/i.test(v),
+        message: 'Hospital image must be an uploaded file or an http(s) URL.',
+      },
+    },
   },
   { timestamps: true }
 );
