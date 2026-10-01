@@ -9,13 +9,16 @@ const bloodRequestSchema = new mongoose.Schema(
     bloodType: { type: String, enum: BLOOD_TYPES, required: true },
     unitsNeeded: { type: Number, min: 1, max: 10, default: 1 },
     urgency: { type: String, enum: ['Low', 'Medium', 'High', 'Critical'], required: true },
-    status: { type: String, enum: ['Pending', 'Approved', 'Rejected', 'Fulfilled'], default: 'Pending' },
+    status: { type: String, enum: ['Pending', 'Approved', 'Rejected', 'Fulfilled', 'Cancelled'], default: 'Pending' },
     reason: { type: String, required: true },
     contact:   { type: String, default: '' },
     userEmail: { type: String, default: '', lowercase: true, trim: true },
     photo: { type: String, default: null },
     fulfilledAt: { type: Date, default: null },
     fulfilledBy: { type: mongoose.Schema.Types.ObjectId, ref: 'StaffUser', default: null },
+    // Set when the requester withdraws a still-pending request (PATCH /:id/cancel).
+    cancelledAt: { type: Date, default: null },
+    cancellationReason: { type: String, default: '', trim: true, maxlength: 500 },
   },
   { timestamps: true }
 );

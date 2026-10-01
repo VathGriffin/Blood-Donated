@@ -33,6 +33,7 @@ const STATUS_META = {
   Pending:  { color: "#d97706", darkBg: "rgba(217,119,6,0.14)",  lightBg: "#fffbeb", icon: <HourglassEmptyIcon sx={{ fontSize: 13 }} />, label: "Pending"  },
   Approved: { color: "#16a34a", darkBg: "rgba(22,163,74,0.14)",  lightBg: "#f0fdf4", icon: <CheckCircleIcon   sx={{ fontSize: 13 }} />, label: "Approved" },
   Rejected: { color: "#dc2626", darkBg: "rgba(220,38,38,0.14)",  lightBg: "#fff0f0", icon: <CancelIcon        sx={{ fontSize: 13 }} />, label: "Rejected" },
+  Cancelled: { color: "#64748b", darkBg: "rgba(148,163,184,0.14)", lightBg: "#f8fafc", icon: <CancelIcon        sx={{ fontSize: 13 }} />, label: "Cancelled" },
 };
 
 const URGENCY_ORDER = { Critical: 0, High: 1, Medium: 2, Low: 3 };
@@ -167,7 +168,7 @@ export default function RequestBlood() {
               <Box display="flex" alignItems="center" gap={0.8}>
                 Active Requests
                 {requests.length > 0 && (
-                  <Chip label={requests.filter(r => r.status !== "Rejected").length} size="small"
+                  <Chip label={requests.filter(r => r.status !== "Rejected" && r.status !== "Cancelled").length} size="small"
                     sx={{ height: 18, fontSize: "0.68rem", fontWeight: 700,
                       bgcolor: "rgba(220,38,38,0.12)", color: "#dc2626" }} />
                 )}
@@ -327,6 +328,7 @@ export default function RequestBlood() {
                   <MenuItem value="Pending">Pending</MenuItem>
                   <MenuItem value="Approved">Approved</MenuItem>
                   <MenuItem value="Rejected">Rejected</MenuItem>
+                  <MenuItem value="Cancelled">Cancelled</MenuItem>
                 </Select>
               </FormControl>
               <FormControl size="small" sx={{ minWidth: 120 }}>

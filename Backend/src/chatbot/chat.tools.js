@@ -28,7 +28,7 @@ const tools = [
   },
   {
     name: 'get_my_requests',
-    description: "Get the authenticated user's own blood requests and their status (Pending, Approved, Rejected, Fulfilled). Only works if the user is logged in as a donor; if not, tell them to log in.",
+    description: "Get the authenticated user's own blood requests and their status (Pending, Approved, Rejected, Fulfilled, Cancelled). Only works if the user is logged in as a donor; if not, tell them to log in.",
     input_schema: { type: 'object', properties: {}, required: [] },
   },
   {

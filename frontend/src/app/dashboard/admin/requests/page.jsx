@@ -25,8 +25,8 @@ const C = { primary: "#B91C2C", dark: "#881D2A", surface: "#F8FAFC", ink: "#1E29
 
 const URGENCY_LEVELS = ["Low", "Medium", "High", "Critical"];
 const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
-const STATUSES = ["Pending", "Approved", "Rejected", "Fulfilled"];
-const STATUS_TABS = ["All", "Pending", "Approved", "Rejected"];
+const STATUSES = ["Pending", "Approved", "Rejected", "Fulfilled", "Cancelled"];
+const STATUS_TABS = ["All", "Pending", "Approved", "Rejected", "Cancelled"];
 const UNITS = Array.from({ length: 10 }, (_, i) => i + 1);
 const urgencyOrder = { critical: 0, high: 1, medium: 2, low: 3 };
 const MAX_PHOTO_SIZE = 10 * 1024 * 1024; // must match the multer limit in Backend/src/common/upload.js
@@ -46,7 +46,7 @@ const apiError = (err, fallback) =>
 
 // Badge colours for this page: green = approved / low, amber = pending / medium,
 // orange = high, red = critical / rejected.
-const STATUS_TONE  = { Pending: "warning", Approved: "success", Rejected: "error", Fulfilled: "info" };
+const STATUS_TONE  = { Pending: "warning", Approved: "success", Rejected: "error", Fulfilled: "info", Cancelled: "neutral" };
 const URGENCY_TONE = { Low: "success", Medium: "warning", High: "warning", Critical: "error" };
 // The theme has no orange tone, so High gets its own colours on top of the amber one.
 const highUrgencySx = (t) => {

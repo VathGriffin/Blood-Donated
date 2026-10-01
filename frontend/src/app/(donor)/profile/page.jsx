@@ -1,12 +1,16 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   Box, Container, Typography, Avatar, Paper, Chip, Button, useTheme, Grid, Skeleton,
   Tooltip, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField,
-  CircularProgress, Tabs, Tab, Switch, FormControlLabel,
+  CircularProgress, Tabs, Tab, Switch, FormControlLabel, Alert, Snackbar,
 } from '@mui/material';
+import TaskAltIcon from '@mui/icons-material/TaskAlt';
+import DoNotDisturbOnOutlinedIcon from '@mui/icons-material/DoNotDisturbOnOutlined';
+import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
+import SupportAgentOutlinedIcon from '@mui/icons-material/SupportAgentOutlined';
 import BloodtypeIcon from '@mui/icons-material/Bloodtype';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -29,7 +33,10 @@ const STATUS_META = {
   Pending:  { color: '#d97706', bg: 'rgba(217,119,6,0.12)',  darkBg: 'rgba(217,119,6,0.15)',  label: 'Pending',  icon: <HourglassEmptyIcon sx={{ fontSize: 13 }} /> },
   Approved: { color: '#16a34a', bg: 'rgba(22,163,74,0.1)',   darkBg: 'rgba(22,163,74,0.15)',  label: 'Approved', icon: <CheckCircleIcon   sx={{ fontSize: 13 }} /> },
   Rejected: { color: '#dc2626', bg: 'rgba(220,38,38,0.1)',   darkBg: 'rgba(220,38,38,0.15)',  label: 'Rejected', icon: <CancelIcon        sx={{ fontSize: 13 }} /> },
+  Fulfilled: { color: '#2563eb', bg: 'rgba(37,99,235,0.1)',  darkBg: 'rgba(37,99,235,0.15)',  label: 'Fulfilled', icon: <TaskAltIcon      sx={{ fontSize: 13 }} /> },
+  Cancelled: { color: '#64748b', bg: 'rgba(100,116,139,0.12)', darkBg: 'rgba(148,163,184,0.15)', label: 'Cancelled', icon: <DoNotDisturbOnOutlinedIcon sx={{ fontSize: 13 }} /> },
 };
+const REQUEST_FILTERS = ['All', 'Pending', 'Approved', 'Fulfilled', 'Rejected', 'Cancelled'];
 
 const URGENCY_COLOR = { Critical: '#dc2626', High: '#ea580c', Medium: '#d97706', Low: '#16a34a' };
 
@@ -82,14 +89,56 @@ export default function ProfilePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuth, token]);
 
-  useEffect(() => {
-    if (!isAuth || !user?.email) return;
-    setLoading(true);
-    axios.get(`${API_BASE}/api/requests?email=${encodeURIComponent(user.email)}`, { headers: { Authorization: `Bearer ${token}` } })
+  // `quiet` refreshes in place (after a cancellation) without swapping the list for skeletons.
+  const loadRequests = useCallback((quiet = false) => {
+    if (!isAuth || !user?.email) return Promise.resolve();
+    if (!quiet) setLoading(true);
+    return axios.get(`${API_BASE}/api/requests?email=${encodeURIComponent(user.email)}`, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => setRequests(Array.isArray(res.data) ? res.data : []))
-      .catch(() => setRequests([]))
-      .finally(() => setLoading(false));
+      .catch(() => { if (!quiet) setRequests([]); })
+      .finally(() => { if (!quiet) setLoading(false); });
   }, [isAuth, user?.email, token]);
+
+  useEffect(() => { loadRequests(); }, [loadRequests]);
+
+  // Cancel a pending request: confirm, optional reason, then PATCH /api/requests/:id/cancel.
+  const [cancelTarget, setCancelTarget] = useState(null); // the request being cancelled
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelling,   setCancelling]   = useState(false);
+  const [cancelError,  setCancelError]  = useState('');
+  const [toast,        setToast]        = useState(null); // { severity, message }
+  const cancelInFlight = useRef(false);
+
+  const openCancel = (req) => { setCancelTarget(req); setCancelReason(''); setCancelError(''); };
+  const closeCancel = () => { if (!cancelling) setCancelTarget(null); };
+  const confirmCancel = async () => {
+    if (!cancelTarget || cancelInFlight.current) return; // one request at a time, even on a double click
+    cancelInFlight.current = true;
+    setCancelling(true);
+    setCancelError('');
+    try {
+      const { data } = await axios.patch(`${API_BASE}/api/requests/${cancelTarget._id}/cancel`,
+        { reason: cancelReason.trim() }, { headers: { Authorization: `Bearer ${token}` } });
+      setRequests(list => list.map(r => (r._id === data._id ? data : r)));
+      setCancelTarget(null);
+      setToast({ severity: 'success', message: 'Your blood request has been cancelled.' });
+      loadRequests(true);
+    } catch (err) {
+      if (sessionExpired(err)) return;
+      const message = err.response?.data?.error || 'Could not cancel the request. Please try again.';
+      if (err.response?.status === 409 || err.response?.status === 404) {
+        // The request changed meanwhile (approved, already cancelled, removed) — show its real state.
+        setCancelTarget(null);
+        setToast({ severity: 'warning', message });
+        loadRequests(true);
+      } else {
+        setCancelError(message);
+      }
+    } finally {
+      cancelInFlight.current = false;
+      setCancelling(false);
+    }
+  };
 
   useEffect(() => {
     if (!isAuth || !user?.email) return;
@@ -378,7 +427,7 @@ export default function ProfilePage() {
           <Box sx={{ px: 2.5, py: 1.75, display: 'flex', gap: 1, flexWrap: 'wrap',
             borderTop: `1px solid ${border}`, bgcolor: subBg }}>
             {(tab === 0
-              ? ['All', 'Pending', 'Approved', 'Rejected']
+              ? REQUEST_FILTERS
               : ['All', 'Pending', 'Confirmed', 'CheckedIn', 'Cancelled']
             ).map(s => {
               const isAppt  = tab === 1;
@@ -529,6 +578,19 @@ export default function ProfilePage() {
                       </Box>
                     </Box>
 
+                    {status === 'Pending' && (
+                      <Box sx={{ px: 2, pb: 1.5, pt: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, flexWrap: 'wrap' }}>
+                        <Typography fontSize="0.75rem" color="text.secondary">
+                          Awaiting review by the hospital team.
+                        </Typography>
+                        <Button size="small" variant="outlined" color="error" onClick={() => openCancel(req)}
+                          startIcon={<DoNotDisturbOnOutlinedIcon sx={{ fontSize: 16 }} />}
+                          aria-label={`Cancel blood request for ${req.patientName}`}
+                          sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2, fontSize: '0.78rem', py: 0.4 }}>
+                          Cancel Request
+                        </Button>
+                      </Box>
+                    )}
                     {status === 'Approved' && (
                       <Box sx={{ px: 2, pb: 1.5, pt: 0 }}>
                         <Box sx={{ px: 1.5, py: 0.8, borderRadius: 1.5,
@@ -537,6 +599,38 @@ export default function ProfilePage() {
                           <Typography fontSize="0.75rem" color="#16a34a" fontWeight={600}>
                             ✓ Your request has been approved. Our team will contact you shortly.
                           </Typography>
+                        </Box>
+                        {/* Approved requests are already being acted on, so they're changed by talking to the team, not cancelled here */}
+                        <Box sx={{ display: 'flex', gap: 1, mt: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+                          <Typography fontSize="0.72rem" color="text.secondary" sx={{ flex: '1 1 200px' }}>
+                            Need to change or cancel it? Contact the hospital team.
+                          </Typography>
+                          <Button component={Link} href="/notification" size="small" variant="outlined"
+                            startIcon={<ChatBubbleOutlineIcon sx={{ fontSize: 15 }} />}
+                            sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2, fontSize: '0.75rem', py: 0.3, color: 'text.primary', borderColor: border }}>
+                            Send Message
+                          </Button>
+                          <Button component={Link} href="/contact" size="small" variant="outlined"
+                            startIcon={<SupportAgentOutlinedIcon sx={{ fontSize: 15 }} />}
+                            sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2, fontSize: '0.75rem', py: 0.3, color: 'text.primary', borderColor: border }}>
+                            Contact Hospital
+                          </Button>
+                        </Box>
+                      </Box>
+                    )}
+                    {status === 'Cancelled' && (
+                      <Box sx={{ px: 2, pb: 1.5, pt: 0 }}>
+                        <Box sx={{ px: 1.5, py: 0.8, borderRadius: 1.5,
+                          bgcolor: isDark ? 'rgba(148,163,184,0.08)' : '#f8fafc',
+                          border: `1px solid ${isDark ? 'rgba(148,163,184,0.2)' : '#e2e8f0'}` }}>
+                          <Typography fontSize="0.75rem" color="text.secondary" fontWeight={600}>
+                            You cancelled this request{req.cancelledAt ? ` on ${new Date(req.cancelledAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : ''}.
+                          </Typography>
+                          {req.cancellationReason && (
+                            <Typography fontSize="0.74rem" color="text.secondary" sx={{ mt: 0.25, overflowWrap: 'anywhere' }}>
+                              Reason: {req.cancellationReason}
+                            </Typography>
+                          )}
                         </Box>
                       </Box>
                     )}
@@ -785,6 +879,66 @@ export default function ProfilePage() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Cancel blood request confirmation */}
+      <Dialog open={Boolean(cancelTarget)} onClose={closeCancel} maxWidth="xs" fullWidth
+        aria-labelledby="cancel-request-title" aria-describedby="cancel-request-text"
+        PaperProps={{ sx: { borderRadius: 3, bgcolor: card } }}>
+        <DialogTitle id="cancel-request-title" sx={{ fontWeight: 800, fontSize: '1.05rem', pb: 1, display: 'flex', alignItems: 'center', gap: 1.25 }}>
+          <Box aria-hidden="true" sx={{ width: 36, height: 36, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            bgcolor: isDark ? 'rgba(220,38,38,0.15)' : '#fdecee', color: '#b91c2c' }}>
+            <DoNotDisturbOnOutlinedIcon sx={{ fontSize: 20 }} />
+          </Box>
+          Cancel Blood Request
+        </DialogTitle>
+        <DialogContent sx={{ pb: 1 }}>
+          <Typography id="cancel-request-text" fontSize="0.92rem" fontWeight={600}>
+            Are you sure you want to cancel this blood request?
+          </Typography>
+          {cancelTarget && (
+            <Box sx={{ mt: 1.5, px: 1.5, py: 1.1, borderRadius: 2, bgcolor: subBg, border: `1px solid ${border}` }}>
+              <Typography fontSize="0.82rem" fontWeight={700}>
+                {cancelTarget.bloodType} · {cancelTarget.unitsNeeded || 1} unit{cancelTarget.unitsNeeded !== 1 ? 's' : ''} for {cancelTarget.patientName}
+              </Typography>
+              <Typography fontSize="0.78rem" color="text.secondary">{cancelTarget.hospitalName}</Typography>
+            </Box>
+          )}
+          <Typography fontSize="0.8rem" color="text.secondary" sx={{ mt: 1.5, mb: 1 }}>
+            The hospital will no longer process it. This can’t be undone — you can submit a new request any time.
+          </Typography>
+          <Typography component="label" htmlFor="cancel-reason" sx={{ display: 'block', fontWeight: 700, fontSize: '0.82rem', mb: 0.6 }}>
+            Reason <Box component="span" sx={{ color: 'text.secondary', fontWeight: 500 }}>(optional)</Box>
+          </Typography>
+          <TextField fullWidth multiline minRows={2} maxRows={5} size="small" id="cancel-reason"
+            placeholder="e.g. Found a donor, surgery postponed…"
+            value={cancelReason} onChange={(e) => setCancelReason(e.target.value.slice(0, 500))}
+            disabled={cancelling}
+            helperText={`${cancelReason.length}/500`}
+            FormHelperTextProps={{ sx: { textAlign: 'right', mr: 0 } }}
+            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }} />
+          {cancelError && <Alert severity="error" sx={{ mt: 1.5, borderRadius: 2 }}>{cancelError}</Alert>}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5, pt: 1, gap: 1 }}>
+          <Button onClick={closeCancel} disabled={cancelling} color="inherit"
+            sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2 }}>
+            Keep Request
+          </Button>
+          <Button onClick={confirmCancel} variant="contained" color="error" disabled={cancelling}
+            startIcon={cancelling ? <CircularProgress size={15} color="inherit" /> : null}
+            sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2, minWidth: 150, bgcolor: '#b91c2c', '&:hover': { bgcolor: '#881d2a' } }}>
+            {cancelling ? 'Cancelling…' : 'Cancel Request'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar open={Boolean(toast)} autoHideDuration={5000} onClose={() => setToast(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+        {toast ? (
+          <Alert onClose={() => setToast(null)} severity={toast.severity} variant="filled" sx={{ borderRadius: 2, fontWeight: 600 }}>
+            {toast.message}
+          </Alert>
+        ) : undefined}
+      </Snackbar>
     </Box>
   );
 }
