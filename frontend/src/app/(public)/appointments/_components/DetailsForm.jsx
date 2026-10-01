@@ -14,7 +14,7 @@ import { BLOOD_TYPES } from './booking';
 export default function DetailsForm({ form, onChange, emailLocked }) {
   const set = (name) => (e) => onChange(name, e.target.value);
   return (
-    <Panel icon={<BadgeOutlinedIcon />} title="Your Details" subtitle="We'll use these to confirm your appointment">
+    <Panel icon={<BadgeOutlinedIcon />} title="Your Information" subtitle="We'll use these details to confirm your appointment">
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2.25, columnGap: 2.75 }}>
         <AuthField label="Full Name" name="fullName" placeholder="Enter your full name" autoComplete="name"
           icon={<PersonOutlineIcon fontSize="small" />} value={form.fullName} onChange={set('fullName')} required />

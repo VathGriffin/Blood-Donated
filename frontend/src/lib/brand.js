@@ -1,7 +1,7 @@
 // Product names. BRAND is shown on the public site and auth pages; DASHBOARD_BRAND
 // is the admin / hospital dashboard sidebar.
 export const BRAND = {
-  name: 'Blood Donated',
+  name: 'BloodLife AI',
   tagline: 'Save Lives Together',
 };
 

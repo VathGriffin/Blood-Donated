@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { Box, Typography, IconButton, Link as MuiLink, useTheme, Divider, Grid } from "@mui/material";
 import { Facebook, Telegram, Favorite } from "@mui/icons-material";
+import { BRAND } from "@/lib/brand";
 
 const quickLinks = [
   { label: "Home",          path: "/" },
@@ -31,7 +32,7 @@ function Footer() {
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
               <Favorite sx={{ color: "#ffcdd2", fontSize: 28 }} />
               <Typography variant="h6" fontWeight={800} sx={{ color: "#ffeb3b", letterSpacing: "-0.5px" }}>
-                Blood Donated
+                {BRAND.name}
               </Typography>
             </Box>
             <Typography variant="body2" sx={{ lineHeight: 1.85, opacity: 0.9, textAlign: "justify", mb: 3 }}>
@@ -101,7 +102,7 @@ function Footer() {
       <Box sx={{ maxWidth: "1200px", mx: "auto" }}>
         <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, justifyContent: "space-between", alignItems: "center", gap: 1.5, mb: 1.5 }}>
           <Typography variant="body2" sx={{ opacity: 0.7, fontSize: "0.82rem" }} suppressHydrationWarning>
-            © {new Date().getFullYear()} Blood Donated. All rights reserved.
+            © {new Date().getFullYear()} {BRAND.name}. All rights reserved.
           </Typography>
           <Typography variant="body2" sx={{ opacity: 0.7, fontSize: "0.82rem", display: "flex", alignItems: "center", gap: 0.5 }}>
             Made with <Favorite sx={{ fontSize: 14, color: "#ffcdd2" }} /> by Data Science Students — ITC Cambodia

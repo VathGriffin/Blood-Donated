@@ -176,6 +176,13 @@ export default function ChatBot() {
   const conversationRef = useRef(0);
   useEffect(() => { openRef.current = open; }, [open]);
 
+  // Pages can open the assistant (e.g. a "Need Help?" panel): window.dispatchEvent(new CustomEvent("bloodlife:open-chat")).
+  useEffect(() => {
+    const openChat = () => setOpen(true);
+    window.addEventListener("bloodlife:open-chat", openChat);
+    return () => window.removeEventListener("bloodlife:open-chat", openChat);
+  }, []);
+
   // Keep the newest message in view by scrolling the log itself, so the page behind never jumps.
   useEffect(() => {
     const el = logRef.current;
@@ -294,17 +301,17 @@ export default function ChatBot() {
             aria-expanded={open}
             aria-controls="bloodlife-chat-panel"
             sx={{
-              position: "fixed", bottom: { xs: 20, sm: 28 }, right: { xs: 20, sm: 28 }, zIndex: 1300,
-              width: 60, height: 60, borderRadius: "50%", border: 0, p: 0, cursor: "pointer",
+              position: "fixed", bottom: { xs: 16, sm: 24 }, right: { xs: 16, sm: 24 }, zIndex: 1300,
+              width: { xs: 46, sm: 50 }, height: { xs: 46, sm: 50 }, borderRadius: "50%", border: 0, p: 0, cursor: "pointer",
               background: HEADER_BG, display: "flex", alignItems: "center", justifyContent: "center",
-              boxShadow: "0 8px 24px rgba(185,28,44,0.40)",
+              boxShadow: "0 4px 14px rgba(185,28,44,0.28)",
               transition: "transform .2s ease, box-shadow .2s ease",
-              "&:hover": { transform: "translateY(-2px)", boxShadow: "0 12px 30px rgba(185,28,44,0.50)" },
+              "&:hover": { transform: "translateY(-2px)", boxShadow: "0 8px 20px rgba(185,28,44,0.36)" },
               "&:focus-visible": { outline: "3px solid #fff", outlineOffset: 2, boxShadow: `0 0 0 6px ${C.primary}` },
             }}>
             <Badge badgeContent={unread} color="success" overlap="circular"
               sx={{ "& .MuiBadge-badge": { top: -6, right: -6, fontWeight: 700 } }}>
-              {open ? <CloseIcon sx={{ color: "#fff", fontSize: 24 }} /> : <SmartToyIcon sx={{ color: "#fff", fontSize: 28 }} />}
+              {open ? <CloseIcon sx={{ color: "#fff", fontSize: 22 }} /> : <SmartToyIcon sx={{ color: "#fff", fontSize: 24 }} />}
             </Badge>
           </Box>
         </Tooltip>
@@ -323,7 +330,7 @@ export default function ChatBot() {
             position: "fixed", zIndex: 1299,
             ...(isPhone
               ? { inset: 0, width: "100%", height: "100dvh", borderRadius: 0 }
-              : { bottom: 100, right: 28, width: 440, height: "min(720px, calc(100vh - 128px))", borderRadius: "28px" }),
+              : { bottom: 88, right: 24, width: 440, height: "min(720px, calc(100vh - 128px))", borderRadius: "28px" }),
             display: "flex", flexDirection: "column", overflow: "hidden",
             border: isPhone ? 0 : `1px solid ${border}`, bgcolor: panelBg,
             boxShadow: isDark ? "0 24px 64px rgba(0,0,0,0.7)" : "0 24px 64px rgba(15,23,42,0.18), 0 4px 16px rgba(15,23,42,0.06)",
