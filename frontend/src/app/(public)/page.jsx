@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from 'next/navigation';
 import { script } from '@/lib/fonts';
 import { Container, Box, Typography, Button, useTheme, Paper, InputBase, Autocomplete } from "@mui/material";

@@ -9,7 +9,7 @@ const anthropicClient = process.env.ANTHROPIC_API_KEY
   ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
   : null;
 
-const MODEL = 'claude-sonnet-5';
+const MODEL = 'claude-sonnet-5-5';
 const MAX_TOOL_ITERATIONS = 5;
 const MAX_TOKENS = 1500; // Khmer and multi-step how-to answers need more room than English one-liners
 

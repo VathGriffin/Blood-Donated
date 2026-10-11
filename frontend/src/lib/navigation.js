@@ -66,10 +66,11 @@ export const ROLE_CONFIG = {
           { label: 'Blood Requests',  href: '/dashboard/hospital/requests',     icon: DescriptionIcon },
           { label: 'Appointments',    href: '/dashboard/hospital/appointments', icon: CalendarMonthIcon },
           { label: 'Scan QR',         href: '/dashboard/hospital/scan',         icon: QrCodeScannerIcon },
+          { label: 'My Profile',      href: '/dashboard/hospital/profile',      icon: PersonIcon },
         ],
       },
     ],
-    profileLinks: [],
+    profileLinks: [{ label: 'My Profile', href: '/dashboard/hospital/profile', icon: PersonIcon }],
   },
 
   [ROLES.DONOR]: {
