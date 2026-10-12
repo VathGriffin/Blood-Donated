@@ -2,7 +2,7 @@ const request = require('supertest');
 const app = require('../src/app');
 const Donor = require('../src/donor/donor.model');
 const Appointment = require('../src/appointments/appointment.model');
-const { createHospital, createHospitalStaff } = require('./helpers');
+const { createHospital, createAdmin, createHospitalStaff } = require('./helpers');
 
 describe('appointment confirm + check-in', () => {
   test('confirm then check-in updates donation history on the matching donor', async () => {
@@ -127,5 +127,78 @@ describe('POST /api/appointments (public booking)', () => {
   test('still enforces the required contact fields', async () => {
     const res = await request(app).post('/api/appointments').send(booking({ email: undefined }));
     expect(res.status).toBe(400);
+  });
+});
+
+describe('PUT /api/appointments/:id (status changes)', () => {
+  const makeAppt = (hospital, over = {}) => Appointment.create({
+    fullName: 'Status Donor', email: 'status@test.com', phone: '0933333333', bloodType: 'A+',
+    date: '2026-09-05', time: '09:00 AM', location: hospital.name, hospital: hospital._id,
+    status: 'Pending', ...over,
+  });
+
+  test('admin can confirm and cancel an appointment', async () => {
+    const hospital = await createHospital();
+    const { token } = await createAdmin();
+    const appt = await makeAppt(hospital);
+    for (const status of ['Confirmed', 'Cancelled', 'Pending']) {
+      const res = await request(app).put(`/api/appointments/${appt._id}`)
+        .set('Authorization', `Bearer ${token}`).send({ status });
+      expect(res.status).toBe(200);
+      expect(res.body.status).toBe(status);
+    }
+  });
+
+  test('ignores every field except status', async () => {
+    const hospitalA = await createHospital({ name: 'Hospital A' });
+    const hospitalB = await createHospital({ name: 'Hospital B' });
+    const { token } = await createHospitalStaff(hospitalA._id, { email: 'staffput@test.com' });
+    const appt = await makeAppt(hospitalA);
+    const res = await request(app).put(`/api/appointments/${appt._id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ status: 'Confirmed', hospital: hospitalB._id, email: 'someone@else.com', checkedInAt: new Date() });
+    expect(res.status).toBe(200);
+    const reloaded = await Appointment.findById(appt._id);
+    expect(String(reloaded.hospital)).toBe(String(hospitalA._id));
+    expect(reloaded.email).toBe('status@test.com');
+    expect(reloaded.checkedInAt).toBeNull();
+  });
+
+  test('refuses CheckedIn and unknown statuses — check-in has its own endpoint', async () => {
+    const hospital = await createHospital();
+    const { token } = await createAdmin();
+    const appt = await makeAppt(hospital);
+    for (const status of ['CheckedIn', 'Completed', undefined]) {
+      const res = await request(app).put(`/api/appointments/${appt._id}`)
+        .set('Authorization', `Bearer ${token}`).send({ status });
+      expect(res.status).toBe(400);
+    }
+    expect((await Appointment.findById(appt._id)).status).toBe('Pending');
+  });
+
+  test('a checked-in appointment can no longer be changed', async () => {
+    const hospital = await createHospital();
+    const { token } = await createAdmin();
+    const appt = await makeAppt(hospital, { status: 'CheckedIn', checkedInAt: new Date() });
+    const res = await request(app).put(`/api/appointments/${appt._id}`)
+      .set('Authorization', `Bearer ${token}`).send({ status: 'Cancelled' });
+    expect(res.status).toBe(409);
+  });
+});
+
+describe('DELETE /api/appointments/:id', () => {
+  test('only an admin can delete', async () => {
+    const hospital = await createHospital();
+    const staff = await createHospitalStaff(hospital._id, { email: 'staffdel@test.com' });
+    const admin = await createAdmin();
+    const appt = await Appointment.create({
+      fullName: 'Del', email: 'del@test.com', phone: '0944444444', bloodType: 'O+',
+      date: '2026-09-06', time: '09:00 AM', location: hospital.name, hospital: hospital._id,
+    });
+    const asStaff = await request(app).delete(`/api/appointments/${appt._id}`).set('Authorization', `Bearer ${staff.token}`);
+    expect(asStaff.status).toBe(403);
+    const asAdmin = await request(app).delete(`/api/appointments/${appt._id}`).set('Authorization', `Bearer ${admin.token}`);
+    expect(asAdmin.status).toBe(200);
+    expect(await Appointment.findById(appt._id)).toBeNull();
   });
 });

@@ -69,13 +69,14 @@ export const surfaces = {
 
 // Dark-red app sidebar (used by the dashboard shells).
 export const sidebar = {
-  bg:          brand.primaryDark,
-  bgGradient:  `linear-gradient(180deg, ${brand.primaryDark} 0%, #6E101A 100%)`,
+  bg:          '#881D2A',
+  bgGradient:  'linear-gradient(180deg, #881D2A 0%, #6A1420 100%)',
   border:      'rgba(255,255,255,0.08)',
   text:        'rgba(255,255,255,0.72)',
   textActive:  '#FFFFFF',
   itemHover:   'rgba(255,255,255,0.08)',
-  itemActive:  'rgba(255,255,255,0.16)',
+  itemActive:  'rgba(255,255,255,0.14)',
+  indicator:   '#FFFFFF',  // bar beside the active item
   sectionLabel:'rgba(255,255,255,0.45)',
 };
 

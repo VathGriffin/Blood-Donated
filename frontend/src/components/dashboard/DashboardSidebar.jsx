@@ -66,15 +66,22 @@ function SidebarContent({ role, profile, onNavigate }) {
                     onClick={onNavigate}
                     aria-current={active ? 'page' : undefined}
                     sx={{
-                      mb: 0.5, py: 1.1, px: 1.75,
+                      position: 'relative', mb: 0.5, py: 1.1, px: 1.75, borderRadius: '10px',
                       color: active ? sb.textActive : sb.text,
                       bgcolor: active ? sb.itemActive : 'transparent',
+                      boxShadow: active ? 'inset 0 0 0 1px rgba(255,255,255,0.08)' : 'none',
                       transition: 'background-color .15s ease, color .15s ease',
+                      // Bar beside the active item, so the current page doesn't rely on tint alone.
+                      '&::before': {
+                        content: '""', position: 'absolute', left: -12, top: 8, bottom: 8, width: 4,
+                        borderRadius: '0 4px 4px 0', bgcolor: sb.indicator,
+                        opacity: active ? 1 : 0, transition: 'opacity .15s ease',
+                      },
                       '&:hover': { bgcolor: active ? sb.itemActive : sb.itemHover, color: sb.textActive },
                       '&.Mui-focusVisible': { outlineColor: '#FFFFFF' },
                     }}
                   >
-                    <ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}>
+                    <ListItemIcon sx={{ minWidth: 38, color: 'inherit', opacity: active ? 1 : 0.85 }}>
                       <Icon sx={{ fontSize: 20 }} />
                     </ListItemIcon>
                     <ListItemText

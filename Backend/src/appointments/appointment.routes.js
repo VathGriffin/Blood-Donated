@@ -99,13 +99,25 @@ router.get('/:id', readAppointments, async (req, res) => {
   }
 });
 
+// Only the status can be changed here, and only between the states that carry no side effects.
+// Checking in goes through PATCH /:id/check-in, which also records the donation on the donor,
+// and a checked-in appointment is final so that donation record can't drift out of sync.
+// Everything else in the body (hospital, checkedInAt, contact details …) is ignored.
+const EDITABLE_STATUSES = ['Pending', 'Confirmed', 'Cancelled'];
+
 router.put('/:id', requireRole('admin', 'hospital_staff'), async (req, res) => {
   try {
+    const { status } = req.body;
+    if (!EDITABLE_STATUSES.includes(status))
+      return res.status(400).json({ error: `Status must be one of: ${EDITABLE_STATUSES.join(', ')}` });
     const appt = await Appointment.findById(req.params.id);
     if (!appt) return res.status(404).json({ error: 'Appointment not found' });
     if (!assertHospitalScope(req, appt))
       return res.status(403).json({ error: "Not your hospital's appointment" });
-    const updated = await Appointment.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    if (appt.status === 'CheckedIn')
+      return res.status(409).json({ error: 'This donor has already checked in; the appointment can no longer be changed.' });
+    appt.status = status;
+    const updated = await appt.save();
     res.json(updated);
   } catch (err) {
     res.status(400).json({ error: err.message });
