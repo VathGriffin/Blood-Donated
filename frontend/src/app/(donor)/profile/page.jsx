@@ -847,7 +847,7 @@ export default function ProfilePage() {
         <DialogTitle sx={{ fontWeight: 800, fontSize: '1rem', pb: 1 }}>
           Edit Profile
         </DialogTitle>
-        <DialogContent sx={{ pt: 2, pb: 2 }}>
+        <DialogContent sx={{ pb: 2 }}>
           <TextField
             label="Full Name"
             value={editName}

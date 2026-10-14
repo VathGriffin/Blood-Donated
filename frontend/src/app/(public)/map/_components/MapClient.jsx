@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { preconnect } from 'react-dom';
 import 'leaflet/dist/leaflet.css';
 import { MapContainer, TileLayer, Marker, Popup, ScaleControl } from 'react-leaflet';
 import { Box, Typography, Alert, Button, ButtonBase, useTheme } from '@mui/material';
@@ -46,6 +47,13 @@ const FALLBACK_STREET_LAYER = {
 };
 // This many tiles failing in a row, with none loading in between, means the server is refusing us.
 const TILE_FAILOVER_ERRORS = 6;
+// Tiles that are blocked (ad/privacy extensions, some networks) or just hang never fire an error,
+// so also give up on a provider when not a single tile has arrived this long after it was shown.
+const TILE_FIRST_LOAD_MS = 8000;
+
+// Open the connections to the tile servers while the map code is still downloading, so the first
+// tiles start sooner. (Runs once, when this lazily loaded module is first evaluated.)
+['https://tile.openstreetmap.org', 'https://server.arcgisonline.com'].forEach((origin) => preconnect(origin));
 
 const PANEL_HEIGHT ='clamp(600px, calc(100vh - 200px), 780px)';
 
@@ -98,7 +106,10 @@ export default function Maps() {
   const [sort, setSort] = useState('nearest');       // nearest | name
   const [baseLayer, setBaseLayer] = useState('map'); // map | satellite
   const [streetFallback, setStreetFallback] = useState(false); // OSM tiles kept failing: use the backup provider
+  const [tileTrouble, setTileTrouble] = useState(false);       // every provider failed: tell the user
+  const [tileAttempt, setTileAttempt] = useState(0);           // bump to remount the tile layer (Retry)
   const tileErrors = useRef(0);
+  const tileLoaded = useRef(false);
 
   const [hospRaw, setHospRaw] = useState([]);
   const [hospStatus, setHospStatus] = useState('loading'); // loading | ok | error
@@ -324,16 +335,38 @@ export default function Maps() {
   );
 
   const layer = baseLayer === 'map' && streetFallback ? FALLBACK_STREET_LAYER : BASE_LAYERS[baseLayer];
+  // The current provider has failed: street map → backup street map; otherwise there is nothing
+  // left to switch to, so say so instead of leaving a silent grey box.
+  const giveUpOnLayer = useCallback(() => {
+    tileErrors.current = 0;
+    if (baseLayer === 'map' && !streetFallback) setStreetFallback(true);
+    else setTileTrouble(true);
+  }, [baseLayer, streetFallback]);
   const tileHandlers = useMemo(() => ({
-    tileload: () => { tileErrors.current = 0; },
+    tileload: () => { tileErrors.current = 0; tileLoaded.current = true; setTileTrouble(false); },
     tileerror: (e) => {
       retryTile(e);
-      if (baseLayer === 'map' && ++tileErrors.current >= TILE_FAILOVER_ERRORS) {
-        tileErrors.current = 0;
-        setStreetFallback(true);
-      }
+      if (++tileErrors.current >= TILE_FAILOVER_ERRORS) giveUpOnLayer();
     },
-  }), [baseLayer]);
+  }), [giveUpOnLayer]);
+
+  // Each time a provider is (re)mounted, it must deliver a first tile within TILE_FIRST_LOAD_MS.
+  // Keyed only on what remounts the layer: restarting the check while tiles are already showing
+  // would wait for a first load that never comes again. The latest giveUpOnLayer is read via a ref.
+  const giveUpRef = useRef(giveUpOnLayer);
+  useEffect(() => { giveUpRef.current = giveUpOnLayer; }, [giveUpOnLayer]);
+  useEffect(() => {
+    tileLoaded.current = false;
+    tileErrors.current = 0;
+    const timer = setTimeout(() => { if (!tileLoaded.current) giveUpRef.current(); }, TILE_FIRST_LOAD_MS);
+    return () => clearTimeout(timer);
+  }, [layer.url, tileAttempt]);
+
+  const retryTiles = () => {
+    setTileTrouble(false);
+    setStreetFallback(false);
+    setTileAttempt((n) => n + 1);
+  };
 
   return (
     <Box sx={{ minHeight: '100vh', pb: { xs: 3, md: 5 } }}>
@@ -371,7 +404,7 @@ export default function Maps() {
           '& .leaflet-control-scale-line': { bgcolor: 'rgba(255,255,255,0.85)' },
         }}>
           <MapContainer center={DEFAULT_CENTER} zoom={13} minZoom={MIN_ZOOM} maxZoom={MAX_ZOOM} zoomControl={false} style={{ width: '100%', height: '100%' }}>
-            <TileLayer key={layer.url} attribution={layer.attribution} url={layer.url} subdomains={layer.subdomains || 'abc'} maxNativeZoom={layer.maxNativeZoom} maxZoom={MAX_ZOOM} keepBuffer={4} eventHandlers={tileHandlers} />
+            <TileLayer key={`${layer.url}#${tileAttempt}`} attribution={layer.attribution} url={layer.url} subdomains={layer.subdomains || 'abc'} maxNativeZoom={layer.maxNativeZoom} maxZoom={MAX_ZOOM} keepBuffer={4} eventHandlers={tileHandlers} />
             <ScaleControl position="bottomright" imperial={false} />
             <MapSizeSync />
             <MapFlyTo target={flyTo} markerRefs={markerRefs} />
@@ -391,7 +424,15 @@ export default function Maps() {
             )}
           </MapContainer>
 
-          <BaseLayerToggle value={baseLayer} onChange={setBaseLayer} />
+          <BaseLayerToggle value={baseLayer} onChange={(next) => { setTileTrouble(false); setBaseLayer(next); }} />
+
+          {tileTrouble && (
+            <Alert severity="warning" sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 1000, width: 'min(360px, calc(100% - 32px))', borderRadius: 3, boxShadow: '0 4px 16px rgba(0,0,0,0.2)' }}
+              action={<Button color="inherit" size="small" onClick={retryTiles} sx={{ fontWeight: 700 }}>Retry</Button>}>
+              The map background couldn&apos;t load. Your connection or a browser extension (ad or privacy
+              blocker) may be blocking map images. Places and pins still work.
+            </Alert>
+          )}
 
           {/* Appears after panning away from the current results */}
           {movedAway && !loading && (

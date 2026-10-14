@@ -211,6 +211,13 @@ export function buildTheme(mode = 'light') {
       MuiDialogTitle: {
         styleOverrides: { root: { fontSize: '1.125rem', fontWeight: 700, padding: '20px 24px 12px' } },
       },
+      MuiDialogContent: {
+        styleOverrides: {
+          // MUI removes the top padding of content that follows a DialogTitle, which clips the floating
+          // label of a text field placed first ("Full Name" cut in half). Give such content room for it.
+          root: { '.MuiDialogTitle-root + &:not(.MuiDialogContent-dividers):has(.MuiInputLabel-outlined)': { paddingTop: 8 } },
+        },
+      },
       MuiDialogActions: {
         styleOverrides: { root: { padding: '12px 24px 20px' } },
       },

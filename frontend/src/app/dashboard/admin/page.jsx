@@ -67,6 +67,8 @@ const rangeText = ([from, to]) => `${formatDate(from)} - ${formatDate(new Date(t
 const AVATAR_HUES = ['#2563EB', '#7C3AED', '#DB2777', '#0891B2', '#EA580C', '#16A34A'];
 const hueOf = (name = '') => AVATAR_HUES[[...name].reduce((s, c) => s + c.charCodeAt(0), 0) % AVATAR_HUES.length];
 
+const headerBtnSx = { border: 1, borderColor: 'divider', borderRadius: '10px', bgcolor: 'background.paper' };
+
 // ── Page ───────────────────────────────────────────────────────────────────────
 const Dashboard = () => {
   const { token } = useAuth();

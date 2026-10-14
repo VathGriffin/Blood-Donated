@@ -382,7 +382,7 @@ const KHMER = /[ក-៿]/;
 // so both the question and Khmer tags are folded to one form before comparing:
 //   បរិច្ចាក / បរិចាគ / បរិចាក → បរិច្ចាគ (donate), ឱ្យ → ឲ្យ (give), subscript ្ត → ្ដ.
 const normalizeKhmer = (s) => s
-  .replace(/[\s​-‍﻿]+/g, '')
+  .replace(/[\s\u200b-\u200d\ufeff]+/g, '')
   .replace(/បរិ(?:ច្ចា|ចា)[គក]/g, 'បរិច្ចាគ')
   .replace(/ឱ្យ/g, 'ឲ្យ')
   .replace(/្ត/g, '្ដ');
