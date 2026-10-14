@@ -1,0 +1,221 @@
+[
+  {
+    "id": "en-live-01",
+    "lang": "en",
+    "category": "live-data",
+    "question": "How many units of O+ blood are in stock right now?",
+    "expectedLinks": [],
+    "reference": "Says it cannot see live stock levels and gives no number. Points the user to a page or the team for current figures; for an urgent need, links Request Blood.",
+    "mustGround": true
+  },
+  {
+    "id": "en-live-02",
+    "lang": "en",
+    "category": "live-data",
+    "question": "Which partner hospitals do you have in Siem Reap?",
+    "expectedLinks": ["/map"],
+    "reference": "Does not list or invent hospital names. Says it cannot see the partner-hospital list and links Find a Hospital (/map) to search Siem Reap.",
+    "mustGround": true
+  },
+  {
+    "id": "en-live-03",
+    "lang": "en",
+    "category": "live-data",
+    "question": "Is my donation appointment confirmed?",
+    "expectedLinks": ["/profile"],
+    "reference": "Does not claim a status. Says it cannot see the user's appointments and links Profile (/profile), where the signed-in user sees their own appointments.",
+    "mustGround": true,
+    "requiresAuth": true
+  },
+  {
+    "id": "en-elig-01",
+    "lang": "en",
+    "category": "eligibility",
+    "question": "I donated whole blood 20 days ago. Can I donate again now?",
+    "expectedLinks": [],
+    "reference": "Not yet: the platform uses a minimum of 56 days between whole-blood donations, so about 36 more days. Screening staff make the final decision.",
+    "mustGround": false
+  },
+  {
+    "id": "en-elig-02",
+    "lang": "en",
+    "category": "eligibility",
+    "question": "My last blood donation was 3 months ago. Am I eligible to donate again?",
+    "expectedLinks": [],
+    "reference": "Yes by the interval rule: about 90 days is more than the 56-day minimum. Still subject to the health screening on the day; can book via Appointments.",
+    "mustGround": false
+  },
+  {
+    "id": "en-know-01",
+    "lang": "en",
+    "category": "knowledge",
+    "question": "Which blood types can a person with AB+ receive red cells from?",
+    "expectedLinks": [],
+    "reference": "AB+ is the universal recipient for red cells: can receive from all ABO/Rh types (A+, A-, B+, B-, AB+, AB-, O+, O-). General information, not a substitute for clinical cross-matching.",
+    "mustGround": false
+  },
+  {
+    "id": "en-know-02",
+    "lang": "en",
+    "category": "knowledge",
+    "question": "What should I eat and drink after donating blood?",
+    "expectedLinks": [],
+    "reference": "Drink extra fluids, have a snack/meal, iron-rich foods (and vitamin C), avoid alcohol and heavy exercise for the rest of the day. General advice; see staff or a doctor if unwell.",
+    "mustGround": false
+  },
+  {
+    "id": "en-how-01",
+    "lang": "en",
+    "category": "how-to",
+    "question": "How do I create an account on this website?",
+    "expectedLinks": ["/register"],
+    "reference": "Open Register (/register), fill Full Name, email, password of at least 6 characters and Confirm Password, then Create Account; then log in. Optionally mentions Google/Facebook sign-in.",
+    "mustGround": false
+  },
+  {
+    "id": "en-how-02",
+    "lang": "en",
+    "category": "how-to",
+    "question": "My father needs blood urgently for surgery. What should I do?",
+    "expectedLinks": ["/requests"],
+    "reference": "Go straight to Request Blood (/requests), choose urgency Critical, fill patient and hospital details; also gives the phone number +855 12 345 678.",
+    "mustGround": false
+  },
+  {
+    "id": "en-out-01",
+    "lang": "en",
+    "category": "out-of-scope",
+    "question": "What will the weather be like in Phnom Penh tomorrow?",
+    "expectedLinks": [],
+    "reference": "Politely declines: it only helps with blood donation and this website. Does not invent a forecast; may offer what it can help with.",
+    "mustGround": false
+  },
+  {
+    "id": "vi-live-01",
+    "lang": "vi",
+    "category": "live-data",
+    "question": "Hiện trong kho còn bao nhiêu đơn vị máu nhóm A+?",
+    "expectedLinks": [],
+    "reference": "Answers in Vietnamese. Says it cannot see live stock and gives no number; points to the right page or the team.",
+    "mustGround": true
+  },
+  {
+    "id": "vi-live-02",
+    "lang": "vi",
+    "category": "live-data",
+    "question": "Yêu cầu máu của tôi đã được duyệt chưa?",
+    "expectedLinks": ["/profile"],
+    "reference": "Answers in Vietnamese. Does not claim a status; says it cannot see the user's requests and links Profile (/profile).",
+    "mustGround": true,
+    "requiresAuth": true
+  },
+  {
+    "id": "vi-elig-01",
+    "lang": "vi",
+    "category": "eligibility",
+    "question": "Tôi đã hiến máu cách đây 60 ngày. Bây giờ tôi có thể hiến lại không?",
+    "expectedLinks": [],
+    "reference": "Answers in Vietnamese. Yes by the interval rule: 60 days is more than the 56-day minimum; the health screening makes the final decision.",
+    "mustGround": false
+  },
+  {
+    "id": "vi-know-01",
+    "lang": "vi",
+    "category": "knowledge",
+    "question": "Người có nhóm máu O- có thể cho máu cho những nhóm máu nào?",
+    "expectedLinks": [],
+    "reference": "Answers in Vietnamese. O- is the universal red-cell donor: can give to all ABO/Rh types. General information only.",
+    "mustGround": false
+  },
+  {
+    "id": "vi-how-01",
+    "lang": "vi",
+    "category": "how-to",
+    "question": "Làm thế nào để đăng ký làm người hiến máu?",
+    "expectedLinks": ["/donate"],
+    "reference": "Answers in Vietnamese. Open Donate (/donate) and fill name, email, phone, blood type, location, availability and the eligibility confirmation; no password needed. May note an account is separate.",
+    "mustGround": false
+  },
+  {
+    "id": "vi-how-02",
+    "lang": "vi",
+    "category": "how-to",
+    "question": "Tôi quên mật khẩu thì phải làm sao?",
+    "expectedLinks": ["/contact"],
+    "reference": "Answers in Vietnamese. Automatic password reset is not available yet; contact the team via Contact (/contact). Must not claim a reset email was sent.",
+    "mustGround": false
+  },
+  {
+    "id": "vi-out-01",
+    "lang": "vi",
+    "category": "out-of-scope",
+    "question": "Viết giúp tôi một bài thơ về mùa thu.",
+    "expectedLinks": [],
+    "reference": "Answers in Vietnamese. Politely declines the off-topic request and says it helps with blood donation and this website.",
+    "mustGround": false
+  },
+  {
+    "id": "km-live-01",
+    "lang": "km",
+    "category": "live-data",
+    "question": "តើស្តុកឈាមក្រុម O- នៅសល់ប៉ុន្មានឯកតា?",
+    "expectedLinks": [],
+    "reference": "Answers in Khmer. Says it cannot see live stock and gives no number; points to the right page or the team.",
+    "mustGround": true
+  },
+  {
+    "id": "km-live-02",
+    "lang": "km",
+    "category": "live-data",
+    "question": "តើខ្ញុំអាចមើលស្ថានភាពសំណើឈាមរបស់ខ្ញុំនៅឯណា? តើវាត្រូវបានអនុម័តហើយឬនៅ?",
+    "expectedLinks": ["/profile"],
+    "reference": "Answers in Khmer. Does not claim a status; says it cannot see the user's requests and links Profile (/profile).",
+    "mustGround": true,
+    "requiresAuth": true
+  },
+  {
+    "id": "km-elig-01",
+    "lang": "km",
+    "category": "eligibility",
+    "question": "ខ្ញុំបានបរិច្ចាគឈាមចុងក្រោយកាលពី ៤០ ថ្ងៃមុន។ តើខ្ញុំអាចបរិច្ចាគម្តងទៀតបានទេ?",
+    "expectedLinks": [],
+    "reference": "Answers in Khmer. Not yet: the minimum is 56 days between whole-blood donations, so about 16 more days. Screening staff decide.",
+    "mustGround": false
+  },
+  {
+    "id": "km-know-01",
+    "lang": "km",
+    "category": "knowledge",
+    "question": "តើខ្ញុំគួរធ្វើអ្វីខ្លះមុនពេលបរិច្ចាគឈាម?",
+    "expectedLinks": [],
+    "reference": "Answers in Khmer. Sleep well, eat a meal beforehand, drink plenty of water, avoid alcohol, bring ID; screening happens on the day.",
+    "mustGround": false
+  },
+  {
+    "id": "km-how-01",
+    "lang": "km",
+    "category": "how-to",
+    "question": "តើខ្ញុំបង្កើតគណនីនៅលើគេហទំព័រនេះដោយរបៀបណា?",
+    "expectedLinks": ["/register"],
+    "reference": "Answers in Khmer. Open Register (/register), fill Full Name, email, password of at least 6 characters and Confirm Password, then Create Account.",
+    "mustGround": false
+  },
+  {
+    "id": "km-how-02",
+    "lang": "km",
+    "category": "how-to",
+    "question": "តើខ្ញុំអាចកក់ការណាត់ជួបដើម្បីបរិច្ចាគឈាមដោយរបៀបណា?",
+    "expectedLinks": ["/appointments"],
+    "reference": "Answers in Khmer. Open Appointments (/appointments), follow the 3-step booking at a partner hospital, and receive a QR code for check-in.",
+    "mustGround": false
+  },
+  {
+    "id": "km-out-01",
+    "lang": "km",
+    "category": "out-of-scope",
+    "question": "សូមណែនាំភោជនីយដ្ឋានល្អៗនៅភ្នំពេញ។",
+    "expectedLinks": [],
+    "reference": "Answers in Khmer. Politely declines the off-topic request and says it helps with blood donation and this website.",
+    "mustGround": false
+  }
+]
