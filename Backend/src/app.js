@@ -87,8 +87,14 @@ app.use((req, res, next) => {
 
 app.use('/uploads', express.static(uploadsDir));
 
-// Health check
+// Health checks. Both answer 200 while the process is up, so a database outage doesn't make the host
+// restart the API in a loop; /health also reports whether MongoDB is connected.
 app.get('/', (req, res) => res.json({ status: 'ok', service: 'BloodLife API', version: '2.0.0' }));
+app.get('/health', (req, res) => res.json({
+  status: 'ok',
+  database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+  uptimeSeconds: Math.round(process.uptime()),
+}));
 
 // Chat and nearby-hospital lookup — no DB required
 app.use('/api/chat', chatRoutes);

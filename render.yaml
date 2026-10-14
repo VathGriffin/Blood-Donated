@@ -8,7 +8,7 @@ services:
     plan: free                    # free instances sleep after ~15 min idle; upgrade for always-on
     buildCommand: npm install
     startCommand: npm start
-    healthCheckPath: /            # answers {"status":"ok"} without touching the database
+    healthCheckPath: /health      # 200 while the process is up; also reports whether MongoDB is connected
     envVars:
       - key: NODE_ENV
         value: production
@@ -28,6 +28,8 @@ services:
         sync: false
       - key: GEMINI_MODEL         # optional: defaults to gemini-3.5-flash-lite
         sync: false
+      # Optional tuning (add in the dashboard if needed): RATE_LIMIT_MAX (default 1500 per 15 min per IP),
+      # TRUST_PROXY (default 1 in production — correct for Render). PORT is set by Render; don't add it.
     # Uploaded photos are written to Backend/uploads. On the free plan that disk is wiped whenever the
     # service restarts or sleeps. To keep them, use a paid plan and uncomment:
     # disk:
