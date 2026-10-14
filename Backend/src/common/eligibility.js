@@ -1,5 +1,5 @@
-// Whole-blood donation eligibility interval, in days. Single source of truth —
-// donor.routes.js and chat.tools.js both need this and previously duplicated it.
+// Whole-blood donation eligibility interval, in days. Single source of truth for
+// donor.routes.js and anything else that checks eligibility.
 const ELIGIBILITY_INTERVAL_DAYS = 56;
 
 function computeEligibility(lastDonation) {

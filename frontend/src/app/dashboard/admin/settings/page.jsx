@@ -641,7 +641,7 @@ export default function AdminSettings() {
       case 'ai':
         return (
           <Box>
-            <SectionTitle sub="Live status of the Claude-powered chatbot">AI Configuration</SectionTitle>
+            <SectionTitle sub="Live status of the Gemini-powered chatbot">AI Configuration</SectionTitle>
             {aiError && (
               <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}
                 action={<Button color="error" size="small" onClick={loadAiStatus} sx={{ fontWeight: 700, textTransform: 'none' }}>Retry</Button>}>
@@ -668,14 +668,14 @@ export default function AdminSettings() {
                     />
                   </Row>
                   <Row label="Model" border={border}><Typography fontSize="0.86rem" fontFamily="monospace">{aiStatus.model}</Typography></Row>
-                  <Row label="Max Tool Iterations" border={border}><Typography fontSize="0.86rem">{aiStatus.maxToolIterations}</Typography></Row>
+                  <Row label="Provider" border={border}><Typography fontSize="0.86rem">Google Gemini</Typography></Row>
                 </Box>
               </Paper>
             )}
             <Alert severity="info" sx={{ borderRadius: 3, fontSize: '0.82rem' }}>
               {aiStatus?.configured === false
-                ? 'The AI assistant is currently using rule-based fallback responses. Set ANTHROPIC_API_KEY in Backend/.env and restart the server to enable real Claude responses.'
-                : 'To change the model, set ANTHROPIC_API_KEY / edit MODEL in Backend/src/chatbot/chat.routes.js and restart the server — there is no runtime model switch by design.'}
+                ? 'The AI assistant is currently using rule-based fallback responses. Set GEMINI_API_KEY in Backend/.env and restart the server to enable real Gemini responses.'
+                : 'To change the model, set GEMINI_MODEL in Backend/.env and restart the server — there is no runtime model switch by design.'}
             </Alert>
           </Box>
         );

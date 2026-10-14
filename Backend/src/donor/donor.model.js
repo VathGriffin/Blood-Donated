@@ -40,5 +40,6 @@ const donorSchema = new mongoose.Schema(
 donorSchema.index({ bloodType: 1, available: 1 });
 donorSchema.index({ createdAt: -1 });
 donorSchema.index({ email: 1 });
+donorSchema.index({ 'donationHistory.date': 1 }); // admin trends: donations in a date range
 
 module.exports = mongoose.model('Donor', donorSchema);

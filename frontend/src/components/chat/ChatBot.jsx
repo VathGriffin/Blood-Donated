@@ -197,14 +197,15 @@ export default function ChatBot() {
     return () => clearTimeout(t);
   }, [open]);
 
-  const ask = useCallback(async (history, content) => {
+  // `earlier` is the conversation before `content`, the message being asked.
+  const ask = useCallback(async (earlier, content) => {
     const lang = detectLanguage(content);
     setPromptLang(lang);
     setLoading(true);
     const conversation = conversationRef.current;
     // Only role + content go to the API; time/offline are display-only.
     const reply = await askAssistant({
-      history: history.map(({ role, content: c }) => ({ role, content: c })), content, lang, token,
+      history: earlier.map(({ role, content: c }) => ({ role, content: c })), content, lang, token,
     });
     if (conversation !== conversationRef.current) return; // chat was cleared meanwhile
     // With no AI key set up, the built-in guide is the normal mode, so only a real failure is
@@ -222,10 +223,9 @@ export default function ChatBot() {
   const sendMessage = (text) => {
     const content = (text ?? input).trim();
     if (!content || loading) return;
-    const history = [...messages, { role: "user", content, time: Date.now() }];
-    setMessages(history);
+    setMessages([...messages, { role: "user", content, time: Date.now() }]);
     setInput("");
-    ask(history, content);
+    ask(messages, content);
   };
 
   // Re-ask the last question after an offline answer, replacing that answer.
@@ -235,7 +235,7 @@ export default function ChatBot() {
     if (!lastUser) return;
     const history = messages[messages.length - 1]?.role === "assistant" ? messages.slice(0, -1) : messages;
     setMessages(history);
-    ask(history, lastUser.content);
+    ask(history.slice(0, -1), lastUser.content); // history ends with lastUser
   };
 
   const clearConversation = () => {

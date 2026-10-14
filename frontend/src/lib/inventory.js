@@ -4,10 +4,10 @@ export const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
 // `status` comes from the API (a virtual on the inventory model: empty / critical / low / adequate).
 export const STOCK = {
-  adequate: { label: 'Adequate',     alert: null,               color: semantic.success.main },
-  low:      { label: 'Low',          alert: 'Consider restock', color: semantic.warning.main },
-  critical: { label: 'Critical',     alert: 'Low stock',        color: semantic.error.main },
-  empty:    { label: 'Out of stock', alert: 'Out of stock',     color: semantic.error.dark },
+  adequate: { label: 'Adequate',     color: semantic.success.main },
+  low:      { label: 'Low',          color: semantic.warning.main },
+  critical: { label: 'Critical',     color: semantic.error.main },
+  empty:    { label: 'Out of stock', color: semantic.error.dark },
 };
 
 /** One row per blood type — types the pool has no row for yet show as empty. */

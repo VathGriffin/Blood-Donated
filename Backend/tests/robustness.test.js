@@ -44,7 +44,7 @@ describe('requests that are not JSON objects get a 4xx, never a 500', () => {
   test('the assistant endpoint answers 400 for a non-JSON body', async () => {
     const res = await request(app).post('/api/chat').set('Content-Type', 'text/plain').send('hi');
     expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/messages/i);
+    expect(res.body.error).toMatch(/message/i);
   });
 });
 

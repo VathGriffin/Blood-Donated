@@ -55,6 +55,7 @@ const notFound = (req, res) => {
 };
 
 // Express recognises an error handler by its four parameters, so `next` must stay in the signature.
+// eslint-disable-next-line no-unused-vars
 const errorHandler = (err, req, res, next) => sendError(res, err, req);
 
 module.exports = { sendError, notFound, errorHandler };

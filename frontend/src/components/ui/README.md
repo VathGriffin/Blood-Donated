@@ -33,11 +33,14 @@ import { PageHeader, SectionCard, StatCard, StatusBadge, TableCard, EmptyState, 
 
 | Component | Use for |
 |---|---|
-| `PageHeader` | Page title, subtitle, action buttons (stacks on phones) |
-| `SectionCard` | Standard white card, optional ruled header |
-| `StatCard` | KPI tile — `tone`: primary · success · warning · error · info · neutral |
+| `PageHeader` | Page title, subtitle, optional `icon` tile, action buttons (stacks on phones) |
+| `SectionCard` | Standard white card, optional header with `icon`, title and action |
+| `StatCard` | KPI tile — `tone`: primary · success · warning · error · info · neutral, or a hex `color`. Pass `trend` (from `/api/stats/trends`) for a comparison footer and sparkline |
 | `StatusBadge` | Any status. Colour comes from `statusTone` in the tokens, so "Pending" is the same everywhere |
 | `TableCard` | Card around a `<Table>` with header, toolbar and horizontal scroll on small screens |
+| `CardError` | Error alert with a Retry button, inside a card |
+| `BloodPill` · `RowMenu` | Blood-type pill and single-link row menu for compact dashboard tables (`compactHeadCell`, `compactTableContainerSx`) |
+| `Sparkline` · `TrendChip` | Small trend line and ↑/↓ percentage pill (used by `StatCard`) |
 | `EmptyState` | Empty lists / tables / search results |
 | `ResponsiveGrid` | Auto-wrapping card grid. Use instead of MUI `<Grid>`, whose v7 API dropped `item`/`xs` |
 

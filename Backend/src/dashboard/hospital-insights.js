@@ -3,17 +3,11 @@ const BloodRequest = require('../requests/blood-request.model');
 const Appointment = require('../appointments/appointment.model');
 const Inventory = require('../inventory/inventory.model');
 const { BLOOD_TYPES } = require('../common/blood-types');
+const { stockStatus } = require('../common/stock-status');
 
 // Aggregate-only "how are the partner hospitals doing" figures — counts, totals and hospital
-// names/cities, never donor, patient or contact details. Shared by the public About-page
-// endpoint (stats.routes.js) and the AI assistant's network-insights tool (chat.tools.js).
-const stockStatus = ({ units, minUnits }) => {
-  if (units === 0) return 'empty';
-  if (units < minUnits) return 'critical';
-  if (units < minUnits * 2) return 'low';
-  return 'adequate';
-};
-
+// names/cities, never donor, patient or contact details. Used by the public About-page
+// endpoint (stats.routes.js).
 async function buildHospitalInsights() {
   const [hospitals, requestsByStatus, requestsByUrgency, requestsByType, appointmentsByStatus, stockRows, topHospitals] =
     await Promise.all([
@@ -42,7 +36,7 @@ async function buildHospitalInsights() {
   const reporting = new Set();
   for (const row of stockRows) {
     stockByType[row.bloodType] += row.units || 0;
-    status[stockStatus({ units: row.units || 0, minUnits: row.minUnits ?? 10 })] += 1;
+    status[stockStatus(row.units || 0, row.minUnits ?? 10)] += 1;
     if (row.hospital) reporting.add(String(row.hospital));
   }
 

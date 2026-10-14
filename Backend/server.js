@@ -27,11 +27,27 @@ async function dropStaleInventoryIndex() {
   }
 }
 
+// Older builds seeded the central pool with made-up unit counts (A+ 45, A- 12, …). Rows nobody
+// has edited since (updatedBy is still 'system') are reset to 0 so only recorded stock is shown.
+const OLD_SEED_UNITS = { 'A+': 45, 'A-': 12, 'B+': 28, 'B-': 8, 'AB+': 62, 'AB-': 18, 'O+': 74, 'O-': 22 };
+async function clearSeededInventory() {
+  try {
+    const { modifiedCount } = await Inventory.updateMany(
+      { hospital: null, updatedBy: 'system', $or: Object.entries(OLD_SEED_UNITS).map(([bloodType, units]) => ({ bloodType, units })) },
+      { units: 0 }
+    );
+    if (modifiedCount) console.log(`🔧 Reset ${modifiedCount} seeded inventory rows to 0 units`);
+  } catch (err) {
+    console.error('Seeded inventory cleanup failed:', err.message);
+  }
+}
+
 connect().then(async () => {
   // connect() swallows a failed connection so the API can still serve /api/chat;
   // running the migration/seed against a dead connection would only add noise.
   if (mongoose.connection.readyState !== 1) return;
   await dropStaleInventoryIndex();
+  await clearSeededInventory();
   await seedAdmin().catch((err) => console.error('Admin seed failed:', err.message));
 });
 

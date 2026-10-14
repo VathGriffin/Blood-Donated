@@ -24,7 +24,9 @@ services:
         sync: false
       - key: FRONTEND_URL         # your Vercel address(es), comma-separated; "*" wildcards allowed
         sync: false
-      - key: ANTHROPIC_API_KEY    # optional: without a real key the assistant answers offline
+      - key: GEMINI_API_KEY       # optional: without a real key the assistant answers offline
+        sync: false
+      - key: GEMINI_MODEL         # optional: defaults to gemini-3.5-flash-lite
         sync: false
     # Uploaded photos are written to Backend/uploads. On the free plan that disk is wiped whenever the
     # service restarts or sleeps. To keep them, use a paid plan and uncomment:

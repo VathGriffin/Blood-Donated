@@ -49,13 +49,12 @@ export default function AssistantPage() {
     const lang = detectLanguage(content);
     setPromptLang(lang);
 
-    const history = [...messages, { role: 'user', content }];
-    setMessages(history);
+    setMessages([...messages, { role: 'user', content }]);
     setInput('');
     setLoading(true);
 
-    const reply = await askAssistant({ history, content, lang, token });
-    setMessages(prev => [...prev, { role: 'assistant', content: reply.content, powered: reply.powered, offline: reply.offline }]);
+    const reply = await askAssistant({ history: messages, content, lang, token });
+    setMessages(prev => [...prev, { role: 'assistant', content: reply.content, offline: reply.offline, error: reply.error }]);
     setLoading(false);
     inputRef.current?.focus();
   };
@@ -176,7 +175,7 @@ export default function AssistantPage() {
                             ? <WifiOffIcon sx={{ fontSize: 12, color: 'text.disabled' }} />
                             : <SmartToyIcon sx={{ fontSize: 12, color: 'text.disabled' }} />}
                           <Typography variant="caption" color="text.disabled" fontSize="0.68rem">
-                            {msg.offline ? 'Offline answer — AI temporarily unavailable' : 'Powered by Claude AI'}
+                            {msg.offline ? `Offline answer — ${msg.error || 'AI temporarily unavailable'}` : 'Powered by Google Gemini'}
                           </Typography>
                         </Box>
                       )}

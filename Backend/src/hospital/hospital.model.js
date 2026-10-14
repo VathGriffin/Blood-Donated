@@ -28,5 +28,6 @@ const hospitalSchema = new mongoose.Schema(
 );
 
 hospitalSchema.index({ name: 1 });
+hospitalSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model('Hospital', hospitalSchema);
