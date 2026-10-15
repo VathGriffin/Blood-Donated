@@ -1,6 +1,7 @@
 // The Gemini client is mocked, so these tests exercise everything around the model — the prompt,
 // what is forwarded to it, how failures are reported — without calling Google or spending quota.
 process.env.GEMINI_API_KEY = 'test-key';
+process.env.GEMINI_HEDGE_MS = '50';
 
 const mockGenerate = jest.fn();
 jest.mock('@google/genai', () => {
@@ -29,6 +30,7 @@ const ask = (body, token) => {
 const sentToGemini = (i = 0) => mockGenerate.mock.calls[i][0];
 
 beforeEach(() => {
+  chatRoutes.clearReplyCache();
   mockGenerate.mockReset();
   mockGenerate.mockResolvedValue(textReply('ok'));
   jest.spyOn(console, 'error').mockImplementation(() => {});
@@ -149,6 +151,62 @@ describe('POST /api/chat', () => {
     const res = await ask({ message: 'hi' });
     expect(res.status).toBe(502);
     expect(res.body.error).toMatch(/rephrase/);
+  });
+});
+
+describe('speed', () => {
+  const later = (ms, value) => new Promise((resolve) => setTimeout(() => resolve(value), ms));
+
+  test('a slow Gemini call is hedged with a backup request, and the faster answer wins', async () => {
+    mockGenerate
+      .mockImplementationOnce(() => later(2000, textReply('slow')))
+      .mockImplementationOnce(() => later(10, textReply('fast')));
+    const started = Date.now();
+    const res = await ask({ message: 'hi' });
+    expect(res.body).toEqual({ reply: 'fast' });
+    expect(Date.now() - started).toBeLessThan(1000);
+    expect(mockGenerate).toHaveBeenCalledTimes(2);
+    expect(sentToGemini(0).config.abortSignal.aborted).toBe(true);
+  });
+
+  test('a fast answer sends no backup request', async () => {
+    await ask({ message: 'hi' });
+    await later(100);
+    expect(mockGenerate).toHaveBeenCalledTimes(1);
+  });
+
+  test('an overloaded model is retried at once; a rate limit is not', async () => {
+    mockGenerate.mockRejectedValueOnce(new ApiError({ status: 503, message: 'overloaded' })).mockResolvedValueOnce(textReply('ok'));
+    expect((await ask({ message: 'hi' })).body).toEqual({ reply: 'ok' });
+
+    mockGenerate.mockReset();
+    mockGenerate.mockRejectedValue(new ApiError({ status: 429, message: 'Resource exhausted' }));
+    expect((await ask({ message: 'hello' })).status).toBe(429);
+    await later(100);
+    expect(mockGenerate).toHaveBeenCalledTimes(1);
+  });
+
+  test('a repeated opening question is answered from the cache', async () => {
+    mockGenerate.mockResolvedValue(textReply('Open Register.'));
+    await ask({ message: 'How do I create an account?' });
+    const res = await ask({ message: '  how do I  create an account? ' });
+    expect(res.body).toEqual({ reply: 'Open Register.' });
+    expect(mockGenerate).toHaveBeenCalledTimes(1);
+  });
+
+  test('the cache is not shared across languages, users or mid-conversation turns', async () => {
+    await ask({ message: 'hi' });
+    await ask({ message: 'hi', lang: 'km' });
+    await ask({ message: 'hi' }, signDonor({ id: '64b000000000000000000001', email: 'jane@test.com', fullName: 'Jane' }));
+    await ask({ message: 'hi', history: [{ role: 'user', content: 'x' }, { role: 'assistant', content: 'y' }] });
+    await ask({ message: 'hi', history: [{ role: 'user', content: 'x' }, { role: 'assistant', content: 'y' }] });
+    expect(mockGenerate).toHaveBeenCalledTimes(5);
+  });
+
+  test('errors are not cached', async () => {
+    mockGenerate.mockRejectedValueOnce(new ApiError({ status: 400, message: 'bad' }));
+    expect((await ask({ message: 'hi' })).status).toBe(502);
+    expect((await ask({ message: 'hi' })).body).toEqual({ reply: 'ok' });
   });
 });
 
