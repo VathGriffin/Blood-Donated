@@ -125,9 +125,9 @@ const About = () => {
               </Typography>
               <Typography color="text.secondary" sx={{ fontSize: "1.02rem", lineHeight: 1.75, mb: 3.5 }}>
                 We are a community-driven platform connecting donors, hospitals, and
-                patients — built by 4th-year Data Science students at the Institute of
-                Technology of Cambodia, to make blood donation more accessible,
-                transparent, and impactful.
+                patients — built by Vith Vath as an individual graduation project at Hanoi
+                University of Science and Technology (HUST), to make blood donation more
+                accessible, transparent, and impactful.
               </Typography>
 
               <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 4 }}>

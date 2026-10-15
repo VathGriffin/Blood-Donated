@@ -2,7 +2,7 @@
 
 A full-stack web application for intelligent blood donation management — connecting donors, patients, and hospitals across Cambodia with real-time data and AI-powered support.
 
-Built as a Graduation Project by 4th-year Data Science students at **Hanoi University of Science and Technology (HUST)**, Hanoi, Vietnam.
+An individual graduation project (DATN) by **Vith Vath**, 4th-year Data Science student at **Hanoi University of Science and Technology (HUST)**, Hanoi, Vietnam — designed and built end to end, from the database and API to the website and the AI assistant.
 
 | | Link |
 |---|---|
@@ -35,6 +35,8 @@ feature is one folder in `Backend/src/` holding its database model (`*.model.js`
 | Hospital map | `Backend/src/nearby/nearby.routes.js` (OpenStreetMap lookup) | `app/(public)/map/` | `nearby.test.js` |
 | Messages & notifications | `Backend/src/notification/` | `app/(donor)/notification` | `message.test.js`, `notifications.test.js` |
 | Contact form | `Backend/src/contact/` | `app/(public)/contact` | `contact.test.js` |
+| About page creator photo | `Backend/src/about/` (`/api/about`) | `app/(public)/about/_components/CreatorProfile.jsx`, admin `app/dashboard/admin/settings` → *About Page* | `about.test.js` |
+| Photo uploads | `Backend/src/common/upload.js` (JPG/PNG/WebP/GIF, 10 MB, unique filenames) | — | `staff-photo.test.js`, `hospital-image.test.js` |
 | Security (CORS, rate limits, input checks) | `Backend/src/app.js`, `common/cors.js`, `common/middleware/` | — | `cors.test.js`, `robustness.test.js`, `errors.test.js` |
 | Deployment | `render.yaml`, `Backend/server.js` | `frontend/vercel.json`, `frontend/next.config.js` | see [Deployment](#deployment) |
 
@@ -54,13 +56,14 @@ This project presents the design and development of an intelligent blood donatio
 
 ### Public Portal
 - **Donor Registration** — Register with blood type, location, availability, and photo
-- **AI Chatbot** — Gemini-powered assistant that answers donation and site questions; auto-detects Khmer/Vietnamese/English and falls back to a rule-based knowledge base if the AI API is unavailable
-- **Blood Requests** — Submit urgent blood requests with urgency level, units needed, and patient details
+- **AI Chatbot** — Gemini-powered assistant that answers donation and site questions; auto-detects Khmer/Vietnamese/English and falls back to a rule-based knowledge base if the AI API is unavailable. Slow Gemini calls are hedged with a backup request, and common opening questions are answered from a short-lived cache
+- **Blood Requests** — Submit urgent blood requests with urgency level, units needed, and patient details; signing in from the form returns you to it with your draft kept
 - **Appointment Booking** — 3-step calendar booking at partner hospitals, with QR-code check-in
 - **Donor Directory** — Browse and filter verified donors by blood type
 - **Blood Type Compatibility Guide** — Interactive reference chart
 - **Contact Form & Messaging** — Send messages to the platform team, direct user↔admin conversations
 - **Social Login** — Google and Facebook OAuth alongside email/password
+- **About Page** — the project's story and its creator, with a portrait managed from the admin settings
 
 ### Admin Dashboard (`/dashboard/admin`)
 - Secure JWT-based login (role: `admin`)
@@ -69,6 +72,7 @@ This project presents the design and development of an intelligent blood donatio
 - Full CRUD for donors, blood requests, hospitals, staff accounts, and contact messages
 - Analytics charts: BarChart, PieChart (donut), AreaChart, LineChart
 - CSV export of dashboard data
+- Settings: own profile and photo, homepage profiles, the About page creator photo (upload / delete), live AI status
 
 ### Hospital Dashboard (`/dashboard/hospital`)
 - Separate login for hospital staff accounts (role: `hospital_staff`)
@@ -123,6 +127,7 @@ Create both by hand with the variables below; they are never committed. On Rende
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH` | first start | First admin, created on startup if missing. `node scripts/generate-secrets.js` prints the bcrypt hash |
 | `GEMINI_API_KEY` | no | Google Gemini key for the AI assistant (server-side only); without it the assistant uses offline answers |
 | `GEMINI_MODEL` | no | Gemini model ID; defaults to `gemini-3.5-flash-lite` |
+| `GEMINI_HEDGE_MS` | no | Milliseconds before a slow Gemini call gets a backup request (default `4000`) |
 | `FRONTEND_URL` | in production | Origins allowed to call the API, comma-separated; `*` matches one hostname part (covers Vercel preview URLs). localhost is always allowed |
 | `NODE_ENV`, `TRUST_PROXY`, `RATE_LIMIT_MAX` | no | Production tuning; see Deployment |
 
@@ -240,6 +245,7 @@ below yourself, including `NODE_ENV=production`.
 | `FRONTEND_URL` | required in production | Your Vercel URL(s) — leave a placeholder for now, set it in step 4 |
 | `GEMINI_API_KEY` | optional | Google Gemini key for the AI assistant. Without it the chat answers from the offline guide |
 | `GEMINI_MODEL` | optional | Defaults to `gemini-3.5-flash-lite` |
+| `GEMINI_HEDGE_MS` | optional | Wait before a slow Gemini call gets a backup request (default `4000`) |
 | `RATE_LIMIT_MAX` | optional | Requests per IP per 15 min on `/api` (default 1500) |
 | `TRUST_PROXY` | optional | Proxy hops in front of the app (default 1 in production — right for Render) |
 
@@ -317,7 +323,7 @@ Saving restarts the service. Then open the Vercel site with the browser's develo
 
 ### Things that do not persist on Render
 
-- **Uploaded photos** (donor, staff and hospital images) are written to `Backend/uploads` on the
+- **Uploaded photos** (donor, staff, hospital and About page images) are written to `Backend/uploads` on the
   instance's disk. On Render that disk is **temporary**: it is wiped on every deploy and restart, and the
   free plan also restarts after sleeping. The database keeps the `/uploads/…` path, so the image then shows
   as missing. To keep uploads, either:
@@ -381,6 +387,7 @@ Blood Donated/
 │   │   ├── notification/   # Donor/staff messaging
 │   │   ├── nearby/         # Nearby hospitals & blood banks
 │   │   ├── homepage/       # Homepage content endpoint
+│   │   ├── about/          # About page settings (creator photo)
 │   │   ├── chatbot/        # Gemini chat route (POST /api/chat) and its prompt
 │   │   └── evaluation/     # Chatbot evaluation harness (node src/evaluation/runEval.js)
 │   ├── scripts/             # generate-secrets.js (JWT secrets + admin password hash)
@@ -413,14 +420,13 @@ Blood Donated/
 
 ---
 
-## Team
+## Author
 
-| Name | Role |
-|------|------|
-| Vith Vath | Full Stack Developer (Lead) |
-| Sopheak Sok | System Architect |
-| Chanthou Hem | Backend Developer |
-| Dara Khieu | UI/UX Designer |
+**Vith Vath** — Full-stack Developer & System Designer
+Individual graduation project, Hanoi University of Science and Technology (HUST)
+
+Responsible for the whole system: requirements and system design, the Express/MongoDB API, the
+Next.js website and dashboards, the Gemini-powered chatbot and its evaluation, testing, and deployment.
 
 ---
 
