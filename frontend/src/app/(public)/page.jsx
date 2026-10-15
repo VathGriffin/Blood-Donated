@@ -366,7 +366,7 @@ export default function Home() {
       <HelpSection />
 
       {/* ── Blood Type Grid ────────────────────────────────────────────── */}
-      <Box sx={{ position: "relative", overflow: "hidden", py: { xs: 8, md: 11 } }}>
+      <Box id="compatibility" sx={{ position: "relative", overflow: "hidden", py: { xs: 8, md: 11 }, scrollMarginTop: { xs: 64, md: 68 } }}>
         {/* Always-dark crimson background */}
         <Box sx={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, #0f0404 0%, #1c0808 45%, #100808 100%)" }} />
         <Box sx={{ position: "absolute", top: 0, right: 0, width: "55%", height: "100%", background: "radial-gradient(ellipse at 100% 50%, rgba(220,38,38,0.13) 0%, transparent 65%)", pointerEvents: "none" }} />

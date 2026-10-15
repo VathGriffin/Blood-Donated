@@ -2,7 +2,7 @@
 
 A full-stack web application for intelligent blood donation management — connecting donors, patients, and hospitals across Cambodia with real-time data and AI-powered support.
 
-Built as a Graduation Project by 4th-year Data Science students at the **Institute of Technology of Cambodia (ITC)**.
+Built as a Graduation Project by 4th-year Data Science students at **Hanoi University of Science and Technology (HUST)**, Hanoi, Vietnam.
 
 | | Link |
 |---|---|
@@ -426,4 +426,4 @@ Blood Donated/
 
 ## License
 
-Academic project — Institute of Technology of Cambodia, 2024–2025.
+Academic project — Hanoi University of Science and Technology (HUST), 2024–2025.

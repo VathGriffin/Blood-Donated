@@ -14,6 +14,7 @@ import {
   KeyboardArrowDown,
 } from "@mui/icons-material";
 import DonorNotifications from "./DonorNotifications";
+import SiteSearch from "./SiteSearch";
 import { ColorModeContext } from "@/lib/ThemeContext";
 import { useUserAuth } from "@/store/UserAuthContext";
 import API_BASE from "@/lib/config";
@@ -135,6 +136,7 @@ const Header = () => {
 
               {/* Right section */}
               <Box sx={{ display: "flex", alignItems: "center", gap: 1, ml: 1.5 }}>
+                <SiteSearch />
                 {isAuth ? (
                   <>
                     <DonorNotifications />
@@ -211,6 +213,7 @@ const Header = () => {
           ) : (
             /* ── Mobile right section ── */
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <SiteSearch size={36} />
               {isAuth && <DonorNotifications size={36} />}
               {isAuth && (
                 <Tooltip title={user?.fullName}>

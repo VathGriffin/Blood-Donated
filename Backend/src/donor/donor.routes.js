@@ -180,7 +180,7 @@ router.post('/:id/photo', (req, res, next) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
     if (!canUploadPhoto(req, req.params.id)) {
-      fs.unlinkSync(req.file.path);
+      fs.rmSync(req.file.path, { force: true }); // already gone is fine — don't turn a 401/403 into a 500
       return res.status(401).json({ message: 'Unauthorized' });
     }
     const donor = await Donor.findById(req.params.id);

@@ -1,217 +1,338 @@
 'use client';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
-  Box, Container, Typography, Avatar, Paper, Chip, Button, useTheme, Grid, Skeleton,
-  Tooltip, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField,
-  CircularProgress, Tabs, Tab, Switch, FormControlLabel, Alert, Snackbar,
+  Box, Typography, Paper, Chip, Button, Skeleton, Dialog, DialogTitle, DialogContent, DialogActions,
+  TextField, CircularProgress, Tabs, Tab, Alert, Snackbar, InputBase, IconButton,
 } from '@mui/material';
-import TaskAltIcon from '@mui/icons-material/TaskAlt';
-import DoNotDisturbOnOutlinedIcon from '@mui/icons-material/DoNotDisturbOnOutlined';
-import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
-import SupportAgentOutlinedIcon from '@mui/icons-material/SupportAgentOutlined';
-import BloodtypeIcon from '@mui/icons-material/Bloodtype';
-import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CancelIcon from '@mui/icons-material/Cancel';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
-import QrCode2Icon from '@mui/icons-material/QrCode2';
-import AddCircleIcon from '@mui/icons-material/AddCircle';
-import LockIcon from '@mui/icons-material/Lock';
-import EditIcon from '@mui/icons-material/Edit';
-import CameraAltIcon from '@mui/icons-material/CameraAlt';
+import { alpha } from '@mui/material/styles';
+import BloodtypeOutlinedIcon from '@mui/icons-material/BloodtypeOutlined';
+import EventAvailableOutlinedIcon from '@mui/icons-material/EventAvailableOutlined';
 import EventAvailableIcon from '@mui/icons-material/EventAvailable';
-import DoneAllIcon from '@mui/icons-material/DoneAll';
+import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
+import LockIcon from '@mui/icons-material/Lock';
+import AddIcon from '@mui/icons-material/Add';
+import SearchIcon from '@mui/icons-material/Search';
+import CloseIcon from '@mui/icons-material/Close';
+import SearchOffIcon from '@mui/icons-material/SearchOff';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import WaterDropIcon from '@mui/icons-material/WaterDrop';
+import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined';
+import BarChartIcon from '@mui/icons-material/BarChart';
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import { formatDistanceToNow } from 'date-fns';
 import axios from 'axios';
 import API_BASE from '@/lib/config';
 import { initialsOf } from '@/lib/format';
 import { useUserAuth } from '@/store/UserAuthContext';
+import { getHospitals } from '@/lib/public-directory';
+import { hospitalImageUrl } from '@/app/(public)/appointments/_components/booking';
+import ProfileHero from './_components/ProfileHero';
+import AvailabilityCard from './_components/AvailabilityCard';
+import RequestCard from './_components/RequestCard';
+import RequestDetailsDialog from '@/components/donor/RequestDetailsDialog';
+import CancelRequestDialog from '@/components/donor/CancelRequestDialog';
+import AppointmentCard, { DonationCard } from './_components/AppointmentCard';
+import {
+  APPT_FILTERS, APPT_STATUS, EmptyPanel, REQUEST_FILTERS, REQUEST_STATUS, StatCard, cardSx, formatDate, todayKey,
+} from '@/components/donor/ui';
 
-const STATUS_META = {
-  Pending:  { color: '#d97706', bg: 'rgba(217,119,6,0.12)',  darkBg: 'rgba(217,119,6,0.15)',  label: 'Pending',  icon: <HourglassEmptyIcon sx={{ fontSize: 13 }} /> },
-  Approved: { color: '#16a34a', bg: 'rgba(22,163,74,0.1)',   darkBg: 'rgba(22,163,74,0.15)',  label: 'Approved', icon: <CheckCircleIcon   sx={{ fontSize: 13 }} /> },
-  Rejected: { color: '#dc2626', bg: 'rgba(220,38,38,0.1)',   darkBg: 'rgba(220,38,38,0.15)',  label: 'Rejected', icon: <CancelIcon        sx={{ fontSize: 13 }} /> },
-  Fulfilled: { color: '#2563eb', bg: 'rgba(37,99,235,0.1)',  darkBg: 'rgba(37,99,235,0.15)',  label: 'Fulfilled', icon: <TaskAltIcon      sx={{ fontSize: 13 }} /> },
-  Cancelled: { color: '#64748b', bg: 'rgba(100,116,139,0.12)', darkBg: 'rgba(148,163,184,0.15)', label: 'Cancelled', icon: <DoNotDisturbOnOutlinedIcon sx={{ fontSize: 13 }} /> },
+const MAX_PHOTO_SIZE = 10 * 1024 * 1024; // must match the API's upload limit
+
+const TABS = ['requests', 'appointments', 'history'];
+
+// { All: n, Pending: n, Approved: n, … } in one pass over the list.
+const countByStatus = (list) => list.reduce((acc, x) => {
+  const s = x.status || 'Pending';
+  acc[s] = (acc[s] || 0) + 1;
+  return acc;
+}, { All: list.length });
+
+// Keep ?tab= in the address bar so a refresh or shared link opens the same tab.
+const setTabParam = (key) => {
+  try {
+    const url = new URL(window.location.href);
+    if (key === 'requests') url.searchParams.delete('tab'); else url.searchParams.set('tab', key);
+    window.history.replaceState(window.history.state, '', url);
+  } catch { /* cosmetic */ }
 };
-const REQUEST_FILTERS = ['All', 'Pending', 'Approved', 'Fulfilled', 'Rejected', 'Cancelled'];
 
-const URGENCY_COLOR = { Critical: '#dc2626', High: '#ea580c', Medium: '#d97706', Low: '#16a34a' };
+function ListSkeleton({ rows = 3 }) {
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }} aria-hidden="true">
+      {Array.from({ length: rows }, (_, i) => (
+        <Box key={i} sx={{ p: 2, borderRadius: '14px', border: '1px solid', borderColor: 'divider', display: 'flex', gap: 1.75 }}>
+          <Skeleton variant="rounded" width={52} height={52} sx={{ borderRadius: '14px' }} />
+          <Box sx={{ flex: 1 }}>
+            <Skeleton width="40%" height={24} />
+            <Skeleton width="70%" />
+            <Skeleton variant="rounded" height={34} sx={{ mt: 1, borderRadius: '10px' }} />
+          </Box>
+        </Box>
+      ))}
+    </Box>
+  );
+}
 
-const APPT_STATUS_META = {
-  Pending:   { color: '#d97706', bg: 'rgba(217,119,6,0.12)',  darkBg: 'rgba(217,119,6,0.15)',  label: 'Pending',    icon: <HourglassEmptyIcon sx={{ fontSize: 13 }} /> },
-  Confirmed: { color: '#16a34a', bg: 'rgba(22,163,74,0.1)',   darkBg: 'rgba(22,163,74,0.15)',  label: 'Confirmed',  icon: <CheckCircleIcon   sx={{ fontSize: 13 }} /> },
-  CheckedIn: { color: '#2563eb', bg: 'rgba(37,99,235,0.1)',   darkBg: 'rgba(37,99,235,0.15)',  label: 'Checked In', icon: <DoneAllIcon       sx={{ fontSize: 13 }} /> },
-  Cancelled: { color: '#dc2626', bg: 'rgba(220,38,38,0.1)',   darkBg: 'rgba(220,38,38,0.15)',  label: 'Cancelled',  icon: <CancelIcon        sx={{ fontSize: 13 }} /> },
-};
+function LoadError({ what, onRetry }) {
+  return (
+    <Alert severity="error" variant="outlined" icon={<ErrorOutlineIcon />} sx={{ borderRadius: '12px', alignItems: 'center' }}
+      action={<Button color="error" size="small" onClick={onRetry}>Try again</Button>}>
+      We couldn&apos;t load your {what}. Check your connection and try again.
+    </Alert>
+  );
+}
 
 export default function ProfilePage() {
-  const theme  = useTheme();
-  const isDark = theme.palette.mode === 'dark';
   const router = useRouter();
   const { isAuth, user, token, updateUser, logout } = useUserAuth();
 
-  const sessionExpired = (err) => {
-    if (err.response?.status !== 401) return false;
-    logout();
+  // A 401 means the stored session is no longer valid: sign out and go to the login page.
+  // `logout` is a new function whenever the auth context re-renders (e.g. after a profile
+  // edit), so it's read through a ref: the loaders below stay stable and don't refetch.
+  const logoutRef = useRef(logout);
+  logoutRef.current = logout;
+  const sessionExpired = useCallback((err) => {
+    if (err?.response?.status !== 401) return false;
+    logoutRef.current();
     router.push('/login');
     return true;
-  };
+  }, [router]);
 
+  // `status` is 'loading' | 'ready' | 'error' for each list.
   const [requests,     setRequests]     = useState([]);
-  const [loading,      setLoading]      = useState(false);
+  const [reqStatus,    setReqStatus]    = useState('loading');
   const [appointments, setAppointments] = useState([]);
-  const [apptLoading,  setApptLoading]  = useState(false);
+  const [apptStatus,   setApptStatus]   = useState('loading');
+  const [hospitalPhones, setHospitalPhones] = useState({}); // hospital id -> public phone
+  const [hospitalImages, setHospitalImages] = useState({}); // hospital id or name -> photo URL
   const [photoLoading, setPhotoLoading] = useState(false);
-  const [photoError,   setPhotoError]   = useState('');
   const [editOpen,     setEditOpen]     = useState(false);
   const [editName,     setEditName]     = useState('');
   const [editPhone,    setEditPhone]    = useState('');
   const [saving,       setSaving]       = useState(false);
   const [saveError,    setSaveError]    = useState('');
-  const [tab,          setTab]          = useState(0); // 0 = requests, 1 = appointments
+  const [tab,          setTab]          = useState('requests');
   const [reqFilter,    setReqFilter]    = useState('All');
   const [apptFilter,   setApptFilter]   = useState('All');
+  const [reqQuery,     setReqQuery]     = useState('');
+  const [apptQuery,    setApptQuery]    = useState('');
+  const [historyQuery, setHistoryQuery] = useState('');
   const [donorStatus,  setDonorStatus]  = useState(null); // null = loading, { found, available, ... } once checked
+  const [donorAttempt, setDonorAttempt] = useState(0);
   const [availSaving,  setAvailSaving]  = useState(false);
   const [availError,   setAvailError]   = useState('');
+  const [toast,        setToast]        = useState(null); // { severity, message }
 
   const fileInputRef = useRef(null);
+  const tabsRef = useRef(null);
+  const authHeader = useCallback(() => ({ headers: { Authorization: `Bearer ${token}` } }), [token]);
+
+  // (The session itself is verified by DashboardShell before this page renders, so there is
+  // no separate /api/user/me check here.)
 
   useEffect(() => {
-    if (!isAuth || !token) return;
-    axios.get(`${API_BASE}/api/user/me`, { headers: { Authorization: `Bearer ${token}` } })
-      .catch(sessionExpired);
-    // Intentionally keyed to the session only: sessionExpired is re-created on every render, and
-    // depending on it would re-verify the session on each render instead of when it changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuth, token]);
+    const t = new URLSearchParams(window.location.search).get('tab');
+    if (TABS.includes(t)) setTab(t);
+  }, []);
 
-  // `quiet` refreshes in place (after a cancellation) without swapping the list for skeletons.
+  // Each list loader numbers its runs, so a slow older response can never overwrite a newer
+  // one. `quiet` refreshes in place (after a cancellation, or when the tab regains focus)
+  // without swapping the list for skeletons or replacing it with an error.
+  const reqRun = useRef(0);
   const loadRequests = useCallback((quiet = false) => {
     if (!isAuth || !user?.email) return Promise.resolve();
-    if (!quiet) setLoading(true);
+    const run = ++reqRun.current;
+    if (!quiet) setReqStatus('loading');
     return axios.get(`${API_BASE}/api/requests?email=${encodeURIComponent(user.email)}`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(res => setRequests(Array.isArray(res.data) ? res.data : []))
-      .catch(() => { if (!quiet) setRequests([]); })
-      .finally(() => { if (!quiet) setLoading(false); });
-  }, [isAuth, user?.email, token]);
+      .then((res) => {
+        if (run !== reqRun.current) return;
+        setRequests(Array.isArray(res.data) ? res.data : []);
+        setReqStatus('ready');
+      })
+      .catch((err) => {
+        if (run !== reqRun.current || sessionExpired(err)) return;
+        if (!quiet) setReqStatus('error');
+      });
+  }, [isAuth, user?.email, token, sessionExpired]);
+
+  const apptRun = useRef(0);
+  const loadAppointments = useCallback((quiet = false) => {
+    if (!isAuth || !user?.email) return Promise.resolve();
+    const run = ++apptRun.current;
+    if (!quiet) setApptStatus('loading');
+    return axios.get(`${API_BASE}/api/appointments?email=${encodeURIComponent(user.email)}`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => {
+        if (run !== apptRun.current) return;
+        setAppointments(Array.isArray(res.data) ? res.data : []);
+        setApptStatus('ready');
+      })
+      .catch((err) => {
+        if (run !== apptRun.current || sessionExpired(err)) return;
+        if (!quiet) setApptStatus('error');
+      });
+  }, [isAuth, user?.email, token, sessionExpired]);
 
   useEffect(() => { loadRequests(); }, [loadRequests]);
+  useEffect(() => { loadAppointments(); }, [loadAppointments]);
 
-  // Cancel a pending request: confirm, optional reason, then PATCH /api/requests/:id/cancel.
-  const [cancelTarget, setCancelTarget] = useState(null); // the request being cancelled
-  const [cancelReason, setCancelReason] = useState('');
-  const [cancelling,   setCancelling]   = useState(false);
-  const [cancelError,  setCancelError]  = useState('');
-  const [toast,        setToast]        = useState(null); // { severity, message }
-  const cancelInFlight = useRef(false);
-
-  const openCancel = (req) => { setCancelTarget(req); setCancelReason(''); setCancelError(''); };
-  const closeCancel = () => { if (!cancelling) setCancelTarget(null); };
-  const confirmCancel = async () => {
-    if (!cancelTarget || cancelInFlight.current) return; // one request at a time, even on a double click
-    cancelInFlight.current = true;
-    setCancelling(true);
-    setCancelError('');
-    try {
-      const { data } = await axios.patch(`${API_BASE}/api/requests/${cancelTarget._id}/cancel`,
-        { reason: cancelReason.trim() }, { headers: { Authorization: `Bearer ${token}` } });
-      setRequests(list => list.map(r => (r._id === data._id ? data : r)));
-      setCancelTarget(null);
-      setToast({ severity: 'success', message: 'Your blood request has been cancelled.' });
+  // Hospitals approve requests and confirm appointments while this page sits in another tab:
+  // refresh both lists quietly when the page becomes visible again (at most once a minute).
+  useEffect(() => {
+    let last = Date.now();
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible' || Date.now() - last < 60_000) return;
+      last = Date.now();
       loadRequests(true);
-    } catch (err) {
-      if (sessionExpired(err)) return;
-      const message = err.response?.data?.error || 'Could not cancel the request. Please try again.';
-      if (err.response?.status === 409 || err.response?.status === 404) {
-        // The request changed meanwhile (approved, already cancelled, removed) — show its real state.
-        setCancelTarget(null);
-        setToast({ severity: 'warning', message });
-        loadRequests(true);
-      } else {
-        setCancelError(message);
-      }
-    } finally {
-      cancelInFlight.current = false;
-      setCancelling(false);
-    }
-  };
+      loadAppointments(true);
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [loadRequests, loadAppointments]);
 
   useEffect(() => {
-    if (!isAuth || !user?.email) return;
-    setApptLoading(true);
-    axios.get(`${API_BASE}/api/appointments?email=${encodeURIComponent(user.email)}`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(res => setAppointments(Array.isArray(res.data) ? res.data : []))
-      .catch(() => setAppointments([]))
-      .finally(() => setApptLoading(false));
-  }, [isAuth, user?.email, token]);
-
-  useEffect(() => {
-    if (!isAuth || !user?.email) return;
+    if (!isAuth || !user?.email) return undefined;
+    let alive = true;
+    setDonorStatus(null);
     axios.get(`${API_BASE}/api/donors/lookup?email=${encodeURIComponent(user.email)}`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(res => setDonorStatus(res.data))
+      .then((res) => { if (alive) setDonorStatus(res.data); })
       // A failed lookup is not the same as "not registered" — don't send an existing donor
       // to the registration form just because the request errored.
-      .catch(() => setDonorStatus({ found: false, error: true }));
-  }, [isAuth, user?.email, token]);
+      .catch((err) => { if (alive && !sessionExpired(err)) setDonorStatus({ found: false, error: true }); });
+    return () => { alive = false; };
+  }, [isAuth, user?.email, token, donorAttempt, sessionExpired]);
+
+  // Public hospital directory (shared cache), only for the phone numbers behind the "Contact" buttons.
+  useEffect(() => {
+    let alive = true;
+    getHospitals()
+      .then((list) => {
+        if (!alive) return;
+        const phones = {};
+        const images = {};
+        for (const h of list) {
+          if (h.phone) phones[h._id] = h.phone;
+          const img = hospitalImageUrl(h.image);
+          // By id, and by name for older appointments booked before they carried a hospital id.
+          if (img) { images[h._id] = img; if (h.name) images[h.name] = img; }
+        }
+        setHospitalPhones(phones);
+        setHospitalImages(images);
+      })
+      .catch(() => { /* no phone buttons or photos then */ });
+    return () => { alive = false; };
+  }, []);
+
+  const [detailTarget, setDetailTarget] = useState(null); // request shown in the details dialog
+
+  // ── Cancel a pending request (confirmation + PATCH live in CancelRequestDialog).
+  const [cancelTarget, setCancelTarget] = useState(null);
+  const [cancelling,   setCancelling]   = useState(false);
+  const openCancel = (req) => setCancelTarget(req);
+  const onCancelled = (data) => {
+    setRequests((list) => list.map((r) => (r._id === data._id ? data : r)));
+    setCancelTarget(null);
+    setToast({ severity: 'success', message: 'Your blood request has been cancelled.' });
+    loadRequests(true);
+  };
+  // The request changed meanwhile (approved, already cancelled, removed) — show its real state.
+  const onCancelConflict = (message) => {
+    setCancelTarget(null);
+    setToast({ severity: 'warning', message });
+    loadRequests(true);
+  };
+
+  // ── Derived data (all from the API responses above) ──
+  const today = todayKey();
+  const reqCounts = useMemo(() => countByStatus(requests), [requests]);
+  const apptCounts = useMemo(() => countByStatus(appointments), [appointments]);
+  const reqCount = (s) => reqCounts[s] || 0;
+  const apptCount = (s) => apptCounts[s] || 0;
+
+  // Typing stays responsive: the lists re-filter from a deferred copy of each query.
+  const reqQ = useDeferredValue(reqQuery);
+  const apptQ = useDeferredValue(apptQuery);
+  const historyQ = useDeferredValue(historyQuery);
+
+  const upcoming = useMemo(() => appointments
+    .filter((a) => ['Pending', 'Confirmed'].includes(a.status || 'Pending') && a.date >= today)
+    .sort((a, b) => a.date.localeCompare(b.date)), [appointments, today]);
+  // Donation history = appointments staff checked in (check-in records the donation), newest first.
+  const donations = useMemo(() => appointments
+    .filter((a) => a.status === 'CheckedIn')
+    .sort((a, b) => new Date(b.checkedInAt || b.date) - new Date(a.checkedInAt || a.date)), [appointments]);
+  const filteredDonations = useMemo(() => {
+    const q = historyQ.trim().toLowerCase();
+    return q ? donations.filter((a) => [a.location, a.date, a.bloodType].some((v) => v?.toLowerCase().includes(q))) : donations;
+  }, [donations, historyQ]);
+
+  const filteredRequests = useMemo(() => {
+    const q = reqQ.trim().toLowerCase();
+    return requests.filter((r) =>
+      (reqFilter === 'All' || (r.status || 'Pending') === reqFilter) &&
+      (!q || [r.patientName, r.hospitalName, r.bloodType, r.reason].some((v) => v?.toLowerCase().includes(q))));
+  }, [requests, reqFilter, reqQ]);
+
+  // Upcoming first (soonest on top), then everything else newest first.
+  const filteredAppointments = useMemo(() => {
+    const q = apptQ.trim().toLowerCase();
+    const list = appointments.filter((a) =>
+      (apptFilter === 'All' || (a.status || 'Pending') === apptFilter) &&
+      (!q || [a.location, a.date, a.time, a.bloodType, a.notes].some((v) => v?.toLowerCase().includes(q))));
+    const isUp = (a) => ['Pending', 'Confirmed'].includes(a.status || 'Pending') && a.date >= today;
+    return list.sort((a, b) => {
+      const ua = isUp(a), ub = isUp(b);
+      if (ua !== ub) return ua ? -1 : 1;
+      return ua ? a.date.localeCompare(b.date) : (b.date || '').localeCompare(a.date || '');
+    });
+  }, [appointments, apptFilter, apptQ, today]);
 
   if (!isAuth) {
     return (
-      <Box sx={{ minHeight: '70vh', display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center', gap: 2, textAlign: 'center', px: 3 }}>
-        <LockIcon sx={{ fontSize: 52, color: '#b71c1c' }} />
+      <Box sx={{ minHeight: '70vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, textAlign: 'center', px: 3 }}>
+        <LockIcon sx={{ fontSize: 52, color: 'primary.main' }} />
         <Typography variant="h5" fontWeight={700}>Sign in to view your profile</Typography>
         <Typography color="text.secondary" fontSize="0.9rem">
           Your blood requests and donor information are only visible when logged in.
         </Typography>
         <Box display="flex" gap={2} mt={1}>
-          <Button variant="contained" color="error" component={Link} href="/login" sx={{ borderRadius: 3 }}>Log In</Button>
-          <Button variant="outlined" color="error" component={Link} href="/register" sx={{ borderRadius: 3 }}>Sign Up</Button>
+          <Button variant="contained" component={Link} href="/login">Log In</Button>
+          <Button variant="outlined" component={Link} href="/register">Sign Up</Button>
         </Box>
       </Box>
     );
   }
 
-  const initials  = initialsOf(user?.fullName);
-  const statCount = (s) => s === 'All' ? requests.length : requests.filter(r => (r.status || 'Pending') === s).length;
-  const apptStatCount = (s) => s === 'All' ? appointments.length : appointments.filter(a => (a.status || 'Pending') === s).length;
-  const filteredRequests    = requests.filter(r => reqFilter === 'All' || (r.status || 'Pending') === reqFilter);
-  const filteredAppointments = appointments.filter(a => apptFilter === 'All' || (a.status || 'Pending') === apptFilter);
-  const card   = isDark ? '#111111' : '#ffffff';
-  const border = isDark ? '#1f1f1f' : '#e5e5e5';
-  const subBg  = isDark ? '#0d0d0d' : '#f8f8f8';
-
-  const authHeader = () => ({ headers: { Authorization: `Bearer ${token}` } });
-
+  // ── Actions ──
   const handlePhotoClick = () => {
     if (photoLoading) return;
-    setPhotoError('');
     fileInputRef.current?.click();
   };
 
   const handlePhotoChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 10 * 1024 * 1024) {
-      setPhotoError('Image must be under 10 MB.');
+    if (!file.type.startsWith('image/')) {
+      setToast({ severity: 'error', message: 'Please choose an image file.' });
+      e.target.value = '';
+      return;
+    }
+    if (file.size > MAX_PHOTO_SIZE) {
+      setToast({ severity: 'error', message: 'Image must be under 10 MB.' });
       e.target.value = '';
       return;
     }
     setPhotoLoading(true);
-    setPhotoError('');
     try {
       const form = new FormData();
       form.append('photo', file);
       // Do NOT set Content-Type — axios sets it automatically with the correct multipart boundary
-      const res = await axios.post(`${API_BASE}/api/user/photo`, form, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axios.post(`${API_BASE}/api/user/photo`, form, authHeader());
       updateUser({ photo: res.data.photo });
+      setToast({ severity: 'success', message: 'Profile photo updated.' });
     } catch (err) {
-      if (!sessionExpired(err)) setPhotoError(err.response?.data?.message || 'Photo upload failed.');
+      if (!sessionExpired(err)) setToast({ severity: 'error', message: err.response?.data?.message || 'Photo upload failed.' });
     } finally {
       setPhotoLoading(false);
       e.target.value = '';
@@ -225,14 +346,16 @@ export default function ProfilePage() {
     setEditOpen(true);
   };
 
-  const handleSaveProfile = async () => {
+  const handleSaveProfile = async (e) => {
+    e?.preventDefault();
     if (!editName.trim()) { setSaveError('Name cannot be empty.'); return; }
     setSaving(true);
     setSaveError('');
     try {
-      const res = await axios.put(`${API_BASE}/api/user/profile`, { fullName: editName.trim(), phone: editPhone }, authHeader());
+      const res = await axios.put(`${API_BASE}/api/user/profile`, { fullName: editName.trim(), phone: editPhone.trim() }, authHeader());
       updateUser({ fullName: res.data.fullName, phone: res.data.phone });
       setEditOpen(false);
+      setToast({ severity: 'success', message: 'Profile updated.' });
     } catch (err) {
       if (!sessionExpired(err)) setSaveError(err.response?.data?.message || 'Failed to save. Please try again.');
     } finally {
@@ -240,13 +363,13 @@ export default function ProfilePage() {
     }
   };
 
-  const handleToggleAvailability = async (e) => {
-    const available = e.target.checked;
+  const handleToggleAvailability = async (available) => {
     setAvailSaving(true);
     setAvailError('');
     try {
-      await axios.patch(`${API_BASE}/api/donors/me/availability`, { available }, authHeader());
-      setDonorStatus((prev) => ({ ...prev, available }));
+      const { data } = await axios.patch(`${API_BASE}/api/donors/me/availability`, { available }, authHeader());
+      setDonorStatus((prev) => ({ ...prev, available: data.available }));
+      setToast({ severity: 'success', message: data.available ? 'You are now marked available to donate.' : 'You are now marked unavailable.' });
     } catch (err) {
       if (!sessionExpired(err)) setAvailError(err.response?.data?.message || 'Failed to update availability.');
     } finally {
@@ -254,687 +377,211 @@ export default function ProfilePage() {
     }
   };
 
+  const changeTab = (_, value) => { setTab(value); setTabParam(value); };
+  const openTab = (value) => {
+    changeTab(null, value);
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    tabsRef.current?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+  };
+
   const photoSrc = user?.photo ? `${API_BASE}${user.photo}` : null;
+  const isReq = tab === 'requests';
+  const isHistory = tab === 'history';
+  const filters = isReq ? REQUEST_FILTERS : APPT_FILTERS;
+  const statusMeta = isReq ? REQUEST_STATUS : APPT_STATUS;
+  const activeFilter = isReq ? reqFilter : apptFilter;
+  const setActiveFilter = isReq ? setReqFilter : setApptFilter;
+  const query = isReq ? reqQuery : isHistory ? historyQuery : apptQuery;
+  const setQuery = isReq ? setReqQuery : isHistory ? setHistoryQuery : setApptQuery;
+  const listStatus = isReq ? reqStatus : apptStatus;
+  const total = isReq ? requests.length : isHistory ? donations.length : appointments.length;
+  const shown = isReq ? filteredRequests.length : isHistory ? filteredDonations.length : filteredAppointments.length;
+  const noun = isReq ? 'request' : isHistory ? 'donation' : 'appointment';
+  const newHref = isReq ? '/requests' : '/appointments';
+  const newLabel = isReq ? 'New Request' : 'Book Appointment';
+
+  // The donor record's lastDonation is updated on check-in; fall back to the newest check-in.
+  const lastDonation = donorStatus?.lastDonation || donations[0]?.checkedInAt || null;
+
+  const tabDefs = [
+    { value: 'requests', label: 'Blood Requests', count: requests.length, icon: <WaterDropIcon /> },
+    { value: 'appointments', label: 'Appointments', count: appointments.length, icon: <EventAvailableIcon /> },
+    { value: 'history', label: 'Donation History', count: donations.length, icon: <BarChartIcon /> },
+  ];
 
   return (
-    <Box sx={{ pb: 4 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 2, md: 2.5 }, pb: 4, minWidth: 0 }}>
+      <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={handlePhotoChange} />
 
-      {/* Hidden file input */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        style={{ display: 'none' }}
-        onChange={handlePhotoChange}
-      />
+      <ProfileHero user={user} photoSrc={photoSrc} initials={initialsOf(user?.fullName)} donor={donorStatus}
+        photoLoading={photoLoading} onPhotoClick={handlePhotoClick} onEdit={openEdit} />
 
-      {/* Hero banner */}
-      <Box sx={{
-        background: isDark
-          ? 'linear-gradient(135deg, #1a0000 0%, #2d0505 100%)'
-          : 'linear-gradient(135deg, #b71c1c 0%, #7f0000 100%)',
-        pt: { xs: 4, md: 5 }, pb: 8, borderRadius: '14px',
-      }}>
-        <Container maxWidth="md">
-          <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'center', sm: 'flex-end' }}
-            gap={3}>
-
-            {/* Avatar with camera badge */}
-            <Box sx={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
-              <Tooltip title={photoLoading ? 'Uploading…' : 'Change photo'}>
-                <Box sx={{ position: 'relative', cursor: photoLoading ? 'not-allowed' : 'pointer' }}
-                  onClick={handlePhotoClick}>
-                  <Avatar
-                    src={photoSrc || undefined}
-                    sx={{
-                      width: 96, height: 96, bgcolor: 'rgba(255,255,255,0.2)',
-                      fontSize: '2.4rem', fontWeight: 800,
-                      border: '3px solid rgba(255,255,255,0.5)',
-                      boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-                      opacity: photoLoading ? 0.6 : 1,
-                      transition: 'opacity 0.2s',
-                    }}
-                  >
-                    {!photoSrc && initials}
-                  </Avatar>
-                  <Box sx={{
-                    position: 'absolute', bottom: 0, right: 0,
-                    width: 28, height: 28, borderRadius: '50%',
-                    bgcolor: '#dc2626', border: '2px solid white',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    {photoLoading
-                      ? <CircularProgress size={12} sx={{ color: 'white' }} />
-                      : <CameraAltIcon sx={{ fontSize: 14, color: 'white' }} />
-                    }
-                  </Box>
-                </Box>
-              </Tooltip>
-              {photoError && (
-                <Typography fontSize="0.68rem" color="#fca5a5" textAlign="center" maxWidth={100}>
-                  {photoError}
-                </Typography>
-              )}
-            </Box>
-
-            <Box flex={1} textAlign={{ xs: 'center', sm: 'left' }}>
-              <Box display="flex" alignItems="center" gap={1} justifyContent={{ xs: 'center', sm: 'flex-start' }}>
-                <Typography variant="h4" fontWeight={900} color="white" sx={{ letterSpacing: '-0.02em' }}>
-                  {user?.fullName}
-                </Typography>
-                <Tooltip title="Edit profile">
-                  <IconButton onClick={openEdit} size="small"
-                    sx={{ color: 'rgba(255,255,255,0.7)', '&:hover': { color: 'white', bgcolor: 'rgba(255,255,255,0.1)' } }}>
-                    <EditIcon sx={{ fontSize: 18 }} />
-                  </IconButton>
-                </Tooltip>
-              </Box>
-              <Typography color="rgba(255,255,255,0.65)" fontSize="0.9rem" mt={0.5}>
-                {user?.email}
-              </Typography>
-              {user?.phone && (
-                <Typography color="rgba(255,255,255,0.5)" fontSize="0.82rem" mt={0.2}>
-                  {user.phone}
-                </Typography>
-              )}
-            </Box>
-
-            <Box display="flex" gap={1.5} flexWrap="wrap" justifyContent={{ xs: 'center', sm: 'flex-end' }}>
-              <Button component={Link} href="/qr-card" variant="outlined" startIcon={<QrCode2Icon />}
-                sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.4)', borderRadius: 2,
-                  textTransform: 'none', fontWeight: 600, fontSize: '0.85rem',
-                  '&:hover': { bgcolor: 'rgba(255,255,255,0.1)', borderColor: 'white' } }}>
-                QR Card
-              </Button>
-              <Button component={Link} href="/requests" variant="contained" startIcon={<AddCircleIcon />}
-                sx={{ bgcolor: 'white', color: '#b91c1c', borderRadius: 2,
-                  textTransform: 'none', fontWeight: 700, fontSize: '0.85rem',
-                  '&:hover': { bgcolor: '#fff1f2' } }}>
-                New Request
-              </Button>
-            </Box>
-          </Box>
-        </Container>
+      {/* Availability + summary — every number comes from the API responses above */}
+      <Box sx={{ display: 'grid', gap: { xs: 1.5, md: 2 }, gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: '1.25fr repeat(3, 1fr)' } }}>
+        <AvailabilityCard donor={donorStatus} saving={availSaving} error={availError}
+          onToggle={handleToggleAvailability} onRetry={() => setDonorAttempt((n) => n + 1)} />
+        <StatCard icon={<DescriptionOutlinedIcon />} label="Total Blood Requests" loading={reqStatus === 'loading'}
+          value={reqStatus === 'error' ? '—' : requests.length}
+          sub={reqStatus === 'ready' ? `${reqCount('Pending')} pending • ${reqCount('Approved')} approved` : reqStatus === 'error' ? 'Couldn’t load' : undefined}
+          onClick={() => openTab('requests')} />
+        <StatCard icon={<CalendarMonthOutlinedIcon />} label="Upcoming Appointments" loading={apptStatus === 'loading'}
+          value={apptStatus === 'error' ? '—' : upcoming.length}
+          sub={apptStatus === 'ready' ? (upcoming[0] ? `Next: ${formatDate(upcoming[0].date, { day: 'numeric', month: 'short', year: 'numeric' })}` : 'None booked') : apptStatus === 'error' ? 'Couldn’t load' : undefined}
+          onClick={() => openTab('appointments')} />
+        <StatCard icon={<FavoriteBorderIcon />} label="Total Donations" loading={apptStatus === 'loading'}
+          value={apptStatus === 'error' ? '—' : donations.length}
+          sub={lastDonation ? `Last donation: ${formatDistanceToNow(new Date(lastDonation), { addSuffix: true })}` : 'No donations recorded yet'}
+          onClick={() => openTab('history')} />
       </Box>
 
-      <Container maxWidth="md" sx={{ mt: -3 }}>
+      {/* Tabs */}
+      <Paper ref={tabsRef} elevation={0} sx={{ ...cardSx, overflow: 'hidden', scrollMarginTop: 90 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, px: { xs: 0, sm: 2.5 }, borderBottom: '1px solid', borderColor: 'divider' }}>
+          <Tabs value={tab} onChange={changeTab} aria-label="Your activity" variant="scrollable" scrollButtons={false} sx={{
+            flex: 1, minWidth: 0, minHeight: 0,
+            '& .MuiTab-root': {
+              minHeight: { xs: 56, sm: 68 }, fontWeight: 700, fontSize: { xs: '0.86rem', sm: '1rem' }, color: 'text.secondary',
+              px: { xs: 1.5, sm: 2 }, mr: { sm: 1.5 },
+            },
+            '& .MuiTab-root.Mui-selected': { color: 'primary.main' },
+            '& .MuiTab-icon': { fontSize: 22, mr: '10px !important' },
+            '& .MuiTabs-indicator': { height: 3, borderRadius: '3px 3px 0 0' },
+          }}>
+            {tabDefs.map((t) => (
+              <Tab key={t.value} value={t.value} icon={t.icon} iconPosition="start" id={`tab-${t.value}`} aria-controls={`panel-${t.value}`}
+                label={<span>{t.label} ({t.count})</span>} />
+            ))}
+          </Tabs>
+          <Button component={Link} href={newHref} variant="contained" startIcon={<AddIcon />}
+            sx={{ display: { xs: 'none', md: 'inline-flex' }, flexShrink: 0, height: 42, borderRadius: '10px', fontWeight: 700 }}>
+            {newLabel}
+          </Button>
+        </Box>
 
-        {/* Availability Status */}
-        <Paper id="availability" elevation={0} sx={{
-          borderRadius: 3, border: `1px solid ${border}`, bgcolor: card, mb: 3,
-          p: 2.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap',
-        }}>
-          <Box display="flex" alignItems="center" gap={1.5}>
-            <Box sx={{
-              width: 44, height: 44, borderRadius: 2, flexShrink: 0,
-              bgcolor: isDark ? 'rgba(183,28,28,0.12)' : '#fff0f0',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <BloodtypeIcon sx={{ color: '#b71c1c' }} />
-            </Box>
-            <Box>
-              <Typography fontWeight={800} fontSize="0.95rem">Availability Status</Typography>
-              <Typography variant="caption" color="text.secondary">
-                {donorStatus === null
-                  ? 'Checking your donor record…'
-                  : donorStatus.error
-                    ? 'Could not load your donor record. Please refresh to try again.'
-                  : donorStatus.found
-                    ? (donorStatus.available ? 'You are marked available to donate' : 'You are marked unavailable to donate')
-                    : 'Register as a donor to appear in the public directory'}
+        <Box role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`} sx={{ p: { xs: 1.75, sm: 3 } }}>
+          {/* Filters + search */}
+          <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center', mb: 2.5 }}>
+            {isHistory ? (
+              <Typography variant="body2" color="text.secondary" sx={{ flex: '1 1 260px' }}>
+                Donations checked in by staff at a BloodLife donation center.
               </Typography>
-              {availError && (
-                <Typography variant="caption" color="error" display="block" mt={0.3}>{availError}</Typography>
+            ) : (
+              <Box role="radiogroup" aria-label="Filter by status" sx={{ display: 'flex', gap: 1, overflowX: 'auto', flex: '1 1 auto', pb: 0.25, minWidth: 0 }}>
+                {filters.map((s) => {
+                  const selected = activeFilter === s;
+                  const count = isReq ? reqCount(s) : apptCount(s);
+                  return (
+                    <Chip key={s} role="radio" aria-checked={selected} clickable onClick={() => setActiveFilter(s)}
+                      label={`${s === 'All' ? 'All' : statusMeta[s].label}${listStatus === 'ready' ? ` (${count})` : ''}`}
+                      color={selected ? 'primary' : 'default'} variant={selected ? 'filled' : 'outlined'}
+                      sx={{
+                        flexShrink: 0, height: 40, px: 0.75, borderRadius: '999px', fontWeight: 600, fontSize: '0.9rem',
+                        ...(!selected && { bgcolor: 'background.paper', borderColor: 'divider', color: 'text.primary', borderWidth: 1.5 }),
+                        ...(selected && { boxShadow: (t) => `0 4px 10px ${alpha(t.palette.primary.main, 0.25)}` }),
+                      }} />
+                  );
+                })}
+              </Box>
+            )}
+            <Box role="search" sx={{
+              flex: { xs: '1 1 100%', md: '0 0 300px' }, ml: { md: 'auto' }, display: 'flex', alignItems: 'center', gap: 1, px: 1.5, height: 44,
+              borderRadius: '12px', border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper',
+              '&:focus-within': { borderColor: 'primary.main', boxShadow: (t) => `0 0 0 3px ${alpha(t.palette.primary.main, 0.14)}` },
+            }}>
+              <SearchIcon aria-hidden="true" sx={{ fontSize: 21, color: 'text.secondary' }} />
+              <InputBase value={query} onChange={(e) => setQuery(e.target.value)} fullWidth sx={{ fontSize: '0.9rem' }}
+                placeholder={isReq ? 'Search patient or hospital...' : isHistory ? 'Search donations...' : 'Search center or date...'}
+                inputProps={{ 'aria-label': `Search ${noun}s`, type: 'search' }} />
+              {query && (
+                <IconButton size="small" aria-label="Clear search" onClick={() => setQuery('')}><CloseIcon fontSize="small" /></IconButton>
               )}
             </Box>
           </Box>
-          {donorStatus?.found ? (
-            <FormControlLabel
-              control={
-                <Switch checked={!!donorStatus.available} onChange={handleToggleAvailability} disabled={availSaving} color="success" />
-              }
-              label={<Typography variant="body2" fontWeight={700}>{donorStatus.available ? 'Available' : 'Unavailable'}</Typography>}
-            />
-          ) : donorStatus?.error ? null : donorStatus && !donorStatus.found ? (
-            <Button component={Link} href="/donate" variant="outlined" color="error" size="small"
-              sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2 }}>
-              Register as Donor
-            </Button>
-          ) : (
-            <CircularProgress size={20} color="error" />
+
+          {listStatus === 'ready' && total > 0 && (query || (!isHistory && activeFilter !== 'All')) && (
+            <Typography variant="caption" color="text.secondary" aria-live="polite" sx={{ display: 'block', mb: 1.25 }}>
+              Showing {shown} of {total} {noun}{total !== 1 ? 's' : ''}
+            </Typography>
           )}
-        </Paper>
 
-        {/* Tabs + status filters */}
-        <Paper elevation={0} sx={{ borderRadius: 3, border: `1px solid ${border}`, bgcolor: card, overflow: 'hidden', mb: 3 }}>
-          <Tabs
-            value={tab}
-            onChange={(e, v) => setTab(v)}
-            variant="fullWidth"
-            TabIndicatorProps={{ sx: { height: 3, bgcolor: '#dc2626' } }}
-            sx={{
-              minHeight: 0,
-              '& .MuiTab-root': { textTransform: 'none', fontWeight: 700, fontSize: '0.85rem', py: 2, minHeight: 0, color: 'text.secondary' },
-              '& .Mui-selected': { color: '#dc2626 !important' },
-            }}
-          >
-            <Tab icon={<BloodtypeIcon sx={{ fontSize: 18 }} />} iconPosition="start"
-              label={`Requests (${requests.length})`} />
-            <Tab icon={<EventAvailableIcon sx={{ fontSize: 18 }} />} iconPosition="start"
-              label={`Appointments (${appointments.length})`} />
-          </Tabs>
-
-          <Box sx={{ px: 2.5, py: 1.75, display: 'flex', gap: 1, flexWrap: 'wrap',
-            borderTop: `1px solid ${border}`, bgcolor: subBg }}>
-            {(tab === 0
-              ? REQUEST_FILTERS
-              : ['All', 'Pending', 'Confirmed', 'CheckedIn', 'Cancelled']
-            ).map(s => {
-              const isAppt  = tab === 1;
-              const count   = isAppt ? apptStatCount(s) : statCount(s);
-              const active  = isAppt ? apptFilter === s : reqFilter === s;
-              const meta    = isAppt ? APPT_STATUS_META[s] : STATUS_META[s];
-              const color   = meta ? meta.color : '#8a8a8a';
-              const label   = s === 'CheckedIn' ? 'Checked In' : s;
-              return (
-                <Chip
-                  key={s}
-                  label={`${label} · ${count}`}
-                  onClick={() => (isAppt ? setApptFilter(s) : setReqFilter(s))}
-                  sx={{
-                    fontWeight: 700, fontSize: '0.76rem', cursor: 'pointer', height: 28,
-                    bgcolor: active ? color : 'transparent',
-                    color: active ? '#fff' : color,
-                    border: `1.5px solid ${color}`,
-                    transition: 'all 0.15s',
-                  }}
-                />
-              );
-            })}
-          </Box>
-        </Paper>
-
-        {/* Requests panel */}
-        {tab === 0 && (
-        <Paper elevation={0} sx={{ borderRadius: 3, border: `1px solid ${border}`, bgcolor: card, overflow: 'hidden' }}>
-          <Box sx={{ px: 3, py: 2.5, borderBottom: `1px solid ${border}`,
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Box display="flex" alignItems="center" gap={1.5}>
-              <BloodtypeIcon sx={{ color: '#b71c1c', fontSize: 22 }} />
-              <Box>
-                <Typography fontWeight={800} fontSize="1rem">My Blood Requests</Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {filteredRequests.length} of {requests.length} request{requests.length !== 1 ? 's' : ''} shown
-                </Typography>
+          {listStatus === 'loading' ? <ListSkeleton rows={isReq ? 2 : 2} />
+            : listStatus === 'error' ? <LoadError what={isReq ? 'blood requests' : isHistory ? 'donation history' : 'appointments'} onRetry={() => (isReq ? loadRequests() : loadAppointments())} />
+            : total === 0 ? (
+              <EmptyPanel
+                icon={isReq ? <BloodtypeOutlinedIcon /> : isHistory ? <WaterDropIcon /> : <EventAvailableOutlinedIcon />}
+                title={isReq ? 'No blood requests yet' : isHistory ? 'No donations recorded yet' : 'No appointments yet'}
+                text={isReq ? 'Requests you submit for a patient will appear here, with their status.'
+                  : isHistory ? 'When staff check you in at a donation center, the donation appears here.'
+                  : 'Book a donation slot at a center near you. It will appear here once booked.'}
+                action={<Button component={Link} href={newHref} variant="contained" startIcon={<AddIcon />}>
+                  {isReq ? 'Submit a Request' : 'Book an Appointment'}
+                </Button>} />
+            ) : shown === 0 ? (
+              <EmptyPanel icon={<SearchOffIcon />} title="Nothing matches"
+                text={isHistory ? 'Try another search term.' : 'Try another status or search term.'}
+                action={<Button variant="outlined" onClick={() => { if (!isHistory) setActiveFilter('All'); setQuery(''); }}>Clear filters</Button>} />
+            ) : (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {isReq
+                  ? filteredRequests.map((req) => (
+                    <RequestCard key={req._id} req={req} hospitalPhone={hospitalPhones[req.hospital]}
+                      onCancel={openCancel} onView={setDetailTarget}
+                      cancelling={cancelling && cancelTarget?._id === req._id} />
+                  ))
+                  : isHistory
+                    ? filteredDonations.map((a) => <DonationCard key={a._id} appt={a}
+                      hospitalImage={hospitalImages[a.hospital] || hospitalImages[a.location]} />)
+                    : filteredAppointments.map((a) => <AppointmentCard key={a._id} appt={a} hospitalPhone={hospitalPhones[a.hospital]}
+                      hospitalImage={hospitalImages[a.hospital] || hospitalImages[a.location]} />)}
               </Box>
-            </Box>
-            <Button component={Link} href="/requests" variant="outlined" color="error" size="small"
-              startIcon={<AddCircleIcon />}
-              sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2, fontSize: '0.8rem' }}>
-              New Request
-            </Button>
-          </Box>
+            )}
 
-          {loading ? (
-            <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {[...Array(3)].map((_, i) => (
-                <Skeleton key={i} variant="rounded" height={90} sx={{ borderRadius: 2 }} />
-              ))}
-            </Box>
-          ) : requests.length === 0 ? (
-            <Box sx={{ py: 8, textAlign: 'center' }}>
-              <LocalHospitalIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1.5 }} />
-              <Typography fontWeight={700} color="text.secondary" gutterBottom>No requests yet</Typography>
-              <Typography variant="caption" color="text.disabled" display="block" mb={3}>
-                Blood requests you submit will appear here.
-              </Typography>
-              <Button component={Link} href="/requests" variant="contained" color="error"
-                startIcon={<AddCircleIcon />}
-                sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2 }}>
-                Submit Your First Request
-              </Button>
-            </Box>
-          ) : filteredRequests.length === 0 ? (
-            <Box sx={{ py: 6, textAlign: 'center' }}>
-              <Typography fontWeight={700} color="text.secondary" gutterBottom>
-                No {reqFilter.toLowerCase()} requests
-              </Typography>
-              <Button size="small" onClick={() => setReqFilter('All')}
-                sx={{ textTransform: 'none', fontWeight: 700, color: '#dc2626' }}>
-                Clear filter
-              </Button>
-            </Box>
-          ) : (
-            <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-              {filteredRequests.map((req) => {
-                const status   = req.status || 'Pending';
-                const stMeta   = STATUS_META[status] || STATUS_META.Pending;
-                const urgColor = URGENCY_COLOR[req.urgency] || '#888';
-                return (
-                  <Paper key={req._id} elevation={0} sx={{
-                    borderRadius: 2.5, border: `1px solid ${border}`, bgcolor: subBg,
-                    overflow: 'hidden',
-                    transition: 'box-shadow 0.15s',
-                    '&:hover': { boxShadow: isDark ? '0 4px 20px rgba(0,0,0,0.4)' : '0 4px 20px rgba(0,0,0,0.08)' },
-                  }}>
-                    <Box sx={{ height: 3, bgcolor: urgColor }} />
-                    <Box sx={{ p: 2, display: 'flex', gap: 2, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-                      <Box sx={{
-                        width: 48, height: 48, borderRadius: 2, flexShrink: 0,
-                        bgcolor: isDark ? 'rgba(183,28,28,0.15)' : '#fff0f0',
-                        border: `1.5px solid ${isDark ? 'rgba(183,28,28,0.3)' : '#ffcdd2'}`,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      }}>
-                        <Typography fontWeight={900} fontSize="0.95rem" color="#dc2626">
-                          {req.bloodType}
-                        </Typography>
-                      </Box>
-
-                      <Box flex={1} minWidth={0}>
-                        <Box display="flex" alignItems="center" gap={1} flexWrap="wrap" mb={0.5}>
-                          <Typography fontWeight={700} fontSize="0.92rem" noWrap>{req.patientName}</Typography>
-                          <Chip
-                            icon={stMeta.icon}
-                            label={stMeta.label}
-                            size="small"
-                            sx={{
-                              fontSize: '0.7rem', fontWeight: 700, height: 22,
-                              bgcolor: isDark ? stMeta.darkBg : stMeta.bg,
-                              color: stMeta.color,
-                              '& .MuiChip-icon': { color: stMeta.color },
-                            }}
-                          />
-                          <Chip label={req.urgency} size="small"
-                            sx={{
-                              fontSize: '0.68rem', fontWeight: 700, height: 22,
-                              bgcolor: isDark ? `${urgColor}18` : `${urgColor}12`,
-                              color: urgColor,
-                            }} />
-                        </Box>
-                        <Box display="flex" alignItems="center" gap={0.6} mb={0.3}>
-                          <LocalHospitalIcon sx={{ fontSize: 13, color: 'text.disabled' }} />
-                          <Typography fontSize="0.78rem" color="text.secondary" noWrap>{req.hospitalName}</Typography>
-                        </Box>
-                        {req.reason && (
-                          <Typography fontSize="0.78rem" color="text.disabled"
-                            sx={{ display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                            {req.reason}
-                          </Typography>
-                        )}
-                      </Box>
-
-                      <Box textAlign="right" flexShrink={0}>
-                        <Box display="flex" alignItems="center" gap={0.5} justifyContent="flex-end">
-                          <AccessTimeIcon sx={{ fontSize: 12, color: 'text.disabled' }} />
-                          <Typography fontSize="0.72rem" color="text.disabled">
-                            {req.createdAt
-                              ? new Date(req.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                              : '—'}
-                          </Typography>
-                        </Box>
-                        <Typography fontSize="0.7rem" color="text.disabled" mt={0.3}>
-                          {req.unitsNeeded || 1} unit{req.unitsNeeded !== 1 ? 's' : ''}
-                        </Typography>
-                      </Box>
-                    </Box>
-
-                    {status === 'Pending' && (
-                      <Box sx={{ px: 2, pb: 1.5, pt: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, flexWrap: 'wrap' }}>
-                        <Typography fontSize="0.75rem" color="text.secondary">
-                          Awaiting review by the hospital team.
-                        </Typography>
-                        <Button size="small" variant="outlined" color="error" onClick={() => openCancel(req)}
-                          startIcon={<DoNotDisturbOnOutlinedIcon sx={{ fontSize: 16 }} />}
-                          aria-label={`Cancel blood request for ${req.patientName}`}
-                          sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2, fontSize: '0.78rem', py: 0.4 }}>
-                          Cancel Request
-                        </Button>
-                      </Box>
-                    )}
-                    {status === 'Approved' && (
-                      <Box sx={{ px: 2, pb: 1.5, pt: 0 }}>
-                        <Box sx={{ px: 1.5, py: 0.8, borderRadius: 1.5,
-                          bgcolor: isDark ? 'rgba(22,163,74,0.1)' : '#f0fdf4',
-                          border: '1px solid rgba(22,163,74,0.2)' }}>
-                          <Typography fontSize="0.75rem" color="#16a34a" fontWeight={600}>
-                            ✓ Your request has been approved. Our team will contact you shortly.
-                          </Typography>
-                        </Box>
-                        {/* Approved requests are already being acted on, so they're changed by talking to the team, not cancelled here */}
-                        <Box sx={{ display: 'flex', gap: 1, mt: 1, flexWrap: 'wrap', alignItems: 'center' }}>
-                          <Typography fontSize="0.72rem" color="text.secondary" sx={{ flex: '1 1 200px' }}>
-                            Need to change or cancel it? Contact the hospital team.
-                          </Typography>
-                          <Button component={Link} href="/notification" size="small" variant="outlined"
-                            startIcon={<ChatBubbleOutlineIcon sx={{ fontSize: 15 }} />}
-                            sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2, fontSize: '0.75rem', py: 0.3, color: 'text.primary', borderColor: border }}>
-                            Send Message
-                          </Button>
-                          <Button component={Link} href="/contact" size="small" variant="outlined"
-                            startIcon={<SupportAgentOutlinedIcon sx={{ fontSize: 15 }} />}
-                            sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2, fontSize: '0.75rem', py: 0.3, color: 'text.primary', borderColor: border }}>
-                            Contact Hospital
-                          </Button>
-                        </Box>
-                      </Box>
-                    )}
-                    {status === 'Cancelled' && (
-                      <Box sx={{ px: 2, pb: 1.5, pt: 0 }}>
-                        <Box sx={{ px: 1.5, py: 0.8, borderRadius: 1.5,
-                          bgcolor: isDark ? 'rgba(148,163,184,0.08)' : '#f8fafc',
-                          border: `1px solid ${isDark ? 'rgba(148,163,184,0.2)' : '#e2e8f0'}` }}>
-                          <Typography fontSize="0.75rem" color="text.secondary" fontWeight={600}>
-                            You cancelled this request{req.cancelledAt ? ` on ${new Date(req.cancelledAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : ''}.
-                          </Typography>
-                          {req.cancellationReason && (
-                            <Typography fontSize="0.74rem" color="text.secondary" sx={{ mt: 0.25, overflowWrap: 'anywhere' }}>
-                              Reason: {req.cancellationReason}
-                            </Typography>
-                          )}
-                        </Box>
-                      </Box>
-                    )}
-                    {status === 'Rejected' && (
-                      <Box sx={{ px: 2, pb: 1.5, pt: 0 }}>
-                        <Box sx={{ px: 1.5, py: 0.8, borderRadius: 1.5,
-                          bgcolor: isDark ? 'rgba(220,38,38,0.08)' : '#fff0f0',
-                          border: '1px solid rgba(220,38,38,0.2)' }}>
-                          <Typography fontSize="0.75rem" color="#dc2626" fontWeight={600}>
-                            This request was not approved. Please contact us or submit a new request.
-                          </Typography>
-                        </Box>
-                      </Box>
-                    )}
-                  </Paper>
-                );
-              })}
-            </Box>
-          )}
-        </Paper>
-        )}
-
-        {/* Appointments panel */}
-        {tab === 1 && (
-        <Paper elevation={0} sx={{ borderRadius: 3, border: `1px solid ${border}`, bgcolor: card, overflow: 'hidden' }}>
-          <Box sx={{ px: 3, py: 2.5, borderBottom: `1px solid ${border}`,
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Box display="flex" alignItems="center" gap={1.5}>
-              <EventAvailableIcon sx={{ color: '#b71c1c', fontSize: 22 }} />
-              <Box>
-                <Typography fontWeight={800} fontSize="1rem">My Appointments</Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {filteredAppointments.length} of {appointments.length} appointment{appointments.length !== 1 ? 's' : ''} shown
-                </Typography>
-              </Box>
-            </Box>
-            <Button component={Link} href="/appointments" variant="outlined" color="error" size="small"
-              startIcon={<AddCircleIcon />}
-              sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2, fontSize: '0.8rem' }}>
-              Book Appointment
-            </Button>
-          </Box>
-
-          {apptLoading ? (
-            <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {[...Array(2)].map((_, i) => (
-                <Skeleton key={i} variant="rounded" height={90} sx={{ borderRadius: 2 }} />
-              ))}
-            </Box>
-          ) : appointments.length === 0 ? (
-            <Box sx={{ py: 8, textAlign: 'center' }}>
-              <EventAvailableIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1.5 }} />
-              <Typography fontWeight={700} color="text.secondary" gutterBottom>No appointments yet</Typography>
-              <Typography variant="caption" color="text.disabled" display="block" mb={3}>
-                Appointments you book will appear here.
-              </Typography>
-              <Button component={Link} href="/appointments" variant="contained" color="error"
-                startIcon={<AddCircleIcon />}
-                sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2 }}>
-                Book an Appointment
-              </Button>
-            </Box>
-          ) : filteredAppointments.length === 0 ? (
-            <Box sx={{ py: 6, textAlign: 'center' }}>
-              <Typography fontWeight={700} color="text.secondary" gutterBottom>
-                No {(apptFilter === 'CheckedIn' ? 'checked in' : apptFilter.toLowerCase())} appointments
-              </Typography>
-              <Button size="small" onClick={() => setApptFilter('All')}
-                sx={{ textTransform: 'none', fontWeight: 700, color: '#dc2626' }}>
-                Clear filter
-              </Button>
-            </Box>
-          ) : (
-            <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-              {filteredAppointments.map((appt) => {
-                const status = appt.status || 'Pending';
-                const stMeta = APPT_STATUS_META[status] || APPT_STATUS_META.Pending;
-                return (
-                  <Paper key={appt._id} elevation={0} sx={{
-                    borderRadius: 2.5, border: `1px solid ${border}`, bgcolor: subBg,
-                    overflow: 'hidden',
-                    transition: 'box-shadow 0.15s',
-                    '&:hover': { boxShadow: isDark ? '0 4px 20px rgba(0,0,0,0.4)' : '0 4px 20px rgba(0,0,0,0.08)' },
-                  }}>
-                    <Box sx={{ height: 3, bgcolor: stMeta.color }} />
-                    <Box sx={{ p: 2, display: 'flex', gap: 2, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-                      <Box sx={{
-                        width: 48, height: 48, borderRadius: 2, flexShrink: 0,
-                        bgcolor: isDark ? 'rgba(183,28,28,0.15)' : '#fff0f0',
-                        border: `1.5px solid ${isDark ? 'rgba(183,28,28,0.3)' : '#ffcdd2'}`,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      }}>
-                        <Typography fontWeight={900} fontSize="0.95rem" color="#dc2626">
-                          {appt.bloodType}
-                        </Typography>
-                      </Box>
-
-                      <Box flex={1} minWidth={0}>
-                        <Box display="flex" alignItems="center" gap={1} flexWrap="wrap" mb={0.5}>
-                          <Typography fontWeight={700} fontSize="0.92rem" noWrap>{appt.location}</Typography>
-                          <Chip
-                            icon={stMeta.icon}
-                            label={stMeta.label}
-                            size="small"
-                            sx={{
-                              fontSize: '0.7rem', fontWeight: 700, height: 22,
-                              bgcolor: isDark ? stMeta.darkBg : stMeta.bg,
-                              color: stMeta.color,
-                              '& .MuiChip-icon': { color: stMeta.color },
-                            }}
-                          />
-                        </Box>
-                        <Box display="flex" alignItems="center" gap={0.6} mb={0.3}>
-                          <AccessTimeIcon sx={{ fontSize: 13, color: 'text.disabled' }} />
-                          <Typography fontSize="0.78rem" color="text.secondary" noWrap>
-                            {appt.date} at {appt.time}
-                          </Typography>
-                        </Box>
-                        {appt.notes && (
-                          <Typography fontSize="0.78rem" color="text.disabled"
-                            sx={{ display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                            {appt.notes}
-                          </Typography>
-                        )}
-                      </Box>
-
-                      <Box textAlign="right" flexShrink={0}>
-                        <Box display="flex" alignItems="center" gap={0.5} justifyContent="flex-end">
-                          <AccessTimeIcon sx={{ fontSize: 12, color: 'text.disabled' }} />
-                          <Typography fontSize="0.72rem" color="text.disabled">
-                            {appt.createdAt
-                              ? new Date(appt.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                              : '—'}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </Box>
-
-                    {status === 'Confirmed' && (
-                      <Box sx={{ px: 2, pb: 1.5, pt: 0 }}>
-                        <Box sx={{ px: 1.5, py: 0.8, borderRadius: 1.5,
-                          bgcolor: isDark ? 'rgba(22,163,74,0.1)' : '#f0fdf4',
-                          border: '1px solid rgba(22,163,74,0.2)' }}>
-                          <Typography fontSize="0.75rem" color="#16a34a" fontWeight={600}>
-                            ✓ Your appointment is confirmed. See you at the center!
-                          </Typography>
-                        </Box>
-                      </Box>
-                    )}
-                    {status === 'CheckedIn' && (
-                      <Box sx={{ px: 2, pb: 1.5, pt: 0 }}>
-                        <Box sx={{ px: 1.5, py: 0.8, borderRadius: 1.5,
-                          bgcolor: isDark ? 'rgba(37,99,235,0.1)' : '#eff6ff',
-                          border: '1px solid rgba(37,99,235,0.2)' }}>
-                          <Typography fontSize="0.75rem" color="#2563eb" fontWeight={600}>
-                            ✓ You&apos;ve checked in. Thank you for donating!
-                          </Typography>
-                        </Box>
-                      </Box>
-                    )}
-                    {status === 'Cancelled' && (
-                      <Box sx={{ px: 2, pb: 1.5, pt: 0 }}>
-                        <Box sx={{ px: 1.5, py: 0.8, borderRadius: 1.5,
-                          bgcolor: isDark ? 'rgba(220,38,38,0.08)' : '#fff0f0',
-                          border: '1px solid rgba(220,38,38,0.2)' }}>
-                          <Typography fontSize="0.75rem" color="#dc2626" fontWeight={600}>
-                            This appointment was cancelled. Please book a new one.
-                          </Typography>
-                        </Box>
-                      </Box>
-                    )}
-                  </Paper>
-                );
-              })}
-            </Box>
-          )}
-        </Paper>
-        )}
-
-        {/* Quick links */}
-        <Grid container spacing={2} mt={1}>
-          {[
-            { label: 'My QR Card',    desc: 'Download your donor ID card', href: '/qr-card',  icon: <QrCode2Icon sx={{ color: '#b71c1c' }} /> },
-            { label: 'Find Hospital', desc: 'Locate nearby hospitals',      href: '/map',      icon: <LocalHospitalIcon sx={{ color: '#b71c1c' }} /> },
-            { label: 'New Request',   desc: 'Submit a blood request',        href: '/requests', icon: <BloodtypeIcon sx={{ color: '#b71c1c' }} /> },
-          ].map(item => (
-            <Grid size={{ xs: 12, sm: 4 }} key={item.label}>
-              <Paper component={Link} href={item.href} elevation={0}
-                sx={{
-                  p: 2.5, borderRadius: 3, border: `1px solid ${border}`,
-                  bgcolor: card, display: 'flex', alignItems: 'center', gap: 1.5,
-                  textDecoration: 'none', color: 'inherit',
-                  transition: 'all 0.15s',
-                  '&:hover': { borderColor: '#dc2626', boxShadow: '0 4px 16px rgba(183,28,28,0.12)', transform: 'translateY(-1px)' },
-                }}>
-                <Box sx={{ width: 40, height: 40, borderRadius: 2, flexShrink: 0,
-                  bgcolor: isDark ? 'rgba(183,28,28,0.12)' : '#fff0f0',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {item.icon}
-                </Box>
-                <Box>
-                  <Typography fontWeight={700} fontSize="0.85rem">{item.label}</Typography>
-                  <Typography fontSize="0.72rem" color="text.secondary">{item.desc}</Typography>
-                </Box>
-              </Paper>
-            </Grid>
-          ))}
-        </Grid>
-      </Container>
-
-      {/* Edit Profile Dialog */}
-      <Dialog open={editOpen} onClose={() => setEditOpen(false)} maxWidth="xs" fullWidth
-        PaperProps={{ sx: { borderRadius: 3, bgcolor: isDark ? '#111' : '#fff' } }}>
-        <DialogTitle sx={{ fontWeight: 800, fontSize: '1rem', pb: 1 }}>
-          Edit Profile
-        </DialogTitle>
-        <DialogContent sx={{ pb: 2 }}>
-          <TextField
-            label="Full Name"
-            value={editName}
-            onChange={e => setEditName(e.target.value)}
-            fullWidth
-            size="small"
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            label="Phone Number"
-            value={editPhone}
-            onChange={e => setEditPhone(e.target.value)}
-            fullWidth
-            size="small"
-            placeholder="+855 ..."
-          />
-          {saveError && (
-            <Typography color="error" fontSize="0.82rem" mt={1.5}>{saveError}</Typography>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2.5 }}>
-          <Button onClick={() => setEditOpen(false)} color="inherit"
-            sx={{ textTransform: 'none', fontWeight: 600 }}>
-            Cancel
+          {/* On small screens the tab bar has no room for this button */}
+          <Button component={Link} href={newHref} variant="contained" startIcon={<AddIcon />} fullWidth
+            sx={{ display: { xs: 'flex', md: 'none' }, mt: 2.5, borderRadius: '12px', height: 46 }}>
+            {newLabel}
           </Button>
-          <Button onClick={handleSaveProfile} variant="contained" color="error" disabled={saving}
-            sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2, minWidth: 90 }}>
-            {saving ? <CircularProgress size={16} sx={{ color: 'white' }} /> : 'Save'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        </Box>
+      </Paper>
 
-      {/* Cancel blood request confirmation */}
-      <Dialog open={Boolean(cancelTarget)} onClose={closeCancel} maxWidth="xs" fullWidth
-        aria-labelledby="cancel-request-title" aria-describedby="cancel-request-text"
-        PaperProps={{ sx: { borderRadius: 3, bgcolor: card } }}>
-        <DialogTitle id="cancel-request-title" sx={{ fontWeight: 800, fontSize: '1.05rem', pb: 1, display: 'flex', alignItems: 'center', gap: 1.25 }}>
-          <Box aria-hidden="true" sx={{ width: 36, height: 36, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            bgcolor: isDark ? 'rgba(220,38,38,0.15)' : '#fdecee', color: '#b91c2c' }}>
-            <DoNotDisturbOnOutlinedIcon sx={{ fontSize: 20 }} />
-          </Box>
-          Cancel Blood Request
-        </DialogTitle>
+      {detailTarget && (
+        <RequestDetailsDialog request={detailTarget} token={token} hospitalPhone={hospitalPhones[detailTarget.hospital]}
+          onClose={() => setDetailTarget(null)} onCancel={openCancel} onSessionExpired={sessionExpired}
+          // The dialog re-reads the request; keep the card behind it in step with the server.
+          onFresh={(data) => setRequests((list) => list.map((r) => (r._id === data._id ? data : r)))} />
+      )}
+
+      {/* Edit Profile */}
+      <Dialog open={editOpen} onClose={() => !saving && setEditOpen(false)} maxWidth="xs" fullWidth aria-labelledby="edit-profile-title"
+        slotProps={{ paper: { component: 'form', onSubmit: handleSaveProfile, sx: { borderRadius: (t) => `${t.custom.radius.dialog}px` } } }}>
+        <DialogTitle id="edit-profile-title" sx={{ fontWeight: 800, fontSize: '1.05rem', pb: 1 }}>Edit Profile</DialogTitle>
         <DialogContent sx={{ pb: 1 }}>
-          <Typography id="cancel-request-text" fontSize="0.92rem" fontWeight={600}>
-            Are you sure you want to cancel this blood request?
+          <TextField label="Full Name" value={editName} onChange={(e) => setEditName(e.target.value)} fullWidth size="small"
+            required autoFocus autoComplete="name" sx={{ mt: 1, mb: 2 }}
+            error={!!saveError && !editName.trim()} />
+          <TextField label="Phone Number" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} fullWidth size="small"
+            type="tel" autoComplete="tel" placeholder="012 345 678" />
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1.5 }}>
+            Your email ({user?.email}) is your login and can&apos;t be changed here.
           </Typography>
-          {cancelTarget && (
-            <Box sx={{ mt: 1.5, px: 1.5, py: 1.1, borderRadius: 2, bgcolor: subBg, border: `1px solid ${border}` }}>
-              <Typography fontSize="0.82rem" fontWeight={700}>
-                {cancelTarget.bloodType} · {cancelTarget.unitsNeeded || 1} unit{cancelTarget.unitsNeeded !== 1 ? 's' : ''} for {cancelTarget.patientName}
-              </Typography>
-              <Typography fontSize="0.78rem" color="text.secondary">{cancelTarget.hospitalName}</Typography>
-            </Box>
-          )}
-          <Typography fontSize="0.8rem" color="text.secondary" sx={{ mt: 1.5, mb: 1 }}>
-            The hospital will no longer process it. This can’t be undone — you can submit a new request any time.
-          </Typography>
-          <Typography component="label" htmlFor="cancel-reason" sx={{ display: 'block', fontWeight: 700, fontSize: '0.82rem', mb: 0.6 }}>
-            Reason <Box component="span" sx={{ color: 'text.secondary', fontWeight: 500 }}>(optional)</Box>
-          </Typography>
-          <TextField fullWidth multiline minRows={2} maxRows={5} size="small" id="cancel-reason"
-            placeholder="e.g. Found a donor, surgery postponed…"
-            value={cancelReason} onChange={(e) => setCancelReason(e.target.value.slice(0, 500))}
-            disabled={cancelling}
-            helperText={`${cancelReason.length}/500`}
-            FormHelperTextProps={{ sx: { textAlign: 'right', mr: 0 } }}
-            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }} />
-          {cancelError && <Alert severity="error" sx={{ mt: 1.5, borderRadius: 2 }}>{cancelError}</Alert>}
+          {saveError && <Alert severity="error" sx={{ mt: 1.5, borderRadius: '10px' }}>{saveError}</Alert>}
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2.5, pt: 1, gap: 1 }}>
-          <Button onClick={closeCancel} disabled={cancelling} color="inherit"
-            sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2 }}>
-            Keep Request
-          </Button>
-          <Button onClick={confirmCancel} variant="contained" color="error" disabled={cancelling}
-            startIcon={cancelling ? <CircularProgress size={15} color="inherit" /> : null}
-            sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2, minWidth: 150, bgcolor: '#b91c2c', '&:hover': { bgcolor: '#881d2a' } }}>
-            {cancelling ? 'Cancelling…' : 'Cancel Request'}
+        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+          <Button onClick={() => setEditOpen(false)} color="inherit" disabled={saving}>Cancel</Button>
+          <Button type="submit" variant="contained" disabled={saving} sx={{ minWidth: 96 }}
+            startIcon={saving ? <CircularProgress size={15} color="inherit" /> : null}>
+            {saving ? 'Saving…' : 'Save'}
           </Button>
         </DialogActions>
       </Dialog>
+
+      <CancelRequestDialog request={cancelTarget} token={token} onClose={() => setCancelTarget(null)}
+        onCancelled={onCancelled} onChanged={onCancelConflict} onSessionExpired={sessionExpired} onBusyChange={setCancelling} />
 
       <Snackbar open={Boolean(toast)} autoHideDuration={5000} onClose={() => setToast(null)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
         {toast ? (
-          <Alert onClose={() => setToast(null)} severity={toast.severity} variant="filled" sx={{ borderRadius: 2, fontWeight: 600 }}>
+          <Alert onClose={() => setToast(null)} severity={toast.severity} variant="filled" sx={{ borderRadius: '10px', fontWeight: 600 }}>
             {toast.message}
           </Alert>
         ) : undefined}

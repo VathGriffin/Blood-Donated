@@ -102,7 +102,7 @@ export default function HospitalLogin() {
                 </Box>
 
                 <Typography fontSize="0.72rem" sx={{ color: 'rgba(255,255,255,0.3)', fontWeight: 600, letterSpacing: '0.06em' }}>
-                    © 2026 ITC CAMBODIA · DATA SCIENCE 4TH YEAR
+                    © 2026 HUST · DATA SCIENCE 4TH YEAR
                 </Typography>
             </Box>
 

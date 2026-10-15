@@ -90,7 +90,7 @@ function Footer() {
                   support@bloodlife.kh
                 </MuiLink>
               </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.9 }}>📍 Institute of Technology of Cambodia, Phnom Penh</Typography>
+              <Typography variant="body2" sx={{ opacity: 0.9 }}>📍 Hanoi University of Science and Technology (HUST), Hanoi, Vietnam</Typography>
               <Typography variant="body2" sx={{ opacity: 0.9 }}>📞 +855 12 345 678</Typography>
               <Typography variant="body2" sx={{ opacity: 0.9 }}>🕐 Mon–Fri: 8:00 AM – 5:00 PM</Typography>
             </Box>
@@ -105,7 +105,7 @@ function Footer() {
             © {new Date().getFullYear()} {BRAND.name}. All rights reserved.
           </Typography>
           <Typography variant="body2" sx={{ opacity: 0.7, fontSize: "0.82rem", display: "flex", alignItems: "center", gap: 0.5 }}>
-            Made with <Favorite sx={{ fontSize: 14, color: "#ffcdd2" }} /> by Data Science Students — ITC Cambodia
+            Made with <Favorite sx={{ fontSize: 14, color: "#ffcdd2" }} /> by Data Science Students — HUST
           </Typography>
         </Box>
         <Box sx={{ display: "flex", justifyContent: "center", gap: 3, flexWrap: "wrap" }}>

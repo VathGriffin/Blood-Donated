@@ -28,6 +28,11 @@ const ManageDonors = () => {
   const [open, setOpen] = useState(false);
   const [selectedDonor, setSelectedDonor] = useState(null);
   const [search, setSearch] = useState("");
+  // ?q=… (e.g. from the Messages page's "View Donor Profile") pre-fills the search.
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("q")?.trim();
+    if (q) setSearch(q);
+  }, []);
   const [photoPreview, setPhotoPreview] = useState(null);
   const [photoFile, setPhotoFile] = useState(null);
   const [photoError, setPhotoError] = useState("");

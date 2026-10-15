@@ -5,7 +5,7 @@ export const DEFAULT_CENTER = [11.5564, 104.9282]; // Phnom Penh [lat, lng]
 
 export const HOSPITAL_LIMIT = 60;
 export const DONOR_LIMIT = 100;
-export const HOSPITAL_REQUEST_TIMEOUT_MS = 32000; // just above the backend's own worst case (~28 s across several OSM servers)
+export const HOSPITAL_REQUEST_TIMEOUT_MS = 15000; // just above the backend's own 12 s budget across the OSM servers
 const CACHE_TTL_MS = 10 * 60 * 1000;
 
 export const BLOOD_COLORS = {

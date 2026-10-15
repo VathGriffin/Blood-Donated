@@ -11,6 +11,7 @@ import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import PersonIcon from '@mui/icons-material/Person';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
 import EventAvailableIcon from '@mui/icons-material/EventAvailable';
+import NotificationsIcon from '@mui/icons-material/Notifications';
 
 /**
  * Dashboard roles. These are the front-end names; the API's role strings are
@@ -83,14 +84,15 @@ export const ROLE_CONFIG = {
       {
         // My Profile hosts Availability Status and Request History as sections/tabs of
         // that one page, rather than separate rows, so the sidebar never highlights more
-        // than one row for the same page. Blood Request and Appointment are public pages —
-        // they open outside the dashboard chrome.
+        // than one row for the same page. Blood Request and Appointment are the donor's own lists
+        // (/my-requests, /my-appointments); their "New Request" / "Book Appointment" buttons
+        // lead to the public form and booking pages.
         items: [
           { label: 'My Profile',       href: '/profile',      icon: PersonIcon, exact: true },
           { label: 'My QR Card',       href: '/qr-card',      icon: QrCode2Icon },
-          { label: 'Blood Request',    href: '/requests',     icon: DescriptionIcon },
-          { label: 'Appointment',      href: '/appointments', icon: EventAvailableIcon },
-          { label: 'Notifications',    href: '/notification', icon: ChatIcon },
+          { label: 'Blood Request',    href: '/my-requests',  icon: DescriptionIcon },
+          { label: 'Appointment',      href: '/my-appointments', icon: EventAvailableIcon },
+          { label: 'Notifications',    href: '/notification', icon: NotificationsIcon, badge: true },
         ],
       },
     ],

@@ -51,7 +51,7 @@ router.post('/:id/photo', requireRole('admin', 'hospital_staff'), (req, res, nex
     const request = await BloodRequest.findById(req.params.id);
     if (!request) return res.status(404).json({ error: 'Request not found' });
     if (!assertHospitalScope(req, request)) {
-      fs.unlinkSync(req.file.path);
+      fs.rmSync(req.file.path, { force: true }); // already gone is fine — don't turn a 401/403 into a 500
       return res.status(403).json({ error: "Not your hospital's request" });
     }
     if (request.photo) {

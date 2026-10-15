@@ -3,27 +3,30 @@ const router = express.Router();
 
 // Public Overpass (OpenStreetMap) servers. Any one of them is regularly slow,
 // rate-limited or down (the main one often answers 504 when busy), so they are
-// tried in turn until one answers.
+// raced: see queryOverpass. Only servers holding the whole planet belong here —
+// regional ones (e.g. overpass.osm.ch, Switzerland only) answer fast with an
+// empty list, which looked like "no hospitals" and then got preferred as lastGood.
 const ENDPOINTS = [
+  'https://overpass.openstreetmap.fr/api/interpreter',
   'https://overpass-api.de/api/interpreter',
   'https://lz4.overpass-api.de/api/interpreter',
-  'https://overpass.openstreetmap.fr/api/interpreter',
-  'https://overpass.osm.ch/api/interpreter',
   'https://overpass.private.coffee/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
 ];
 const COOLDOWN_MS = 2 * 60 * 1000; // skip a server that just failed instead of waiting on it again
 const ATTEMPT_TIMEOUT_MS = 8000;
-const TOTAL_BUDGET_MS = 20000;
+const HEDGE_MS = 1500;             // a server silent this long gets a backup request racing it
+const TOTAL_BUDGET_MS = 12000;
 const CACHE_TTL_MS = 10 * 60 * 1000;
 const CACHE_MAX_ENTRIES = 200;
 // Overpass asks clients to identify themselves and rejects generic ones (HTTP 406),
 // which is one reason calling it straight from the browser was unreliable.
-const USER_AGENT = 'BloodLifeCambodia/2.0 (blood donation platform; ITC graduation project)';
+const USER_AGENT = 'BloodLifeCambodia/2.0 (blood donation platform; HUST graduation project)';
 
 const cache = new Map(); // "lat,lng" (~1 km cell) -> { t, hospitals }
 const failedAt = new Map(); // endpoint -> time of its last failure
 let lastGood = null;        // endpoint that answered most recently
+const inflight = new Map(); // "lat,lng" -> pending lookup, so simultaneous requests share one
 
 // nwr: hospitals are often mapped as buildings (ways), not just points.
 // Blood centres are tagged healthcare=blood_donation (older maps: amenity=blood_bank).
@@ -93,36 +96,89 @@ function orderedEndpoints() {
   return [...healthy, ...cooling];
 }
 
-async function queryOverpass(lat, lng) {
-  const started = Date.now();
+async function askEndpoint(endpoint, body, signal) {
+  const res = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Accept: 'application/json',
+      'User-Agent': USER_AGENT,
+    },
+    body,
+    signal,
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  // Overpass reports a query that ran out of time/memory as 200 + a "remark".
+  if (!Array.isArray(data.elements) || data.remark) throw new Error(data.remark || 'malformed response');
+  return data.elements;
+}
+
+// Asks the best server first. A failure moves straight on to the next one; a server that
+// is merely slow gets a backup request after HEDGE_MS, and whichever answers first wins
+// (the rest are cancelled). So one hung server costs ~1.5 s instead of a full timeout.
+function queryOverpass(lat, lng) {
+  const body = `data=${encodeURIComponent(buildQuery(lat, lng))}`;
+  const queue = orderedEndpoints();
+  const attempts = []; // { ctrl, timer } per request sent
+  let running = 0;
+  let done = false;
   let lastError;
-  for (const endpoint of orderedEndpoints()) {
-    if (Date.now() - started > TOTAL_BUDGET_MS) break;
-    try {
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          Accept: 'application/json',
-          'User-Agent': USER_AGENT,
-        },
-        body: `data=${encodeURIComponent(buildQuery(lat, lng))}`,
-        signal: AbortSignal.timeout(ATTEMPT_TIMEOUT_MS),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      // Overpass reports a query that ran out of time/memory as 200 + a "remark".
-      if (!Array.isArray(data.elements) || data.remark) throw new Error(data.remark || 'malformed response');
-      failedAt.delete(endpoint);
-      lastGood = endpoint;
-      return parseHospitals(data.elements);
-    } catch (err) {
-      lastError = err;
-      failedAt.set(endpoint, Date.now());
-      console.warn(`[nearby] ${new URL(endpoint).host} failed: ${err.message}`);
-    }
+  let hedgeTimer;
+
+  return new Promise((resolve, reject) => {
+    const finish = (hospitals, err) => {
+      if (done) return;
+      done = true;
+      clearTimeout(budgetTimer);
+      clearTimeout(hedgeTimer);
+      attempts.forEach(({ ctrl, timer }) => { clearTimeout(timer); ctrl.abort(); });
+      if (hospitals) resolve(hospitals); else reject(err);
+    };
+    const budgetTimer = setTimeout(() => finish(null, lastError || new Error('Overpass lookup timed out')), TOTAL_BUDGET_MS);
+
+    const launch = () => {
+      clearTimeout(hedgeTimer);
+      if (done) return;
+      const endpoint = queue.shift();
+      if (!endpoint) {
+        if (!running) finish(null, lastError || new Error('no Overpass endpoint available'));
+        return;
+      }
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(new Error('timed out')), ATTEMPT_TIMEOUT_MS);
+      attempts.push({ ctrl, timer });
+      running += 1;
+      hedgeTimer = setTimeout(launch, HEDGE_MS);
+
+      askEndpoint(endpoint, body, ctrl.signal)
+        .then((elements) => {
+          failedAt.delete(endpoint);
+          lastGood = endpoint;
+          finish(parseHospitals(elements));
+        })
+        .catch((err) => {
+          if (done) return; // cancelled because another server already answered
+          lastError = err;
+          failedAt.set(endpoint, Date.now());
+          console.warn(`[nearby] ${new URL(endpoint).host} failed: ${err.message}`);
+        })
+        .finally(() => {
+          clearTimeout(timer);
+          running -= 1;
+          if (!done) launch();
+        });
+    };
+    launch();
+  });
+}
+
+// One Overpass lookup per area at a time: requests arriving while it runs wait for it.
+function lookup(key, lat, lng) {
+  if (!inflight.has(key)) {
+    inflight.set(key, queryOverpass(lat, lng).finally(() => inflight.delete(key)));
   }
-  throw lastError || new Error('no Overpass endpoint available');
+  return inflight.get(key);
 }
 
 // GET /api/nearby/hospitals?lat=11.55&lng=104.92
@@ -143,7 +199,7 @@ router.get('/hospitals', async (req, res) => {
   }
 
   try {
-    const hospitals = await queryOverpass(lat, lng);
+    const hospitals = await lookup(key, lat, lng);
     if (hospitals.length) {
       // don't pin an empty result, and keep the cache bounded
       if (cache.size >= CACHE_MAX_ENTRIES) cache.delete(cache.keys().next().value);
@@ -158,6 +214,6 @@ router.get('/hospitals', async (req, res) => {
   }
 });
 
-router.clearCache = () => { cache.clear(); failedAt.clear(); lastGood = null; };
+router.clearCache = () => { cache.clear(); failedAt.clear(); inflight.clear(); lastGood = null; };
 
 module.exports = router;

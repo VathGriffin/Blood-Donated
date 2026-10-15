@@ -41,6 +41,9 @@ function ShellStatus({ children }) {
  * (wrong role). That is a UX guard — the API independently rejects any request whose
  * token lacks the role, which is what actually protects the data.
  */
+// Sidebar badge per link: the live notification counts that point at that link.
+const navBadges = (items = []) => items.reduce((acc, i) => ({ ...acc, [i.href]: (acc[i.href] || 0) + i.count }), {});
+
 export default function DashboardShell({ role, children }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -93,7 +96,7 @@ export default function DashboardShell({ role, children }) {
         Skip to content
       </Box>
 
-      <DashboardSidebar role={role} profile={session.profile} open={mobileOpen} onClose={() => setMobileOpen(false)} />
+      <DashboardSidebar role={role} profile={session.profile} badges={navBadges(notifications.items)} open={mobileOpen} onClose={() => setMobileOpen(false)} />
 
       <Box sx={{ flexGrow: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
         <DashboardTopBar

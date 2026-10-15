@@ -21,14 +21,15 @@ import RemoveIcon from "@mui/icons-material/Remove";
 import axios from "axios";
 import API_BASE from "@/lib/config";
 import { script } from '@/lib/fonts';
+import { CONTACT } from '@/lib/contact';
 
 const HERO_IMG =
   "https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&w=1920&q=80";
 
-const CONTACT_EMAIL = "support@bloodlife.kh";
-const CONTACT_PHONE_DISPLAY = "+855 12 345 678";
-const CONTACT_PHONE_HREF = "tel:+85512345678";
-const CONTACT_ADDRESS = "Institute of Technology of Cambodia, Phnom Penh";
+const CONTACT_EMAIL = CONTACT.email;
+const CONTACT_PHONE_DISPLAY = CONTACT.phoneDisplay;
+const CONTACT_PHONE_HREF = CONTACT.phoneHref;
+const CONTACT_ADDRESS = CONTACT.address;
 
 const heroFeatures = [
   { icon: <ChatBubbleOutlineIcon />, title: "Quick Response", subtitle: "We usually reply within 24 hours" },
@@ -38,7 +39,7 @@ const heroFeatures = [
 
 const topInfoCards = [
   { icon: <EmailIcon />, title: "Email Us", value: CONTACT_EMAIL, caption: "We'll get back to you soon", href: `mailto:${CONTACT_EMAIL}` },
-  { icon: <PhoneIcon />, title: "Call Us", value: CONTACT_PHONE_DISPLAY, caption: "Mon – Fri, 8AM–5PM", href: CONTACT_PHONE_HREF },
+  { icon: <PhoneIcon />, title: "Call Us", value: CONTACT_PHONE_DISPLAY, caption: CONTACT.hours, href: CONTACT_PHONE_HREF },
   { icon: <LocationOnIcon />, title: "Visit Us", value: "Phnom Penh, Cambodia", caption: "Our main office" },
   { icon: <GroupsIcon />, title: "General Inquiries", value: "We're happy to help", caption: "Any questions or suggestions" },
 ];

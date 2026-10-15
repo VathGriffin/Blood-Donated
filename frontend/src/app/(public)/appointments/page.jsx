@@ -89,6 +89,15 @@ export default function AppointmentPage() {
     }
   }, [isAuth, user]);
 
+  // ?hospital=<id> (used by the navbar search) preselects that center, if it is one of the loaded centers.
+  const preselected = useRef(false);
+  useEffect(() => {
+    if (preselected.current || centersLoading) return;
+    preselected.current = true;
+    const id = new URLSearchParams(window.location.search).get('hospital');
+    if (id && centers.some((c) => c.key === id)) setForm((f) => (f.centerKey ? f : { ...f, centerKey: id }));
+  }, [centers, centersLoading]);
+
   const setField = (name, value) => { setForm((f) => ({ ...f, [name]: value })); setError(''); };
   const center = centers.find((c) => c.key === form.centerKey) || null;
 

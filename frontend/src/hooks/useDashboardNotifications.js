@@ -17,31 +17,6 @@ const value = (settled) => (settled.status === 'fulfilled' ? settled.value.data 
 // condition it describes is true in the database. Zero-count items are dropped.
 const keep = (items) => items.filter((i) => i.count > 0);
 
-async function loadAdmin(token) {
-  const auth = { headers: { Authorization: `Bearer ${token}` } };
-  const [stats, convs, inv] = await Promise.allSettled([
-    axios.get(`${API_BASE}/api/stats`, auth),
-    axios.get(`${API_BASE}/api/messages/conversations`, auth),
-    axios.get(`${API_BASE}/api/inventory/stats`),
-  ]);
-  const s = value(stats);
-  const c = value(convs);
-  const i = value(inv);
-  if (!s && !c && !i) return null; // everything failed — keep what we had
-  const critical = s?.requests?.critical || 0;
-  const pending = Math.max(0, (s?.requests?.pending || 0) - critical); // `pending` includes the critical ones
-  const toConfirm = s?.appointments?.pending || 0;
-  const unread = sum(Array.isArray(c) ? c : [], (x) => x.unread);
-  const lowStock = i?.critical || 0;
-  return keep([
-    { id: 'crit', tone: 'error', count: critical, title: `${plural(critical, 'critical request')} awaiting review`, detail: 'Urgent blood needs', href: '/dashboard/admin/requests' },
-    { id: 'pend', tone: 'warning', count: pending, title: plural(pending, 'pending request'), detail: 'Waiting for approval', href: '/dashboard/admin/requests' },
-    { id: 'appt', tone: 'info', count: toConfirm, title: `${plural(toConfirm, 'appointment')} to confirm`, detail: 'Donor bookings', href: '/dashboard/admin/appointments' },
-    { id: 'msg', tone: 'primary', count: unread, title: plural(unread, 'unread message'), detail: 'From donors', href: '/dashboard/admin/contacts' },
-    { id: 'stock', tone: 'warning', count: lowStock, title: `${plural(lowStock, 'blood type')} critically low`, detail: 'Central inventory', href: '/dashboard/admin/inventory' },
-  ]);
-}
-
 async function loadHospital(hospitalId, token) {
   if (!hospitalId) return [];
   const auth = { headers: { Authorization: `Bearer ${token}` } };
@@ -94,7 +69,7 @@ async function loadDonor({ token, account, onMessagesPage }) {
     .sort((p, q) => p.date.localeCompare(q.date));
   return keep([
     { id: 'reply', tone: 'primary', count: unreplied, title: `${plural(unreplied, 'new reply')} from support`, detail: 'Open your messages', href: '/notification' },
-    { id: 'appt', tone: 'info', count: upcoming.length, title: `${plural(upcoming.length, 'upcoming appointment')}`, detail: upcoming[0] ? `Next: ${upcoming[0].date} at ${upcoming[0].time}` : '', href: '/profile' },
+    { id: 'appt', tone: 'info', count: upcoming.length, title: `${plural(upcoming.length, 'upcoming appointment')}`, detail: upcoming[0] ? `Next: ${upcoming[0].date} at ${upcoming[0].time}` : '', href: '/my-appointments' },
   ]);
 }
 
@@ -116,7 +91,8 @@ export function useDashboardNotifications(session) {
     lastLoad.current = Date.now();
     let next = null;
     try {
-      if (role === ROLES.ADMIN) next = await loadAdmin(token);
+      // Admins use the activity feed (components/notifications/AdminNotifications) instead.
+      if (role === ROLES.ADMIN) next = [];
       else if (role === ROLES.HOSPITAL_STAFF) next = await loadHospital(account?.hospitalId, token);
       else if (role === ROLES.DONOR) next = await loadDonor({ token, account, onMessagesPage: pathname.startsWith('/notification') });
     } catch { next = null; }

@@ -153,7 +153,7 @@ const AdminLogin = () => {
                 {/* Footer */}
                 <Box sx={{ position: 'relative', zIndex: 1 }}>
                     <Typography fontSize="0.72rem" sx={{ color: 'rgba(255,255,255,0.3)', fontWeight: 600, letterSpacing: '0.06em' }}>
-                        © 2025 ITC CAMBODIA · DATA SCIENCE 4TH YEAR
+                        © 2025 HUST · DATA SCIENCE 4TH YEAR
                     </Typography>
                 </Box>
             </Box>

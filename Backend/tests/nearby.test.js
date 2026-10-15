@@ -98,6 +98,28 @@ describe('GET /api/nearby/hospitals', () => {
     expect(fetchSpy.mock.calls[2][0]).toBe(mirrorUrl);
   });
 
+  test('races a backup server when the first one hangs, and cancels the loser', async () => {
+    let hungSignal;
+    fetchSpy
+      .mockImplementationOnce((url, { signal }) => { hungSignal = signal; return new Promise(() => {}); })
+      .mockResolvedValueOnce(overpassReply(sampleElements));
+    const started = Date.now();
+    const res = await request(app).get(URL_OK);
+
+    expect(res.body.hospitals).toHaveLength(2);
+    expect(Date.now() - started).toBeLessThan(4000); // not the 8 s per-server timeout
+    expect(fetchSpy.mock.calls[1][0]).not.toBe(fetchSpy.mock.calls[0][0]);
+    expect(hungSignal.aborted).toBe(true);
+  });
+
+  test('shares one lookup between simultaneous requests for the same area', async () => {
+    fetchSpy.mockResolvedValueOnce(overpassReply(sampleElements));
+    const [a, b] = await Promise.all([request(app).get(URL_OK), request(app).get(URL_OK)]);
+    expect(a.body.hospitals).toHaveLength(2);
+    expect(b.body.hospitals).toHaveLength(2);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
+
   test('treats an Overpass "remark" (query ran out of time) as a failure', async () => {
     fetchSpy
       .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ elements: [], remark: 'runtime error: timeout' }) })

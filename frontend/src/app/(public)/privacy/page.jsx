@@ -222,8 +222,8 @@ export default function PrivacyPolicy() {
           <Box sx={{ p: 2.5, borderRadius: "12px", bgcolor: isDark ? "#1a1a1a" : "#f8f8f8", border: `1px solid ${border}` }}>
             <Typography fontWeight={700} fontSize="0.9rem" mb={1} sx={{ color: isDark ? "#f5f5f5" : "#111" }}>BloodLife Data Controller</Typography>
             <Typography variant="body2" color="text.secondary" lineHeight={2}>
-              Institute of Technology of Cambodia<br />
-              Phnom Penh, Cambodia<br />
+              Hanoi University of Science and Technology (HUST)<br />
+              Hanoi, Vietnam<br />
               Email:{" "}
               <Box component="a" href="mailto:support@bloodlife.kh"
                 sx={{ color: "#dc2626", textDecoration: "none", fontWeight: 600 }}>

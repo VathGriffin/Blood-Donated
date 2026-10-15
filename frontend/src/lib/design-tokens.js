@@ -70,7 +70,7 @@ export const surfaces = {
 // Dark-red app sidebar (used by the dashboard shells).
 export const sidebar = {
   bg:          '#881D2A',
-  bgGradient:  'linear-gradient(180deg, #881D2A 0%, #6A1420 100%)',
+  bgGradient:  'linear-gradient(180deg, #B91C2C 0%, #9B1726 55%, #881D2A 100%)',
   border:      'rgba(255,255,255,0.08)',
   text:        'rgba(255,255,255,0.72)',
   textActive:  '#FFFFFF',
