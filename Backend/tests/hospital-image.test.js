@@ -40,7 +40,6 @@ describe('hospital image', () => {
     const { token } = await createAdmin();
     const first = await uploadAs(token, hospital._id);
     track(first.body.image);
-    await new Promise((r) => setTimeout(r, 5)); // filenames embed a timestamp
     const second = await uploadAs(token, hospital._id);
     track(second.body.image);
     expect(onDisk(first.body.image)).toBe(false);
