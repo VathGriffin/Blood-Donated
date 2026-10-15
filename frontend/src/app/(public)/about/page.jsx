@@ -3,11 +3,12 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState } from "react";
 import {
-  Container, Typography, Box, Chip, Avatar, Button, Paper, useTheme,
+  Container, Typography, Box, Button, Paper, useTheme,
 } from "@mui/material";
 import axios from "axios";
 import API_BASE from "@/lib/config";
 import { script } from '@/lib/fonts';
+import CreatorProfile from './_components/CreatorProfile';
 import VolunteerActivismIcon from "@mui/icons-material/VolunteerActivism";
 import GroupsIcon from "@mui/icons-material/Groups";
 import PeopleIcon from "@mui/icons-material/People";
@@ -21,10 +22,6 @@ import BloodtypeIcon from "@mui/icons-material/Bloodtype";
 import TrackChangesIcon from "@mui/icons-material/TrackChanges";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
-import CodeIcon from "@mui/icons-material/Code";
-import StorageIcon from "@mui/icons-material/Storage";
-import ApiIcon from "@mui/icons-material/Api";
-import BrushIcon from "@mui/icons-material/Brush";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 
 const HERO_IMG =
@@ -53,53 +50,6 @@ const purposeCards = [
     icon: <TrendingUpIcon />,
     title: "Our Impact",
     desc: "Connecting people, supporting hospitals, and helping save lives across Cambodia through innovation and collaboration.",
-  },
-];
-
-const teamMembers = [
-  {
-    name: "Vith Vath",
-    role: "Full Stack Developer",
-    specialty: "Lead",
-    bio: "Leads platform development with expertise in React and Node.js. Passionate about leveraging technology for social good.",
-    image: "https://i.pravatar.cc/300?img=12",
-    skills: ["React", "Node.js", "MongoDB"],
-    color: "#b71c1c",
-    initials: "VV",
-    icon: <CodeIcon />,
-  },
-  {
-    name: "Sopheak Sok",
-    role: "System Architect",
-    specialty: "Backend",
-    bio: "Designs scalable system architecture and ensures data integrity across the blood inventory management system.",
-    image: "https://i.pravatar.cc/300?img=3",
-    skills: ["Express", "Docker", "AWS"],
-    color: "#ad1457",
-    initials: "SS",
-    icon: <StorageIcon />,
-  },
-  {
-    name: "Chanthou Hem",
-    role: "Backend Developer",
-    specialty: "API",
-    bio: "Builds robust RESTful APIs and integrates third-party services to connect donors, hospitals, and staff seamlessly.",
-    image: "https://i.pravatar.cc/300?img=5",
-    skills: ["Node.js", "REST API", "MongoDB"],
-    color: "#6a1b9a",
-    initials: "CH",
-    icon: <ApiIcon />,
-  },
-  {
-    name: "Dara Khieu",
-    role: "UI/UX Designer",
-    specialty: "Design",
-    bio: "Creates intuitive and accessible user experiences, ensuring every interaction feels effortless and welcoming.",
-    image: "https://i.pravatar.cc/300?img=9",
-    skills: ["Figma", "Material UI", "CSS"],
-    color: "#1565c0",
-    initials: "DK",
-    icon: <BrushIcon />,
   },
 ];
 
@@ -272,18 +222,18 @@ const About = () => {
 
       {/* ── Stats row ─────────────────────────────────────────────────────── */}
       <Container maxWidth="lg" sx={{ py: { xs: 5, md: 6 } }}>
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(4, 1fr)" }, gap: 2.5 }}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", md: "repeat(4, minmax(0, 1fr))" }, gap: { xs: 1.5, sm: 2.5 } }}>
           {statCards.map((s) => (
-            <Paper key={s.label} elevation={0} sx={{ ...cardSx(isDark), p: 2.5, display: "flex", alignItems: "center", gap: 1.75 }}>
+            <Paper key={s.label} elevation={0} sx={{ ...cardSx(isDark), p: { xs: 1.75, sm: 2.5 }, display: "flex", alignItems: "center", gap: { xs: 1.25, sm: 1.75 } }}>
               <Box sx={{
-                width: 48, height: 48, borderRadius: "50%", flexShrink: 0,
+                width: { xs: 40, sm: 48 }, height: { xs: 40, sm: 48 }, borderRadius: "50%", flexShrink: 0,
                 backgroundColor: isDark ? "rgba(183,28,28,0.16)" : "#fdeaea",
                 color: "error.main", display: "flex", alignItems: "center", justifyContent: "center",
-                "& svg": { fontSize: 22 },
+                "& svg": { fontSize: { xs: 19, sm: 22 } },
               }}>
                 {s.icon}
               </Box>
-              <Box sx={{ minWidth: 0 }}>
+              <Box sx={{ minWidth: 0, overflowWrap: "anywhere" }}>
                 <Typography fontWeight={800} color="error.main" sx={{ fontSize: "1.4rem", lineHeight: 1.15 }}>{s.value}</Typography>
                 <Typography fontWeight={700} sx={{ fontSize: "0.85rem", lineHeight: 1.25 }}>{s.label}</Typography>
                 <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>{s.caption}</Typography>
@@ -356,74 +306,8 @@ const About = () => {
         </Box>
       </Container>
 
-      {/* ── Team ──────────────────────────────────────────────────────────── */}
-      <Box id="team-section" sx={{ backgroundColor: isDark ? "#0f0f0f" : "#fff", py: { xs: 8, md: 10 } }}>
-        <Container maxWidth="lg">
-          <Box textAlign="center" mb={6}>
-            <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1.5, mb: 1 }}>
-              <Typography variant="overline" color="error" fontWeight={700} letterSpacing="0.12em">
-                The People
-              </Typography>
-              <Box sx={{ width: 32, height: 3, borderRadius: 2, backgroundColor: "error.main" }} />
-            </Box>
-            <Typography sx={{
-              fontWeight: 800, fontSize: { xs: "1.7rem", md: "2.1rem" },
-              color: isDark ? "#fff" : "#161a23", mb: 1,
-            }}>
-              The Builders Behind It
-            </Typography>
-            <Typography color="text.secondary" sx={{ maxWidth: 560, mx: "auto", lineHeight: 1.7 }}>
-              A passionate team of final-year Data Science students at the Institute of
-              Technology of Cambodia, working together to create real impact in healthcare.
-            </Typography>
-          </Box>
-
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", lg: "repeat(4, 1fr)" }, gap: 3 }}>
-            {teamMembers.map((member) => (
-              <Paper key={member.name} elevation={0} sx={{
-                ...cardSx(isDark), overflow: "hidden", display: "flex", flexDirection: "column",
-                transition: "all 0.25s ease",
-                "&:hover": { transform: "translateY(-6px)", boxShadow: `0 16px 36px ${member.color}30` },
-              }}>
-                <Box sx={{ height: 5, background: `linear-gradient(90deg, ${member.color} 0%, ${member.color}88 100%)` }} />
-                <Box sx={{ pt: 4, pb: 2.5, display: "flex", flexDirection: "column", alignItems: "center" }}>
-                  <Box sx={{ position: "relative", mb: 1.5 }}>
-                    <Avatar src={member.image} alt={member.name} slotProps={{ img: { loading: "lazy" } }} sx={{
-                      width: 84, height: 84, border: `3px solid ${member.color}`,
-                      boxShadow: `0 0 0 4px ${member.color}22, 0 8px 20px rgba(0,0,0,0.15)`,
-                      fontSize: "1.4rem", fontWeight: 800, bgcolor: member.color,
-                    }}>
-                      {member.initials}
-                    </Avatar>
-                    <Box sx={{
-                      position: "absolute", bottom: -2, right: -4, width: 28, height: 28, borderRadius: "50%",
-                      bgcolor: member.color, display: "flex", alignItems: "center", justifyContent: "center",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.25)", "& svg": { fontSize: 14, color: "#fff" },
-                    }}>
-                      {member.icon}
-                    </Box>
-                  </Box>
-                  <Chip label={member.specialty} size="small" sx={{ backgroundColor: member.color, color: "white", fontWeight: 700, fontSize: "0.7rem" }} />
-                </Box>
-                <Box sx={{ px: 3, pb: 3, textAlign: "center", flexGrow: 1 }}>
-                  <Typography fontWeight={800} sx={{ fontSize: "1rem" }}>{member.name}</Typography>
-                  <Typography fontWeight={600} sx={{ color: member.color, fontSize: "0.82rem", mb: 1.25 }}>{member.role}</Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.7, fontSize: "0.83rem", mb: 2 }}>{member.bio}</Typography>
-                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, justifyContent: "center" }}>
-                    {member.skills.map((skill) => (
-                      <Chip key={skill} label={skill} size="small" sx={{
-                        fontSize: "0.68rem", fontWeight: 600,
-                        bgcolor: isDark ? `${member.color}22` : `${member.color}12`,
-                        color: member.color, border: `1px solid ${member.color}40`,
-                      }} />
-                    ))}
-                  </Box>
-                </Box>
-              </Paper>
-            ))}
-          </Box>
-        </Container>
-      </Box>
+      {/* ── Builder ───────────────────────────────────────────────────────── */}
+      <CreatorProfile />
 
       {/* ── CTA strip ─────────────────────────────────────────────────────── */}
       <Container maxWidth="lg" sx={{ py: { xs: 6, md: 8 } }}>

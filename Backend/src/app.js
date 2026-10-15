@@ -20,6 +20,7 @@ const contactRoutes     = require('./contact/contact.routes');
 const chatRoutes        = require('./chatbot/chat.routes');
 const statsRoutes       = require('./dashboard/stats.routes');
 const homepageRoutes    = require('./homepage/homepage.routes');
+const aboutRoutes       = require('./about/about.routes');
 const inventoryRoutes   = require('./inventory/inventory.routes');
 const analyticsRoutes   = require('./analytics/analytics.routes');
 const nearbyRoutes      = require('./nearby/nearby.routes');
@@ -119,6 +120,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/contacts',     contactRoutes);
 app.use('/api/stats',        statsRoutes);
 app.use('/api/homepage',     homepageRoutes);
+app.use('/api/about',        aboutRoutes);
 app.use('/api/inventory',    inventoryRoutes);
 app.use('/api/analytics',    analyticsRoutes);
 

@@ -10,7 +10,7 @@ import {
 import {
   Settings, SmartToy, Bloodtype, CalendarMonth,
   Security, Person, Delete, AddAPhoto, Lock, PersonAdd,
-  MoreVert, Edit, Visibility, VisibilityOff, HideImage,
+  MoreVert, Edit, Visibility, VisibilityOff, HideImage, Info,
 } from '@mui/icons-material';
 import API_BASE from '@/lib/config';
 import { useAuth } from '@/store/AuthContext';
@@ -18,6 +18,7 @@ import { useAuth } from '@/store/AuthContext';
 const SECTIONS = [
   { id: 'profile',     label: 'My Profile',           icon: <Person sx={{ fontSize: 18 }} /> },
   { id: 'homepage',    label: 'Homepage Profiles',    icon: <Settings sx={{ fontSize: 18 }} /> },
+  { id: 'about',       label: 'About Page',           icon: <Info sx={{ fontSize: 18 }} /> },
   { id: 'ai',          label: 'AI Configuration',     icon: <SmartToy sx={{ fontSize: 18 }} /> },
   { id: 'blood',       label: 'Blood Rules',          icon: <Bloodtype sx={{ fontSize: 18 }} /> },
   { id: 'appointment', label: 'Appointment Rules',    icon: <CalendarMonth sx={{ fontSize: 18 }} /> },
@@ -141,6 +142,55 @@ export default function AdminSettings() {
       if (!res.ok) throw new Error(data.message || 'Could not remove the photo.');
       updateStaff({ photo: null });
       setProfileMsg({ type: 'success', text: 'Profile photo removed.' });
+    });
+  };
+
+  // ── About page: creator portrait in "The Builders Behind It" ────────────
+  // POST /api/about/creator-photo replaces it, DELETE removes it (the page then shows initials).
+  const [creatorPhoto, setCreatorPhoto] = useState(null);
+  const [creatorLoading, setCreatorLoading] = useState(false);
+  const [creatorBusy, setCreatorBusy] = useState(false);
+  const [creatorMsg, setCreatorMsg] = useState(null);
+  const creatorPhotoInput = React.useRef(null);
+
+  const loadCreatorPhoto = React.useCallback(() => {
+    setCreatorLoading(true);
+    setCreatorMsg(null);
+    getJson(`${API_BASE}/api/about`)
+      .then(data => setCreatorPhoto(data.creatorPhoto || null))
+      .catch(err => setCreatorMsg({ type: 'error', text: err.message || 'Failed to load the About page settings.' }))
+      .finally(() => setCreatorLoading(false));
+  }, []);
+
+  React.useEffect(() => {
+    if (section === 'about') loadCreatorPhoto();
+  }, [section, loadCreatorPhoto]);
+
+  const changeCreatorPhoto = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // allow re-selecting the same file later
+    if (!file) return;
+    if (!PHOTO_TYPES.includes(file.type)) { setCreatorMsg({ type: 'error', text: 'Please choose a JPG, PNG, WebP or GIF image.' }); return; }
+    if (file.size > MAX_PHOTO_SIZE) { setCreatorMsg({ type: 'error', text: `Image is too large — max ${MAX_PHOTO_SIZE / (1024 * 1024)} MB.` }); return; }
+    await withSaving(setCreatorBusy, setCreatorMsg, async () => {
+      const form = new FormData();
+      form.append('photo', file);
+      const res = await fetch(`${API_BASE}/api/about/creator-photo`, { method: 'POST', headers: authHeader, body: form });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || 'Photo upload failed.');
+      setCreatorPhoto(data.creatorPhoto);
+      setCreatorMsg({ type: 'success', text: 'Photo updated. It now shows on the About page.' });
+    });
+  };
+
+  const removeCreatorPhoto = async () => {
+    if (!window.confirm('Remove the creator photo from the About page? Your initials will be shown instead.')) return;
+    await withSaving(setCreatorBusy, setCreatorMsg, async () => {
+      const res = await fetch(`${API_BASE}/api/about/creator-photo`, { method: 'DELETE', headers: authHeader });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || 'Could not remove the photo.');
+      setCreatorPhoto(null);
+      setCreatorMsg({ type: 'success', text: 'Photo removed. The About page now shows initials.' });
     });
   };
 
@@ -634,6 +684,53 @@ export default function AdminSettings() {
                 </Button>
               </DialogActions>
             </Dialog>
+          </Box>
+        );
+
+      /* ── ABOUT PAGE ── */
+      case 'about':
+        return (
+          <Box>
+            <SectionTitle sub="The creator photo shown in 'The Builders Behind It' on the About page">About Page</SectionTitle>
+            <Paper elevation={0} sx={{ ...cardSx, mb: 2.5 }}>
+              <Box px={3} py={2}>
+                <Row label="Creator Photo" border={border}>
+                  {creatorLoading ? (
+                    <CircularProgress size={20} color="error" />
+                  ) : (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Avatar src={creatorPhoto ? `${API_BASE}${creatorPhoto}` : undefined} alt="Current creator photo"
+                        sx={{ width: 72, height: 72, bgcolor: '#b71c1c', fontWeight: 800, opacity: creatorBusy ? 0.5 : 1 }}>
+                        VV
+                      </Avatar>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, alignItems: 'flex-start' }}>
+                        <Button size="small" variant="outlined" color="error" disabled={creatorBusy}
+                          startIcon={creatorBusy ? <CircularProgress size={14} color="inherit" /> : <AddAPhoto sx={{ fontSize: 16 }} />}
+                          onClick={() => creatorPhotoInput.current?.click()}
+                          sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2 }}>
+                          {creatorBusy ? 'Working…' : creatorPhoto ? 'Change photo' : 'Upload photo'}
+                        </Button>
+                        {creatorPhoto && (
+                          <Button size="small" color="inherit" disabled={creatorBusy} startIcon={<Delete sx={{ fontSize: 15 }} />}
+                            onClick={removeCreatorPhoto} sx={{ textTransform: 'none', color: 'text.secondary', fontWeight: 600, p: 0, minWidth: 0 }}>
+                            Delete photo
+                          </Button>
+                        )}
+                        <Typography variant="caption" color="text.secondary">JPG, PNG, WebP or GIF · up to 10 MB · a square photo works best</Typography>
+                      </Box>
+                      <input ref={creatorPhotoInput} type="file" hidden accept={PHOTO_TYPES.join(',')} onChange={changeCreatorPhoto} />
+                    </Box>
+                  )}
+                </Row>
+              </Box>
+            </Paper>
+            {creatorMsg && (
+              <Alert severity={creatorMsg.type} sx={{ mb: 2, borderRadius: 2 }} onClose={() => setCreatorMsg(null)}>{creatorMsg.text}</Alert>
+            )}
+            <Button href="/about#team-section" target="_blank" rel="noopener" size="small" color="error"
+              sx={{ textTransform: 'none', fontWeight: 700 }}>
+              View the About page ↗
+            </Button>
           </Box>
         );
 
