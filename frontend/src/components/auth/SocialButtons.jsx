@@ -7,6 +7,7 @@ import axios from "axios";
 import { useUserAuth } from "@/store/UserAuthContext";
 import { useRouter } from "next/navigation";
 import API_BASE from "@/lib/config";
+import { nextPath } from "@/lib/next-path";
 
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 const FACEBOOK_APP_ID = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID;
@@ -54,7 +55,7 @@ const GoogleLoginButton = ({ onError }) => {
             try {
                 const { data } = await axios.post(`${API_BASE}/api/user/google`, { accessToken: tokenResponse.access_token });
                 login(data.token, data.user);
-                router.push("/notification");
+                router.push(nextPath("/notification"));
             } catch (err) {
                 onError(err.response?.data?.message || "Google sign-in failed. Please try again.");
             }
@@ -80,7 +81,7 @@ const FacebookLoginButton = ({ onError }) => {
         window.FB.login((response) => {
             if (!response.authResponse) { onError("Facebook sign-in was cancelled."); return; }
             axios.post(`${API_BASE}/api/user/facebook`, { accessToken: response.authResponse.accessToken })
-                .then(({ data }) => { login(data.token, data.user); router.push("/notification"); })
+                .then(({ data }) => { login(data.token, data.user); router.push(nextPath("/notification")); })
                 .catch((err) => { onError(err.response?.data?.message || "Facebook sign-in failed. Please try again."); });
         }, { scope: "public_profile,email" });
     };
