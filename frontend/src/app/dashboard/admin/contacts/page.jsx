@@ -49,9 +49,11 @@ const listTime = (d) => (new Date(d).toDateString() === new Date().toDateString(
   ? timeLabel(d) : new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
 const signature = (list) => list.map((m) => `${m._id}:${m.deleted ? 1 : 0}`).join('|');
 
-function DonorAvatar({ id, name, size = 44 }) {
+const photoSrc = (photo) => (!photo ? undefined : /^https?:\/\//.test(photo) ? photo : `${API_BASE}${photo}`);
+
+function DonorAvatar({ id, name, photo, size = 44 }) {
   return (
-    <Avatar aria-hidden="true" sx={{ width: size, height: size, bgcolor: colorFor(id), color: '#fff', fontWeight: 800, fontSize: size * 0.4 }}>
+    <Avatar aria-hidden="true" src={photoSrc(photo)} alt="" sx={{ width: size, height: size, bgcolor: colorFor(id), color: '#fff', fontWeight: 800, fontSize: size * 0.4 }}>
       {initial(name)}
     </Avatar>
   );
@@ -334,7 +336,7 @@ export default function AdminMessagesPage() {
                     '&:hover': { bgcolor: active ? undefined : 'action.hover' },
                     '&.Mui-focusVisible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: -2 },
                   }}>
-                  <DonorAvatar id={c._id} name={c.userName} />
+                  <DonorAvatar id={c._id} name={c.userName} photo={c.photo} />
                   <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
                       <Typography noWrap sx={{ fontWeight: c.unread ? 800 : 700, fontSize: '0.95rem', minWidth: 0 }}>{c.userName}</Typography>
@@ -373,7 +375,7 @@ export default function AdminMessagesPage() {
             <>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, px: { xs: 1.5, sm: 2.5 }, py: 1.75, borderBottom: '1px solid', borderColor: 'divider' }}>
                 <IconButton onClick={() => setSelected(null)} aria-label="Back to conversations" sx={{ display: { md: 'none' } }}><ArrowBackIcon /></IconButton>
-                <DonorAvatar id={selected._id} name={selected.userName} size={48} />
+                <DonorAvatar id={selected._id} name={selected.userName} photo={selected.photo} size={48} />
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Typography component="h2" noWrap sx={{ fontWeight: 800, fontSize: '1.1rem' }}>{selected.userName}</Typography>
@@ -426,7 +428,7 @@ export default function AdminMessagesPage() {
                           </Box>
                         )}
                         <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, justifyContent: fromAdmin ? 'flex-end' : 'flex-start' }}>
-                          {!fromAdmin && <DonorAvatar id={selected._id} name={selected.userName} size={38} />}
+                          {!fromAdmin && <DonorAvatar id={selected._id} name={selected.userName} photo={selected.photo} size={38} />}
                           <Box sx={{ maxWidth: { xs: '80%', sm: '70%' }, minWidth: 0, order: fromAdmin ? 1 : 0 }}>
                             <Box sx={{
                               px: 1.75, py: 1.25, borderRadius: fromAdmin ? '16px 4px 16px 16px' : '4px 16px 16px 16px',

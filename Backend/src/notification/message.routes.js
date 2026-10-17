@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const router = express.Router();
 const Message = require('./message.model');
+const User = require('../users/user.model');
 const { requireRole } = require('../common/middleware/require-role');
 const { sendError } = require('../common/middleware/error-handler');
 const userAuth = requireRole('donor');
@@ -82,6 +83,10 @@ router.get('/conversations', adminAuth, async (req, res) => {
         },
       },
       { $sort: { lastAt: -1 } },
+      // The donor's current profile photo, so the admin inbox can show it instead of an initial.
+      { $lookup: { from: User.collection.name, localField: '_id', foreignField: '_id', as: 'user' } },
+      { $addFields: { photo: { $ifNull: [{ $arrayElemAt: ['$user.photo', 0] }, null] } } },
+      { $project: { user: 0 } },
     ]);
     res.json(conversations);
   } catch (err) {
