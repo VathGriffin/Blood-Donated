@@ -1,18 +1,12 @@
 'use client';
-import { useEffect, useState } from "react";
 import { Avatar, Box, Container, Paper, Typography, useTheme } from "@mui/material";
 import SchoolIcon from "@mui/icons-material/School";
 import CodeIcon from "@mui/icons-material/Code";
+import RichText from "@/components/ui/RichText";
+import { initialsOf } from "@/lib/format";
 import FavoriteIcon from "@mui/icons-material/Favorite";
-import API_BASE from "@/lib/config";
 
-const creator = {
-  name: "Vith Vath",
-  initials: "VV",
-  project: "Individual Graduation Project",
-  position: "Full-stack Developer & System Designer",
-  bio: "Designed and developed BloodLife AI as an individual graduation project, combining modern web technologies and AI to create a practical solution supporting blood donors, hospitals, and healthcare communities.",
-};
+const PROJECT = "Individual Graduation Project";
 
 const badges = [
   { icon: <SchoolIcon />, label: "Education", value: "Hanoi University of Science and Technology (HUST)" },
@@ -34,7 +28,7 @@ function Eyebrow({ children, id }) {
   );
 }
 
-function Portrait({ isDark, photo }) {
+function Portrait({ isDark, photo, name }) {
   const size = { xs: 184, sm: 168, md: 224 };
   const ring = (sx) => <Box aria-hidden sx={{ position: "absolute", borderRadius: "50%", ...sx }} />;
   const tint = isDark ? "rgba(229,57,53,0.16)" : "rgba(229,57,53,0.12)";
@@ -50,7 +44,7 @@ function Portrait({ isDark, photo }) {
 
       <Avatar
         src={photo || undefined}
-        alt={`Portrait of ${creator.name}, creator of BloodLife AI`}
+        alt={`Portrait of ${name}, creator of BloodLife AI`}
         sx={{
           position: "relative", width: "100%", height: "100%",
           fontSize: { xs: "3.2rem", md: "4rem" }, fontWeight: 800, letterSpacing: "0.02em", color: "#fff",
@@ -59,7 +53,7 @@ function Portrait({ isDark, photo }) {
           boxShadow: "0 18px 40px rgba(183,28,28,0.28)",
         }}
       >
-        {creator.initials}
+        {initialsOf(name)}
       </Avatar>
 
       <Box aria-hidden sx={{
@@ -75,22 +69,12 @@ function Portrait({ isDark, photo }) {
   );
 }
 
-export default function CreatorProfile() {
+// `team` is { name, position, bio } and `photo` an absolute URL, both edited in Settings → About Page.
+// Without a photo the card shows the creator's initials.
+export default function CreatorProfile({ team, photo }) {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
   const heading = isDark ? "#fff" : "#161a23";
-
-  // The portrait is uploaded by an admin (Settings → About Page). Until there is one, or if the
-  // backend can't be reached, the card shows the creator's initials.
-  const [photo, setPhoto] = useState(null);
-  useEffect(() => {
-    let cancelled = false;
-    fetch(`${API_BASE}/api/about`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => { if (!cancelled && data?.creatorPhoto) setPhoto(`${API_BASE}${data.creatorPhoto}`); })
-      .catch(() => { /* keep the initials */ });
-    return () => { cancelled = true; };
-  }, []);
 
   return (
     <Box component="section" id="team-section" aria-labelledby="builders-heading"
@@ -133,7 +117,7 @@ export default function CreatorProfile() {
             borderRight: { sm: `1px solid ${isDark ? "rgba(229,57,53,0.18)" : "#f8dede"}` },
             borderBottom: { xs: `1px solid ${isDark ? "rgba(229,57,53,0.18)" : "#f8dede"}`, sm: "none" },
           }}>
-            <Portrait isDark={isDark} photo={photo} />
+            <Portrait isDark={isDark} photo={photo} name={team.name} />
           </Box>
 
           <Box sx={{ p: { xs: 3, sm: 4, md: 5 }, textAlign: { xs: "center", sm: "left" } }}>
@@ -142,17 +126,20 @@ export default function CreatorProfile() {
               fontWeight: 800, fontSize: { xs: "1.9rem", md: "2.3rem" }, lineHeight: 1.15,
               letterSpacing: "-0.015em", color: heading, mt: 0.5,
             }}>
-              {creator.name}
+              {team.name}
             </Typography>
             <Typography sx={{ color: "error.main", fontWeight: 600, fontSize: { xs: "1.02rem", md: "1.12rem" }, mt: 0.75 }}>
-              {creator.project}
+              {PROJECT}
             </Typography>
             <Typography sx={{ color: isDark ? "grey.300" : "#4b5563", fontWeight: 500, fontSize: { xs: "0.95rem", md: "1.02rem" }, mt: 0.25 }}>
-              {creator.position}
+              {team.position}
             </Typography>
-            <Typography color="text.secondary" sx={{ lineHeight: 1.75, fontSize: { xs: "0.92rem", md: "0.98rem" }, mt: 2, maxWidth: 560, mx: { xs: "auto", sm: 0 } }}>
-              {creator.bio}
-            </Typography>
+            <RichText value={team.bio} sx={{
+              mt: 2, maxWidth: 560, mx: { xs: "auto", sm: 0 }, color: "text.secondary",
+              lineHeight: 1.75, fontSize: { xs: "0.92rem", md: "0.98rem" },
+              // the card is centred on phones; keep list bullets lined up with their text
+              "& ul, & ol": { textAlign: "left", display: { xs: "inline-block", sm: "block" } },
+            }} />
 
             <Box component="ul" sx={{
               listStyle: "none", p: 0, m: 0, mt: 3.5,

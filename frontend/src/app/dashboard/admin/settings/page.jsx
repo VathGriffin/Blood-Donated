@@ -14,11 +14,25 @@ import {
 } from '@mui/icons-material';
 import API_BASE from '@/lib/config';
 import { useAuth } from '@/store/AuthContext';
+import { MAX_PHOTO_SIZE, PHOTO_TYPES, photoFileError } from '@/lib/validation';
+import dynamic from 'next/dynamic';
+
+// The About editor pulls in the rich-text editor (TipTap); load it only when that section opens.
+const AboutEditor = dynamic(() => import('@/components/about-editor/AboutEditor'), {
+  ssr: false,
+  loading: () => (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 6, justifyContent: 'center' }}>
+      <CircularProgress size={22} color="error" />
+      <Typography color="text.secondary">Loading editor…</Typography>
+    </Box>
+  ),
+});
 
 const SECTIONS = [
   { id: 'profile',     label: 'My Profile',           icon: <Person sx={{ fontSize: 18 }} /> },
   { id: 'homepage',    label: 'Homepage Profiles',    icon: <Settings sx={{ fontSize: 18 }} /> },
-  { id: 'about',       label: 'About Page',           icon: <Info sx={{ fontSize: 18 }} /> },
+  // wide: the section needs the full width, so the menu shrinks to an icon rail while it's open
+  { id: 'about',       label: 'About Page',           icon: <Info sx={{ fontSize: 18 }} />, wide: true },
   { id: 'ai',          label: 'AI Configuration',     icon: <SmartToy sx={{ fontSize: 18 }} /> },
   { id: 'blood',       label: 'Blood Rules',          icon: <Bloodtype sx={{ fontSize: 18 }} /> },
   { id: 'appointment', label: 'Appointment Rules',    icon: <CalendarMonth sx={{ fontSize: 18 }} /> },
@@ -26,8 +40,6 @@ const SECTIONS = [
 ];
 
 const ROLE_LABEL = { admin: 'Administrator', hospital_staff: 'Hospital Staff' };
-const MAX_PHOTO_SIZE = 10 * 1024 * 1024; // must match the multer limit in Backend/src/common/upload.js
-const PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']; // same list the server accepts
 
 // Role choices for homepage profiles. Each also sets the badge, which picks the card's icon on the homepage.
 const HP_ROLES = [
@@ -83,6 +95,7 @@ export default function AdminSettings() {
   const { token, staff, login, updateStaff } = useAuth();
 
   const [section, setSection] = useState('profile');
+  const railNav = SECTIONS.find((s) => s.id === section)?.wide;
 
   const card  = isDark ? '#111111' : '#ffffff';
   const border = isDark ? '#1f1f1f' : '#e5e5e5';
@@ -122,8 +135,8 @@ export default function AdminSettings() {
     const file = e.target.files?.[0];
     e.target.value = ''; // allow re-selecting the same file later
     if (!file) return;
-    if (!PHOTO_TYPES.includes(file.type)) { setProfileMsg({ type: 'error', text: 'Please choose a JPG, PNG, WebP or GIF image.' }); return; }
-    if (file.size > MAX_PHOTO_SIZE) { setProfileMsg({ type: 'error', text: `Image is too large — max ${MAX_PHOTO_SIZE / (1024 * 1024)} MB.` }); return; }
+    const invalid = photoFileError(file);
+    if (invalid) { setProfileMsg({ type: 'error', text: invalid }); return; }
     await withSaving(setPhotoBusy, setProfileMsg, async () => {
       const form = new FormData();
       form.append('photo', file);
@@ -142,55 +155,6 @@ export default function AdminSettings() {
       if (!res.ok) throw new Error(data.message || 'Could not remove the photo.');
       updateStaff({ photo: null });
       setProfileMsg({ type: 'success', text: 'Profile photo removed.' });
-    });
-  };
-
-  // ── About page: creator portrait in "The Builders Behind It" ────────────
-  // POST /api/about/creator-photo replaces it, DELETE removes it (the page then shows initials).
-  const [creatorPhoto, setCreatorPhoto] = useState(null);
-  const [creatorLoading, setCreatorLoading] = useState(false);
-  const [creatorBusy, setCreatorBusy] = useState(false);
-  const [creatorMsg, setCreatorMsg] = useState(null);
-  const creatorPhotoInput = React.useRef(null);
-
-  const loadCreatorPhoto = React.useCallback(() => {
-    setCreatorLoading(true);
-    setCreatorMsg(null);
-    getJson(`${API_BASE}/api/about`)
-      .then(data => setCreatorPhoto(data.creatorPhoto || null))
-      .catch(err => setCreatorMsg({ type: 'error', text: err.message || 'Failed to load the About page settings.' }))
-      .finally(() => setCreatorLoading(false));
-  }, []);
-
-  React.useEffect(() => {
-    if (section === 'about') loadCreatorPhoto();
-  }, [section, loadCreatorPhoto]);
-
-  const changeCreatorPhoto = async (e) => {
-    const file = e.target.files?.[0];
-    e.target.value = ''; // allow re-selecting the same file later
-    if (!file) return;
-    if (!PHOTO_TYPES.includes(file.type)) { setCreatorMsg({ type: 'error', text: 'Please choose a JPG, PNG, WebP or GIF image.' }); return; }
-    if (file.size > MAX_PHOTO_SIZE) { setCreatorMsg({ type: 'error', text: `Image is too large — max ${MAX_PHOTO_SIZE / (1024 * 1024)} MB.` }); return; }
-    await withSaving(setCreatorBusy, setCreatorMsg, async () => {
-      const form = new FormData();
-      form.append('photo', file);
-      const res = await fetch(`${API_BASE}/api/about/creator-photo`, { method: 'POST', headers: authHeader, body: form });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.message || 'Photo upload failed.');
-      setCreatorPhoto(data.creatorPhoto);
-      setCreatorMsg({ type: 'success', text: 'Photo updated. It now shows on the About page.' });
-    });
-  };
-
-  const removeCreatorPhoto = async () => {
-    if (!window.confirm('Remove the creator photo from the About page? Your initials will be shown instead.')) return;
-    await withSaving(setCreatorBusy, setCreatorMsg, async () => {
-      const res = await fetch(`${API_BASE}/api/about/creator-photo`, { method: 'DELETE', headers: authHeader });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.message || 'Could not remove the photo.');
-      setCreatorPhoto(null);
-      setCreatorMsg({ type: 'success', text: 'Photo removed. The About page now shows initials.' });
     });
   };
 
@@ -217,13 +181,6 @@ export default function AdminSettings() {
   }, [section, loadHpProfiles]);
 
   const replaceHpProfile = (updated) => setHpProfiles(prev => prev.map(p => p._id === updated._id ? updated : p));
-
-  // Returns an error message, or '' when the file is fine to upload.
-  const photoFileError = (file) => {
-    if (!PHOTO_TYPES.includes(file.type)) return 'Please choose a JPG, PNG, WebP or GIF image.';
-    if (file.size > MAX_PHOTO_SIZE) return `Image is too large — max ${MAX_PHOTO_SIZE / (1024 * 1024)} MB.`;
-    return '';
-  };
 
   const uploadHpPhoto = async (profileId, file) => {
     const form = new FormData();
@@ -689,50 +646,7 @@ export default function AdminSettings() {
 
       /* ── ABOUT PAGE ── */
       case 'about':
-        return (
-          <Box>
-            <SectionTitle sub="The creator photo shown in 'The Builders Behind It' on the About page">About Page</SectionTitle>
-            <Paper elevation={0} sx={{ ...cardSx, mb: 2.5 }}>
-              <Box px={3} py={2}>
-                <Row label="Creator Photo" border={border}>
-                  {creatorLoading ? (
-                    <CircularProgress size={20} color="error" />
-                  ) : (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Avatar src={creatorPhoto ? `${API_BASE}${creatorPhoto}` : undefined} alt="Current creator photo"
-                        sx={{ width: 72, height: 72, bgcolor: '#b71c1c', fontWeight: 800, opacity: creatorBusy ? 0.5 : 1 }}>
-                        VV
-                      </Avatar>
-                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, alignItems: 'flex-start' }}>
-                        <Button size="small" variant="outlined" color="error" disabled={creatorBusy}
-                          startIcon={creatorBusy ? <CircularProgress size={14} color="inherit" /> : <AddAPhoto sx={{ fontSize: 16 }} />}
-                          onClick={() => creatorPhotoInput.current?.click()}
-                          sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2 }}>
-                          {creatorBusy ? 'Working…' : creatorPhoto ? 'Change photo' : 'Upload photo'}
-                        </Button>
-                        {creatorPhoto && (
-                          <Button size="small" color="inherit" disabled={creatorBusy} startIcon={<Delete sx={{ fontSize: 15 }} />}
-                            onClick={removeCreatorPhoto} sx={{ textTransform: 'none', color: 'text.secondary', fontWeight: 600, p: 0, minWidth: 0 }}>
-                            Delete photo
-                          </Button>
-                        )}
-                        <Typography variant="caption" color="text.secondary">JPG, PNG, WebP or GIF · up to 10 MB · a square photo works best</Typography>
-                      </Box>
-                      <input ref={creatorPhotoInput} type="file" hidden accept={PHOTO_TYPES.join(',')} onChange={changeCreatorPhoto} />
-                    </Box>
-                  )}
-                </Row>
-              </Box>
-            </Paper>
-            {creatorMsg && (
-              <Alert severity={creatorMsg.type} sx={{ mb: 2, borderRadius: 2 }} onClose={() => setCreatorMsg(null)}>{creatorMsg.text}</Alert>
-            )}
-            <Button href="/about#team-section" target="_blank" rel="noopener" size="small" color="error"
-              sx={{ textTransform: 'none', fontWeight: 700 }}>
-              View the About page ↗
-            </Button>
-          </Box>
-        );
+        return <AboutEditor token={token} />;
 
       /* ── AI CONFIGURATION (real, read-only) ── */
       case 'ai':
@@ -882,16 +796,19 @@ export default function AdminSettings() {
       </Box>
 
       <Box display="flex" gap={2.5} alignItems="flex-start">
-        {/* Sidebar nav */}
+        {/* Sidebar nav — collapses to an icon rail on the About editor, which needs the width for its live preview */}
         <Paper elevation={0} sx={{
-          width: 220, flexShrink: 0, borderRadius: 3,
+          width: railNav ? 60 : 220, flexShrink: 0, borderRadius: 3,
           border: `1px solid ${border}`, bgcolor: card, overflow: 'hidden',
+          transition: 'width 0.3s cubic-bezier(0.22, 1, 0.36, 1)',
+          '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
         }}>
           <List dense disablePadding sx={{ py: 1 }}>
             {SECTIONS.map((s) => (
-              <ListItemButton key={s.id} selected={section === s.id} onClick={() => setSection(s.id)}
+              <Tooltip key={s.id} title={railNav ? s.label : ''} placement="right">
+              <ListItemButton selected={section === s.id} onClick={() => setSection(s.id)} aria-label={s.label}
                 sx={{
-                  mx: 1, borderRadius: 2, mb: 0.3, py: 0.9,
+                  mx: 1, borderRadius: 2, mb: 0.3, py: 0.9, px: railNav ? 1.25 : 2, whiteSpace: 'nowrap',
                   '&.Mui-selected': {
                     bgcolor: isDark ? 'rgba(220,38,38,0.12)' : '#fff0f0',
                     color: '#dc2626',
@@ -902,9 +819,10 @@ export default function AdminSettings() {
                 <ListItemIcon sx={{ minWidth: 32, color: section === s.id ? '#dc2626' : 'text.disabled' }}>
                   {s.icon}
                 </ListItemIcon>
-                <ListItemText primary={s.label}
+                <ListItemText primary={s.label} sx={{ opacity: railNav ? 0 : 1, transition: 'opacity 0.2s' }}
                   primaryTypographyProps={{ fontSize: '0.845rem', fontWeight: section === s.id ? 700 : 500 }} />
               </ListItemButton>
+              </Tooltip>
             ))}
           </List>
         </Paper>

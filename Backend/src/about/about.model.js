@@ -4,6 +4,10 @@ const mongoose = require('mongoose');
 const aboutSettingsSchema = new mongoose.Schema({
   key:          { type: String, required: true, unique: true, default: 'about' },
   creatorPhoto: { type: String, default: null }, // "/uploads/about-creator-…" for the "Builders Behind It" card
-}, { timestamps: true });
+  heroImage:    { type: String, default: null }, // "/uploads/about-hero-…" — the hero photo
+  purposeImage: { type: String, default: null }, // "/uploads/about-purpose-…" — the "Our Purpose" photo
+  // Page text, already checked against about.sections.js. Missing fields show the built-in text.
+  sections:     { type: mongoose.Schema.Types.Mixed, default: () => ({}) },
+}, { timestamps: true, minimize: false });
 
 module.exports = mongoose.model('AboutSettings', aboutSettingsSchema);

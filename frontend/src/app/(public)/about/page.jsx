@@ -9,6 +9,8 @@ import axios from "axios";
 import API_BASE from "@/lib/config";
 import { script } from '@/lib/fonts';
 import CreatorProfile from './_components/CreatorProfile';
+import { mergeSections, aboutImageUrl } from '@/lib/aboutContent';
+import RichText from '@/components/ui/RichText';
 import VolunteerActivismIcon from "@mui/icons-material/VolunteerActivism";
 import GroupsIcon from "@mui/icons-material/Groups";
 import PeopleIcon from "@mui/icons-material/People";
@@ -24,34 +26,9 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 
-const HERO_IMG =
-  "https://images.unsplash.com/photo-1615461066841-6116e61058f4?auto=format&fit=crop&w=1200&q=80";
-const PURPOSE_IMG =
-  "https://images.unsplash.com/photo-1565687363630-7a81809a199c?auto=format&fit=crop&w=1200&q=80";
-
-const heroFeatures = [
-  { icon: <ShieldIcon />, title: "Trusted Platform", subtitle: "Safe, secure, and transparent" },
-  { icon: <GroupsIcon />, title: "Connecting Communities", subtitle: "Donors, hospitals, and patients" },
-  { icon: <FavoriteIcon />, title: "Saving Lives", subtitle: "A stronger, healthier Cambodia" },
-];
-
-const purposeCards = [
-  {
-    icon: <TrackChangesIcon />,
-    title: "Our Mission",
-    desc: "To make blood donation easier, safer, and more accessible for everyone in Cambodia using technology and community support.",
-  },
-  {
-    icon: <VisibilityIcon />,
-    title: "Our Vision",
-    desc: "A Cambodia where no patient suffers due to a lack of blood, and where voluntary blood donation becomes a regular part of life.",
-  },
-  {
-    icon: <TrendingUpIcon />,
-    title: "Our Impact",
-    desc: "Connecting people, supporting hospitals, and helping save lives across Cambodia through innovation and collaboration.",
-  },
-];
+// Icons for the editable lists, by position. The text comes from Settings → About Page.
+const heroFeatureIcons = [<ShieldIcon key="s" />, <GroupsIcon key="g" />, <FavoriteIcon key="f" />];
+const purposeIcons = [<TrackChangesIcon key="t" />, <VisibilityIcon key="v" />, <TrendingUpIcon key="u" />];
 
 const cardSx = (isDark) => ({
   borderRadius: 4,
@@ -64,19 +41,32 @@ const About = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
   const [stats, setStats] = useState(null);
+  // Admin-edited content; null until loaded, and the built-in text is shown meanwhile (or if it fails).
+  const [about, setAbout] = useState(null);
 
   useEffect(() => {
     axios.get(`${API_BASE}/api/stats/public`)
       .then((res) => setStats(res.data))
       .catch((err) => console.error("Failed to fetch platform stats:", err));
+    axios.get(`${API_BASE}/api/about`)
+      .then((res) => setAbout(res.data))
+      .catch(() => { /* keep the built-in content */ });
   }, []);
 
+  const content = mergeSections(about?.sections);
+  const { hero, purpose, cta } = content;
+  const heroImg = aboutImageUrl(about?.heroImage, "heroImage");
+  const purposeImg = aboutImageUrl(about?.purposeImage, "purposeImage");
+  const heroFeatures = content.values.map((v, i) => ({ ...v, icon: heroFeatureIcons[i] }));
+  const purposeCards = content.pillars.map((p, i) => ({ ...p, icon: purposeIcons[i] }));
+
+  // Values are live counts; the labels and captions are editable.
   const statCards = [
-    { icon: <PeopleIcon />, value: stats ? stats.donors : "…", label: "Registered Donors", caption: "People in our community" },
-    { icon: <BloodtypeIcon />, value: stats ? stats.donations : "…", label: "Total Donations", caption: "Contributions to save lives" },
-    { icon: <LocalHospitalIcon />, value: stats ? `${stats.hospitals}` : "…", label: "Partner Hospitals", caption: "Working across Cambodia" },
-    { icon: <TaskAltIcon />, value: stats ? stats.fulfilledRequests : "…", label: "Blood Requests Fulfilled", caption: "Patients received help" },
-  ];
+    { icon: <PeopleIcon />, value: stats ? stats.donors : "…" },
+    { icon: <BloodtypeIcon />, value: stats ? stats.donations : "…" },
+    { icon: <LocalHospitalIcon />, value: stats ? `${stats.hospitals}` : "…" },
+    { icon: <TaskAltIcon />, value: stats ? stats.fulfilledRequests : "…" },
+  ].map((s, i) => ({ ...s, ...content.stats[i] }));
 
   return (
     <Box sx={{ backgroundColor: isDark ? "#121212" : "#f4f4f4" }}>
@@ -105,7 +95,7 @@ const About = () => {
             <Box>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
                 <Typography variant="overline" color="error" fontWeight={700} letterSpacing="0.12em">
-                  People · Community · A Healthier Cambodia
+                  {hero.eyebrow}
                 </Typography>
                 <Box sx={{ width: 36, height: 3, borderRadius: 2, backgroundColor: "error.main", flexShrink: 0 }} />
               </Box>
@@ -114,21 +104,16 @@ const About = () => {
                 fontSize: { xs: "2.2rem", md: "2.9rem" },
                 color: isDark ? "#fff" : "#161a23",
               }}>
-                About
-                <Box component="span" sx={{ display: "block", color: "error.main" }}>Blood Donated</Box>
+                {hero.title}
+                <Box component="span" sx={{ display: "block", color: "error.main" }}>{hero.titleAccent}</Box>
               </Typography>
               <Typography sx={{
                 fontWeight: 700, mb: 2, fontSize: { xs: "1.05rem", md: "1.2rem" },
                 color: isDark ? "#fff" : "#161a23",
               }}>
-                Revolutionizing Blood Donation Across Cambodia
+                {hero.headline}
               </Typography>
-              <Typography color="text.secondary" sx={{ fontSize: "1.02rem", lineHeight: 1.75, mb: 3.5 }}>
-                We are a community-driven platform connecting donors, hospitals, and
-                patients — built by Vith Vath as an individual graduation project at Hanoi
-                University of Science and Technology (HUST), to make blood donation more
-                accessible, transparent, and impactful.
-              </Typography>
+              <RichText value={hero.intro} sx={{ mb: 3.5, color: "text.secondary", fontSize: "1.02rem", lineHeight: 1.75 }} />
 
               <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 4 }}>
                 <Button component={Link} href="/donate" variant="contained" color="error" size="large"
@@ -149,8 +134,8 @@ const About = () => {
               </Box>
 
               <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(3, auto)" }, gap: { xs: 2.5, sm: 4 } }}>
-                {heroFeatures.map((f) => (
-                  <Box key={f.title} sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
+                {heroFeatures.map((f, i) => (
+                  <Box key={i} sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
                     <Box sx={{ color: "error.main", mt: 0.2, "& svg": { fontSize: 22 } }}>{f.icon}</Box>
                     <Box>
                       <Typography fontWeight={700} sx={{ fontSize: "0.9rem", lineHeight: 1.3 }}>{f.title}</Typography>
@@ -169,7 +154,7 @@ const About = () => {
                 position: "relative", height: { xs: 320, md: 400 }, overflow: "hidden",
                 borderRadius: 5, boxShadow: "0 20px 50px rgba(0,0,0,0.25)",
               }}>
-                <Image src={HERO_IMG} alt="A nurse caring for a blood donor" fill
+                <Image src={heroImg} alt="A nurse caring for a blood donor" fill unoptimized={!!about?.heroImage}
                   sizes="(max-width: 900px) 100vw, 460px" style={{ objectFit: "cover" }} priority
                 />
 
@@ -252,7 +237,7 @@ const About = () => {
               position: "relative", height: { xs: 280, md: 340 }, overflow: "hidden",
               borderRadius: 4, boxShadow: "0 16px 40px rgba(0,0,0,0.18)",
             }}>
-              <Image src={PURPOSE_IMG} alt="Angkor Wat, Cambodia" fill
+              <Image src={purposeImg} alt={about?.purposeImage ? "" : "Angkor Wat, Cambodia"} fill unoptimized={!!about?.purposeImage}
                 sizes="(max-width: 900px) 100vw, 600px" style={{ objectFit: "cover" }}
               />
             </Box>
@@ -262,7 +247,7 @@ const About = () => {
             }}>
               <FormatQuoteIcon sx={{ fontSize: 26, color: "error.main", transform: "scaleX(-1)", display: "block", mb: 0.5 }} />
               <Typography fontWeight={800} sx={{ fontSize: "0.95rem", lineHeight: 1.35 }}>
-                A stronger Cambodia is built by people who care.
+                {purpose.quote}
               </Typography>
               <Box sx={{ width: 32, height: 3, borderRadius: 2, backgroundColor: "error.main", mt: 1.5 }} />
             </Paper>
@@ -271,24 +256,20 @@ const About = () => {
           {/* Copy + mini cards */}
           <Box>
             <Typography variant="overline" color="error" fontWeight={700} letterSpacing="0.12em">
-              Our Purpose
+              {purpose.eyebrow}
             </Typography>
             <Typography sx={{
               fontWeight: 800, mt: 0.5, mb: 2, lineHeight: 1.25,
               fontSize: { xs: "1.6rem", md: "1.9rem" },
               color: isDark ? "#fff" : "#161a23",
             }}>
-              A Healthier Cambodia Through Blood Donation
+              {purpose.title}
             </Typography>
-            <Typography color="text.secondary" sx={{ fontSize: "1rem", lineHeight: 1.75, mb: 3.5 }}>
-              We believe that everyone has the power to save lives. Our platform
-              bridges the gap between donors, hospitals, and patients to create a
-              stronger, healthier Cambodia.
-            </Typography>
+            <RichText value={purpose.text} sx={{ mb: 3.5, color: "text.secondary", fontSize: "1rem", lineHeight: 1.75, "& p + p": { mt: 1.5 } }} />
 
             <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(3, 1fr)" }, gap: 2 }}>
-              {purposeCards.map((c) => (
-                <Paper key={c.title} elevation={0} sx={{ ...cardSx(isDark), p: 2.5 }}>
+              {purposeCards.map((c, i) => (
+                <Paper key={i} elevation={0} sx={{ ...cardSx(isDark), p: 2.5 }}>
                   <Box sx={{
                     width: 38, height: 38, borderRadius: 2, mb: 1.5,
                     backgroundColor: isDark ? "rgba(183,28,28,0.16)" : "#fdeaea",
@@ -307,7 +288,7 @@ const About = () => {
       </Container>
 
       {/* ── Builder ───────────────────────────────────────────────────────── */}
-      <CreatorProfile />
+      <CreatorProfile team={content.team} photo={aboutImageUrl(about?.creatorPhoto, "creatorPhoto")} />
 
       {/* ── CTA strip ─────────────────────────────────────────────────────── */}
       <Container maxWidth="lg" sx={{ py: { xs: 6, md: 8 } }}>
@@ -328,10 +309,10 @@ const About = () => {
             </Box>
             <Box>
               <Typography fontWeight={800} sx={{ fontSize: { xs: "1.15rem", md: "1.3rem" } }}>
-                Be Part of a Stronger, Healthier Cambodia
+                {cta.title}
               </Typography>
               <Typography color="text.secondary" sx={{ mt: 0.5 }}>
-                Whether you&apos;re a donor, hospital, or supporter — together we can save more lives.
+                {cta.text}
               </Typography>
             </Box>
           </Box>
@@ -343,7 +324,7 @@ const About = () => {
               boxShadow: "0 6px 20px rgba(183,28,28,0.4)",
               "&:hover": { boxShadow: "0 8px 28px rgba(183,28,28,0.55)" },
             }}>
-            Join Us Today
+            {cta.button}
           </Button>
         </Paper>
       </Container>
