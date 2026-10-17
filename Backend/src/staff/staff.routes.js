@@ -10,6 +10,7 @@ const { authLimiter } = require('../common/middleware/auth-limiter');
 const { sendError } = require('../common/middleware/error-handler');
 const { createImageUpload } = require('../common/upload');
 const { sessionClaims } = require('../common/session');
+const { PASSWORD_MIN } = require('./password-rules');
 
 const upload = createImageUpload('staff', (req) => req.auth?.id || 'unknown');
 
@@ -135,8 +136,8 @@ router.patch('/me/password', requireRole('admin', 'hospital_staff'), async (req,
   const { currentPassword, newPassword } = req.body;
   if (!currentPassword || !newPassword)
     return res.status(400).json({ message: 'currentPassword and newPassword are required.' });
-  if (newPassword.length < 8)
-    return res.status(400).json({ message: 'New password must be at least 8 characters.' });
+  if (newPassword.length < PASSWORD_MIN)
+    return res.status(400).json({ message: `New password must be at least ${PASSWORD_MIN} characters.` });
   try {
     const staff = await StaffUser.findById(req.auth.id);
     if (!staff) return res.status(404).json({ message: 'Account not found' });

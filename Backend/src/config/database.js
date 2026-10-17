@@ -23,6 +23,7 @@ const REQUIRED_IN_PRODUCTION = ['MONGO_URI', 'JWT_SECRET', 'QR_JWT_SECRET'];
 const RECOMMENDED_IN_PRODUCTION = {
   FRONTEND_URL: 'browsers on your deployed frontend will be blocked by CORS',
   GEMINI_API_KEY: 'the AI assistant will answer from its offline guide only',
+  SMTP_HOST: 'hospital staff cannot reset a forgotten password by email (also set SMTP_USER, SMTP_PASS, MAIL_FROM, APP_URL)',
 };
 
 const isSet = (env, name) => typeof env[name] === 'string' && env[name].trim() !== '';

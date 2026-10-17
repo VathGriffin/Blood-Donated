@@ -112,7 +112,7 @@ describe('health checks', () => {
 });
 
 describe('checkEnv', () => {
-  const full = { NODE_ENV: 'production', MONGO_URI: 'mongodb+srv://x', JWT_SECRET: 'a', QR_JWT_SECRET: 'b', FRONTEND_URL: 'https://x.vercel.app', GEMINI_API_KEY: 'k' };
+  const full = { NODE_ENV: 'production', MONGO_URI: 'mongodb+srv://x', JWT_SECRET: 'a', QR_JWT_SECRET: 'b', FRONTEND_URL: 'https://x.vercel.app', GEMINI_API_KEY: 'k', SMTP_HOST: 'smtp.x' };
 
   test('outside production nothing is required', () => {
     expect(checkEnv({ NODE_ENV: 'development' })).toEqual({ missing: [], warnings: [] });

@@ -10,6 +10,7 @@ const mongoose     = require('mongoose');
 
 const userRoutes        = require('./users/user.routes');
 const staffRoutes       = require('./staff/staff.routes');
+const passwordResetRoutes = require('./staff/password-reset.routes');
 const hospitalRoutes    = require('./hospital/hospital.routes');
 const donorRoutes       = require('./donor/donor.routes');
 const appointmentRoutes = require('./appointments/appointment.routes');
@@ -109,6 +110,7 @@ app.use('/api', (req, res, next) => {
 });
 
 // Routes
+app.use('/api/staff/password-reset', passwordResetRoutes);
 app.use('/api/staff',        staffRoutes);
 app.use('/api/user',         userRoutes);
 app.use('/api/hospitals',    hospitalRoutes);
