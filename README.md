@@ -216,9 +216,6 @@ Blood Donated/
 | Name | Role |
 |------|------|
 | Vith Vath | Full Stack Developer (Lead) |
-| Sopheak Sok | System Architect |
-| Chanthou Hem | Backend Developer |
-| Dara Khieu | UI/UX Designer |
 
 ---
 
