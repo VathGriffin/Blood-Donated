@@ -32,11 +32,13 @@ async function loadHospital(hospitalId, token) {
   const pending = (Array.isArray(r) ? r : []).filter((x) => x.status === 'Pending');
   const critical = pending.filter((x) => x.urgency === 'Critical').length;
   const toConfirm = (Array.isArray(a) ? a : []).filter((x) => x.status === 'Pending').length;
+  const toReschedule = (Array.isArray(a) ? a : []).filter((x) => x.rescheduleRequests?.some((q) => q.status === 'Pending')).length;
   const low = (Array.isArray(s) ? s : []).filter((x) => x.status === 'critical' || x.status === 'empty').length;
   return keep([
     { id: 'crit', tone: 'error', count: critical, title: `${plural(critical, 'critical request')} awaiting review`, detail: 'Urgent blood needs', href: '/dashboard/hospital/requests' },
     { id: 'pend', tone: 'warning', count: pending.length - critical, title: `${plural(pending.length - critical, 'pending request')}`, detail: 'Waiting for approval', href: '/dashboard/hospital/requests' },
     { id: 'appt', tone: 'info', count: toConfirm, title: `${plural(toConfirm, 'appointment')} to confirm`, detail: 'Donor bookings', href: '/dashboard/hospital/appointments' },
+    { id: 'resched', tone: 'warning', count: toReschedule, title: `${plural(toReschedule, 'reschedule request')} to review`, detail: 'Donors asking for a new date', href: '/dashboard/hospital/appointments' },
     { id: 'stock', tone: 'warning', count: low, title: `${plural(low, 'blood type')} critically low`, detail: 'Your inventory', href: '/dashboard/hospital/inventory' },
   ]);
 }

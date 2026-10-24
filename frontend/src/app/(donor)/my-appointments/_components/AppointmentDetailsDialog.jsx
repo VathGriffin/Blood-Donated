@@ -12,7 +12,7 @@ import QrCode2Icon from '@mui/icons-material/QrCode2';
 import EventRepeatIcon from '@mui/icons-material/EventRepeat';
 import API_BASE from '@/lib/config';
 import { IconCircle, Pill, formatDate } from '@/components/donor/ui';
-import { categoryOf, daysUntil, telHref } from './appointments';
+import { categoryOf, daysUntil, fmtStamp, slotRange, telHref, whenLabel } from './appointments';
 
 const LABEL = {
   upcoming: (s) => (s === 'Confirmed' ? ['success', 'Confirmed'] : ['warning', 'Awaiting confirmation']),
@@ -94,7 +94,7 @@ export default function AppointmentDetailsDialog({ appt, hospital, token, onClos
         )}
         <Row label="Date">{longDate || a.date}</Row>
         <Divider />
-        <Row label="Time">{a.time}</Row>
+        <Row label="Time">{slotRange(a.time)}</Row>
         <Divider />
         <Row label="Donation center">
           {a.location}
@@ -102,6 +102,8 @@ export default function AppointmentDetailsDialog({ appt, hospital, token, onClos
           {hospital?.phone && <Box component="span" sx={{ display: 'block', color: 'text.secondary' }}>{hospital.phone}</Box>}
         </Row>
         {a.bloodType && (<><Divider /><Row label="Blood type">{a.bloodType}</Row></>)}
+        <Divider />
+        <Row label="Donation type">{a.donationType || 'Whole Blood'}</Row>
         <Divider />
         <Row label="Booked on">{fmtDateTime(a.createdAt) || '—'}</Row>
         {cat === 'completed' && fmtDateTime(a.checkedInAt) && (<><Divider /><Row label="Checked in">{fmtDateTime(a.checkedInAt)}</Row></>)}
@@ -112,9 +114,29 @@ export default function AppointmentDetailsDialog({ appt, hospital, token, onClos
           <Box component="span" sx={{ display: 'block', color: 'text.secondary' }}>{[a.email, a.phone].filter(Boolean).join(' · ')}</Box>
         </Row>
         {a.notes?.trim() && (<><Divider /><Row label="Notes">{a.notes}</Row></>)}
+        {(a.rescheduleRequests || []).length > 0 && (
+          <>
+            <Divider />
+            <Row label="Date changes">
+              {a.rescheduleRequests.slice().reverse().map((r) => (
+                <Box key={r._id} sx={{ mb: 1, '&:last-child': { mb: 0 } }}>
+                  <Box component="span" sx={{ fontWeight: 600 }}>
+                    {whenLabel(r.fromDate, r.fromTime)} → {whenLabel(r.toDate, r.toTime)}
+                  </Box>
+                  <Box component="span" sx={{ display: 'block', color: 'text.secondary' }}>
+                    {r.reviewerRole === 'system' ? 'Changed before confirmation' : r.status === 'Pending' ? 'Waiting for the hospital' : r.status}
+                    {r.reviewedAt && r.reviewerRole !== 'system' ? ` · ${fmtStamp(r.reviewedAt)}` : ` · requested ${fmtStamp(r.requestedAt)}`}
+                    {r.reason && r.reviewerRole !== 'system' ? ` · “${r.reason}”` : ''}
+                    {r.decisionNote && r.reviewerRole !== 'system' ? ` · Hospital: “${r.decisionNote}”` : ''}
+                  </Box>
+                </Box>
+              ))}
+            </Row>
+          </>
+        )}
         {cat === 'upcoming' && (
           <Alert severity="info" sx={{ mt: 1, mb: 1.5, borderRadius: '10px' }}>
-            Bring your QR card so staff can check you in. To change or cancel this booking, contact the donation center.
+            Bring your QR card so staff can check you in. You can change the date or cancel from the appointment card.
           </Alert>
         )}
       </DialogContent>

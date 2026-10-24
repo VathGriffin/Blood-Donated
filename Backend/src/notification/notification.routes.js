@@ -61,12 +61,33 @@ async function buildFeed(user) {
     const when = `${shortDate(a.date)}, ${a.time}`;
     const status = APPOINTMENT_STATUS[a.status];
     if (status) {
+      // Prefer the moment the status changed; older records only have updatedAt.
+      const changedAt = { CheckedIn: a.checkedInAt, Confirmed: a.confirmedAt, Cancelled: a.cancelledAt }[a.status];
       items.push({
         id: `appointment-${a._id}-${a.status}`, type: 'appointment', tone: status.tone, title: status.title,
         body: a.status === 'CheckedIn' ? `Your donation${where} has been recorded.` : `${when}${where}`,
-        href: '/my-appointments', at: a.status === 'CheckedIn' && a.checkedInAt ? a.checkedInAt : a.updatedAt,
+        href: '/my-appointments', at: changedAt || a.updatedAt,
       });
     }
+    // Reschedule requests the hospital has answered (direct changes made before confirmation
+    // are the donor's own action, so they don't notify).
+    (a.rescheduleRequests || []).forEach((r) => {
+      if (r.reviewerRole === 'system' || !r.reviewedAt) return;
+      const from = `${shortDate(r.fromDate)}, ${r.fromTime}`;
+      const to = `${shortDate(r.toDate)}, ${r.toTime}`;
+      if (r.status === 'Approved') {
+        items.push({
+          id: `reschedule-${r._id}-Approved`, type: 'appointment', tone: 'success', title: 'Hospital approved the new date',
+          body: `Your appointment${where} has been moved to ${to}.`, href: '/my-appointments', at: r.reviewedAt,
+        });
+      } else if (r.status === 'Rejected') {
+        items.push({
+          id: `reschedule-${r._id}-Rejected`, type: 'appointment', tone: 'error', title: 'Reschedule request declined',
+          body: clip(`Your appointment stays on ${from}${where}.${r.decisionNote ? ` ${r.decisionNote}` : ''}`),
+          href: '/my-appointments', at: r.reviewedAt,
+        });
+      }
+    });
     // Reminder for a still-active appointment today, tomorrow or the day after.
     const day = dayStart(a.date);
     if (day && (a.status === 'Pending' || a.status === 'Confirmed')) {
@@ -127,13 +148,14 @@ const URGENCY_TONE = { Critical: 'error', High: 'warning', Medium: 'info', Low: 
 const units = (n) => `${n || 1} unit${(n || 1) === 1 ? '' : 's'}`;
 
 async function buildAdminFeed() {
-  const [requests, cancelled, appointments, messages, donors, stock] = await Promise.all([
+  const [requests, cancelled, appointments, messages, donors, stock, rescheduling] = await Promise.all([
     BloodRequest.find().sort({ createdAt: -1 }).limit(LIMIT).lean(),
     BloodRequest.find({ status: 'Cancelled', cancelledAt: { $ne: null } }).sort({ cancelledAt: -1 }).limit(LIMIT).lean(),
     Appointment.find().sort({ createdAt: -1 }).limit(LIMIT).lean(),
     Message.find({ sender: 'user', deletedAt: null }).sort({ createdAt: -1 }).limit(LIMIT).lean(),
     Donor.find().select('fullName bloodType location createdAt').sort({ createdAt: -1 }).limit(LIMIT).lean(),
     Inventory.find({ hospital: null }).lean(), // the central pool the admin manages
+    Appointment.find({ 'rescheduleRequests.status': 'Pending' }).sort({ updatedAt: -1 }).limit(LIMIT).lean(),
   ]);
 
   const items = [];
@@ -154,6 +176,15 @@ async function buildAdminFeed() {
     title: 'New appointment booked',
     body: `${a.fullName} · ${shortDate(a.date)}, ${a.time}${a.location ? ` at ${a.location}` : ''}`,
     href: '/dashboard/admin/appointments', at: a.createdAt,
+  }));
+  rescheduling.forEach((a) => (a.rescheduleRequests || []).forEach((r) => {
+    if (r.status !== 'Pending') return;
+    items.push({
+      id: `reschedule-${r._id}`, type: 'appointment', tone: 'warning',
+      title: 'Reschedule requested',
+      body: `${a.fullName} · ${shortDate(r.fromDate)}, ${r.fromTime} → ${shortDate(r.toDate)}, ${r.toTime}${a.location ? ` at ${a.location}` : ''}`,
+      href: '/dashboard/admin/appointments', at: r.requestedAt,
+    });
   }));
   messages.forEach((m) => items.push({
     id: `message-${m._id}`, type: 'message', tone: 'primary',

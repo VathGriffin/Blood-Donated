@@ -99,6 +99,8 @@ export default function AppointmentPage() {
   }, [centers, centersLoading]);
 
   const setField = (name, value) => { setForm((f) => ({ ...f, [name]: value })); setError(''); };
+  // Stable so TimeSlots can clear a slot that turns out to be full without re-running its effect.
+  const setTime = useCallback((slot) => { setForm((f) => ({ ...f, time: slot })); setError(''); }, []);
   const center = centers.find((c) => c.key === form.centerKey) || null;
 
   const validateSelection = () => {
@@ -207,7 +209,7 @@ export default function AppointmentPage() {
                     onLocate={locate} locating={locating} note={pickerNote} />
                   <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2.5 }}>
                     <CalendarPicker value={form.date} onChange={(iso) => { setForm((f) => ({ ...f, date: iso, time: '' })); setError(''); }} />
-                    <TimeSlots date={form.date} value={form.time} onChange={(slot) => setField('time', slot)} />
+                    <TimeSlots date={form.date} value={form.time} onChange={setTime} hospitalId={center?.hospitalId} />
                   </Box>
                 </>
               )}

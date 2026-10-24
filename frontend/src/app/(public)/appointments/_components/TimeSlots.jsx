@@ -1,5 +1,7 @@
 'use client';
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import axios from 'axios';
+import API_BASE from '@/lib/config';
 import { Box, Typography, useTheme } from '@mui/material';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import EventBusyOutlinedIcon from '@mui/icons-material/EventBusyOutlined';
@@ -10,16 +12,33 @@ import { C, TIME_SLOTS, parseIso, radioKeyDown, slotStartMinutes } from './booki
 
 const COLUMNS = 3;
 
-export default function TimeSlots({ date, value, onChange }) {
+// `hospitalId` (optional): grey out slots that center has no room left in. The server checks
+// again on booking, so a failed availability lookup just leaves every slot open.
+export default function TimeSlots({ date, value, onChange, hospitalId }) {
   const isDark = useTheme().palette.mode === 'dark';
   const refs = useRef([]);
+  const [full, setFull] = useState(() => new Set());
+
+  useEffect(() => {
+    setFull(new Set());
+    if (!date || !hospitalId) return undefined;
+    let alive = true;
+    axios.get(`${API_BASE}/api/appointments/availability`, { params: { hospital: hospitalId, date } })
+      .then(({ data }) => { if (alive) setFull(new Set((data.slots || []).filter((x) => !x.available).map((x) => x.time))); })
+      .catch(() => { /* leave slots open; booking re-checks */ });
+    return () => { alive = false; };
+  }, [date, hospitalId]);
+
+  // A selected slot that turns out to be full is cleared.
+  useEffect(() => { if (value && full.has(value)) onChange(''); }, [full, value, onChange]);
   const now = new Date();
   const isToday = !!date && parseIso(date).toDateString() === now.toDateString();
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
 
   const slots = TIME_SLOTS.map((slot, i) => {
     const passed = isToday && slotStartMinutes(slot) <= nowMinutes; // can't book a slot that already started
-    return { slot, i, passed, disabled: !date || passed, get el() { return refs.current[i]; } };
+    const isFull = !passed && full.has(slot);
+    return { slot, i, passed, full: isFull, disabled: !date || passed || isFull, get el() { return refs.current[i]; } };
   });
   const open = slots.filter((s) => !s.disabled);
   const selectedIdx = slots.findIndex((s) => s.slot === value && !s.disabled);
@@ -31,19 +50,21 @@ export default function TimeSlots({ date, value, onChange }) {
       {date && !open.length ? (
         <Box role="status" sx={{ textAlign: 'center', py: 4, px: 2, borderRadius: '14px', border: `1px dashed ${isDark ? '#333' : C.border}` }}>
           <EventBusyOutlinedIcon sx={{ fontSize: 34, color: 'text.disabled' }} aria-hidden="true" />
-          <Typography sx={{ fontWeight: 700, mt: 1 }}>No more slots today</Typography>
-          <Typography sx={{ color: 'text.secondary', fontSize: '0.85rem', mt: 0.5 }}>Every slot for today has already started. Please choose another date.</Typography>
+          <Typography sx={{ fontWeight: 700, mt: 1 }}>{isToday ? 'No more slots today' : 'This day is fully booked'}</Typography>
+          <Typography sx={{ color: 'text.secondary', fontSize: '0.85rem', mt: 0.5 }}>
+            {isToday ? 'Every slot left today is taken or has already started.' : 'Every slot at this center is taken.'} Please choose another date.
+          </Typography>
         </Box>
       ) : (
         <Box role="radiogroup" aria-label="Time slot" sx={{ display: 'grid', gridTemplateColumns: `repeat(${COLUMNS}, 1fr)`, gap: 1 }}>
           {slots.map((s) => {
             const selected = value === s.slot;
-            const sub = !date ? 'Pick a date' : s.passed ? 'Started' : 'Available';
+            const sub = !date ? 'Pick a date' : s.passed ? 'Started' : s.full ? 'Full' : 'Available';
             return (
               <Box key={s.slot} ref={(el) => { refs.current[s.i] = el; }}
                 component="button" type="button" role="radio" aria-checked={selected} disabled={s.disabled}
                 tabIndex={s.i === tabbable ? 0 : -1}
-                aria-label={`${s.slot}${s.passed ? ', already started' : ''}`}
+                aria-label={`${s.slot}${s.passed ? ', already started' : s.full ? ', fully booked' : ''}`}
                 onClick={() => onChange(s.slot)}
                 onKeyDown={(e) => radioKeyDown(e, s.i, slots, (n) => onChange(slots[n].slot), COLUMNS)}
                 sx={{

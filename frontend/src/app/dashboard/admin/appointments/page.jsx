@@ -15,6 +15,7 @@ import axios from "axios";
 import { format, parseISO, isValid } from "date-fns";
 import API_BASE from "@/lib/config";
 import { useAuth } from "@/store/AuthContext";
+import RescheduleRequestsPanel from "@/components/appointments/RescheduleRequestsPanel";
 import { PageHeader, StatusBadge, TableCard, EmptyState } from "@/components/ui";
 
 const API = `${API_BASE}/api/appointments`;
@@ -46,6 +47,9 @@ const formatDate = (d, pattern = "MMM d, yyyy") => {
   return parsed && isValid(parsed) ? format(parsed, pattern) : d || "—";
 };
 
+// Uploaded photos are served by the API as "/uploads/…"; full URLs pass through.
+const photoUrl = (photo) => (!photo ? undefined : /^https?:\/\//.test(photo) ? photo : `${API_BASE}${photo}`);
+
 const initials = (name = "") =>
   name.trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase() || "?";
 
@@ -73,7 +77,8 @@ function BloodChip({ type }) {
 function DonorCell({ appt }) {
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, minWidth: 0 }}>
-      <Avatar sx={{ width: 38, height: 38, fontSize: "0.82rem", fontWeight: 700, bgcolor: "primary.main", flexShrink: 0 }}>
+      <Avatar src={photoUrl(appt.donorPhoto)} alt={appt.fullName}
+        sx={{ width: 38, height: 38, fontSize: "0.82rem", fontWeight: 700, bgcolor: "primary.main", flexShrink: 0 }}>
         {initials(appt.fullName)}
       </Avatar>
       <Box sx={{ minWidth: 0 }}>
@@ -457,6 +462,9 @@ const ManageAppointments = () => {
         sx={{ mb: 3 }}
       />
 
+      <RescheduleRequestsPanel appointments={appointments} token={token} showHospital
+        onUpdated={(data) => setAppointments((prev) => prev.map((a) => (a._id === data._id ? { donorPhoto: a.donorPhoto, ...data } : a)))} />
+
       {/* Summary — each card filters the table by that status */}
       <Box
         sx={{
@@ -532,7 +540,8 @@ const ManageAppointments = () => {
         {viewing && (
           <>
             <DialogTitle id="appt-details-title" sx={{ display: "flex", alignItems: "center", gap: 1.5, pr: 7 }}>
-              <Avatar sx={{ width: 44, height: 44, bgcolor: "primary.main", fontWeight: 700 }}>{initials(viewing.fullName)}</Avatar>
+              <Avatar src={photoUrl(viewing.donorPhoto)} alt={viewing.fullName}
+                sx={{ width: 56, height: 56, bgcolor: "primary.main", fontWeight: 700 }}>{initials(viewing.fullName)}</Avatar>
               <Box sx={{ minWidth: 0 }}>
                 <Typography variant="h6" component="span" display="block" noWrap>{viewing.fullName}</Typography>
                 <Typography variant="caption" color="text.secondary">
