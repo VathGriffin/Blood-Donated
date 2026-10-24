@@ -52,9 +52,13 @@ export default function DashboardShell({ role, children }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
-    if (session.status === 'unauthenticated') router.replace(session.redirectTo);
+    if (session.status === 'unauthenticated') {
+      // Donors are brought back to the page they opened (e.g. the Request Blood form) after login.
+      const toLogin = role === ROLES.DONOR && session.redirectTo === ROLE_CONFIG[ROLES.DONOR].loginPath;
+      router.replace(toLogin ? `${session.redirectTo}?next=${encodeURIComponent(pathname)}` : session.redirectTo);
+    }
     else if (session.status === 'forbidden') router.replace(ROLE_CONFIG[session.actualRole]?.homePath || '/');
-  }, [session.status, session.redirectTo, session.actualRole, router]);
+  }, [session.status, session.redirectTo, session.actualRole, router, role, pathname]);
 
   useEffect(() => { setMobileOpen(false); }, [pathname]);
 

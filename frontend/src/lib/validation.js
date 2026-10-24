@@ -12,3 +12,11 @@ export function photoFileError(file) {
   if (file.size > MAX_PHOTO_SIZE) return `Image is too large — max ${MAX_PHOTO_SIZE / (1024 * 1024)} MB.`;
   return null;
 }
+
+// Phone numbers as people type them ("+855 12 345 678", "0901-234-567"): 8–15 digits, with
+// optional spaces, dashes, dots, brackets and a leading +.
+export const isPhone = (value) => {
+  const v = String(value || '').trim();
+  const digits = v.replace(/\D/g, '');
+  return /^\+?[\d\s\-().]+$/.test(v) && digits.length >= 8 && digits.length <= 15;
+};

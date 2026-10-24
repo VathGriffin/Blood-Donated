@@ -147,14 +147,14 @@ export default function HospitalRequests() {
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  {['ID', 'Patient', 'Blood Type', 'Units', 'Urgency', 'Status', 'Requested Date'].map((h) => <TableCell key={h}>{h}</TableCell>)}
+                  {['ID', 'Patient', 'Blood Type', 'Units', 'Urgency', 'Needed By', 'Status', 'Requested Date'].map((h) => <TableCell key={h}>{h}</TableCell>)}
                   <TableCell align="right">Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {visible.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={8}>
+                    <TableCell colSpan={9}>
                       <EmptyState
                         icon={<DescriptionIcon />}
                         title={tab === 'All' ? 'No requests yet' : `No ${tab.toLowerCase()} requests`}
@@ -170,6 +170,7 @@ export default function HospitalRequests() {
                     <TableCell sx={{ color: 'primary.main', fontWeight: 800 }}>{r.bloodType}</TableCell>
                     <TableCell>{r.unitsNeeded}</TableCell>
                     <TableCell><StatusBadge status={r.urgency} size="small" dot={false} /></TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>{r.requiredBy ? formatDateTime(r.requiredBy) : '—'}</TableCell>
                     <TableCell><StatusBadge status={r.status} size="small" /></TableCell>
                     <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDate(r.createdAt)}</TableCell>
                     <TableCell align="right" onClick={(e) => e.stopPropagation()}>
@@ -197,7 +198,12 @@ export default function HospitalRequests() {
             <SectionCard
               sx={{ mt: { xs: 2, md: 3 } }}
               title={`Request Status Timeline (${shortRequestId(selected._id)})`}
-              subtitle={`${selected.patientName} · ${selected.unitsNeeded} unit${selected.unitsNeeded === 1 ? '' : 's'} of ${selected.bloodType}`}
+              subtitle={[
+                selected.patientAge != null ? `${selected.patientName} (age ${selected.patientAge})` : selected.patientName,
+                `${selected.unitsNeeded} unit${selected.unitsNeeded === 1 ? '' : 's'} of ${selected.bloodType}${selected.component ? ` ${selected.component.toLowerCase()}` : ''}`,
+                selected.requiredBy && `needed by ${formatDateTime(selected.requiredBy)}`,
+                selected.contact && `contact ${selected.contact}`,
+              ].filter(Boolean).join(' · ')}
             >
               <RequestTimeline request={selected} />
             </SectionCard>

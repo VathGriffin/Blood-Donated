@@ -89,7 +89,9 @@ export default function RequestDetailsDialog({ request, token, hospitalPhone, on
         )}
         <Row label="Hospital">{r.hospitalName}</Row>
         <Divider />
-        <Row label="Units needed">{units} unit{units !== 1 ? 's' : ''} of {r.bloodType}</Row>
+        <Row label="Units needed">{units} unit{units !== 1 ? 's' : ''} of {r.bloodType}{r.component ? ` · ${r.component}` : ''}</Row>
+        {r.patientAge != null && (<><Divider /><Row label="Patient age">{r.patientAge}</Row></>)}
+        {fmtDateTime(r.requiredBy) && (<><Divider /><Row label="Required by">{fmtDateTime(r.requiredBy)}</Row></>)}
         <Divider />
         <Row label="Requested">{fmtDateTime(r.createdAt) || '—'}</Row>
         {fmtDateTime(r.updatedAt) && r.updatedAt !== r.createdAt && (<><Divider /><Row label="Last updated">{fmtDateTime(r.updatedAt)}</Row></>)}

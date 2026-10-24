@@ -12,6 +12,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
 import EventAvailableIcon from '@mui/icons-material/EventAvailable';
 import NotificationsIcon from '@mui/icons-material/Notifications';
+import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 
 /**
  * Dashboard roles. These are the front-end names; the API's role strings are
@@ -84,15 +85,16 @@ export const ROLE_CONFIG = {
       {
         // My Profile hosts Availability Status and Request History as sections/tabs of
         // that one page, rather than separate rows, so the sidebar never highlights more
-        // than one row for the same page. Blood Request and Appointment are the donor's own lists
-        // (/my-requests, /my-appointments); their "New Request" / "Book Appointment" buttons
-        // lead to the public form and booking pages.
+        // than one row for the same page. Blood Requests covers the donor's list (/my-requests)
+        // and the Request Blood form (/requests); "Book Appointment" leads to the public booking page.
         items: [
           { label: 'My Profile',       href: '/profile',      icon: PersonIcon, exact: true },
           { label: 'My QR Card',       href: '/qr-card',      icon: QrCode2Icon },
-          { label: 'Blood Request',    href: '/my-requests',  icon: DescriptionIcon },
-          { label: 'Appointment',      href: '/my-appointments', icon: EventAvailableIcon },
+          { label: 'My Appointments',  href: '/my-appointments', icon: EventAvailableIcon },
+          { label: 'Blood Requests',   href: '/my-requests',  icon: DescriptionIcon, alsoActive: ['/requests'] },
+          { label: 'Donor Directory',  href: '/donors',       icon: PeopleAltIcon },
           { label: 'Notifications',    href: '/notification', icon: NotificationsIcon, badge: true },
+          { label: 'Chat with AI',     href: '/assistant',    icon: SmartToyOutlinedIcon },
         ],
       },
     ],
@@ -103,8 +105,14 @@ export const ROLE_CONFIG = {
   },
 };
 
+const pathMatches = (href, pathname) => pathname === href || pathname.startsWith(`${href}/`);
+
+// `alsoActive` lists other paths that belong to the same menu row (e.g. the Request Blood
+// form at /requests is part of "Blood Requests").
 export const isItemActive = (item, pathname) =>
-  item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`);
+  item.exact
+    ? pathname === item.href
+    : pathMatches(item.href, pathname) || (item.alsoActive || []).some((href) => pathMatches(href, pathname));
 
 /** The nav item (and its section) matching the current URL — drives the top-bar title. */
 export function findActive(role, pathname) {

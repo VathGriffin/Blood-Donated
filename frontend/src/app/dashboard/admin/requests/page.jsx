@@ -615,7 +615,9 @@ const ManageRequests = () => {
                             <Box sx={{ border: 1, borderColor: "divider", borderRadius: 2.5, overflow: "hidden", mb: 2 }}>
                                 {[
                                     { icon: <LocalHospital />, label: "Hospital",     value: viewProfile.hospitalName },
-                                    { icon: <Bloodtype />,     label: "Units Needed", value: viewProfile.unitsNeeded },
+                                    { icon: <Bloodtype />,     label: "Units Needed", value: `${viewProfile.unitsNeeded}${viewProfile.component ? ` · ${viewProfile.component}` : ""}` },
+                                    ...(viewProfile.patientAge != null ? [{ icon: <Notes />, label: "Patient Age", value: viewProfile.patientAge }] : []),
+                                    ...(viewProfile.requiredBy ? [{ icon: <CalendarToday />, label: "Required By", value: new Date(viewProfile.requiredBy).toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) }] : []),
                                     { icon: <Phone />,         label: "Contact",      value: viewProfile.contact },
                                     { icon: <Notes />,         label: "Reason",       value: viewProfile.reason },
                                     { icon: <CalendarToday />, label: "Submitted",    value: formatDate(viewProfile.createdAt) },
