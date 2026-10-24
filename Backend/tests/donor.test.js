@@ -223,3 +223,25 @@ describe('donor QR verification', () => {
     expect(res.body.reason).toBe('invalid');
   });
 });
+
+describe('donor photos whose file is missing', () => {
+  test('are reported as null so pages show initials, without changing the record', async () => {
+    const donor = await Donor.create({
+      fullName: 'Lost Photo', email: 'lost.photo@test.com', phone: '0912345678', bloodType: 'A+', location: 'Phnom Penh',
+      photo: '/uploads/donor-does-not-exist-123.jpg',
+    });
+    const list = await request(app).get('/api/donors');
+    expect(list.body.find((d) => d._id === String(donor._id)).photo).toBeNull();
+    expect((await request(app).get(`/api/donors/${donor._id}`)).body.photo).toBeNull();
+    expect((await Donor.findById(donor._id)).photo).toBe('/uploads/donor-does-not-exist-123.jpg');
+  });
+
+  test('external photo URLs are passed through', async () => {
+    await Donor.create({
+      fullName: 'Web Photo', email: 'web.photo@test.com', phone: '0912345678', bloodType: 'O+', location: 'Kandal',
+      photo: 'https://example.com/me.jpg',
+    });
+    const list = await request(app).get('/api/donors');
+    expect(list.body.find((d) => d.fullName === 'Web Photo').photo).toBe('https://example.com/me.jpg');
+  });
+});
