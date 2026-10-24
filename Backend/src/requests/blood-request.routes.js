@@ -11,6 +11,7 @@ const { BLOOD_TYPES } = require('../common/blood-types');
 const { assertHospitalScope } = require('../common/middleware/assert-hospital-scope');
 const { createImageUpload } = require('../common/upload');
 const { sendError } = require('../common/middleware/error-handler');
+const { findHospitalIdByName } = require('./link-hospital');
 
 const validateRequest = [
   body('patientName').trim().notEmpty().withMessage('Patient name is required').isLength({ max: 100 }),
@@ -34,6 +35,8 @@ router.post('/', optionalAuth, validateRequest, async (req, res) => {
   try {
     const data = Object.fromEntries(REQUEST_FIELDS.filter((key) => req.body[key] !== undefined).map((key) => [key, req.body[key]]));
     data.userEmail = req.user?.email || '';
+    // Link to the registered hospital so it shows up on that hospital's staff dashboard.
+    data.hospital = await findHospitalIdByName(data.hospitalName);
     res.status(201).json(await new BloodRequest(data).save());
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -200,7 +203,13 @@ router.put('/:id', requireRole('admin', 'hospital_staff'), async (req, res) => {
     if (!request) return res.status(404).json({ error: 'Request not found' });
     if (!assertHospitalScope(req, request))
       return res.status(403).json({ error: "Not your hospital's request" });
-    const updated = await BloodRequest.findByIdAndUpdate(req.params.id, { $set: req.body }, { new: true });
+    const changes = { ...req.body };
+    // Renaming the hospital moves the request to that hospital's dashboard (admins only — staff
+    // keep their own hospital's requests, so a rename can't push a request out of their scope).
+    delete changes.hospital;
+    if (typeof changes.hospitalName === 'string' && !req.staff)
+      changes.hospital = await findHospitalIdByName(changes.hospitalName);
+    const updated = await BloodRequest.findByIdAndUpdate(req.params.id, { $set: changes }, { new: true });
     res.json(updated);
   } catch (err) {
     res.status(400).json({ error: err.message });

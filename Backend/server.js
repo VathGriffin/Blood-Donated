@@ -16,6 +16,7 @@ const mongoose = require('mongoose');
 const app = require('./src/app');
 const seedAdmin = require('./src/staff/seed-admin');
 const Inventory = require('./src/inventory/inventory.model');
+const { linkUnassignedRequests } = require('./src/requests/link-hospital');
 
 const PORT = process.env.PORT || 3001;
 
@@ -56,6 +57,10 @@ const startup = connect().then(async () => {
   if (mongoose.connection.readyState !== 1) return;
   await dropStaleInventoryIndex();
   await clearSeededInventory();
+  // Requests filed before they were linked to a hospital never reached that hospital's dashboard.
+  await linkUnassignedRequests()
+    .then((n) => { if (n) console.log(`🔧 Linked ${n} blood request(s) to their hospital`); })
+    .catch((err) => console.error('Linking blood requests to hospitals failed:', err.message));
   await seedAdmin().catch((err) => console.error('Admin seed failed:', err.message));
 });
 
