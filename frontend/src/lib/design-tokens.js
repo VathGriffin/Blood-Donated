@@ -111,6 +111,18 @@ export const radius = {
   pill:   999, // badges
 };
 
+// ── Motion ───────────────────────────────────────────────────────────────────
+// Shared timings so hover, press and theme changes feel like one system.
+// `prefers-reduced-motion` is honoured globally in theme.js.
+export const easing = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
+export const motion = {
+  fast:  `.15s ${easing}`,  // hover colours
+  base:  `.22s ${easing}`,  // cards, shadows
+  press: `.1s ease-out`,    // button press
+  theme: `.25s ease`,       // light/dark cross-fade
+  page:  `.32s ${easing}`,  // page enter
+};
+
 // ── Elevation ────────────────────────────────────────────────────────────────
 // Subtle, cool-tinted shadows; dark mode uses plain black at higher opacity.
 export const shadow = {

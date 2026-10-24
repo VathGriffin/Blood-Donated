@@ -5,10 +5,10 @@ import { CustomThemeProvider } from '@/lib/ThemeContext';
 import { AuthProvider } from '@/store/AuthContext';
 import { UserAuthProvider } from '@/store/UserAuthContext';
 
-export default function Providers({ children }) {
+export default function Providers({ initialMode, children }) {
   return (
     <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''}>
-      <CustomThemeProvider>
+      <CustomThemeProvider initialMode={initialMode}>
         <CssBaseline />
         <AuthProvider>
           <UserAuthProvider>

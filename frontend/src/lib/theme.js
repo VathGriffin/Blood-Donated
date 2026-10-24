@@ -1,7 +1,7 @@
 import { createTheme, alpha } from '@mui/material/styles';
 import * as tokens from './design-tokens';
 
-const { brand, neutral, semantic, surfaces, radius, layout, sidebar, statusTone } = tokens;
+const { brand, neutral, semantic, surfaces, radius, layout, sidebar, statusTone, motion } = tokens;
 
 // `theme.breakpoints` isn't available while the theme is being defined, so the one
 // breakpoint the type scale needs is written out (matches MUI's default `md`).
@@ -104,6 +104,7 @@ export function buildTheme(mode = 'light') {
     // Design tokens exposed to components as `theme.custom.*`.
     custom: {
       radius,
+      motion,
       layout,
       sidebar,
       statusTone,
@@ -115,8 +116,43 @@ export function buildTheme(mode = 'light') {
     components: {
       MuiCssBaseline: {
         styleOverrides: {
-          body: { WebkitFontSmoothing: 'antialiased', MozOsxFontSmoothing: 'grayscale' },
+          html: {
+            colorScheme: mode,
+            // Anchor jumps land below the fixed header instead of under it.
+            scrollPaddingTop: 88,
+            '@media (prefers-reduced-motion: no-preference)': { scrollBehavior: 'smooth' },
+          },
+          body: {
+            WebkitFontSmoothing: 'antialiased',
+            MozOsxFontSmoothing: 'grayscale',
+            textRendering: 'optimizeLegibility',
+            WebkitTapHighlightColor: 'transparent',
+          },
           '::selection': { backgroundColor: alpha(primary, 0.22) },
+          // Set briefly by the light/dark toggle so colours cross-fade instead of snapping.
+          'html.theme-transition, html.theme-transition *, html.theme-transition *::before, html.theme-transition *::after': {
+            transition: `background-color ${motion.theme}, border-color ${motion.theme}, color ${motion.theme}, fill ${motion.theme}, box-shadow ${motion.theme} !important`,
+            transitionDelay: '0s !important',
+          },
+          '@keyframes bl-page-enter': {
+            from: { opacity: 0, transform: 'translateY(6px)' },
+            to: { opacity: 1, transform: 'none' },
+          },
+          '@keyframes bl-route-progress': {
+            '0%': { transform: 'translateX(-100%) scaleX(0.3)' },
+            '50%': { transform: 'translateX(20%) scaleX(0.6)' },
+            '100%': { transform: 'translateX(100%) scaleX(0.3)' },
+          },
+          '@keyframes bl-fade-in': { from: { opacity: 0 }, to: { opacity: 1 } },
+          // Respect the OS "reduce motion" setting everywhere.
+          '@media (prefers-reduced-motion: reduce)': {
+            '*, *::before, *::after': {
+              animationDuration: '0.01ms !important',
+              animationIterationCount: '1 !important',
+              transitionDuration: '0.01ms !important',
+              scrollBehavior: 'auto !important',
+            },
+          },
         },
       },
 
@@ -137,8 +173,9 @@ export function buildTheme(mode = 'light') {
             fontWeight: 600,
             letterSpacing: '-0.005em',
             boxShadow: 'none',
-            transition: 'background-color .15s ease, border-color .15s ease, color .15s ease',
+            transition: `background-color ${motion.fast}, border-color ${motion.fast}, color ${motion.fast}, transform ${motion.press}`,
             '&:hover': { boxShadow: 'none' },
+            '&:active:not(.Mui-disabled)': { transform: 'scale(0.98)' },
           },
           sizeSmall:  { minHeight: 32, padding: '4px 12px', fontSize: '0.8125rem' },
           sizeMedium: { minHeight: 40, padding: '8px 18px' },
@@ -151,14 +188,23 @@ export function buildTheme(mode = 'light') {
       // ── Inputs ─────────────────────────────────────────────────────────────
       // Geometry (height, label offsets) is left at MUI's defaults on purpose — the
       // floating label positions depend on it. Use size="small" for dense forms.
+      MuiIconButton: {
+        styleOverrides: {
+          root: {
+            transition: `background-color ${motion.fast}, color ${motion.fast}, transform ${motion.press}`,
+            '&:active:not(.Mui-disabled)': { transform: 'scale(0.92)' },
+          },
+        },
+      },
+
       MuiOutlinedInput: {
         styleOverrides: {
           root: {
             borderRadius: radius.md,
             backgroundColor: mode === 'light' ? '#FFFFFF' : s.subtle,
             fontSize: '0.9375rem',
-            transition: 'box-shadow .15s ease',
-            '& .MuiOutlinedInput-notchedOutline': { borderColor: s.borderStrong },
+            transition: `box-shadow ${motion.fast}`,
+            '& .MuiOutlinedInput-notchedOutline': { borderColor: s.borderStrong, transition: `border-color ${motion.fast}` },
             '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: neutral[400] },
             '&.Mui-focused': { boxShadow: `0 0 0 3px ${alpha(primary, 0.14)}` },
             '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: primary, borderWidth: 1.5 },
@@ -199,6 +245,8 @@ export function buildTheme(mode = 'light') {
             border: `1px solid ${s.border}`,
             boxShadow: elevation.sm,
             backgroundImage: 'none',
+            // Pages that lift or re-border cards on hover get a smooth change for free.
+            transition: `box-shadow ${motion.base}, border-color ${motion.base}, transform ${motion.base}`,
           },
         },
       },
@@ -282,7 +330,7 @@ export function buildTheme(mode = 'light') {
       },
       MuiTableRow: {
         styleOverrides: {
-          root: { '&.MuiTableRow-hover:hover': { backgroundColor: s.subtle } },
+          root: { transition: `background-color ${motion.fast}`, '&.MuiTableRow-hover:hover': { backgroundColor: s.subtle } },
         },
       },
       MuiTableBody: {
@@ -303,6 +351,7 @@ export function buildTheme(mode = 'light') {
         styleOverrides: {
           root: {
             borderRadius: radius.md,
+            transition: `background-color ${motion.fast}`,
             '&.Mui-selected': { backgroundColor: alpha(primary, 0.08) },
             '&.Mui-selected:hover': { backgroundColor: alpha(primary, 0.12) },
           },
