@@ -1,350 +1,273 @@
 'use client';
-import { useRef, useState, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import {
-  Box, Typography, Button, Avatar, Chip, useTheme, ToggleButtonGroup, ToggleButton,
-  Tooltip, CircularProgress,
+  Box, Button, Dialog, DialogContent, GlobalStyles, IconButton, Skeleton, Snackbar, Alert, Typography,
 } from '@mui/material';
+import QrCode2Icon from '@mui/icons-material/QrCode2';
 import DownloadIcon from '@mui/icons-material/Download';
 import PrintIcon from '@mui/icons-material/Print';
-import BloodtypeIcon from '@mui/icons-material/Bloodtype';
-import FavoriteIcon from '@mui/icons-material/Favorite';
-import VerifiedIcon from '@mui/icons-material/Verified';
+import FullscreenIcon from '@mui/icons-material/Fullscreen';
+import CloseIcon from '@mui/icons-material/Close';
 import LockIcon from '@mui/icons-material/Lock';
+import VerifiedIcon from '@mui/icons-material/Verified';
 import PersonOffIcon from '@mui/icons-material/PersonOff';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import Link from 'next/link';
+import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
+import WaterDropIcon from '@mui/icons-material/WaterDrop';
+import EventAvailableOutlinedIcon from '@mui/icons-material/EventAvailableOutlined';
+import HistoryIcon from '@mui/icons-material/History';
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import QRCode from 'react-qr-code';
 import axios from 'axios';
 import { useUserAuth } from '@/store/UserAuthContext';
 import API_BASE from '@/lib/config';
 import { initialsOf } from '@/lib/format';
-const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+import DonorPageHero from '@/components/donor/PageHero';
+import { IconCircle, Notice, Pill, cardSx, formatDate } from '@/components/donor/ui';
+import DonorCard from './_components/DonorCard';
 
-const BLOOD_COLORS = {
-  'A+': '#b71c1c', 'A-': '#c62828', 'B+': '#ad1457', 'B-': '#880e4f',
-  'AB+': '#6a1b9a', 'AB-': '#4a148c', 'O+': '#1565c0', 'O-': '#0d47a1',
-};
+const ELIGIBILITY_DAYS = 56; // same interval as the API (Backend/src/common/eligibility.js)
+
+// Expiry of the signed QR token, read from its payload (display only — the server checks it).
+function tokenExpiry(token) {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    return payload.exp ? new Date(payload.exp * 1000) : null;
+  } catch {
+    return null;
+  }
+}
+
+function nextEligible(lastDonation) {
+  if (!lastDonation) return null;
+  const d = new Date(new Date(lastDonation).getTime() + ELIGIBILITY_DAYS * 86400000);
+  return d > new Date() ? d : null;
+}
+
+const STEPS = [
+  { title: 'Open or print your card', text: 'Keep it on your phone, or print it to carry in your wallet.' },
+  { title: 'Show it at check-in', text: 'Hand it to staff at any partner hospital or blood drive.' },
+  { title: 'Staff scan the QR', text: 'They see your live donor record instantly — no forms to fill in.' },
+];
+
+function InfoRow({ icon, label, children }) {
+  return (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 1.4, '&:not(:last-of-type)': { borderBottom: '1px solid', borderColor: 'divider' } }}>
+      <IconCircle size={38}>{icon}</IconCircle>
+      <Typography sx={{ flex: 1, fontSize: '0.9rem', color: 'text.secondary', fontWeight: 600 }}>{label}</Typography>
+      <Box sx={{ fontSize: '0.9rem', fontWeight: 700, textAlign: 'right' }}>{children}</Box>
+    </Box>
+  );
+}
+
+const actionSx = { height: 46, borderRadius: '12px', fontWeight: 700, textTransform: 'none', flex: { sm: 1 } };
 
 export default function QRCardPage() {
   const { isAuth, user, token } = useUserAuth();
   const cardRef = useRef(null);
-  const theme   = useTheme();
-  const isDark  = theme.palette.mode === 'dark';
 
-  const [bloodType,  setBloodType]  = useState('O+');
-  const [donor,      setDonor]      = useState(null);   // null = loading, false = not found
-  const [loading,    setLoading]    = useState(false);
-  const [qrToken,    setQrToken]    = useState(null);    // signed, opaque — issued by the server, never built client-side
+  const [donor, setDonor] = useState(null);           // null = loading, false = not registered
+  const [qrToken, setQrToken] = useState(null);       // signed, opaque — issued by the server, never built client-side
+  const [qrStatus, setQrStatus] = useState('idle');   // idle | loading | ready | error
+  const [bigQr, setBigQr] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [toast, setToast] = useState(null);
+
+  const loadQr = useCallback((donorId) => {
+    setQrStatus('loading');
+    axios.get(`${API_BASE}/api/donors/${donorId}/qr-token`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => { setQrToken(res.data.token); setQrStatus('ready'); })
+      .catch(() => { setQrToken(null); setQrStatus('error'); });
+  }, [token]);
 
   useEffect(() => {
     if (!isAuth || !user?.email) return;
-    setLoading(true);
+    setDonor(null);
     axios.get(`${API_BASE}/api/donors/lookup?email=${encodeURIComponent(user.email)}`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(res => {
-        if (res.data.found) {
-          setDonor(res.data);
-          setBloodType(res.data.bloodType);
-          return axios.get(`${API_BASE}/api/donors/${res.data._id}/qr-token`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }).then(qr => setQrToken(qr.data.token)).catch(() => setQrToken(null));
-        }
-        setDonor(false);
+      .then((res) => {
+        if (!res.data.found) { setDonor(false); return; }
+        setDonor(res.data);
+        loadQr(res.data._id);
       })
-      .catch(() => setDonor(false))
-      .finally(() => setLoading(false));
-  }, [isAuth, user?.email, token]);
-
-  const isVerified = !!donor;
-  const isAvailable = donor?.available ?? false;
-
-  const donorId = user?.id
-    ? `BD-${user.id.toString().slice(-6).toUpperCase()}`
-    : 'BD-XXXXXX';
-
-  const handlePrint    = () => window.print();
-  const handleDownload = async () => {
-    const { default: html2canvas } = await import('html2canvas');
-    const canvas = await html2canvas(cardRef.current, { scale: 3, useCORS: true });
-    const link   = document.createElement('a');
-    link.download = `blood-donor-card-${donorId}.png`;
-    link.href     = canvas.toDataURL('image/png');
-    link.click();
-  };
+      .catch(() => setDonor(false));
+  }, [isAuth, user?.email, token, loadQr]);
 
   if (!isAuth) {
     return (
-      <Box sx={{ minHeight: '70vh', display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center', px: 2, textAlign: 'center' }}>
-        <LockIcon sx={{ fontSize: 56, color: '#b71c1c', mb: 2 }} />
-        <Typography variant="h5" fontWeight={700} gutterBottom>Log in to view your QR Card</Typography>
-        <Typography variant="body2" color="text.secondary" mb={3}>
-          Your personalised blood donor ID card is only available when signed in.
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button variant="contained" color="error" component={Link} href="/login" sx={{ borderRadius: 3 }}>Log In</Button>
-          <Button variant="outlined" color="error" component={Link} href="/register" sx={{ borderRadius: 3 }}>Sign Up</Button>
+      <Box sx={{ ...cardSx, maxWidth: 480, mx: 'auto', mt: 6, p: 4, textAlign: 'center' }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}><IconCircle size={64}><LockIcon /></IconCircle></Box>
+        <Typography variant="h5" fontWeight={800} gutterBottom>Log in to view your QR card</Typography>
+        <Typography variant="body2" color="text.secondary" mb={3}>Your donor ID card is only available when you’re signed in.</Typography>
+        <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'center' }}>
+          <Button variant="contained" component={Link} href="/login" sx={{ borderRadius: '12px', fontWeight: 700 }}>Log in</Button>
+          <Button variant="outlined" component={Link} href="/register" sx={{ borderRadius: '12px', fontWeight: 700 }}>Sign up</Button>
         </Box>
       </Box>
     );
   }
 
-  const initials = initialsOf(user?.fullName);
+  const loading = donor === null;
+  const verified = !!donor;
+  const donorId = user?.id ? `BD-${String(user.id).slice(-6).toUpperCase()}` : 'BD-XXXXXX';
+  const photoSrc = user?.photo ? `${API_BASE}${user.photo}` : null;
+  const expiry = qrToken ? tokenExpiry(qrToken) : null;
+  const eligibleOn = verified ? nextEligible(donor.lastDonation) : null;
+  const qrState = !verified ? 'locked' : qrStatus === 'ready' ? 'ready' : qrStatus === 'error' ? 'error' : 'loading';
+  const canExport = qrState === 'ready';
+
+  const handleDownload = async () => {
+    if (!cardRef.current) return;
+    setDownloading(true);
+    try {
+      const { default: html2canvas } = await import('html2canvas');
+      const canvas = await html2canvas(cardRef.current, { scale: 3, useCORS: true, backgroundColor: null });
+      const link = document.createElement('a');
+      link.download = `bloodlife-donor-card-${donorId}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch {
+      setToast('Couldn’t create the image. Try Print → Save as PDF instead.');
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   return (
-    <Box sx={{ pb: 4 }}>
-      {/* Hero */}
-      <Box sx={{
-        background: isDark
-          ? 'linear-gradient(135deg, #1a0000 0%, #2d0505 100%)'
-          : 'linear-gradient(135deg, #b71c1c 0%, #7f0000 100%)',
-        color: 'white', pt: { xs: 4, md: 5 }, pb: { xs: 4, md: 5 }, textAlign: 'center', px: 3, borderRadius: '14px',
-      }}>
-        <BloodtypeIcon sx={{ fontSize: 48, mb: 1.5, opacity: 0.9 }} />
-        <Typography variant="h4" fontWeight={800} gutterBottom>Your Donor QR Card</Typography>
-        <Typography variant="body1" sx={{ opacity: 0.88 }}>
-          Present this card at any partner hospital or blood drive event.
-        </Typography>
-      </Box>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 2, md: 2.5 }, pb: 4, minWidth: 0 }}>
+      {/* Print only the card */}
+      <GlobalStyles styles={{
+        '@media print': {
+          '@page': { margin: '12mm' },
+          'body *': { visibility: 'hidden' },
+          '#donor-card, #donor-card *': { visibility: 'visible' },
+          '#donor-card': { position: 'absolute', top: 0, left: 0, width: '120mm !important', boxShadow: 'none !important' },
+        },
+      }} />
 
-      <Box sx={{ maxWidth: 480, mx: 'auto', px: 2, mt: 5 }}>
+      <DonorPageHero id="qr-title" icon={<QrCode2Icon />} title="My QR Card"
+        subtitle="Your digital donor ID. Show it at any partner hospital or blood drive for a faster check-in." />
 
-        {/* Donor status banner */}
-        {loading ? (
-          <Box display="flex" justifyContent="center" alignItems="center" gap={1.5} mb={3}
-            sx={{ py: 1.5, px: 2.5, borderRadius: 2, bgcolor: isDark ? '#1a1a1a' : '#f5f5f5',
-              border: `1px solid ${isDark ? '#2a2a2a' : '#e5e5e5'}` }}>
-            <CircularProgress size={16} color="error" />
-            <Typography fontSize="0.85rem" color="text.secondary">Looking up your donor profile…</Typography>
-          </Box>
-        ) : isVerified ? (
-          <Box display="flex" alignItems="center" gap={1.5} mb={3}
-            sx={{ py: 1.5, px: 2.5, borderRadius: 2,
-              bgcolor: isDark ? 'rgba(22,163,74,0.1)' : '#f0fdf4',
-              border: '1px solid rgba(22,163,74,0.3)' }}>
-            <VerifiedIcon sx={{ color: '#16a34a', fontSize: 22, flexShrink: 0 }} />
-            <Box>
-              <Typography fontSize="0.85rem" fontWeight={700} color="#16a34a">Verified Donor</Typography>
-              <Typography fontSize="0.75rem" color="text.secondary">
-                Blood type <strong>{bloodType}</strong> · registered in BloodLife
-                {isAvailable ? ' · Available to donate' : ''}
-              </Typography>
+      {loading ? (
+        <Skeleton variant="rounded" height={48} sx={{ borderRadius: '12px' }} />
+      ) : verified ? (
+        <Notice tone="success" icon={<VerifiedIcon />}>
+          You’re a verified donor — your card is ready to use.
+        </Notice>
+      ) : (
+        <Notice tone="warning" icon={<PersonOffIcon />}>
+          You’re not registered as a donor yet. <Box component={Link} href="/donate" sx={{ color: 'inherit', fontWeight: 800 }}>Register on the Donate page</Box> to unlock your QR code.
+        </Notice>
+      )}
+
+      <Box sx={{ display: 'grid', gap: { xs: 2, md: 2.5 }, gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1.35fr) minmax(0, 1fr)' }, alignItems: 'start' }}>
+        {/* Card + actions */}
+        <Box sx={{ ...cardSx, p: { xs: 2, sm: 3 }, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+          {loading ? (
+            <Skeleton variant="rounded" sx={{ borderRadius: '20px', width: '100%', maxWidth: 560, mx: 'auto', height: { xs: 230, sm: 270 } }} />
+          ) : (
+            <DonorCard ref={cardRef} name={user?.fullName} photoSrc={photoSrc} initials={initialsOf(user?.fullName)}
+              bloodType={verified ? donor.bloodType : null} donorId={donorId} verified={verified}
+              qrToken={qrToken} qrState={qrState} validUntil={expiry ? formatDate(expiry) : null}
+              onRetry={() => loadQr(donor._id)} />
+          )}
+
+          {verified || loading ? (
+            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1.25, maxWidth: 560, width: '100%', mx: 'auto' }}>
+              <Button variant="contained" disableElevation startIcon={<FullscreenIcon />} disabled={!canExport}
+                onClick={() => setBigQr(true)} sx={actionSx}>
+                Show QR
+              </Button>
+              <Button variant="outlined" startIcon={<DownloadIcon />} disabled={!canExport || downloading}
+                onClick={handleDownload} sx={actionSx}>
+                {downloading ? 'Preparing…' : 'Download'}
+              </Button>
+              <Button variant="outlined" startIcon={<PrintIcon />} disabled={!canExport}
+                onClick={() => window.print()} sx={actionSx}>
+                Print
+              </Button>
             </Box>
-          </Box>
-        ) : (
-          <Box display="flex" alignItems="center" gap={1.5} mb={3}
-            sx={{ py: 1.5, px: 2.5, borderRadius: 2,
-              bgcolor: isDark ? 'rgba(217,119,6,0.1)' : '#fffbeb',
-              border: '1px solid rgba(217,119,6,0.3)' }}>
-            <PersonOffIcon sx={{ color: '#d97706', fontSize: 22, flexShrink: 0 }} />
-            <Box>
-              <Typography fontSize="0.85rem" fontWeight={700} color="#d97706">Not Yet Registered as Donor</Typography>
-              <Typography fontSize="0.75rem" color="text.secondary">
-                Register on the <Link href="/donate" style={{ color: '#dc2626', fontWeight: 600 }}>Donate page</Link> to get verified status.
-              </Typography>
-            </Box>
-          </Box>
-        )}
+          ) : (
+            <Button variant="contained" disableElevation component={Link} href="/donate" startIcon={<FavoriteBorderIcon />}
+              sx={{ ...actionSx, alignSelf: 'center', px: 3 }}>
+              Register as a donor
+            </Button>
+          )}
+        </Box>
 
-        {/* Blood-type selector — locked if verified, manual if not */}
-        {isVerified ? (
-          <Box mb={4} textAlign="center">
-            <Typography variant="subtitle2" fontWeight={700} color="text.secondary" mb={1}>
-              YOUR BLOOD TYPE
-            </Typography>
-            <Box display="inline-flex" alignItems="center" gap={1} sx={{
-              px: 3, py: 1.2, borderRadius: 3,
-              bgcolor: isDark ? `${BLOOD_COLORS[bloodType]}18` : `${BLOOD_COLORS[bloodType]}12`,
-              border: `2px solid ${BLOOD_COLORS[bloodType]}66`,
-            }}>
-              <BloodtypeIcon sx={{ color: BLOOD_COLORS[bloodType], fontSize: 20 }} />
-              <Typography fontWeight={900} fontSize="1.3rem" sx={{ color: BLOOD_COLORS[bloodType] }}>
-                {bloodType}
-              </Typography>
-              <CheckCircleIcon sx={{ color: '#16a34a', fontSize: 16, ml: 0.5 }} />
-            </Box>
-            <Typography variant="caption" color="text.disabled" display="block" mt={0.8}>
-              Confirmed from your donor record
-            </Typography>
-          </Box>
-        ) : (
-          <Box mb={4}>
-            <Typography variant="subtitle2" fontWeight={700} mb={1.5} color="text.secondary" textAlign="center">
-              SELECT YOUR BLOOD TYPE
-            </Typography>
-            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-              <ToggleButtonGroup
-                value={bloodType} exclusive
-                onChange={(_, v) => v && setBloodType(v)}
-                sx={{ flexWrap: 'wrap', gap: 0.5, justifyContent: 'center',
-                  '& .MuiToggleButtonGroup-grouped': { border: '1px solid', borderRadius: '8px !important', mx: 0 } }}>
-                {BLOOD_TYPES.map(t => (
-                  <ToggleButton key={t} value={t} size="small"
-                    sx={{
-                      fontWeight: 700, fontSize: '0.78rem', px: 1.5, py: 0.6, minWidth: 46,
-                      color: bloodType === t ? 'white !important' : BLOOD_COLORS[t],
-                      bgcolor: bloodType === t ? `${BLOOD_COLORS[t]} !important` : 'transparent',
-                      borderColor: `${BLOOD_COLORS[t]} !important`,
-                      '&:hover': { bgcolor: `${BLOOD_COLORS[t]}18` },
-                    }}>
-                    {t}
-                  </ToggleButton>
-                ))}
-              </ToggleButtonGroup>
-            </Box>
-          </Box>
-        )}
-
-        {/* ── The Card ── */}
-        <Box ref={cardRef} sx={{
-          borderRadius: 4, overflow: 'hidden',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
-          background: isDark ? '#1e1e1e' : '#fff',
-          border: `1px solid ${isDark ? '#2a2a2a' : '#e8e8e8'}`,
-        }}>
-          {/* Header strip */}
-          <Box sx={{
-            background: `linear-gradient(135deg, ${BLOOD_COLORS[bloodType]} 0%, #7f0000 100%)`,
-            px: 3, py: 2.5, display: 'flex', alignItems: 'center', gap: 1.5,
-          }}>
-            <FavoriteIcon sx={{ color: 'rgba(255,255,255,0.9)', fontSize: 22 }} />
-            <Box sx={{ flex: 1 }}>
-              <Typography fontWeight={900} fontSize="1rem" color="white" letterSpacing={0.3}>
-                BLOOD DONATED
-              </Typography>
-              <Typography fontSize="0.65rem"
-                sx={{ color: 'rgba(255,255,255,0.75)', letterSpacing: 1.5, textTransform: 'uppercase' }}>
-                Donor Identification Card
-              </Typography>
-            </Box>
-            <Chip label={bloodType} size="small" sx={{
-              bgcolor: 'rgba(255,255,255,0.22)', color: 'white',
-              fontWeight: 800, fontSize: '0.9rem', height: 32, px: 0.5,
-              border: '1.5px solid rgba(255,255,255,0.4)', backdropFilter: 'blur(4px)',
-            }} />
+        {/* Side panel */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 2, md: 2.5 } }}>
+          <Box sx={{ ...cardSx, p: { xs: 2, sm: 2.5 } }}>
+            <Typography sx={{ fontWeight: 800, fontSize: '1.05rem', mb: 0.5 }}>Donation status</Typography>
+            {loading ? (
+              [0, 1, 2].map((i) => <Skeleton key={i} height={52} />)
+            ) : (
+              <>
+                <InfoRow icon={<WaterDropIcon />} label="Blood type">{verified ? donor.bloodType : '—'}</InfoRow>
+                <InfoRow icon={<HistoryIcon />} label="Last donation">
+                  {verified && donor.lastDonation ? formatDate(donor.lastDonation) : 'None yet'}
+                </InfoRow>
+                <InfoRow icon={<EventAvailableOutlinedIcon />} label="Can donate">
+                  {!verified ? '—'
+                    : eligibleOn ? <Pill tone="warning">From {formatDate(eligibleOn)}</Pill>
+                    : donor.available ? <Pill tone="success">Now</Pill>
+                    : <Pill tone="neutral">Marked unavailable</Pill>}
+                </InfoRow>
+              </>
+            )}
           </Box>
 
-          {/* Card body */}
-          <Box sx={{ px: 3, py: 3, display: 'flex', gap: 3, alignItems: 'center' }}>
-            {/* Left: avatar + info */}
-            <Box sx={{ flex: 1 }}>
-              <Avatar sx={{
-                width: 72, height: 72, mb: 1.5,
-                bgcolor: BLOOD_COLORS[bloodType],
-                fontSize: '1.6rem', fontWeight: 800,
-                border: `3px solid ${BLOOD_COLORS[bloodType]}44`,
-                boxShadow: `0 4px 16px ${BLOOD_COLORS[bloodType]}55`,
-              }}>
-                {initials}
-              </Avatar>
-
-              <Typography fontWeight={800} fontSize="1.05rem" lineHeight={1.2} mb={0.4}>
-                {user?.fullName}
-              </Typography>
-              <Typography fontSize="0.72rem" color="text.secondary" mb={1.5}>
-                {user?.email}
-              </Typography>
-
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.6 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.7 }}>
-                  <Typography fontSize="0.68rem" color="text.disabled" sx={{ minWidth: 56 }}>DONOR ID</Typography>
-                  <Typography fontSize="0.72rem" fontWeight={700} fontFamily="monospace">{donorId}</Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.7 }}>
-                  <Typography fontSize="0.68rem" color="text.disabled" sx={{ minWidth: 56 }}>BLOOD TYPE</Typography>
-                  <Typography fontSize="0.72rem" fontWeight={800} sx={{ color: BLOOD_COLORS[bloodType] }}>
-                    {bloodType}
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.7 }}>
-                  <Typography fontSize="0.68rem" color="text.disabled" sx={{ minWidth: 56 }}>STATUS</Typography>
-                  {isVerified ? (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.4 }}>
-                      <VerifiedIcon sx={{ fontSize: 13, color: '#16a34a' }} />
-                      <Typography fontSize="0.72rem" fontWeight={700} color="#16a34a">Verified Donor</Typography>
-                    </Box>
-                  ) : (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.4 }}>
-                      <PersonOffIcon sx={{ fontSize: 13, color: '#d97706' }} />
-                      <Typography fontSize="0.72rem" fontWeight={700} color="#d97706">Unverified</Typography>
-                    </Box>
-                  )}
-                </Box>
-                {isVerified && isAvailable && (
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.7 }}>
-                    <Typography fontSize="0.68rem" color="text.disabled" sx={{ minWidth: 56 }}>AVAILABLE</Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.4 }}>
-                      <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: '#16a34a' }} />
-                      <Typography fontSize="0.72rem" fontWeight={700} color="#16a34a">Ready to donate</Typography>
-                    </Box>
+          <Box sx={{ ...cardSx, p: { xs: 2, sm: 2.5 } }}>
+            <Typography sx={{ fontWeight: 800, fontSize: '1.05rem', mb: 1.5 }}>How to use your card</Typography>
+            <Box component="ol" sx={{ listStyle: 'none', m: 0, p: 0, display: 'flex', flexDirection: 'column', gap: 1.75 }}>
+              {STEPS.map((s, i) => (
+                <Box component="li" key={s.title} sx={{ display: 'flex', gap: 1.5 }}>
+                  <Box aria-hidden="true" sx={{
+                    width: 28, height: 28, borderRadius: '50%', flexShrink: 0, display: 'grid', placeItems: 'center',
+                    bgcolor: 'primary.main', color: '#fff', fontWeight: 800, fontSize: '0.82rem',
+                  }}>
+                    {i + 1}
                   </Box>
-                )}
-              </Box>
+                  <Box>
+                    <Typography sx={{ fontWeight: 700, fontSize: '0.92rem' }}>{s.title}</Typography>
+                    <Typography variant="body2" color="text.secondary">{s.text}</Typography>
+                  </Box>
+                </Box>
+              ))}
             </Box>
-
-            {/* Right: QR code — encodes only a server-signed token, never raw claims */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.8, flexShrink: 0 }}>
-              <Box sx={{
-                p: 1.2, borderRadius: 2, minWidth: 110, minHeight: 110,
-                border: `2px solid ${BLOOD_COLORS[bloodType]}44`,
-                background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                {isVerified && qrToken ? (
-                  <QRCode
-                    value={qrToken}
-                    size={110}
-                    fgColor={BLOOD_COLORS[bloodType]}
-                    bgColor="#ffffff"
-                    level="M"
-                  />
-                ) : isVerified ? (
-                  <CircularProgress size={24} sx={{ color: BLOOD_COLORS[bloodType] }} />
-                ) : (
-                  <LockIcon sx={{ fontSize: 28, color: 'text.disabled' }} />
-                )}
-              </Box>
-              <Typography fontSize="0.6rem" color="text.disabled" textAlign="center">
-                {isVerified ? 'Scan to verify' : 'Register to unlock'}
-              </Typography>
+            <Box sx={{ mt: 2.25 }}>
+              <Notice tone="neutral" icon={<ShieldOutlinedIcon />}>
+                The QR holds a signed code only — none of your personal details. Only hospital staff can use it to look you up.
+              </Notice>
             </Box>
           </Box>
-
-          {/* Footer strip */}
-          <Box sx={{
-            px: 3, py: 1.2,
-            background: isDark ? '#111' : '#fafafa',
-            borderTop: `1px solid ${isDark ? '#2a2a2a' : '#f0f0f0'}`,
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          }}>
-            <Typography fontSize="0.6rem" color="text.disabled">BloodLife Cambodia · blooddonated.org</Typography>
-            <Typography fontSize="0.6rem" color="text.disabled" suppressHydrationWarning>{new Date().getFullYear()}</Typography>
-          </Box>
         </Box>
-
-        {/* Action buttons */}
-        <Box sx={{ display: 'flex', gap: 2, mt: 3 }}>
-          <Tooltip title="Download as PNG">
-            <Button fullWidth variant="contained" color="error" startIcon={<DownloadIcon />}
-              onClick={handleDownload}
-              sx={{ borderRadius: 3, fontWeight: 700, py: 1.3, textTransform: 'none',
-                boxShadow: '0 4px 16px rgba(183,28,28,0.35)' }}>
-              Download Card
-            </Button>
-          </Tooltip>
-          <Tooltip title="Print">
-            <Button fullWidth variant="outlined" color="error" startIcon={<PrintIcon />}
-              onClick={handlePrint}
-              sx={{ borderRadius: 3, fontWeight: 700, py: 1.3, textTransform: 'none' }}>
-              Print
-            </Button>
-          </Tooltip>
-        </Box>
-
-        {!isVerified && !loading && (
-          <Typography variant="caption" display="block" textAlign="center" mt={2} color="text.disabled">
-            Select your blood type above — register as a donor to get it auto-filled.
-          </Typography>
-        )}
       </Box>
+
+      {/* Large QR for scanning from a phone screen */}
+      <Dialog open={bigQr} onClose={() => setBigQr(false)} fullWidth maxWidth="xs" aria-labelledby="big-qr-title"
+        PaperProps={{ sx: { borderRadius: '20px' } }}>
+        <IconButton onClick={() => setBigQr(false)} aria-label="Close" sx={{ position: 'absolute', right: 10, top: 10 }}>
+          <CloseIcon />
+        </IconButton>
+        <DialogContent sx={{ textAlign: 'center', pt: 5, pb: 4 }}>
+          <Typography id="big-qr-title" sx={{ fontWeight: 800, fontSize: '1.25rem' }}>{user?.fullName}</Typography>
+          <Typography color="text.secondary" sx={{ fontSize: '0.9rem', mb: 2.5 }}>
+            {verified ? `${donor.bloodType} · ` : ''}{donorId}
+          </Typography>
+          {qrToken && (
+            <Box sx={{ p: 2, bgcolor: '#fff', borderRadius: '16px', border: '1px solid', borderColor: 'divider', width: 'min(100%, 300px)', mx: 'auto' }}>
+              <QRCode value={qrToken} size={512} fgColor="#1A1A1A" bgColor="#FFFFFF" level="M" style={{ width: '100%', height: 'auto' }} />
+            </Box>
+          )}
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+            Turn up your screen brightness for an easier scan.
+          </Typography>
+        </DialogContent>
+      </Dialog>
+
+      <Snackbar open={!!toast} autoHideDuration={5000} onClose={() => setToast(null)} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+        <Alert severity="error" onClose={() => setToast(null)} sx={{ borderRadius: '12px' }}>{toast}</Alert>
+      </Snackbar>
     </Box>
   );
 }
