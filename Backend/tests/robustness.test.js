@@ -1,6 +1,7 @@
 const request = require('supertest');
 const app = require('../src/app');
 const { createAdmin, signDonor } = require('./helpers');
+const { checkEnv } = require('../src/config/database');
 
 const bearer = (token) => ({ Authorization: `Bearer ${token}` });
 const donorToken = () => signDonor({ id: '64b000000000000000000001', email: 'me@test.com', fullName: 'Me' });
@@ -44,7 +45,7 @@ describe('requests that are not JSON objects get a 4xx, never a 500', () => {
   test('the assistant endpoint answers 400 for a non-JSON body', async () => {
     const res = await request(app).post('/api/chat').set('Content-Type', 'text/plain').send('hi');
     expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/messages/i);
+    expect(res.body.error).toMatch(/message/i);
   });
 });
 
@@ -92,5 +93,43 @@ describe('text fields must be text', () => {
     expect(up.status).toBe(200);
     const fs = require('fs'); const path = require('path');
     try { fs.unlinkSync(path.join(__dirname, '../uploads', path.basename(up.body.photo))); } catch { /* cleaned by setup too */ }
+  });
+});
+
+describe('health checks', () => {
+  test('GET / answers ok without touching the database', async () => {
+    const res = await request(app).get('/');
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe('ok');
+  });
+
+  test('GET /health reports the database connection', async () => {
+    const res = await request(app).get('/health');
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ status: 'ok', database: 'connected' });
+    expect(res.body.uptimeSeconds).toEqual(expect.any(Number));
+  });
+});
+
+describe('checkEnv', () => {
+  const full = { NODE_ENV: 'production', MONGO_URI: 'mongodb+srv://x', JWT_SECRET: 'a', QR_JWT_SECRET: 'b', FRONTEND_URL: 'https://x.vercel.app', GEMINI_API_KEY: 'k', SMTP_HOST: 'smtp.x' };
+
+  test('outside production nothing is required', () => {
+    expect(checkEnv({ NODE_ENV: 'development' })).toEqual({ missing: [], warnings: [] });
+  });
+
+  test('production with every setting passes', () => {
+    expect(checkEnv(full)).toEqual({ missing: [], warnings: [] });
+  });
+
+  test('production names missing or blank required settings', () => {
+    const { missing } = checkEnv({ ...full, MONGO_URI: '', JWT_SECRET: '   ', QR_JWT_SECRET: undefined });
+    expect(missing).toEqual(['MONGO_URI', 'JWT_SECRET', 'QR_JWT_SECRET']);
+  });
+
+  test('missing FRONTEND_URL or GEMINI_API_KEY is a warning, not a failure', () => {
+    const { missing, warnings } = checkEnv({ ...full, FRONTEND_URL: '', GEMINI_API_KEY: '' });
+    expect(missing).toEqual([]);
+    expect(warnings).toHaveLength(2);
   });
 });

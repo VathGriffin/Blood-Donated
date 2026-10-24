@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { BLOOD_TYPES } = require('../common/blood-types');
+const { stockStatus } = require('../common/stock-status');
 
 const inventorySchema = new mongoose.Schema({
   bloodType: {
@@ -20,10 +21,7 @@ const inventorySchema = new mongoose.Schema({
 inventorySchema.index({ hospital: 1, bloodType: 1 }, { unique: true });
 
 inventorySchema.virtual('status').get(function () {
-  if (this.units === 0)             return 'empty';
-  if (this.units < this.minUnits)   return 'critical';
-  if (this.units < this.minUnits * 2) return 'low';
-  return 'adequate';
+  return stockStatus(this.units, this.minUnits);
 });
 
 inventorySchema.set('toJSON', { virtuals: true });

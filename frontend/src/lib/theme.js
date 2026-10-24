@@ -49,6 +49,7 @@ const buildTones = (mode) => {
       error:   soft('error'),
       info:    soft('info'),
       neutral: { bg: neutral[100], fg: neutral[600], dot: neutral[400] },
+      purple:  { bg: '#F3E8FF', fg: '#6B21A8', dot: '#9333EA' },
     };
   }
   const soft = (k) => ({ bg: alpha(semantic[k].main, 0.16), fg: semantic[k].light, dot: semantic[k].light });
@@ -59,6 +60,7 @@ const buildTones = (mode) => {
     error:   soft('error'),
     info:    soft('info'),
     neutral: { bg: 'rgba(255,255,255,0.08)', fg: '#B5B5B5', dot: '#7A7A7A' },
+    purple:  { bg: alpha('#9333EA', 0.18), fg: '#C084FC', dot: '#C084FC' },
   };
 };
 
@@ -208,6 +210,13 @@ export function buildTheme(mode = 'light') {
       },
       MuiDialogTitle: {
         styleOverrides: { root: { fontSize: '1.125rem', fontWeight: 700, padding: '20px 24px 12px' } },
+      },
+      MuiDialogContent: {
+        styleOverrides: {
+          // MUI removes the top padding of content that follows a DialogTitle, which clips the floating
+          // label of a text field placed first ("Full Name" cut in half). Give such content room for it.
+          root: { '.MuiDialogTitle-root + &:not(.MuiDialogContent-dividers):has(.MuiInputLabel-outlined)': { paddingTop: 8 } },
+        },
       },
       MuiDialogActions: {
         styleOverrides: { root: { padding: '12px 24px 20px' } },

@@ -78,6 +78,7 @@ export const UserAuthProvider = ({ children }) => {
         email:    userData.email,
         photo:    userData.photo || null,
         phone:    userData.phone || '',
+        bloodType: userData.bloodType || '',
       } : null,
       isAuth: !!userData?.token,
       ready,

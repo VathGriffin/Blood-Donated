@@ -2,14 +2,15 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import WaterDropIcon from '@mui/icons-material/WaterDrop';
 import {
   Avatar, Box, Drawer, List, ListItemButton, ListItemIcon, ListItemText, Typography,
   useTheme,
 } from '@mui/material';
 import BrandLogo from './BrandLogo';
 import API_BASE from '@/lib/config';
-import { BRAND } from '@/lib/brand';
-import { ROLE_CONFIG, isItemActive } from '@/lib/navigation';
+import { BRAND, DASHBOARD_BRAND } from '@/lib/brand';
+import { ROLES, ROLE_CONFIG, isItemActive } from '@/lib/navigation';
 
 function UserCard({ profile }) {
   const sb = useTheme().custom.sidebar;
@@ -25,21 +26,31 @@ function UserCard({ profile }) {
       </Avatar>
       <Box sx={{ minWidth: 0 }}>
         <Typography noWrap sx={{ color: '#fff', fontWeight: 700, fontSize: '0.85rem', lineHeight: 1.3 }}>{profile.name}</Typography>
-        <Typography noWrap sx={{ color: sb.text, fontSize: '0.72rem', lineHeight: 1.3 }}>{profile.subtitle}</Typography>
+        <Typography noWrap sx={{ color: sb.text, fontSize: '0.72rem', lineHeight: 1.3, display: 'flex', alignItems: 'center', gap: 0.6 }}>
+          <Box component="span" aria-hidden="true" sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: '#22C55E', flexShrink: 0 }} />
+          {profile.subtitle}
+        </Typography>
       </Box>
     </Box>
   );
 }
 
-function SidebarContent({ role, profile, onNavigate }) {
+function SidebarContent({ role, profile, badges = {}, onNavigate }) {
   const pathname = usePathname();
   const sb = useTheme().custom.sidebar;
   const cfg = ROLE_CONFIG[role];
 
   return (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', background: sb.bgGradient, color: sb.text }}>
+    <Box sx={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column', background: sb.bgGradient, color: sb.text, '& > *': { position: 'relative' } }}>
+      {/* Faint blood-drop watermark behind the menu — decoration only */}
+      <WaterDropIcon aria-hidden="true" sx={{
+        position: 'absolute !important', left: '50%', bottom: 150, transform: 'translateX(-50%)',
+        fontSize: 190, color: '#fff', opacity: 0.06, pointerEvents: 'none',
+      }} />
       <Box sx={{ px: 2.5, height: 76, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-        <BrandLogo href={cfg.homePath} caption={BRAND.tagline} onClick={onNavigate} />
+        {/* Donors see the public "Save Lives Together" tagline; staff keep the management one. */}
+        <BrandLogo href={cfg.homePath} name={DASHBOARD_BRAND.name}
+          caption={role === ROLES.DONOR ? BRAND.tagline : DASHBOARD_BRAND.tagline} wrapCaption onClick={onNavigate} />
       </Box>
 
       <Box
@@ -66,21 +77,36 @@ function SidebarContent({ role, profile, onNavigate }) {
                     onClick={onNavigate}
                     aria-current={active ? 'page' : undefined}
                     sx={{
-                      mb: 0.5, py: 1.1, px: 1.75,
+                      position: 'relative', mb: 0.5, py: 1.1, px: 1.75, borderRadius: '10px',
                       color: active ? sb.textActive : sb.text,
                       bgcolor: active ? sb.itemActive : 'transparent',
+                      boxShadow: active ? 'inset 0 0 0 1px rgba(255,255,255,0.08)' : 'none',
                       transition: 'background-color .15s ease, color .15s ease',
+                      // Bar beside the active item, so the current page doesn't rely on tint alone.
+                      '&::before': {
+                        content: '""', position: 'absolute', left: -12, top: 8, bottom: 8, width: 4,
+                        borderRadius: '0 4px 4px 0', bgcolor: sb.indicator,
+                        opacity: active ? 1 : 0, transition: 'opacity .15s ease',
+                      },
                       '&:hover': { bgcolor: active ? sb.itemActive : sb.itemHover, color: sb.textActive },
                       '&.Mui-focusVisible': { outlineColor: '#FFFFFF' },
                     }}
                   >
-                    <ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}>
+                    <ListItemIcon sx={{ minWidth: 38, color: 'inherit', opacity: active ? 1 : 0.85 }}>
                       <Icon sx={{ fontSize: 20 }} />
                     </ListItemIcon>
                     <ListItemText
                       primary={item.label}
                       slotProps={{ primary: { sx: { fontSize: '0.875rem', fontWeight: active ? 700 : 500, letterSpacing: '-0.005em' } } }}
                     />
+                    {item.badge && badges[item.href] > 0 && (
+                      <Box component="span" aria-label={`${badges[item.href]} new`} sx={{
+                        minWidth: 20, height: 20, px: 0.6, borderRadius: '999px', display: 'grid', placeItems: 'center',
+                        bgcolor: '#fff', color: 'primary.main', fontSize: '0.7rem', fontWeight: 800,
+                      }}>
+                        {badges[item.href] > 99 ? '99+' : badges[item.href]}
+                      </Box>
+                    )}
                   </ListItemButton>
                 );
               })}
@@ -113,7 +139,7 @@ function SidebarContent({ role, profile, onNavigate }) {
  * drawer controlled by `open` / `onClose`. Items come from ROLE_CONFIG — see the note
  * in lib/navigation.js: hiding links is presentation, not access control.
  */
-export default function DashboardSidebar({ role, profile, open, onClose }) {
+export default function DashboardSidebar({ role, profile, badges, open, onClose }) {
   const { layout } = useTheme().custom;
   const paper = { width: layout.sidebarWidth, boxSizing: 'border-box', border: 0, backgroundImage: 'none' };
 
@@ -124,7 +150,7 @@ export default function DashboardSidebar({ role, profile, open, onClose }) {
         open
         sx={{ display: { xs: 'none', md: 'block' }, width: layout.sidebarWidth, flexShrink: 0, '& .MuiDrawer-paper': paper }}
       >
-        <SidebarContent role={role} profile={profile} />
+        <SidebarContent role={role} profile={profile} badges={badges} />
       </Drawer>
       <Drawer
         variant="temporary"
@@ -133,7 +159,7 @@ export default function DashboardSidebar({ role, profile, open, onClose }) {
         ModalProps={{ keepMounted: true }}
         sx={{ display: { xs: 'block', md: 'none' }, '& .MuiDrawer-paper': { ...paper, maxWidth: '86vw' } }}
       >
-        <SidebarContent role={role} profile={profile} onNavigate={onClose} />
+        <SidebarContent role={role} profile={profile} badges={badges} onNavigate={onClose} />
       </Drawer>
     </>
   );

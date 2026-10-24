@@ -186,7 +186,7 @@ describe('POST /api/requests only saves the fields a requester may set', () => {
   const form = { hospitalName: 'Calmette Hospital', patientName: 'Sok Dara', bloodType: 'O+', unitsNeeded: 2, urgency: 'High', reason: 'Surgery', contact: '0912345678' };
 
   test('status, fulfilment fields, photo and hospital link cannot be forced by a visitor', async () => {
-    const hospital = await createHospital();
+    const hospital = await createHospital({ name: 'Some Other Hospital' });
     const res = await submit({
       ...form, status: 'Fulfilled', fulfilledAt: '2020-01-01', fulfilledBy: '64b000000000000000000001',
       photo: '/uploads/evil.png', hospital: String(hospital._id), _id: '64b000000000000000000002',
@@ -194,6 +194,27 @@ describe('POST /api/requests only saves the fields a requester may set', () => {
     expect(res.status).toBe(201);
     expect(res.body).toMatchObject({ status: 'Pending', fulfilledAt: null, fulfilledBy: null, photo: null, hospital: null });
     expect(res.body._id).not.toBe('64b000000000000000000002');
+  });
+
+  test('a request is linked to the registered hospital it names, so that hospital\'s staff see it', async () => {
+    const hospital = await createHospital();
+    const { token: staffToken } = await createHospitalStaff(hospital._id);
+    const res = await submit({ ...form, hospitalName: '  calmette hospital ' }, donorToken('donor@test.com'));
+    expect(res.status).toBe(201);
+    expect(res.body.hospital).toBe(String(hospital._id));
+    const list = await request(app).get(`/api/requests?hospital=${hospital._id}`).set(bearer(staffToken));
+    expect(list.status).toBe(200);
+    expect(list.body.map((r) => r._id)).toEqual([res.body._id]);
+  });
+
+  test('existing unlinked requests are linked to their hospital by name', async () => {
+    const { linkUnassignedRequests } = require('../src/requests/link-hospital');
+    const hospital = await createHospital();
+    const old = await BloodRequest.create({ ...form, hospital: null });
+    const unknown = await BloodRequest.create({ ...form, hospitalName: 'Not Registered', hospital: null });
+    expect(await linkUnassignedRequests()).toBe(1);
+    expect(String((await BloodRequest.findById(old._id)).hospital)).toBe(String(hospital._id));
+    expect((await BloodRequest.findById(unknown._id)).hospital).toBeNull();
   });
 
   test('a visitor cannot file a request into someone else\'s profile', async () => {

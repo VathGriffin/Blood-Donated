@@ -47,7 +47,7 @@ export default function ScanDonorQr() {
       await axios.patch(`${API_BASE}/api/appointments/${appointment._id}/check-in`, {},
         { headers: { Authorization: `Bearer ${token}` } });
       setAppointment({ ...appointment, status: 'CheckedIn' });
-    } catch (err) {
+    } catch {
       // surfaced inline below via appointment.status staying unchanged
     } finally {
       setCheckingIn(false);

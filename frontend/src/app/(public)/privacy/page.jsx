@@ -46,7 +46,7 @@ function Section({ id, icon, title, children, isDark, border, card }) {
   );
 }
 
-function Bullet({ children, isDark }) {
+function Bullet({ children }) {
   return (
     <Box display="flex" gap={1.5} mb={1}>
       <CheckCircleIcon sx={{ fontSize: 16, color: "#dc2626", mt: 0.3, flexShrink: 0 }} />
@@ -153,7 +153,7 @@ export default function PrivacyPolicy() {
           <Bullet isDark={isDark}><strong>Partner hospitals:</strong> Your contact information may be shared with verified partner hospitals when a blood match is confirmed and you have consented</Bullet>
           <Bullet isDark={isDark}><strong>Legal obligations:</strong> We may disclose data if required by Cambodian law or court order</Bullet>
           <Bullet isDark={isDark}><strong>Service providers:</strong> Cloud infrastructure providers (MongoDB Atlas) under strict data processing agreements</Bullet>
-          <Bullet isDark={isDark}><strong>AI assistant:</strong> Chat messages sent to the AI assistant are processed by Anthropic&apos;s API and are not stored on our servers</Bullet>
+          <Bullet isDark={isDark}><strong>AI assistant:</strong> Chat messages sent to the AI assistant are processed by Google&apos;s Gemini API and are not stored on our servers</Bullet>
         </Section>
 
         {/* 4. Security */}
@@ -198,9 +198,9 @@ export default function PrivacyPolicy() {
           ))}
           <Typography variant="body2" color="text.secondary" mt={2} lineHeight={1.8}>
             To exercise any of these rights, contact us at{" "}
-            <Box component="a" href="mailto:Vath.V211006@sis.hust.edu.vn"
+            <Box component="a" href="mailto:support@bloodlife.kh"
               sx={{ color: "#dc2626", textDecoration: "none", fontWeight: 600 }}>
-              Vath.V211006@sis.hust.edu.vn
+              support@bloodlife.kh
             </Box>. We will respond within 30 days.
           </Typography>
         </Section>
@@ -222,12 +222,12 @@ export default function PrivacyPolicy() {
           <Box sx={{ p: 2.5, borderRadius: "12px", bgcolor: isDark ? "#1a1a1a" : "#f8f8f8", border: `1px solid ${border}` }}>
             <Typography fontWeight={700} fontSize="0.9rem" mb={1} sx={{ color: isDark ? "#f5f5f5" : "#111" }}>BloodLife Data Controller</Typography>
             <Typography variant="body2" color="text.secondary" lineHeight={2}>
-              Institute of Technology of Cambodia<br />
-              Phnom Penh, Cambodia<br />
+              Hanoi University of Science and Technology (HUST)<br />
+              Hanoi, Vietnam<br />
               Email:{" "}
-              <Box component="a" href="mailto:Vath.V211006@sis.hust.edu.vn"
+              <Box component="a" href="mailto:support@bloodlife.kh"
                 sx={{ color: "#dc2626", textDecoration: "none", fontWeight: 600 }}>
-                Vath.V211006@sis.hust.edu.vn
+                support@bloodlife.kh
               </Box>
             </Typography>
           </Box>

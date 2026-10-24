@@ -10,8 +10,11 @@ node_modules/
 Backend/uploads/*
 !Backend/uploads/.gitkeep
 
-# React build output
-frontend/build/
+# Build output and tooling caches
+.next/
+out/
+.vercel/
+coverage/
 
 # Logs
 npm-debug.log*

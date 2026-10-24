@@ -31,7 +31,6 @@ describe('staff profile photo', () => {
       .attach('photo', png, { filename: 'me.png', contentType: 'image/png' });
     const first = await send();
     track(first.body.photo);
-    await new Promise((r) => setTimeout(r, 5)); // filenames embed a timestamp
     const second = await send();
     track(second.body.photo);
 

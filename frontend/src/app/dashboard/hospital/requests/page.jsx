@@ -19,12 +19,19 @@ const TABS = [
   { key: 'Approved', label: 'Approved' },
   { key: 'Fulfilled', label: 'Fulfilled' },
   { key: 'Rejected', label: 'Rejected' },
+  { key: 'Cancelled', label: 'Cancelled' },
 ];
 
 
 // Steps a request moves through. Only two timestamps exist in the data (submitted =
 // createdAt, fulfilled = fulfilledAt), so the others show a state, not an invented time.
 function timelineFor(r) {
+  if (r.status === 'Cancelled') {
+    return [
+      { label: 'Submitted', state: 'done', note: formatDateTime(r.createdAt) },
+      { label: 'Cancelled', state: 'error', note: r.cancelledAt ? `By the requester · ${formatDateTime(r.cancelledAt)}` : 'By the requester' },
+    ];
+  }
   if (r.status === 'Rejected') {
     return [
       { label: 'Submitted', state: 'done', note: formatDateTime(r.createdAt) },

@@ -13,6 +13,8 @@ const staffSchema = new mongoose.Schema(
     },
     password: { type: String, required: true },
     photo: { type: String, default: null },
+    // When this admin last opened the notification list (drives the unread badge).
+    notificationsSeenAt: { type: Date, default: null },
     role: { type: String, enum: ['admin', 'hospital_staff'], required: true },
     hospital: {
       type: mongoose.Schema.Types.ObjectId,

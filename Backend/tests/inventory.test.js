@@ -14,7 +14,8 @@ describe('inventory', () => {
   // Regression: status is a schema virtual and used to be dropped by .lean({ virtuals: true }),
   // so every inventory response lacked it and /stats always reported 0 critical.
   test('GET / includes the computed stock status for each blood type', async () => {
-    await request(app).get('/api/inventory'); // seed defaults (A+ 45, B- 8, ...)
+    await request(app).get('/api/inventory'); // seed the (empty) central pool
+    await Inventory.updateMany({ hospital: null }, { units: 50 });
     await Inventory.updateOne({ bloodType: 'A-', hospital: null }, { units: 0 });
     await Inventory.updateOne({ bloodType: 'B-', hospital: null }, { units: 8 });  // < min 10
     await Inventory.updateOne({ bloodType: 'B+', hospital: null }, { units: 15 }); // < 2 x min
@@ -26,13 +27,36 @@ describe('inventory', () => {
     expect(byType['O+']).toBe('adequate');
   });
 
+  test('the central pool is seeded empty, never with made-up units', async () => {
+    const res = await request(app).get('/api/inventory');
+    expect(res.body.every((i) => i.units === 0 && i.status === 'empty')).toBe(true);
+  });
+
   test('GET /stats counts critical and adequate types from the computed status', async () => {
     await request(app).get('/api/inventory');
+    await Inventory.updateMany({ hospital: null }, { units: 50 });
     await Inventory.updateOne({ bloodType: 'A-', hospital: null }, { units: 0 });
+    await Inventory.updateOne({ bloodType: 'B-', hospital: null }, { units: 8 });
     const res = await request(app).get('/api/inventory/stats');
     expect(res.status).toBe(200);
-    expect(res.body.critical).toBe(2); // A- empty + B- (8 units, min 10) from the seeded defaults
-    expect(res.body.adequate).toBeGreaterThan(0);
+    expect(res.body.critical).toBe(2); // A- empty + B- (8 units, min 10)
+    expect(res.body.adequate).toBe(6);
+  });
+
+  test('GET /network sums the central pool and every hospital per blood type', async () => {
+    const hospital = await createHospital();
+    const { token } = await createHospitalStaff(hospital._id);
+    await request(app).get('/api/inventory');
+    await Inventory.updateOne({ bloodType: 'O+', hospital: null }, { units: 30 });
+    await request(app).put('/api/inventory/O+').set('Authorization', `Bearer ${token}`).send({ units: 25 });
+    const res = await request(app).get('/api/inventory/network');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(8);
+    const byType = Object.fromEntries(res.body.map((i) => [i.bloodType, i]));
+    expect(byType['O+'].units).toBe(55);
+    expect(byType['O+'].status).toBe('adequate'); // 55 >= 2 x (10 + 10)
+    expect(byType['AB-'].units).toBe(0);
+    expect(byType['AB-'].status).toBe('empty');
   });
 
   test('a hospital\'s own rows carry a status too', async () => {

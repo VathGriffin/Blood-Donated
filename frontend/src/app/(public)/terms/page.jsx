@@ -110,7 +110,7 @@ export default function Terms() {
         <Section title="5. Intellectual Property" isDark={isDark} border={border} card={card}>
           <Typography variant="body2" color="text.secondary" lineHeight={1.8}>
             All content, design, code, and trademarks on the BloodLife platform are the intellectual property of the development team
-            at the Institute of Technology of Cambodia. You may not copy, modify, distribute, or use any part of the platform
+            at Hanoi University of Science and Technology (HUST). You may not copy, modify, distribute, or use any part of the platform
             without prior written permission, except as expressly permitted by these terms.
           </Typography>
         </Section>
@@ -152,9 +152,9 @@ export default function Terms() {
         }}>
           <Typography variant="body2" color="text.secondary" lineHeight={1.8}>
             Questions about these terms? Contact us at{" "}
-            <Box component="a" href="mailto:Vath.V211006@sis.hust.edu.vn"
+            <Box component="a" href="mailto:support@bloodlife.kh"
               sx={{ color: "#dc2626", textDecoration: "none", fontWeight: 700 }}>
-              Vath.V211006@sis.hust.edu.vn
+              support@bloodlife.kh
             </Box>
           </Typography>
         </Paper>

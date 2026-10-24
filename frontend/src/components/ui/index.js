@@ -8,3 +8,8 @@ export { default as StatusBadge } from './StatusBadge';
 export { default as TableCard } from './TableCard';
 export { default as EmptyState } from './EmptyState';
 export { default as ResponsiveGrid } from './ResponsiveGrid';
+export { default as CardError } from './CardError';
+export { default as BloodPill } from './BloodPill';
+export { default as RowMenu } from './RowMenu';
+export { Sparkline, TrendChip } from './Trend';
+export { compactHeadCell, compactTableContainerSx } from './compactTable';

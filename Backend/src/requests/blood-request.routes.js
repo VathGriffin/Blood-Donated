@@ -1,4 +1,5 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const path    = require('path');
 const fs      = require('fs');
 const { body, validationResult } = require('express-validator');
@@ -10,6 +11,7 @@ const { BLOOD_TYPES } = require('../common/blood-types');
 const { assertHospitalScope } = require('../common/middleware/assert-hospital-scope');
 const { createImageUpload } = require('../common/upload');
 const { sendError } = require('../common/middleware/error-handler');
+const { findHospitalIdByName } = require('./link-hospital');
 
 const validateRequest = [
   body('patientName').trim().notEmpty().withMessage('Patient name is required').isLength({ max: 100 }),
@@ -33,6 +35,8 @@ router.post('/', optionalAuth, validateRequest, async (req, res) => {
   try {
     const data = Object.fromEntries(REQUEST_FIELDS.filter((key) => req.body[key] !== undefined).map((key) => [key, req.body[key]]));
     data.userEmail = req.user?.email || '';
+    // Link to the registered hospital so it shows up on that hospital's staff dashboard.
+    data.hospital = await findHospitalIdByName(data.hospitalName);
     res.status(201).json(await new BloodRequest(data).save());
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -50,7 +54,7 @@ router.post('/:id/photo', requireRole('admin', 'hospital_staff'), (req, res, nex
     const request = await BloodRequest.findById(req.params.id);
     if (!request) return res.status(404).json({ error: 'Request not found' });
     if (!assertHospitalScope(req, request)) {
-      fs.unlinkSync(req.file.path);
+      fs.rmSync(req.file.path, { force: true }); // already gone is fine — don't turn a 401/403 into a 500
       return res.status(403).json({ error: "Not your hospital's request" });
     }
     if (request.photo) {
@@ -111,6 +115,37 @@ router.get('/:id', readRequests, async (req, res) => {
   }
 });
 
+// The requester withdraws their own request. Only a Pending request can be cancelled: once it is
+// approved the hospital is already acting on it, so the donor contacts them instead. Ownership and
+// status are checked in the same atomic update, so a double-click or two tabs can't cancel twice
+// and a request approved a moment earlier is never flipped to Cancelled.
+router.patch('/:id/cancel', requireRole('donor'), async (req, res) => {
+  const { reason = '' } = req.body || {};
+  if (typeof reason !== 'string' || reason.trim().length > 500)
+    return res.status(400).json({ error: 'Cancellation reason must be text of at most 500 characters.' });
+  if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ error: 'Request not found' });
+  try {
+    const own = req.user.email.toLowerCase();
+    const cancelled = await BloodRequest.findOneAndUpdate(
+      { _id: req.params.id, userEmail: own, status: 'Pending' },
+      { $set: { status: 'Cancelled', cancelledAt: new Date(), cancellationReason: reason.trim() } },
+      { new: true, runValidators: true }
+    );
+    if (cancelled) return res.json(cancelled);
+
+    // Nothing matched: say why, without revealing other people's requests (those are a 404).
+    const existing = await BloodRequest.findById(req.params.id).select('userEmail status').lean();
+    if (!existing || existing.userEmail !== own) return res.status(404).json({ error: 'Request not found' });
+    const why = {
+      Cancelled: 'This request has already been cancelled.',
+      Approved: 'This request has already been approved, so it can no longer be cancelled here. Please contact the hospital or send us a message.',
+    }[existing.status] || `A ${existing.status.toLowerCase()} request can't be cancelled.`;
+    res.status(409).json({ error: why, status: existing.status });
+  } catch (err) {
+    sendError(res, err, req);
+  }
+});
+
 router.patch('/:id/status', requireRole('admin', 'hospital_staff'), async (req, res) => {
   const { status } = req.body;
   if (!['Pending', 'Approved', 'Rejected'].includes(status))
@@ -120,6 +155,9 @@ router.patch('/:id/status', requireRole('admin', 'hospital_staff'), async (req, 
     if (!request) return res.status(404).json({ error: 'Request not found' });
     if (!assertHospitalScope(req, request))
       return res.status(403).json({ error: "Not your hospital's request" });
+    // A request the requester withdrew stays withdrawn — staff can't approve or reopen it.
+    if (request.status === 'Cancelled')
+      return res.status(409).json({ error: 'This request was cancelled by the requester.' });
     request.status = status;
     await request.save();
     res.json(request);
@@ -165,7 +203,13 @@ router.put('/:id', requireRole('admin', 'hospital_staff'), async (req, res) => {
     if (!request) return res.status(404).json({ error: 'Request not found' });
     if (!assertHospitalScope(req, request))
       return res.status(403).json({ error: "Not your hospital's request" });
-    const updated = await BloodRequest.findByIdAndUpdate(req.params.id, { $set: req.body }, { new: true });
+    const changes = { ...req.body };
+    // Renaming the hospital moves the request to that hospital's dashboard (admins only — staff
+    // keep their own hospital's requests, so a rename can't push a request out of their scope).
+    delete changes.hospital;
+    if (typeof changes.hospitalName === 'string' && !req.staff)
+      changes.hospital = await findHospitalIdByName(changes.hospitalName);
+    const updated = await BloodRequest.findByIdAndUpdate(req.params.id, { $set: changes }, { new: true });
     res.json(updated);
   } catch (err) {
     res.status(400).json({ error: err.message });

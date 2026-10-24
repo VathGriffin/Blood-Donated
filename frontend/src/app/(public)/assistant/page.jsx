@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Box, Container, Typography, Paper, TextField, IconButton,
   useTheme, Chip, Avatar,
@@ -11,8 +11,8 @@ import WifiOffIcon from '@mui/icons-material/WifiOff';
 import { useUserAuth } from '@/store/UserAuthContext';
 import { detectLanguage, QUICK_PROMPTS } from '@/lib/chatbot-kb';
 import { askAssistant } from '@/lib/chat-client';
-import ChatMessage from '@/components/ChatMessage';
-import { URGENT_STRIP_HEIGHT } from '@/components/Header';
+import ChatMessage from '@/components/chat/ChatMessage';
+import { URGENT_STRIP_HEIGHT } from '@/components/layout/Header';
 
 export default function AssistantPage() {
   const theme = useTheme();
@@ -49,13 +49,12 @@ export default function AssistantPage() {
     const lang = detectLanguage(content);
     setPromptLang(lang);
 
-    const history = [...messages, { role: 'user', content }];
-    setMessages(history);
+    setMessages([...messages, { role: 'user', content }]);
     setInput('');
     setLoading(true);
 
-    const reply = await askAssistant({ history, content, lang, token });
-    setMessages(prev => [...prev, { role: 'assistant', content: reply.content, powered: reply.powered, offline: reply.offline }]);
+    const reply = await askAssistant({ history: messages, content, lang, token });
+    setMessages(prev => [...prev, { role: 'assistant', content: reply.content, offline: reply.offline, error: reply.error }]);
     setLoading(false);
     inputRef.current?.focus();
   };
@@ -176,7 +175,7 @@ export default function AssistantPage() {
                             ? <WifiOffIcon sx={{ fontSize: 12, color: 'text.disabled' }} />
                             : <SmartToyIcon sx={{ fontSize: 12, color: 'text.disabled' }} />}
                           <Typography variant="caption" color="text.disabled" fontSize="0.68rem">
-                            {msg.offline ? 'Offline answer — AI temporarily unavailable' : 'Powered by Claude AI'}
+                            {msg.offline ? `Offline answer — ${msg.error || 'AI temporarily unavailable'}` : 'Powered by Google Gemini'}
                           </Typography>
                         </Box>
                       )}

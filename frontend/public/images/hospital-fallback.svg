@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 220" preserveAspectRatio="xMidYMid slice">
+  <!-- Neutral stand-in shown when a hospital has no photo (or its photo fails to load). -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#E8EEF6"/>
+      <stop offset="100%" stop-color="#F8FAFC"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="220" fill="url(#sky)"/>
+  <rect y="186" width="400" height="34" fill="#E2E8F0"/>
+  <rect x="44" y="96" width="60" height="96" fill="#E2E8F0"/>
+  <rect x="296" y="96" width="60" height="96" fill="#E2E8F0"/>
+  <rect x="72" y="58" width="256" height="134" fill="#FFFFFF" stroke="#D8E0EA"/>
+  <rect x="64" y="50" width="272" height="10" rx="3" fill="#CBD5E1"/>
+  <g fill="#C7D6E8">
+    <rect x="88" y="76" width="24" height="16" rx="3"/><rect x="128" y="76" width="24" height="16" rx="3"/>
+    <rect x="248" y="76" width="24" height="16" rx="3"/><rect x="288" y="76" width="24" height="16" rx="3"/>
+    <rect x="88" y="104" width="24" height="16" rx="3"/><rect x="128" y="104" width="24" height="16" rx="3"/>
+    <rect x="248" y="104" width="24" height="16" rx="3"/><rect x="288" y="104" width="24" height="16" rx="3"/>
+    <rect x="88" y="132" width="24" height="16" rx="3"/><rect x="128" y="132" width="24" height="16" rx="3"/>
+    <rect x="248" y="132" width="24" height="16" rx="3"/><rect x="288" y="132" width="24" height="16" rx="3"/>
+  </g>
+  <rect x="168" y="70" width="64" height="122" fill="#F8FAFC" stroke="#D8E0EA"/>
+  <rect x="184" y="78" width="32" height="32" rx="7" fill="#FFFFFF" stroke="#F3C1C7"/>
+  <rect x="196" y="83" width="8" height="22" rx="2" fill="#B91C2C"/>
+  <rect x="189" y="90" width="22" height="8" rx="2" fill="#B91C2C"/>
+  <rect x="180" y="148" width="40" height="44" fill="#C7D6E8"/>
+  <rect x="199" y="148" width="2" height="44" fill="#FFFFFF"/>
+  <circle cx="26" cy="170" r="16" fill="#CFE3D4"/><rect x="24" y="178" width="4" height="12" fill="#A3B8A8"/>
+  <circle cx="374" cy="170" r="16" fill="#CFE3D4"/><rect x="372" y="178" width="4" height="12" fill="#A3B8A8"/>
+</svg>

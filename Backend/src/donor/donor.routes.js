@@ -74,6 +74,25 @@ router.get('/lookup', requireRole('donor'), async (req, res) => {
   }
 });
 
+// Lets the signed-in donor flip their own availability — scoped to their own record by
+// email the same way /lookup is, so nobody can toggle another donor's status.
+router.patch('/me/availability', requireRole('donor'), async (req, res) => {
+  try {
+    const { available } = req.body;
+    if (typeof available !== 'boolean')
+      return res.status(400).json({ message: 'available must be a boolean' });
+    const donor = await Donor.findOneAndUpdate(
+      { email: req.user.email.toLowerCase().trim() },
+      { available },
+      { new: true }
+    ).select('available');
+    if (!donor) return res.status(404).json({ message: 'You are not registered as a donor yet.' });
+    res.json({ available: donor.available });
+  } catch (err) {
+    sendError(res, err, req);
+  }
+});
+
 router.get('/:id', optionalAuth, async (req, res) => {
   try {
     const query = Donor.findById(req.params.id);
@@ -161,7 +180,7 @@ router.post('/:id/photo', (req, res, next) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
     if (!canUploadPhoto(req, req.params.id)) {
-      fs.unlinkSync(req.file.path);
+      fs.rmSync(req.file.path, { force: true }); // already gone is fine — don't turn a 401/403 into a 500
       return res.status(401).json({ message: 'Unauthorized' });
     }
     const donor = await Donor.findById(req.params.id);

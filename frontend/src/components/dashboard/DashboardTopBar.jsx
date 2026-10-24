@@ -7,9 +7,12 @@ import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined';
 import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 import NotificationMenu from './NotificationMenu';
+import AdminNotifications from '@/components/notifications/AdminNotifications';
+import DonorNotifications from '@/components/layout/DonorNotifications';
 import ProfileMenu from './ProfileMenu';
 import { ColorModeContext } from '@/lib/ThemeContext';
-import { ROLE_CONFIG, findActive } from '@/lib/navigation';
+import { ROLES, ROLE_CONFIG, findActive } from '@/lib/navigation';
+import SiteSearch from '@/components/layout/SiteSearch';
 
 /**
  * Minimal sticky bar: utilities on the right (hospital, notifications, theme, account).
@@ -44,7 +47,11 @@ export default function DashboardTopBar({ role, profile, hospitalName, notificat
         <Typography component="p" noWrap sx={{ display: { md: 'none' }, fontSize: '1rem', fontWeight: 700, letterSpacing: '-0.01em', flexGrow: 1, minWidth: 0 }}>
           {active?.item.label || cfg.label}
         </Typography>
-        <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'block' } }} />
+        {/* Donors get the site-wide search (hospitals, donor counts, their own appointments). */}
+        <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'block' }, minWidth: 0 }}>
+          {role === ROLES.DONOR && <SiteSearch variant="field" />}
+        </Box>
+        {role === ROLES.DONOR && <Box sx={{ display: { md: 'none' } }}><SiteSearch size={40} /></Box>}
 
         {hospitalName && (
           <Chip
@@ -65,7 +72,10 @@ export default function DashboardTopBar({ role, profile, hospitalName, notificat
           />
         )}
 
-        <NotificationMenu items={notifications.items} count={notifications.count} loading={notifications.loading} />
+        {/* Admins and donors get their real activity feed; hospital staff keep the live to-do counts. */}
+        {role === ROLES.ADMIN ? <AdminNotifications />
+          : role === ROLES.DONOR ? <DonorNotifications size={40} />
+          : <NotificationMenu items={notifications.items} count={notifications.count} loading={notifications.loading} />}
 
         <Tooltip title={mode === 'dark' ? 'Light mode' : 'Dark mode'}>
           <IconButton onClick={toggleColorMode} aria-label="Toggle colour mode" sx={{ color: 'text.secondary' }}>

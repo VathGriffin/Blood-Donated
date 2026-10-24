@@ -7,7 +7,9 @@ import { MailOutline, LockOutlined } from '@mui/icons-material';
 import axios from 'axios';
 import { useUserAuth } from '@/store/UserAuthContext';
 import API_BASE from '@/lib/config';
-import SocialButtons from '@/components/SocialButtons';
+import { nextPath, nextQuery } from '@/lib/next-path';
+import { apiErrorMessage } from '@/lib/api-error';
+import SocialButtons from '@/components/auth/SocialButtons';
 import DropHeart from '@/components/auth/DropHeart';
 import { LoginArt } from '@/components/auth/AuthArt';
 import {
@@ -21,9 +23,11 @@ const UserLogin = () => {
   const [remember, setRemember] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [authQuery, setAuthQuery] = useState(''); // keeps ?next= when switching to Register
+  useEffect(() => { setAuthQuery(nextQuery()); }, []);
 
   useEffect(() => {
-    if (isAuth) router.replace('/');
+    if (isAuth) router.replace(nextPath('/'));
   }, [isAuth, router]);
 
   if (isAuth) return null;
@@ -39,9 +43,9 @@ const UserLogin = () => {
     try {
       const { data } = await axios.post(`${API_BASE}/api/user/login`, form);
       login(data.token, data.user, { remember });
-      router.push('/');
+      router.push(nextPath('/'));
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Please try again.');
+      setError(apiErrorMessage(err, 'Login failed. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -88,7 +92,7 @@ const UserLogin = () => {
           <SocialButtons onError={(msg) => setError(msg)} />
 
           <Typography sx={{ textAlign: 'center', mt: 3, fontSize: '0.92rem', color: 'text.secondary' }}>
-            Don&apos;t have an account? <AuthLink href="/register">Register</AuthLink>
+            Don&apos;t have an account? <AuthLink href={`/register${authQuery}`}>Register</AuthLink>
           </Typography>
         </AuthCard>
 

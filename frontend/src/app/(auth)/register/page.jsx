@@ -10,8 +10,9 @@ import {
 import axios from 'axios';
 import { useUserAuth } from '@/store/UserAuthContext';
 import API_BASE from '@/lib/config';
+import { nextPath, nextQuery } from '@/lib/next-path';
 import { PROVINCES } from '@/lib/places';
-import SocialButtons from '@/components/SocialButtons';
+import SocialButtons from '@/components/auth/SocialButtons';
 import DropHeart from '@/components/auth/DropHeart';
 import { RegisterPanel } from '@/components/auth/AuthArt';
 import {
@@ -46,9 +47,11 @@ const UserSignUp = () => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [authQuery, setAuthQuery] = useState(''); // keeps ?next= when switching to Login
+  useEffect(() => { setAuthQuery(nextQuery()); }, []);
 
   useEffect(() => {
-    if (isAuth) router.replace('/notification');
+    if (isAuth) router.replace(nextPath('/notification'));
   }, [isAuth, router]);
 
   if (isAuth) return null;
@@ -72,7 +75,7 @@ const UserSignUp = () => {
         fullName: form.fullName.trim(), email: form.email.trim(), password: form.password, ...optional,
       });
       login(data.token, data.user);
-      router.push('/notification');
+      router.push(nextPath('/notification'));
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed. Please try again.');
     } finally {
@@ -187,7 +190,7 @@ const UserSignUp = () => {
             )}
 
             <Typography sx={{ textAlign: 'center', mt: 3, fontSize: '0.92rem', color: 'text.secondary' }}>
-              Already have an account? <AuthLink href="/login">Login</AuthLink>
+              Already have an account? <AuthLink href={`/login${authQuery}`}>Login</AuthLink>
             </Typography>
           </AuthCard>
         </Box>

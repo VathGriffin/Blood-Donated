@@ -10,15 +10,18 @@ const mongoose     = require('mongoose');
 
 const userRoutes        = require('./users/user.routes');
 const staffRoutes       = require('./staff/staff.routes');
+const passwordResetRoutes = require('./staff/password-reset.routes');
 const hospitalRoutes    = require('./hospital/hospital.routes');
 const donorRoutes       = require('./donor/donor.routes');
 const appointmentRoutes = require('./appointments/appointment.routes');
 const requestRoutes     = require('./requests/blood-request.routes');
 const messageRoutes     = require('./notification/message.routes');
-const contactRoutes     = require('./notification/contact.routes');
+const notificationRoutes = require('./notification/notification.routes');
+const contactRoutes     = require('./contact/contact.routes');
 const chatRoutes        = require('./chatbot/chat.routes');
 const statsRoutes       = require('./dashboard/stats.routes');
 const homepageRoutes    = require('./homepage/homepage.routes');
+const aboutRoutes       = require('./about/about.routes');
 const inventoryRoutes   = require('./inventory/inventory.routes');
 const analyticsRoutes   = require('./analytics/analytics.routes');
 const nearbyRoutes      = require('./nearby/nearby.routes');
@@ -86,8 +89,14 @@ app.use((req, res, next) => {
 
 app.use('/uploads', express.static(uploadsDir));
 
-// Health check
+// Health checks. Both answer 200 while the process is up, so a database outage doesn't make the host
+// restart the API in a loop; /health also reports whether MongoDB is connected.
 app.get('/', (req, res) => res.json({ status: 'ok', service: 'BloodLife API', version: '2.0.0' }));
+app.get('/health', (req, res) => res.json({
+  status: 'ok',
+  database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+  uptimeSeconds: Math.round(process.uptime()),
+}));
 
 // Chat and nearby-hospital lookup — no DB required
 app.use('/api/chat', chatRoutes);
@@ -101,6 +110,7 @@ app.use('/api', (req, res, next) => {
 });
 
 // Routes
+app.use('/api/staff/password-reset', passwordResetRoutes);
 app.use('/api/staff',        staffRoutes);
 app.use('/api/user',         userRoutes);
 app.use('/api/hospitals',    hospitalRoutes);
@@ -108,9 +118,11 @@ app.use('/api/donors',       donorRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/requests',     requestRoutes);
 app.use('/api/messages',     messageRoutes);
+app.use('/api/notifications', notificationRoutes);
 app.use('/api/contacts',     contactRoutes);
 app.use('/api/stats',        statsRoutes);
 app.use('/api/homepage',     homepageRoutes);
+app.use('/api/about',        aboutRoutes);
 app.use('/api/inventory',    inventoryRoutes);
 app.use('/api/analytics',    analyticsRoutes);
 

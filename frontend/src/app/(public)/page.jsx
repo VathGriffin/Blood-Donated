@@ -1,13 +1,13 @@
 'use client';
 import Link from 'next/link';
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from 'next/navigation';
 import { script } from '@/lib/fonts';
 import { Container, Box, Typography, Button, useTheme, Paper, InputBase, Autocomplete } from "@mui/material";
 import API_BASE from "@/lib/config";
 import { PROVINCES } from "@/lib/places";
-import HelpSection from "./HelpSection";
-import CommunitySection from "./CommunitySection";
+import HelpSection from "./_components/HelpSection";
+import CommunitySection from "./_components/CommunitySection";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import GroupsIcon from "@mui/icons-material/Groups";
 import PeopleIcon from "@mui/icons-material/People";
@@ -28,15 +28,18 @@ import Diversity3Icon from "@mui/icons-material/Diversity3";
 const HERO_PHOTO = "https://images.unsplash.com/photo-1536856136534-bb679c52a9aa?w=1600&q=80&auto=format&fit=crop";
 
 const FALLBACK_PROFILES = [
-  { name: "Sophea Meas", role: "First-time Donor", initials: "SM", color: "#dc2626",
-    photo: "https://i.pravatar.cc/640?img=47", bloodType: "A+", donations: 3, badge: "Active Donor",
-    bio: "Sophea donated blood for the first time and inspired her entire workplace to join. She now volunteers at local donation drives every quarter." },
-  { name: "Dara Keo", role: "Grateful Parent", initials: "DK", color: "#b91c1c",
-    photo: "https://i.pravatar.cc/640?img=68", bloodType: "O-", donations: 5, badge: "Community Champion",
-    bio: "After BloodLife connected his daughter with a life-saving donor, Dara became a passionate advocate and registered donor himself." },
-  { name: "Dr. Chan Bopha", role: "Cardiologist, Calmette Hospital", initials: "CB", color: "#991b1b",
-    photo: "https://i.pravatar.cc/640?img=32", bloodType: "B+", donations: 12, badge: "Medical Partner",
-    bio: "Dr. Chan Bopha partners with BloodLife to coordinate blood drives for cardiac patients and educates the public on the importance of donation." },
+  { name: "Sophea Meas", role: "Regular Blood Donor (Demo)", initials: "SM", color: "#dc2626",
+    photo: "https://i.pravatar.cc/640?img=47", bloodType: "A+", donations: 3, badge: "Blood Donor", location: "Phnom Penh",
+    quote: "I donate blood because it can give someone else a second chance at life.",
+    bio: "A demo profile representing a typical blood donor on BloodLife AI. This donor regularly donates blood and supports local blood drives." },
+  { name: "Dara Keo", role: "Volunteer & Blood Drive Support (Demo)", initials: "DK", color: "#dc2626",
+    photo: "https://i.pravatar.cc/640?img=68", bloodType: "O-", donations: 5, badge: "Community Volunteer", location: "Kandal",
+    quote: "I believe a stronger community can save more lives through awareness and action.",
+    bio: "A demo profile representing a community volunteer who helps organize blood donation campaigns, raises awareness, and supports donors." },
+  { name: "Chan Bopha", role: "Hospital Representative (Demo)", initials: "CB", color: "#dc2626",
+    photo: "https://i.pravatar.cc/640?img=32", bloodType: "B+", donations: 2, badge: "Healthcare Partner", location: "Siem Reap",
+    quote: "Our hospital relies on the support of donors and the community to save more lives.",
+    bio: "A demo profile representing a partner hospital on BloodLife AI. Hospitals can request blood units, manage inventory, and connect with donors." },
 ];
 
 const bloodTypes = [
@@ -199,7 +202,7 @@ export default function Home() {
           <FavoriteIcon sx={{ fontSize: 30, color: "primary.main", ml: 0.75, transform: "rotate(12deg)", verticalAlign: "top" }} />
         </Box>
 
-        <Container maxWidth="lg" sx={{ position: "relative", zIndex: 2, pt: { xs: 4, md: 7 }, pb: { xs: 3, md: 14 } }}>
+        <Container maxWidth="lg" sx={{ position: "relative", zIndex: 2, pt: { xs: 4, md: 7 }, pb: { xs: 3, md: 8 } }}>
           <Box sx={{ maxWidth: { md: 640 } }}>
             <Typography sx={{ fontSize: { xs: "0.78rem", md: "0.9rem" }, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", color: "text.secondary", mb: 1.5 }}>
               A small act makes a big difference
@@ -238,8 +241,8 @@ export default function Home() {
         </Container>
       </Box>
 
-      {/* ── Stats bar (real, public totals) ────────────────────────────── */}
-      <Container maxWidth="lg" sx={{ position: "relative", zIndex: 3, mt: { xs: 0, md: -7 } }}>
+      {/* ── Stats bar (real, public totals) — sits below the hero, not over its photo ── */}
+      <Container maxWidth="lg" sx={{ position: "relative", zIndex: 3, mt: { xs: 5, md: 7 } }}>
         <Paper
           ref={statsRef}
           variant="outlined"
@@ -363,7 +366,7 @@ export default function Home() {
       <HelpSection />
 
       {/* ── Blood Type Grid ────────────────────────────────────────────── */}
-      <Box sx={{ position: "relative", overflow: "hidden", py: { xs: 8, md: 11 } }}>
+      <Box id="compatibility" sx={{ position: "relative", overflow: "hidden", py: { xs: 8, md: 11 }, scrollMarginTop: { xs: 64, md: 68 } }}>
         {/* Always-dark crimson background */}
         <Box sx={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, #0f0404 0%, #1c0808 45%, #100808 100%)" }} />
         <Box sx={{ position: "absolute", top: 0, right: 0, width: "55%", height: "100%", background: "radial-gradient(ellipse at 100% 50%, rgba(220,38,38,0.13) 0%, transparent 65%)", pointerEvents: "none" }} />
@@ -410,70 +413,6 @@ export default function Home() {
 
       {/* ── Community profiles ("People Behind the Mission") ─────────────── */}
       <CommunitySection profiles={profiles} />
-
-      {/* ── CTA Banner ────────────────────────────────────────────────── */}
-      <Box sx={{
-        py: { xs: 10, md: 14 }, textAlign: "center", position: "relative", overflow: "hidden",
-        background: "linear-gradient(135deg, #7f1d1d 0%, #991b1b 30%, #dc2626 65%, #b91c1c 100%)",
-      }}>
-        {/* Photo texture */}
-        <Box sx={{ position: "absolute", inset: 0, backgroundImage: `url(https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=1920&h=600&fit=crop&q=40)`, backgroundSize: "cover", backgroundPosition: "center", opacity: 0.08, mixBlendMode: "luminosity" }} />
-        <Box sx={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px)", backgroundSize: "26px 26px", pointerEvents: "none" }} />
-        <Box sx={{ position: "absolute", top: "-30%", right: "-10%", width: 600, height: 600, borderRadius: "50%", bgcolor: "rgba(255,255,255,0.04)", pointerEvents: "none" }} />
-        <Box sx={{ position: "absolute", bottom: "-25%", left: "-8%", width: 450, height: 450, borderRadius: "50%", bgcolor: "rgba(0,0,0,0.15)", pointerEvents: "none" }} />
-
-        <Container maxWidth="md" sx={{ position: "relative", zIndex: 1 }}>
-          <Box sx={{
-            width: 72, height: 72, borderRadius: "22px", mx: "auto", mb: 3,
-            bgcolor: "rgba(255,255,255,0.18)", display: "flex", alignItems: "center", justifyContent: "center",
-            border: "1px solid rgba(255,255,255,0.25)",
-            boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
-          }}>
-            <FavoriteIcon sx={{ fontSize: 34, color: "white", animation: "pulse 2s ease infinite" }} />
-          </Box>
-
-          {/* Mini stat chips */}
-          <Box sx={{ display: "flex", justifyContent: "center", gap: 1.5, mb: 4, flexWrap: "wrap" }}>
-            {pub && [[pub.donors.toLocaleString(), "Donors"], [pub.donations.toLocaleString(), "Donations"], [pub.hospitals.toLocaleString(), "Hospitals"]].map(([val, lbl]) => (
-              <Box key={lbl} sx={{ px: 2, py: 0.8, borderRadius: "100px", bgcolor: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.22)", backdropFilter: "blur(8px)" }}>
-                <Typography sx={{ fontSize: "0.8rem", fontWeight: 800, color: "white" }}>{val} <Box component="span" sx={{ fontWeight: 400, opacity: 0.75 }}>{lbl}</Box></Typography>
-              </Box>
-            ))}
-          </Box>
-
-          <Typography sx={{
-            fontSize: { xs: "2.2rem", md: "3rem" }, fontWeight: 900, color: "white",
-            letterSpacing: "-0.03em", lineHeight: 1.05, mb: 2,
-            textShadow: "0 2px 20px rgba(0,0,0,0.3)",
-          }}>
-            Ready to Save a Life Today?
-          </Typography>
-          <Typography sx={{ color: "rgba(255,255,255,0.8)", mb: 5.5, fontSize: "1.08rem", maxWidth: 520, mx: "auto", lineHeight: 1.85 }}>
-            {pub && pub.donors > 0 ? `Join ${pub.donors.toLocaleString()} registered donors across Cambodia. ` : "Join our community of donors across Cambodia. "}Your donation could give someone a lifetime.
-          </Typography>
-          <Box sx={{ display: "flex", justifyContent: "center", gap: 2, flexWrap: "wrap" }}>
-            <Button component={Link} href="/donate" variant="contained" size="large"
-              sx={{
-                bgcolor: "white", color: "#b91c1c", fontWeight: 800, px: 4.5, py: 1.6,
-                borderRadius: "10px", fontSize: "0.95rem",
-                boxShadow: "0 8px 32px rgba(0,0,0,0.28)",
-                "&:hover": { bgcolor: "#fff1f2", transform: "translateY(-2px)", boxShadow: "0 14px 40px rgba(0,0,0,0.3)" },
-                transition: "all 0.22s ease",
-              }}>
-              Become a Donor
-            </Button>
-            <Button component={Link} href="/requests" variant="outlined" size="large"
-              sx={{
-                borderColor: "rgba(255,255,255,0.48)", color: "white", fontWeight: 700,
-                px: 4.5, py: 1.6, borderRadius: "10px", fontSize: "0.95rem",
-                "&:hover": { bgcolor: "rgba(255,255,255,0.1)", borderColor: "white", transform: "translateY(-2px)" },
-                transition: "all 0.22s ease",
-              }}>
-              Request Blood
-            </Button>
-          </Box>
-        </Container>
-      </Box>
 
     </Box>
   );

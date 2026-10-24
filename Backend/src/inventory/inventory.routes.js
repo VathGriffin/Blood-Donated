@@ -4,15 +4,32 @@ const router   = express.Router();
 const Inventory = require('./inventory.model');
 const { requireRole } = require('../common/middleware/require-role');
 const { BLOOD_TYPES } = require('../common/blood-types');
+const { stockStatus } = require('../common/stock-status');
 const { sendError } = require('../common/middleware/error-handler');
 
-const DEFAULTS = BLOOD_TYPES.map((t, i) => ({
+// The central pool starts empty — every unit shown anywhere must be one somebody recorded.
+const DEFAULTS = BLOOD_TYPES.map((t) => ({
   bloodType: t,
   hospital: null,
-  units: [45, 12, 28, 8, 62, 18, 74, 22][i],
+  units: 0,
   minUnits: 10,
   maxUnits: 200,
 }));
+
+// Real stock across the whole network: central pool + every hospital, one row per blood type.
+// A type nobody has recorded comes back as 0 units (empty) rather than being left out.
+async function networkStock() {
+  const groups = await Inventory.aggregate([
+    { $group: { _id: '$bloodType', units: { $sum: '$units' }, minUnits: { $sum: '$minUnits' }, pools: { $sum: 1 }, lastUpdated: { $max: '$lastUpdated' } } },
+  ]);
+  const byType = Object.fromEntries(groups.map((g) => [g._id, g]));
+  return BLOOD_TYPES.map((bloodType) => {
+    const g = byType[bloodType];
+    const units = g?.units || 0;
+    const minUnits = g?.minUnits || 10;
+    return { bloodType, units, minUnits, pools: g?.pools || 0, lastUpdated: g?.lastUpdated || null, status: stockStatus(units, minUnits) };
+  });
+}
 
 // NOTE: these queries deliberately don't use .lean(). `status` is a schema virtual, and
 // lean() skips virtuals ( `.lean({ virtuals: true })` needs the mongoose-lean-virtuals
@@ -43,10 +60,19 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET summary stats (central pool)
+// GET network-wide stock per blood type (central pool + all hospitals) — the admin overview.
+router.get('/network', async (req, res) => {
+  try {
+    res.json(await networkStock());
+  } catch (err) {
+    sendError(res, err, req);
+  }
+});
+
+// GET summary stats, network-wide
 router.get('/stats', async (req, res) => {
   try {
-    const items = await Inventory.find({ hospital: null });
+    const items = await networkStock();
     const total    = items.reduce((s, i) => s + i.units, 0);
     const critical = items.filter(i => i.status === 'critical' || i.status === 'empty').length;
     const adequate = items.filter(i => i.status === 'adequate').length;

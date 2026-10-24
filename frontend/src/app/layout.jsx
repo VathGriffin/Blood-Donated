@@ -3,8 +3,8 @@ import Providers from '@/lib/Providers';
 
 export const metadata = {
   title: {
-    default: 'Blood Donated — Blood Donation Platform',
-    template: '%s | Blood Donated',
+    default: 'BloodLife AI — Blood Donation Platform',
+    template: '%s | BloodLife AI',
   },
   description: 'Development of an Intelligent Blood Donation Management Platform Integrated with an AI Chatbot for Donor and Hospital Support. Connecting donors, patients, and hospitals across Cambodia.',
   icons: { icon: '/favicon.ico' },

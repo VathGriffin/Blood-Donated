@@ -15,7 +15,7 @@ describe('public homepage stats', () => {
 
     const res = await request(app).get('/api/stats/public');
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ donors: 2, donations: 5, hospitals: 3, fulfilledRequests: 2 });
+    expect(res.body).toEqual({ donors: 2, availableDonors: 0, donations: 5, hospitals: 3, fulfilledRequests: 2, units: 0 });
     // nothing personal leaks
     const text = JSON.stringify(res.body);
     expect(text).not.toMatch(/Private Person|private@test|Secret Patient|0911111111/);
@@ -23,7 +23,22 @@ describe('public homepage stats', () => {
 
   test('returns zeros on an empty database', async () => {
     const res = await request(app).get('/api/stats/public');
-    expect(res.body).toEqual({ donors: 0, donations: 0, hospitals: 0, fulfilledRequests: 0 });
+    expect(res.body).toEqual({ donors: 0, availableDonors: 0, donations: 0, hospitals: 0, fulfilledRequests: 0, units: 0 });
+  });
+
+  test('counts available donors and sums blood units on hand across all inventory rows', async () => {
+    const Inventory = require('../src/inventory/inventory.model');
+    const hospital = await createHospital();
+    await Donor.create({ fullName: 'A', email: 'a@test.com', phone: '0911111111', bloodType: 'O+', location: 'PP', available: true });
+    await Donor.create({ fullName: 'B', email: 'b@test.com', phone: '0922222222', bloodType: 'A-', location: 'PP', available: false });
+    await Inventory.create([
+      { bloodType: 'O+', hospital: null, units: 20 },
+      { bloodType: 'A-', hospital: null, units: 5 },
+      { bloodType: 'O+', hospital: hospital._id, units: 7 },
+    ]);
+
+    const res = await request(app).get('/api/stats/public');
+    expect(res.body).toMatchObject({ donors: 2, availableDonors: 1, units: 32 });
   });
 
   test('the admin stats endpoint is still protected', async () => {
@@ -80,5 +95,39 @@ describe('admin dashboard stats', () => {
     const res = await request(app).get('/api/stats').set('Authorization', `Bearer ${token}`);
     expect(res.body.donations.total).toBe(0);
     expect(res.body.hospitals.total).toBe(0);
+  });
+});
+
+describe('admin stat trends', () => {
+  const DAY = 24 * 60 * 60 * 1000;
+
+  test('compares the range with the period before it and buckets a sparkline', async () => {
+    const { token } = await createAdmin();
+    const to = new Date('2026-10-31T00:00:00Z');
+    const from = new Date(to.getTime() - 10 * DAY);
+    const at = (daysBeforeTo) => new Date(to.getTime() - daysBeforeTo * DAY);
+    const donor = (email, createdAt) => ({ fullName: email, email, phone: '0911111111', bloodType: 'O+', location: 'PP', createdAt });
+    // 3 donors in range, 2 in the previous 10 days, 1 older than that (ignored)
+    await Donor.collection.insertMany([
+      donor('a@t.com', at(1)), donor('b@t.com', at(2)), donor('c@t.com', at(9)),
+      donor('d@t.com', at(12)), donor('e@t.com', at(15)), donor('f@t.com', at(40)),
+    ]);
+    await Donor.updateOne({ email: 'a@t.com' }, { $push: { donationHistory: { $each: [{ date: at(3) }, { date: at(14) }] } } });
+
+    const res = await request(app).get(`/api/stats/trends?from=${from.toISOString()}&to=${to.toISOString()}`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(200);
+    expect(res.body.donors).toMatchObject({ current: 3, previous: 2, change: 50 });
+    expect(res.body.donors.series).toHaveLength(12);
+    expect(res.body.donors.series.reduce((a, b) => a + b, 0)).toBe(3);
+    expect(res.body.donations).toMatchObject({ current: 1, previous: 1, change: 0 });
+    expect(res.body.requests).toMatchObject({ current: 0, previous: 0, change: null });
+  });
+
+  test('is admin-only and rejects a bad range', async () => {
+    expect((await request(app).get('/api/stats/trends')).status).toBe(401);
+    const { token } = await createAdmin();
+    const bad = await request(app).get('/api/stats/trends?from=2026-10-10&to=2026-10-01').set('Authorization', `Bearer ${token}`);
+    expect(bad.status).toBe(400);
   });
 });

@@ -5,8 +5,9 @@ const adminAuth = requireRole('admin');
 const Donor = require('../donor/donor.model');
 const BloodRequest = require('../requests/blood-request.model');
 const Appointment = require('../appointments/appointment.model');
-const ContactMessage = require('../notification/contact-message.model');
+const ContactMessage = require('../contact/contact-message.model');
 const Hospital = require('../hospital/hospital.model');
+const Inventory = require('../inventory/inventory.model');
 const { buildHospitalInsights } = require('./hospital-insights');
 const { sendError } = require('../common/middleware/error-handler');
 
@@ -14,13 +15,18 @@ const { sendError } = require('../common/middleware/error-handler');
 // so it is safe without authentication. (The admin dashboard uses GET / below.)
 router.get('/public', async (req, res) => {
   try {
-    const [donors, donationTotals, hospitals, fulfilledRequests] = await Promise.all([
+    const [donors, availableDonors, donationTotals, hospitals, fulfilledRequests, unitTotals] = await Promise.all([
       Donor.countDocuments(),
+      Donor.countDocuments({ available: true }),
       Donor.aggregate([{ $group: { _id: null, total: { $sum: '$donationCount' } } }]),
       Hospital.countDocuments(),
       BloodRequest.countDocuments({ status: 'Fulfilled' }),
+      Inventory.aggregate([{ $group: { _id: null, total: { $sum: '$units' } } }]),
     ]);
-    res.json({ donors, donations: donationTotals[0]?.total || 0, hospitals, fulfilledRequests });
+    res.json({
+      donors, availableDonors, donations: donationTotals[0]?.total || 0, hospitals, fulfilledRequests,
+      units: unitTotals[0]?.total || 0, // blood units on hand, summed across every inventory row
+    });
   } catch (err) {
     sendError(res, err, req);
   }
@@ -43,6 +49,86 @@ router.get('/hospital-insights', async (req, res) => {
   }
 });
 router.clearInsightsCache = () => { insightsCache = null; };
+
+// Activity trends for the admin stat cards over a date range (?from=&to=, ISO dates; default the
+// last 30 days). For each metric: how many were added in the range, how many in the equally long
+// period just before it, and the range split into SPARK_BUCKETS counts for a sparkline.
+const SPARK_BUCKETS = 12;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function parseRange(query) {
+  const to = query.to ? new Date(query.to) : new Date();
+  const from = query.from ? new Date(query.from) : new Date(to.getTime() - 30 * DAY_MS);
+  if (Number.isNaN(to.getTime()) || Number.isNaN(from.getTime()) || from >= to) return null;
+  if (to - from > 366 * DAY_MS) return null; // keep the scan bounded
+  return { from, to };
+}
+
+// Counts are bucketed in Mongo so only ~13 small rows come back per metric, not every document.
+// Bucket -1 is the previous period; 0..SPARK_BUCKETS-1 split the range itself.
+function bucketBy(field, { from, to }) {
+  const span = to - from;
+  return {
+    $group: {
+      _id: {
+        $cond: [
+          { $lt: [field, from] },
+          -1,
+          { $min: [SPARK_BUCKETS - 1, { $floor: { $multiply: [{ $divide: [{ $subtract: [field, from] }, span] }, SPARK_BUCKETS] } }] },
+        ],
+      },
+      count: { $sum: 1 },
+    },
+  };
+}
+
+function trendOf(groups) {
+  const series = new Array(SPARK_BUCKETS).fill(0);
+  let previous = 0;
+  for (const { _id, count } of groups) {
+    if (_id === -1) previous = count;
+    else series[_id] = count;
+  }
+  const current = series.reduce((a, b) => a + b, 0);
+  // % change vs the previous period; null when there is nothing to compare against.
+  const change = previous === 0 ? null : Math.round(((current - previous) / previous) * 100);
+  return { current, previous, change, series };
+}
+
+router.get('/trends', adminAuth, async (req, res) => {
+  try {
+    const range = parseRange(req.query);
+    if (!range) return res.status(400).json({ error: 'Invalid date range' });
+    const since = new Date(range.from.getTime() - (range.to - range.from));
+    const inWindow = { $gte: since, $lt: range.to };
+    const createdIn = (Model) => Model.aggregate([
+      { $match: { createdAt: inWindow } },
+      bucketBy('$createdAt', range),
+    ]);
+
+    const [donors, requests, hospitals, donations] = await Promise.all([
+      createdIn(Donor),
+      createdIn(BloodRequest),
+      createdIn(Hospital),
+      Donor.aggregate([
+        { $match: { 'donationHistory.date': inWindow } }, // only donors with a donation in the window
+        { $unwind: '$donationHistory' },
+        { $match: { 'donationHistory.date': inWindow } },
+        bucketBy('$donationHistory.date', range),
+      ]),
+    ]);
+
+    res.json({
+      from: range.from, to: range.to,
+      donors: trendOf(donors),
+      donations: trendOf(donations),
+      requests: trendOf(requests),
+      hospitals: trendOf(hospitals),
+    });
+  } catch (err) {
+    sendError(res, err, req);
+  }
+});
 
 router.get('/', adminAuth, async (req, res) => {
   try {
