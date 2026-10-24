@@ -8,6 +8,8 @@ import API_BASE from "@/lib/config";
 import { PROVINCES } from "@/lib/places";
 import HelpSection from "./_components/HelpSection";
 import CommunitySection from "./_components/CommunitySection";
+import BloodSupplySection from "./_components/BloodSupplySection";
+import EligibilitySection from "./_components/EligibilitySection";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import GroupsIcon from "@mui/icons-material/Groups";
 import PeopleIcon from "@mui/icons-material/People";
@@ -21,8 +23,8 @@ import DomainIcon from "@mui/icons-material/Domain";
 import PlaceIcon from "@mui/icons-material/Place";
 import StarIcon from "@mui/icons-material/Star";
 import Diversity3Icon from "@mui/icons-material/Diversity3";
-
-// Handwritten accent used once, on the hero photo.
+import Inventory2Icon from "@mui/icons-material/Inventory2";
+import LocalHospitalOutlinedIcon from "@mui/icons-material/LocalHospitalOutlined";
 
 // A real donation photo (donor's arm on the chair, squeezing a ball).
 const HERO_PHOTO = "https://images.unsplash.com/photo-1536856136534-bb679c52a9aa?w=1600&q=80&auto=format&fit=crop";
@@ -40,17 +42,6 @@ const FALLBACK_PROFILES = [
     photo: "https://i.pravatar.cc/640?img=32", bloodType: "B+", donations: 2, badge: "Healthcare Partner", location: "Siem Reap",
     quote: "Our hospital relies on the support of donors and the community to save more lives.",
     bio: "A demo profile representing a partner hospital on BloodLife AI. Hospitals can request blood units, manage inventory, and connect with donors." },
-];
-
-const bloodTypes = [
-  { type: "A+",  can: "A+, AB+",         pct: 36 },
-  { type: "A-",  can: "A+, A-, AB+, AB-", pct: 6 },
-  { type: "B+",  can: "B+, AB+",          pct: 8 },
-  { type: "B-",  can: "B+, B-, AB+, AB-", pct: 2 },
-  { type: "O+",  can: "A+, B+, O+, AB+",  pct: 38 },
-  { type: "O-",  can: "All blood types",   pct: 7 },
-  { type: "AB+", can: "AB+ only",          pct: 3 },
-  { type: "AB-", can: "AB+, AB-",          pct: 1 },
 ];
 
 function useCountUp(target, duration = 2000, active = false) {
@@ -153,7 +144,7 @@ export default function Home() {
     { icon: <PeopleIcon />,      value: pub?.donors,            label: "Registered Donors" },
     { icon: <WaterDropIcon />,   value: pub?.donations,         label: "Total Donations" },
     { icon: <DomainIcon />,      value: pub?.hospitals,         label: "Partner Hospitals" },
-    { icon: <FavoriteIcon />,    value: pub?.fulfilledRequests, label: "Blood Requests Fulfilled" },
+    { icon: <Inventory2Icon />,  value: pub?.units,             label: "Units in Stock" },
   ];
   const iconCircle = (size, solid) => ({
     width: size, height: size, borderRadius: "50%", flexShrink: 0,
@@ -164,13 +155,6 @@ export default function Home() {
 
   return (
     <Box sx={{ backgroundColor: bg }}>
-      <style>{`
-        @keyframes fadeUp      { from { opacity:0; transform:translateY(22px); } to { opacity:1; transform:translateY(0); } }
-        @keyframes floatBlob   { 0%,100%{transform:translate(0,0) scale(1);} 40%{transform:translate(18px,-16px) scale(1.04);} 70%{transform:translate(-12px,10px) scale(0.97);} }
-        @keyframes pulse       { 0%,100%{opacity:1;} 50%{opacity:0.5;} }
-        @keyframes floatUp     { 0%,100%{transform:translateY(0px);} 50%{transform:translateY(-18px);} }
-        @keyframes floatDown   { 0%,100%{transform:translateY(0px);} 50%{transform:translateY(18px);} }
-      `}</style>
 
       {/* ── Hero ───────────────────────────────────────────────────────── */}
       <Box component="section" sx={{ position: "relative", overflow: "hidden", bgcolor: "background.paper" }}>
@@ -204,9 +188,25 @@ export default function Home() {
 
         <Container maxWidth="lg" sx={{ position: "relative", zIndex: 2, pt: { xs: 4, md: 7 }, pb: { xs: 3, md: 8 } }}>
           <Box sx={{ maxWidth: { md: 640 } }}>
-            <Typography sx={{ fontSize: { xs: "0.78rem", md: "0.9rem" }, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", color: "text.secondary", mb: 1.5 }}>
-              A small act makes a big difference
-            </Typography>
+            {pub?.availableDonors > 0 ? (
+              <Box component={Link} href="/donors" sx={{
+                display: "inline-flex", alignItems: "center", gap: 1, mb: 2, px: 1.5, py: 0.6, borderRadius: "999px", textDecoration: "none",
+                bgcolor: "background.paper", color: "text.primary", fontSize: "0.82rem", fontWeight: 600,
+                border: "1px solid", borderColor: "divider", boxShadow: (t) => t.custom.shadow.sm,
+                "&:hover": { borderColor: "primary.main" },
+              }}>
+                <Box component="span" aria-hidden="true" sx={{
+                  width: 8, height: 8, borderRadius: "50%", bgcolor: (t) => t.custom.tones.success.dot,
+                  boxShadow: (t) => `0 0 0 4px ${t.custom.tones.success.bg}`,
+                }} />
+                <Box component="span"><Box component="strong" sx={{ color: "primary.main" }}>{pub.availableDonors.toLocaleString()}</Box> donor{pub.availableDonors !== 1 ? "s" : ""} available to donate now</Box>
+                <ArrowForwardIcon aria-hidden="true" sx={{ fontSize: 15, color: "text.secondary" }} />
+              </Box>
+            ) : (
+              <Typography sx={{ fontSize: { xs: "0.78rem", md: "0.9rem" }, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", color: "text.secondary", mb: 1.5 }}>
+                A small act makes a big difference
+              </Typography>
+            )}
             <Typography component="h1" sx={{ fontSize: { xs: "2.6rem", sm: "3.4rem", md: "4.4rem" }, fontWeight: 800, lineHeight: 1.04, letterSpacing: "-0.035em", color: "text.primary" }}>
               Donate Blood
               <Box component="span" sx={{ display: "block", color: "primary.main" }}>Save Lives</Box>
@@ -217,16 +217,23 @@ export default function Home() {
 
             <Box sx={{ mt: 4, display: "flex", gap: 1.5, flexWrap: "wrap" }}>
               <Button component={Link} href="/map" variant="contained" size="large" startIcon={<FavoriteIcon />} endIcon={<ArrowForwardIcon />}
-                sx={{ px: 3, py: 1.4, fontSize: "0.95rem", fontWeight: 700 }}>
+                sx={{ px: 3, py: 1.4, fontSize: "0.95rem", fontWeight: 700, width: { xs: "100%", sm: "auto" } }}>
                 Find a Donation Center
               </Button>
               <Button component={Link} href="/appointments" variant="outlined" size="large" startIcon={<CalendarMonthIcon />}
-                sx={{ px: 3, py: 1.4, fontSize: "0.95rem", fontWeight: 700, borderWidth: 1.5, bgcolor: "background.paper", "&:hover": { borderWidth: 1.5 } }}>
+                sx={{ px: 3, py: 1.4, fontSize: "0.95rem", fontWeight: 700, borderWidth: 1.5, bgcolor: "background.paper", "&:hover": { borderWidth: 1.5 }, width: { xs: "100%", sm: "auto" } }}>
                 Book an Appointment
               </Button>
             </Box>
+            <Typography sx={{ mt: 2, fontSize: "0.9rem", color: "text.secondary", display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
+              <LocalHospitalOutlinedIcon aria-hidden="true" sx={{ fontSize: 18, color: "primary.main" }} />
+              Need blood for a patient?
+              <Box component={Link} href="/requests" sx={{ color: "primary.main", fontWeight: 700, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 0.25, "&:hover": { textDecoration: "underline" } }}>
+                Request blood <ArrowForwardIcon aria-hidden="true" sx={{ fontSize: 16 }} />
+              </Box>
+            </Typography>
 
-            <Box sx={{ mt: 4, display: "flex", gap: { xs: 2.5, md: 4 }, flexWrap: "wrap" }}>
+            <Box sx={{ mt: 4, display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(3, auto)" }, justifyContent: "start", columnGap: 4, rowGap: 1.75 }}>
               {TRUST.map((t) => (
                 <Box key={t.title} sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
                   <Box sx={{ color: "primary.main", display: "flex", "& svg": { fontSize: 34 } }}>{t.icon}</Box>
@@ -273,6 +280,9 @@ export default function Home() {
         </Paper>
       </Container>
 
+      {/* ── Live blood supply + compatibility (#compatibility) ─────────── */}
+      <Box sx={{ mt: { xs: 1, md: 2 } }}><BloodSupplySection /></Box>
+
       {/* ── Why Donate Blood? ──────────────────────────────────────────── */}
       <Box component="section" sx={{ py: { xs: 6, md: 9 } }}>
         <Container maxWidth="lg">
@@ -309,8 +319,20 @@ export default function Home() {
               </Box>
             ))}
           </Box>
+          <Box sx={{ mt: { xs: 4, md: 5 }, display: "flex", justifyContent: "center", gap: 1.5, flexWrap: "wrap" }}>
+            <Button component={Link} href="/appointments" variant="contained" size="large" startIcon={<CalendarMonthIcon />} sx={{ fontWeight: 700, px: 3 }}>
+              Book an Appointment
+            </Button>
+            <Button component={Link} href="/donate" variant="outlined" size="large"
+              sx={{ fontWeight: 700, px: 3, borderWidth: 1.5, bgcolor: "background.paper", "&:hover": { borderWidth: 1.5 } }}>
+              Register as a Donor
+            </Button>
+          </Box>
         </Container>
       </Box>
+
+      {/* ── Can I donate? ──────────────────────────────────────────────── */}
+      <EligibilitySection />
 
       {/* ── Find a Donation Center Near You ────────────────────────────── */}
       <Box
@@ -364,52 +386,6 @@ export default function Home() {
 
       {/* ── How Can We Help? ───────────────────────────────────────────── */}
       <HelpSection />
-
-      {/* ── Blood Type Grid ────────────────────────────────────────────── */}
-      <Box id="compatibility" sx={{ position: "relative", overflow: "hidden", py: { xs: 8, md: 11 }, scrollMarginTop: { xs: 64, md: 68 } }}>
-        {/* Always-dark crimson background */}
-        <Box sx={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, #0f0404 0%, #1c0808 45%, #100808 100%)" }} />
-        <Box sx={{ position: "absolute", top: 0, right: 0, width: "55%", height: "100%", background: "radial-gradient(ellipse at 100% 50%, rgba(220,38,38,0.13) 0%, transparent 65%)", pointerEvents: "none" }} />
-        <Box sx={{ position: "absolute", bottom: 0, left: 0, width: "40%", height: "60%", background: "radial-gradient(ellipse at 0% 100%, rgba(185,28,28,0.1) 0%, transparent 65%)", pointerEvents: "none" }} />
-        <Box sx={{ position: "absolute", inset: 0, pointerEvents: "none", backgroundImage: "radial-gradient(rgba(255,255,255,0.025) 1px, transparent 1px)", backgroundSize: "28px 28px" }} />
-        <Container maxWidth="lg" sx={{ position: "relative", zIndex: 1 }}>
-          <Box textAlign="center" mb={6}>
-            <Typography sx={{
-              fontSize: { xs: "1.7rem", md: "2.2rem" }, fontWeight: 900,
-              letterSpacing: "-0.025em", color: "#f5f5f5", mb: 1,
-            }}>
-              Blood Type Compatibility
-            </Typography>
-            <Typography sx={{ color: "rgba(255,255,255,0.55)" }}>Know your type. Know who you can help.</Typography>
-          </Box>
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, 1fr)", sm: "repeat(4, 1fr)", md: "repeat(8, 1fr)" }, gap: 1.5 }}>
-            {bloodTypes.map((bt, i) => (
-              <Box key={i} sx={{
-                bgcolor: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: "14px", p: 2, textAlign: "center",
-                transition: "all 0.2s ease",
-                backdropFilter: "blur(8px)",
-                "&:hover": {
-                  borderColor: "#dc2626",
-                  bgcolor: "rgba(220,38,38,0.1)",
-                  boxShadow: "0 8px 28px rgba(220,38,38,0.25)",
-                  transform: "translateY(-4px)",
-                },
-              }}>
-                <Typography sx={{ fontSize: "1.65rem", fontWeight: 900, color: "#f87171", letterSpacing: "-0.03em", lineHeight: 1 }}>
-                  {bt.type}
-                </Typography>
-                <Typography sx={{ fontSize: "0.62rem", color: "rgba(255,255,255,0.4)", mt: 0.5, lineHeight: 1.4, fontWeight: 500 }}>
-                  {bt.pct}% of people
-                </Typography>
-              </Box>
-            ))}
-          </Box>
-          <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.35)" }} display="block" textAlign="center" mt={3}>
-            O- is the universal donor type — compatible with all blood types.
-          </Typography>
-        </Container>
-      </Box>
 
       {/* ── Community profiles ("People Behind the Mission") ─────────────── */}
       <CommunitySection profiles={profiles} />
