@@ -87,7 +87,9 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use('/uploads', express.static(uploadsDir));
+// Every upload gets a new unique filename (see common/upload.js), so a file never changes once
+// written and browsers can keep it for a year instead of re-downloading photos on every visit.
+app.use('/uploads', express.static(uploadsDir, { maxAge: '365d', immutable: true }));
 
 // Health checks. Both answer 200 while the process is up, so a database outage doesn't make the host
 // restart the API in a loop; /health also reports whether MongoDB is connected.

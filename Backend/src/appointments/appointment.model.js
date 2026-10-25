@@ -48,7 +48,8 @@ const appointmentSchema = new mongoose.Schema(
 );
 
 appointmentSchema.index({ status: 1 });
-appointmentSchema.index({ email: 1 });
+// A donor's own appointments, most recently changed first (My Appointments, notification bell).
+appointmentSchema.index({ email: 1, updatedAt: -1 });
 appointmentSchema.index({ createdAt: -1 });
 // Hospital staff list their own hospital's appointments, newest first.
 appointmentSchema.index({ hospital: 1, createdAt: -1 });

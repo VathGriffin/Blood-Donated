@@ -110,8 +110,16 @@ export function useDashboardNotifications(session) {
     // clears the "new reply" badge, so it always refreshes.
     const fresh = Date.now() - lastLoad.current < MIN_GAP_MS;
     if (!fresh || pathname.startsWith('/notification')) load();
-    const id = setInterval(load, POLL_MS);
-    return () => clearInterval(id);
+    // Skip polls while the tab is in the background, and catch up as soon as it is back.
+    const id = setInterval(() => { if (document.visibilityState === 'visible') load(); }, POLL_MS);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible' && Date.now() - lastLoad.current >= POLL_MS) load();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, [load, status, pathname]);
 
   return { items, count: sum(items, (i) => i.count), loading, refresh: load };

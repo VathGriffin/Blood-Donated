@@ -22,5 +22,7 @@ const messageSchema = new mongoose.Schema(
 
 messageSchema.index({ userId: 1, createdAt: 1 });
 messageSchema.index({ sender: 1, read: 1 });
+// Admin activity feed: newest donor messages.
+messageSchema.index({ sender: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Message', messageSchema);

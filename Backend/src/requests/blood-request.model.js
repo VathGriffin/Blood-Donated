@@ -31,7 +31,10 @@ const bloodRequestSchema = new mongoose.Schema(
 bloodRequestSchema.index({ status: 1, urgency: 1 });
 bloodRequestSchema.index({ bloodType: 1 });
 bloodRequestSchema.index({ createdAt: -1 });
-bloodRequestSchema.index({ userEmail: 1 });
+// A donor's own requests, most recently changed first (My Requests, notification bell).
+bloodRequestSchema.index({ userEmail: 1, updatedAt: -1 });
+// Admin activity feed: latest cancellations.
+bloodRequestSchema.index({ status: 1, cancelledAt: -1 });
 // Hospital staff list their own hospital's requests, newest first.
 bloodRequestSchema.index({ hospital: 1, createdAt: -1 });
 

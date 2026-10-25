@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from 'next/navigation';
 import { script } from '@/lib/fonts';
@@ -27,7 +28,7 @@ import Inventory2Icon from "@mui/icons-material/Inventory2";
 import LocalHospitalOutlinedIcon from "@mui/icons-material/LocalHospitalOutlined";
 
 // A real donation photo (donor's arm on the chair, squeezing a ball).
-const HERO_PHOTO = "https://images.unsplash.com/photo-1536856136534-bb679c52a9aa?w=1600&q=80&auto=format&fit=crop";
+const HERO_PHOTO = "https://images.unsplash.com/photo-1536856136534-bb679c52a9aa?auto=format&fit=crop";
 
 const FALLBACK_PROFILES = [
   { name: "Sophea Meas", role: "Regular Blood Donor (Demo)", initials: "SM", color: "#dc2626",
@@ -170,7 +171,15 @@ export default function Home() {
             maskImage: { xs: "linear-gradient(180deg, transparent 0%, #000 40%)", md: "linear-gradient(90deg, transparent 0%, transparent 22%, #000 60%)" },
           }}
         >
-          <Box sx={{ position: "absolute", inset: 0, transform: "scaleX(-1)", backgroundImage: `url(${HERO_PHOTO})`, backgroundSize: "cover", backgroundPosition: "center 35%" }} />
+          {/* Loaded first (it is the largest thing on screen) and sized to the visitor's screen. */}
+          <Image
+            src={HERO_PHOTO}
+            alt=""
+            fill
+            priority
+            sizes="(min-width: 900px) 64vw, 100vw"
+            style={{ objectFit: "cover", objectPosition: "center 35%", transform: "scaleX(-1)" }}
+          />
         </Box>
         {/* Handwritten tagline on the faded part of the photo */}
         <Box
