@@ -71,7 +71,6 @@ export function AuthHeading({ title, subtitle, emblem }) {
 // `selectProps` configures a `select` field.
 export function AuthField({ label, icon, type = 'text', hideLabel = false, endAdornment, inputProps, acParams, selectProps, sx, ...rest }) {
   // InputLabelProps is pulled out only to drop it — the label renders above the field, not inside.
-  // eslint-disable-next-line no-unused-vars
   const { InputProps: acInput, inputProps: acHtml, InputLabelProps: _ignored, ...acRest } = acParams || {};
   const isDark = useTheme().palette.mode === 'dark';
   const [show, setShow] = useState(false);

@@ -7,7 +7,7 @@ import {
 import { Verified, ErrorOutline, Bloodtype, EventAvailable, Refresh } from '@mui/icons-material';
 import axios from 'axios';
 import { useAuth } from '@/store/AuthContext';
-import API_BASE from '@/lib/config';
+import API_BASE, { uploadUrl } from '@/lib/config';
 
 const QrScanner = dynamic(() => import('@/components/hospital/QrScanner'), { ssr: false });
 
@@ -81,7 +81,7 @@ export default function ScanDonorQr() {
       {result?.valid && (
         <Paper elevation={0} sx={{ borderRadius: 3, border: '1px solid', borderColor: 'divider', p: 3, mt: 1 }}>
           <Box display="flex" alignItems="center" gap={2} mb={2}>
-            <Avatar src={result.donor.photo ? `${API_BASE}${result.donor.photo}` : undefined} sx={{ width: 56, height: 56 }}>
+            <Avatar src={uploadUrl(result.donor.photo)} sx={{ width: 56, height: 56 }}>
               {result.donor.fullName?.[0]}
             </Avatar>
             <Box>

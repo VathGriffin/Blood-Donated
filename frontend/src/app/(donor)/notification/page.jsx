@@ -22,7 +22,7 @@ import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import LockIcon from '@mui/icons-material/Lock';
-import API_BASE from '@/lib/config';
+import API_BASE, { uploadUrl } from '@/lib/config';
 import { useUserAuth } from '@/store/UserAuthContext';
 import { CardMenu, cardSx } from '@/components/donor/ui';
 import DonorPageHero from '@/components/donor/PageHero';
@@ -246,7 +246,7 @@ export default function MessageAdminPage() {
 
   const tooLong = content.trim().length > MAX_LENGTH;
   const canSend = !!content.trim() && !tooLong && !sending;
-  const userPhoto = user?.photo ? `${API_BASE}${user.photo}` : undefined;
+  const userPhoto = uploadUrl(user?.photo);
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 2, md: 2.5 }, pb: 4, minWidth: 0 }}>

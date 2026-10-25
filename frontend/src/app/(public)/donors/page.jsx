@@ -28,7 +28,8 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import axios from "axios";
-import API_BASE from "@/lib/config";
+import API_BASE, { uploadUrl } from "@/lib/config";
+import { initialsOf } from "@/lib/format";
 import { BLOOD_TYPES } from "@/lib/inventory";
 import { GIVES_TO, RECEIVES_FROM } from "@/lib/blood-compat";
 import { formatDistanceToNow } from "date-fns";
@@ -57,10 +58,6 @@ const validDate = (date) => !!date && !Number.isNaN(new Date(date).getTime());
 const relative = (date) => (validDate(date) ? formatDistanceToNow(new Date(date), { addSuffix: true }) : null);
 const shortDate = (date) => new Date(date).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
 
-const initialsOf = (name = "") =>
-  name.split(" ").filter(Boolean).map((n) => n[0]).join("").slice(0, 2).toUpperCase() || "?";
-
-const photoSrc = (photo) => (photo ? (photo.startsWith("http") ? photo : `${API_BASE}${photo}`) : undefined);
 
 // Same rule as the backend: eligible again 56 days after the last whole-blood donation.
 const eligibilityOf = (lastDonation) => {
@@ -165,7 +162,7 @@ function StatusPills({ donor }) {
 function DonorAvatar({ donor, size = 52 }) {
   return (
     <Box sx={{ position: "relative", flexShrink: 0 }}>
-      <Avatar src={photoSrc(donor.photo)} alt="" slotProps={{ img: { loading: "lazy" } }} sx={{
+      <Avatar src={uploadUrl(donor.photo)} alt="" slotProps={{ img: { loading: "lazy" } }} sx={{
         width: size, height: size, fontWeight: 700, fontSize: size > 56 ? "1.3rem" : "1rem",
         bgcolor: (t) => t.custom.tones.neutral.bg, color: "text.primary",
       }}>
@@ -306,7 +303,7 @@ function DonorDialog({ donor, onClose }) {
           <CloseIcon fontSize="small" />
         </IconButton>
         <Box sx={{ display: "flex", alignItems: "center", gap: 2, pr: 3 }}>
-          <Avatar src={photoSrc(donor.photo)} alt="" sx={{
+          <Avatar src={uploadUrl(donor.photo)} alt="" sx={{
             width: 64, height: 64, fontWeight: 700, fontSize: "1.3rem",
             bgcolor: "background.paper", color: "text.primary", border: "3px solid", borderColor: "background.paper",
           }}>

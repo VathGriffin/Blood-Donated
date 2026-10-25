@@ -7,7 +7,7 @@ import {
 import LogoutIcon from '@mui/icons-material/Logout';
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
-import API_BASE from '@/lib/config';
+import { uploadUrl } from '@/lib/config';
 import { ROLE_CONFIG } from '@/lib/navigation';
 
 /**
@@ -21,7 +21,7 @@ export default function ProfileMenu({ role, profile, onLogout }) {
   const close = () => setAnchor(null);
   const cfg = ROLE_CONFIG[role];
   const initial = profile.name?.charAt(0)?.toUpperCase() || '?';
-  const photo = profile.photo ? `${API_BASE}${profile.photo}` : undefined;
+  const photo = uploadUrl(profile.photo);
   const avatarSx = { bgcolor: 'primary.main', color: 'primary.contrastText', fontWeight: 700 };
 
   return (

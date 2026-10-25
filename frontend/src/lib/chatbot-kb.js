@@ -491,7 +491,3 @@ export function guideReply(input, lang) {
   if (entry) return { content: entry.answer[answerLang] || entry.answer.en, lang: answerLang, suggestions: [] };
   return { content: FALLBACK[lang] || FALLBACK.en, lang, suggestions: suggestFor(q, lang) };
 }
-
-export function ruleBasedResponse(input, lang) {
-  return guideReply(input, lang).content;
-}

@@ -35,8 +35,6 @@ export const sortAppointments = (list, today = todayKey()) => [...list].sort((a,
   return ua ? (a.date || '').localeCompare(b.date || '') : (b.date || '').localeCompare(a.date || '');
 });
 
-export const telHref = (phone) => (phone ? `tel:${phone.replace(/[^\d+]/g, '')}` : null);
-
 // ── Time and reschedule helpers ─────────────────────────────────────────────────────────────
 
 // Slots are half an hour long and stored as "09:00 AM".

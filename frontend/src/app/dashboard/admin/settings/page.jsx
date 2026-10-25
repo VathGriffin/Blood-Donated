@@ -12,7 +12,7 @@ import {
   Security, Person, Delete, AddAPhoto, Lock, PersonAdd,
   MoreVert, Edit, Visibility, VisibilityOff, HideImage, Info,
 } from '@mui/icons-material';
-import API_BASE from '@/lib/config';
+import API_BASE, { uploadUrl } from '@/lib/config';
 import { useAuth } from '@/store/AuthContext';
 import { MAX_PHOTO_SIZE, PHOTO_TYPES, photoFileError } from '@/lib/validation';
 import dynamic from 'next/dynamic';
@@ -48,7 +48,6 @@ const HP_ROLES = [
   { label: 'Hospital Representative', badge: 'Healthcare Partner' },
 ];
 
-const hpPhotoUrl = (photo) => (photo ? (photo.startsWith('http') ? photo : `${API_BASE}${photo}`) : null);
 
 // Label/value row used inside every settings card — takes `children` for an
 // interactive control (TextField, Chip) or a plain `value` for read-only text.
@@ -128,7 +127,7 @@ export default function AdminSettings() {
   // the updated account, and updateStaff() pushes the new photo into the sidebar and menu.
   const [photoBusy, setPhotoBusy] = useState(false);
   const adminPhotoInput = React.useRef(null);
-  const adminPhotoSrc = staff?.photo ? `${API_BASE}${staff.photo}` : undefined;
+  const adminPhotoSrc = uploadUrl(staff?.photo);
   const initials = (staff?.fullName || 'A').split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase();
 
   const changePhoto = async (e) => {
@@ -268,7 +267,7 @@ export default function AdminSettings() {
       ? { name: profile.name, role: profile.role, bio: profile.bio || '', visible: profile.visible !== false }
       : emptyHpForm);
     setHpPhotoFile(null);
-    setHpPhotoPreview(profile ? hpPhotoUrl(profile.photo) : null);
+    setHpPhotoPreview(profile ? uploadUrl(profile.photo) : null);
     setHpFormError('');
     setHpDialogOpen(true);
   };
@@ -480,7 +479,7 @@ export default function AdminSettings() {
             ) : (
               <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }} gap={2.5}>
                 {hpProfiles.map(p => {
-                  const photoUrl = hpPhotoUrl(p.photo);
+                  const photoUrl = uploadUrl(p.photo);
                   const isUploading = !!hpUploading[p._id];
                   const isDeleting  = !!hpDeleting[p._id];
                   const hidden = p.visible === false;

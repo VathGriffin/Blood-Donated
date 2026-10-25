@@ -23,7 +23,7 @@ import BarChartIcon from '@mui/icons-material/BarChart';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import { formatDistanceToNow } from 'date-fns';
 import axios from 'axios';
-import API_BASE from '@/lib/config';
+import API_BASE, { uploadUrl } from '@/lib/config';
 import { initialsOf } from '@/lib/format';
 import { useUserAuth } from '@/store/UserAuthContext';
 import { getHospitals } from '@/lib/public-directory';
@@ -384,7 +384,7 @@ export default function ProfilePage() {
     tabsRef.current?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
   };
 
-  const photoSrc = user?.photo ? `${API_BASE}${user.photo}` : null;
+  const photoSrc = uploadUrl(user?.photo);
   const isReq = tab === 'requests';
   const isHistory = tab === 'history';
   const filters = isReq ? REQUEST_FILTERS : APPT_FILTERS;

@@ -16,7 +16,7 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import PlaceIcon from '@mui/icons-material/Place';
 import FormatQuoteIcon from '@mui/icons-material/FormatQuote';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import API_BASE from '@/lib/config';
+import { uploadUrl } from '@/lib/config';
 
 const fadeUp = keyframes`from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); }`;
 const GAP_PX = 24;
@@ -50,8 +50,6 @@ const kindStats = (kind, p) => {
   ];
 };
 
-const photoUrl = (photo) => (photo ? (photo.startsWith('http') ? photo : `${API_BASE}${photo}`) : null);
-
 function Stat({ icon, value, label }) {
   return (
     <Box sx={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 0.875, px: { xs: 0.75, xl: 1.25 }, '&:first-of-type': { pl: 0 } }}>
@@ -67,7 +65,7 @@ function Stat({ icon, value, label }) {
 function ProfileCard({ profile, index }) {
   const isDark = useTheme().palette.mode === 'dark';
   const kind = profileKind(profile.badge);
-  const photo = photoUrl(profile.photo);
+  const photo = uploadUrl(profile.photo);
   const line = isDark ? '#2a2a2a' : '#f1e4e4';
   const stats = kindStats(kind, profile);
   return (

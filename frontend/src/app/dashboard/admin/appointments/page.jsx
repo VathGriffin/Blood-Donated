@@ -13,7 +13,9 @@ import {
 } from "@mui/icons-material";
 import axios from "axios";
 import { format, parseISO, isValid } from "date-fns";
-import API_BASE from "@/lib/config";
+import API_BASE, { uploadUrl } from "@/lib/config";
+import { apiErrorMessage } from "@/lib/api-error";
+import { initialsOf } from "@/lib/format";
 import { useAuth } from "@/store/AuthContext";
 import RescheduleRequestsPanel from "@/components/appointments/RescheduleRequestsPanel";
 import { PageHeader, StatusBadge, TableCard, EmptyState } from "@/components/ui";
@@ -40,7 +42,6 @@ const STATUS_ACTIONS = [
 
 const EMPTY_FILTERS = { status: "", bloodType: "", hospital: "", from: "", to: "" };
 
-const apiError = (err, fallback) => err?.response?.data?.error || err?.response?.data?.message || fallback;
 
 const formatDate = (d, pattern = "MMM d, yyyy") => {
   const parsed = d ? parseISO(d) : null;
@@ -48,10 +49,7 @@ const formatDate = (d, pattern = "MMM d, yyyy") => {
 };
 
 // Uploaded photos are served by the API as "/uploads/…"; full URLs pass through.
-const photoUrl = (photo) => (!photo ? undefined : /^https?:\/\//.test(photo) ? photo : `${API_BASE}${photo}`);
 
-const initials = (name = "") =>
-  name.trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase() || "?";
 
 function AppointmentStatus({ status, size }) {
   const s = STATUS[status];
@@ -77,9 +75,9 @@ function BloodChip({ type }) {
 function DonorCell({ appt }) {
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, minWidth: 0 }}>
-      <Avatar src={photoUrl(appt.donorPhoto)} alt={appt.fullName}
+      <Avatar src={uploadUrl(appt.donorPhoto)} alt={appt.fullName}
         sx={{ width: 38, height: 38, fontSize: "0.82rem", fontWeight: 700, bgcolor: "primary.main", flexShrink: 0 }}>
-        {initials(appt.fullName)}
+        {initialsOf(appt.fullName)}
       </Avatar>
       <Box sx={{ minWidth: 0 }}>
         <Typography fontWeight={700} fontSize="0.875rem" noWrap>{appt.fullName}</Typography>
@@ -174,7 +172,7 @@ const ManageAppointments = () => {
       const res = await axios.get(API, authHeader());
       setAppointments(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
-      setLoadError(apiError(err, "Could not load appointments."));
+      setLoadError(apiErrorMessage(err, "Could not load appointments."));
     } finally {
       setLoading(false);
     }
@@ -234,7 +232,7 @@ const ManageAppointments = () => {
       setViewing((v) => (v?._id === appt._id ? { ...v, ...res.data } : v));
       notify(`${appt.fullName}'s appointment is now ${STATUS[status].label.toLowerCase()}.`);
     } catch (err) {
-      notify(apiError(err, "Could not update the status."), "error");
+      notify(apiErrorMessage(err, "Could not update the status."), "error");
     }
   };
 
@@ -248,7 +246,7 @@ const ManageAppointments = () => {
       notify("Appointment deleted.");
       setDeleting(null);
     } catch (err) {
-      notify(apiError(err, "Could not delete the appointment."), "error");
+      notify(apiErrorMessage(err, "Could not delete the appointment."), "error");
     } finally {
       setBusy(false);
     }
@@ -540,8 +538,8 @@ const ManageAppointments = () => {
         {viewing && (
           <>
             <DialogTitle id="appt-details-title" sx={{ display: "flex", alignItems: "center", gap: 1.5, pr: 7 }}>
-              <Avatar src={photoUrl(viewing.donorPhoto)} alt={viewing.fullName}
-                sx={{ width: 56, height: 56, bgcolor: "primary.main", fontWeight: 700 }}>{initials(viewing.fullName)}</Avatar>
+              <Avatar src={uploadUrl(viewing.donorPhoto)} alt={viewing.fullName}
+                sx={{ width: 56, height: 56, bgcolor: "primary.main", fontWeight: 700 }}>{initialsOf(viewing.fullName)}</Avatar>
               <Box sx={{ minWidth: 0 }}>
                 <Typography variant="h6" component="span" display="block" noWrap>{viewing.fullName}</Typography>
                 <Typography variant="caption" color="text.secondary">

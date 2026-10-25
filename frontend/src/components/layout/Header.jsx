@@ -17,7 +17,7 @@ import DonorNotifications from "./DonorNotifications";
 import SiteSearch from "./SiteSearch";
 import { ColorModeContext } from "@/lib/ThemeContext";
 import { useUserAuth } from "@/store/UserAuthContext";
-import API_BASE from "@/lib/config";
+import { uploadUrl } from "@/lib/config";
 
 // Height of any bar stacked above the AppBar (px). The public layout uses it for the
 // content spacer. The old "urgent needs" strip showed hard-coded shortage notices that
@@ -149,7 +149,7 @@ const Header = () => {
                         "&:focus-visible": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: 2 },
                       }}>
                       <Avatar
-                        src={user?.photo ? `${API_BASE}${user.photo}` : undefined}
+                        src={uploadUrl(user?.photo)}
                         sx={{ width: 34, height: 34, bgcolor: "#B91C2C", fontSize: "0.82rem", fontWeight: 700 }}
                       >
                         {!user?.photo && user?.fullName?.charAt(0)?.toUpperCase()}
@@ -219,7 +219,7 @@ const Header = () => {
                 <Tooltip title={user?.fullName}>
                   <IconButton onClick={handleUserMenuOpen} sx={{ p: 0.4 }}>
                     <Avatar
-                      src={user?.photo ? `${API_BASE}${user.photo}` : undefined}
+                      src={uploadUrl(user?.photo)}
                       sx={{ width: 30, height: 30, bgcolor: "#dc2626", fontSize: "0.78rem", fontWeight: 700 }}
                     >
                       {!user?.photo && user?.fullName?.charAt(0)?.toUpperCase()}
@@ -321,7 +321,7 @@ const Header = () => {
                 border: `1px solid ${isDark ? "#1f1f1f" : "#e5e5e5"}`,
               }}>
                 <Avatar
-                  src={user?.photo ? `${API_BASE}${user.photo}` : undefined}
+                  src={uploadUrl(user?.photo)}
                   sx={{ width: 36, height: 36, bgcolor: "#dc2626", fontSize: "0.85rem", fontWeight: 700 }}
                 >
                   {!user?.photo && user?.fullName?.charAt(0)?.toUpperCase()}

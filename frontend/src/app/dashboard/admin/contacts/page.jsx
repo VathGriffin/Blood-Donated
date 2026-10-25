@@ -20,7 +20,7 @@ import MailOutlineIcon from '@mui/icons-material/MailOutline';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import API_BASE from '@/lib/config';
+import API_BASE, { uploadUrl } from '@/lib/config';
 import { useAuth } from '@/store/AuthContext';
 import { CardMenu, cardSx } from '@/components/donor/ui';
 import DonorPageHero from '@/components/donor/PageHero';
@@ -49,11 +49,9 @@ const listTime = (d) => (new Date(d).toDateString() === new Date().toDateString(
   ? timeLabel(d) : new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
 const signature = (list) => list.map((m) => `${m._id}:${m.deleted ? 1 : 0}`).join('|');
 
-const photoSrc = (photo) => (!photo ? undefined : /^https?:\/\//.test(photo) ? photo : `${API_BASE}${photo}`);
-
 function DonorAvatar({ id, name, photo, size = 44 }) {
   return (
-    <Avatar aria-hidden="true" src={photoSrc(photo)} alt="" sx={{ width: size, height: size, bgcolor: colorFor(id), color: '#fff', fontWeight: 800, fontSize: size * 0.4 }}>
+    <Avatar aria-hidden="true" src={uploadUrl(photo)} alt="" sx={{ width: size, height: size, bgcolor: colorFor(id), color: '#fff', fontWeight: 800, fontSize: size * 0.4 }}>
       {initial(name)}
     </Avatar>
   );

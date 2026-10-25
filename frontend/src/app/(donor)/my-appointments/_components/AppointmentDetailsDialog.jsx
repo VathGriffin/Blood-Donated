@@ -12,7 +12,8 @@ import QrCode2Icon from '@mui/icons-material/QrCode2';
 import EventRepeatIcon from '@mui/icons-material/EventRepeat';
 import API_BASE from '@/lib/config';
 import { IconCircle, Pill, formatDate } from '@/components/donor/ui';
-import { categoryOf, daysUntil, fmtStamp, slotRange, telHref, whenLabel } from './appointments';
+import { categoryOf, daysUntil, fmtStamp, slotRange, whenLabel } from './appointments';
+import { telHref } from '@/lib/format';
 
 const LABEL = {
   upcoming: (s) => (s === 'Confirmed' ? ['success', 'Confirmed'] : ['warning', 'Awaiting confirmation']),

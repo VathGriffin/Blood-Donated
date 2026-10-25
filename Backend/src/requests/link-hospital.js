@@ -29,4 +29,4 @@ async function linkUnassignedRequests() {
   return linked;
 }
 
-module.exports = { findHospitalIdByName, linkUnassignedRequests };
+module.exports = { escapeRegex, findHospitalIdByName, linkUnassignedRequests };

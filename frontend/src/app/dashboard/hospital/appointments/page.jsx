@@ -7,12 +7,10 @@ import {
 import axios from 'axios';
 import { useAuth } from '@/store/AuthContext';
 import RescheduleRequestsPanel from '@/components/appointments/RescheduleRequestsPanel';
-import API_BASE from '@/lib/config';
+import API_BASE, { uploadUrl } from '@/lib/config';
+import { initialsOf } from '@/lib/format';
 
 // Uploaded photos are served by the API as "/uploads/…"; full URLs pass through.
-const photoUrl = (photo) => (!photo ? undefined : /^https?:\/\//.test(photo) ? photo : `${API_BASE}${photo}`);
-const initials = (name = '') =>
-  name.split(' ').filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('') || '?';
 
 const STATUS_COLOR = { Pending: 'warning', Confirmed: 'info', CheckedIn: 'success', Cancelled: 'default' };
 
@@ -86,9 +84,9 @@ export default function HospitalAppointments() {
                 <TableRow key={a._id} hover>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                      <Avatar src={photoUrl(a.donorPhoto)} alt={a.fullName}
+                      <Avatar src={uploadUrl(a.donorPhoto)} alt={a.fullName}
                         sx={{ width: 36, height: 36, fontSize: '0.8rem', fontWeight: 700, bgcolor: 'primary.main' }}>
-                        {initials(a.fullName)}
+                        {initialsOf(a.fullName)}
                       </Avatar>
                       <Box sx={{ minWidth: 0 }}>
                         {a.fullName}

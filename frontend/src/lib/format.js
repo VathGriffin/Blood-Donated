@@ -12,5 +12,8 @@ export const formatDateTime = (d) => new Date(d).toLocaleString('en-US', { ...DA
 /** Short display ID for a blood request, derived from its real database id: "BR-76A5". */
 export const shortRequestId = (id) => `BR-${String(id).slice(-4).toUpperCase()}`;
 
+/** A phone number as a tappable "tel:" link (null when there's no number). */
+export const telHref = (phone) => (phone ? `tel:${phone.replace(/[^\d+]/g, '')}` : null);
+
 /** "Vanna Donor" -> "VD" (max two letters; "?" when there is no name). */
-export const initialsOf = (name) => name?.split(' ').filter(Boolean).map((n) => n[0]).join('').toUpperCase().slice(0, 2) || '?';
+export const initialsOf = (name) => name?.trim().split(/\s+/).filter(Boolean).map((n) => n[0]).join('').toUpperCase().slice(0, 2) || '?';

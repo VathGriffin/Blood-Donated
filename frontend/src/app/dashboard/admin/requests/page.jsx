@@ -13,12 +13,13 @@ import {
     Assignment, WaterDrop, Notes, FilterAltOff, WarningAmber, Add,
 } from "@mui/icons-material";
 import axios from "axios";
-import API_BASE_URL from "@/lib/config";
+import API_BASE_URL, { uploadUrl } from "@/lib/config";
+import { apiErrorMessage } from "@/lib/api-error";
+import { formatDate } from "@/lib/format";
 import { useAuth } from "@/store/AuthContext";
 import { PageHeader, StatCard, StatusBadge, TableCard, EmptyState, ResponsiveGrid } from "@/components/ui";
 
 const API_BASE = `${API_BASE_URL}/api/requests`;
-const BASE_URL = API_BASE_URL;
 
 // BloodLife AI palette for this page.
 const C = { primary: "#B91C2C", dark: "#881D2A", surface: "#F8FAFC", ink: "#1E293B" };
@@ -38,11 +39,6 @@ const emptyForm = {
 const noFilters = { bloodType: "", hospital: "", urgency: "", status: "" };
 
 const reqStatus = (r) => r.status || "Pending";
-const photoUrl = (r) => (r?.photo ? `${BASE_URL}${r.photo}` : undefined);
-const formatDate = (d) => (d ? new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—");
-// The API answers with { error }, { message }, or express-validator's { errors: [{ msg }] }.
-const apiError = (err, fallback) =>
-    err.response?.data?.error || err.response?.data?.message || err.response?.data?.errors?.[0]?.msg || fallback;
 
 // Badge colours for this page: green = approved / low, amber = pending / medium,
 // orange = high, red = critical / rejected.
@@ -74,8 +70,8 @@ const BloodChip = ({ type }) => (
 );
 
 const PatientAvatar = ({ req, size = 38, onOpenPhoto }) => (
-    <Avatar src={photoUrl(req)} alt={req.patientName}
-        onClick={() => req.photo && onOpenPhoto?.({ url: photoUrl(req), name: req.patientName })}
+    <Avatar src={uploadUrl(req?.photo)} alt={req.patientName}
+        onClick={() => req.photo && onOpenPhoto?.({ url: uploadUrl(req?.photo), name: req.patientName })}
         sx={{
             width: size, height: size, flexShrink: 0, fontSize: size * 0.4, fontWeight: 700,
             bgcolor: "rgba(185,28,44,0.1)", color: C.primary,
@@ -125,7 +121,7 @@ const ManageRequests = () => {
             const res = await axios.get(API_BASE, authHeader());
             setRequests(Array.isArray(res.data) ? res.data : []);
         } catch (err) {
-            setLoadError(apiError(err, "Couldn't load blood requests. Check that the server is running."));
+            setLoadError(apiErrorMessage(err, "Couldn't load blood requests. Check that the server is running."));
         } finally {
             setLoading(false);
         }
@@ -164,7 +160,7 @@ const ManageRequests = () => {
             setRequests(prev => prev.map(r => r._id === id ? res.data : r));
             if (viewProfile?._id === id) setViewProfile(res.data);
         } catch (err) {
-            setActionError(apiError(err, "Failed to update status."));
+            setActionError(apiErrorMessage(err, "Failed to update status."));
         } finally {
             setBusyId(null);
         }
@@ -196,7 +192,7 @@ const ManageRequests = () => {
                 id = res.data._id;
             }
         } catch (err) {
-            setFormError(apiError(err, editId ? "Failed to update request." : "Failed to create request."));
+            setFormError(apiErrorMessage(err, editId ? "Failed to update request." : "Failed to create request."));
             setUploading(false);
             return;
         }
@@ -228,7 +224,7 @@ const ManageRequests = () => {
             if (viewProfile?._id === confirmDelete._id) setViewProfile(null);
             setConfirmDelete(null);
         } catch (err) {
-            setActionError(apiError(err, "Failed to delete request."));
+            setActionError(apiErrorMessage(err, "Failed to delete request."));
             setConfirmDelete(null);
         } finally {
             setDeleting(false);
@@ -256,7 +252,7 @@ const ManageRequests = () => {
             photo:        req.photo        || null,
         });
         setEditId(req._id);
-        setPhotoPreview(photoUrl(req) || null);
+        setPhotoPreview(uploadUrl(req?.photo) || null);
         setPhotoFile(null);
         setFormError("");
         setViewProfile(null);
@@ -592,8 +588,8 @@ const ManageRequests = () => {
                                 sx={{ position: "absolute", top: 10, right: 10, color: "rgba(255,255,255,0.85)" }}>
                                 <Close fontSize="small" />
                             </IconButton>
-                            <Avatar src={photoUrl(viewProfile)}
-                                onClick={() => viewProfile.photo && setViewPhoto({ url: photoUrl(viewProfile), name: viewProfile.patientName })}
+                            <Avatar src={uploadUrl(viewProfile.photo)}
+                                onClick={() => viewProfile.photo && setViewPhoto({ url: uploadUrl(viewProfile.photo), name: viewProfile.patientName })}
                                 sx={{
                                     width: 80, height: 80, bgcolor: "rgba(255,255,255,0.2)", fontSize: "2rem", fontWeight: 800,
                                     border: "3px solid rgba(255,255,255,0.5)", cursor: viewProfile.photo ? "pointer" : "default",
@@ -657,7 +653,7 @@ const ManageRequests = () => {
                             </Box>
                             {viewProfile.photo && (
                                 <Button fullWidth size="small" startIcon={<Visibility fontSize="small" />} sx={{ mt: 1.5 }}
-                                    onClick={() => setViewPhoto({ url: photoUrl(viewProfile), name: viewProfile.patientName })}>
+                                    onClick={() => setViewPhoto({ url: uploadUrl(viewProfile.photo), name: viewProfile.patientName })}>
                                     View full photo
                                 </Button>
                             )}

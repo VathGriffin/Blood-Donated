@@ -19,6 +19,7 @@ import {
   BloodBadge, CardMenu, MetaLine, Pill, REQUEST_STATUS, URGENCY_TONE, actionBtnSx, dangerBtnSx, formatDate,
 } from '@/components/donor/ui';
 import { statusOf } from './requests';
+import { telHref } from '@/lib/format';
 
 const STATUS_ICON = {
   Pending: <HourglassTopIcon />, Approved: <CheckCircleIcon />, Fulfilled: <Inventory2Icon />,
@@ -35,8 +36,6 @@ const statusNote = (r) => {
   if (s === 'Rejected') return 'Not approved by the hospital team';
   return null;
 };
-
-const telHref = (phone) => (phone ? `tel:${phone.replace(/[^\d+]/g, '')}` : null);
 
 /**
  * One of the donor's own blood requests. Only actions the API allows a donor are offered:

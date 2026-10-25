@@ -20,7 +20,7 @@ import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import QRCode from 'react-qr-code';
 import axios from 'axios';
 import { useUserAuth } from '@/store/UserAuthContext';
-import API_BASE from '@/lib/config';
+import API_BASE, { uploadUrl } from '@/lib/config';
 import { initialsOf } from '@/lib/format';
 import DonorPageHero from '@/components/donor/PageHero';
 import { IconCircle, Notice, Pill, cardSx, formatDate } from '@/components/donor/ui';
@@ -109,7 +109,7 @@ export default function QRCardPage() {
   const loading = donor === null;
   const verified = !!donor;
   const donorId = user?.id ? `BD-${String(user.id).slice(-6).toUpperCase()}` : 'BD-XXXXXX';
-  const photoSrc = user?.photo ? `${API_BASE}${user.photo}` : null;
+  const photoSrc = uploadUrl(user?.photo);
   const expiry = qrToken ? tokenExpiry(qrToken) : null;
   const eligibleOn = verified ? nextEligible(donor.lastDonation) : null;
   const qrState = !verified ? 'locked' : qrStatus === 'ready' ? 'ready' : qrStatus === 'error' ? 'error' : 'loading';

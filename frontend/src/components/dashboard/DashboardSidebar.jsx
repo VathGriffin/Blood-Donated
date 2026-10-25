@@ -8,13 +8,13 @@ import {
   useTheme,
 } from '@mui/material';
 import BrandLogo from './BrandLogo';
-import API_BASE from '@/lib/config';
+import { uploadUrl } from '@/lib/config';
 import { BRAND, DASHBOARD_BRAND } from '@/lib/brand';
 import { ROLES, ROLE_CONFIG, isItemActive } from '@/lib/navigation';
 
 function UserCard({ profile }) {
   const sb = useTheme().custom.sidebar;
-  const photo = profile.photo ? `${API_BASE}${profile.photo}` : undefined;
+  const photo = uploadUrl(profile.photo);
   return (
     <Box sx={{ px: 2, py: 2, borderTop: `1px solid ${sb.border}`, display: 'flex', alignItems: 'center', gap: 1.5, flexShrink: 0 }}>
       <Avatar

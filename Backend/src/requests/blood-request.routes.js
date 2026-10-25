@@ -12,7 +12,7 @@ const { BLOOD_TYPES, BLOOD_COMPONENTS } = require('../common/blood-types');
 const { assertHospitalScope } = require('../common/middleware/assert-hospital-scope');
 const { createImageUpload } = require('../common/upload');
 const { sendError } = require('../common/middleware/error-handler');
-const { findHospitalIdByName } = require('./link-hospital');
+const { escapeRegex, findHospitalIdByName } = require('./link-hospital');
 
 const DAY_MS = 86400000;
 // A little slack so a "now" picked on a slightly slow clock isn't rejected as being in the past.
@@ -51,7 +51,6 @@ const validateRequest = [
 // The same signed-in requester sending the same patient, blood type and hospital again within this
 // window is almost certainly a double submit (double click, retry after a slow response, two tabs).
 const DUPLICATE_WINDOW_MS = 10 * 60 * 1000;
-const escapeRegex = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 const upload = createImageUpload('request');
 

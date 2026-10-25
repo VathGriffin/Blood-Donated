@@ -10,11 +10,10 @@ import {
   Delete, Edit, Bloodtype, PersonAdd, Search, CameraAlt, DeleteOutline,
 } from "@mui/icons-material";
 import axios from "axios";
-import API_BASE from "@/lib/config";
+import API_BASE, { uploadUrl } from "@/lib/config";
 import { useAuth } from "@/store/AuthContext";
 
 const API = `${API_BASE}/api/donors`;
-const BASE_URL = API_BASE;
 
 const bloodTypes = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const MAX_PHOTO_SIZE = 10 * 1024 * 1024; // must match Backend/src/donor/donor.routes.js multer limit
@@ -54,7 +53,7 @@ const ManageDonors = () => {
 
   const openDialog = (donor) => {
     setSelectedDonor(donor);
-    setPhotoPreview(donor.photo ? `${BASE_URL}${donor.photo}` : null);
+    setPhotoPreview(uploadUrl(donor.photo) || null);
     setPhotoFile(null);
     setPhotoError("");
     setOpen(true);
@@ -276,7 +275,7 @@ const ManageDonors = () => {
                 <TableCell>
                   <Box display="flex" alignItems="center" gap={1.5}>
                     <Avatar
-                      src={donor.photo ? `${BASE_URL}${donor.photo}` : undefined}
+                      src={uploadUrl(donor.photo)}
                       sx={{ width: 38, height: 38, bgcolor: "#b71c1c", fontSize: "0.9rem", fontWeight: 700 }}
                     >
                       {donor.fullName?.charAt(0)?.toUpperCase()}

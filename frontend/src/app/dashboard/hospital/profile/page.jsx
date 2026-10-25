@@ -4,7 +4,7 @@ import {
   Box, Typography, Paper, Avatar, Button, Alert, CircularProgress, Divider,
 } from '@mui/material';
 import { AddAPhoto, Delete } from '@mui/icons-material';
-import API_BASE from '@/lib/config';
+import API_BASE, { uploadUrl } from '@/lib/config';
 import { useAuth } from '@/store/AuthContext';
 
 const MAX_PHOTO_SIZE = 10 * 1024 * 1024; // must match the multer limit in Backend/src/common/upload.js
@@ -18,7 +18,7 @@ export default function HospitalProfile() {
   const [msg, setMsg] = useState(null); // { type: 'success'|'error', text }
   const fileInput = useRef(null);
 
-  const photoSrc = staff?.photo ? `${API_BASE}${staff.photo}` : undefined;
+  const photoSrc = uploadUrl(staff?.photo);
   const initials = (staff?.fullName || 'S').split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase();
   const authHeader = { Authorization: `Bearer ${token}` };
 
