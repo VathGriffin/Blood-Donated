@@ -223,6 +223,7 @@ export default function AssistantPage() {
                 sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: isDark ? '#1a1a1a' : '#fff' } }}
               />
               <IconButton
+                aria-label="Send message"
                 onClick={() => sendMessage()}
                 disabled={loading || !input.trim()}
                 sx={{

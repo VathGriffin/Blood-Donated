@@ -41,11 +41,11 @@ function Footer() {
               <br /><strong> Be a hero — donate blood today.</strong>
             </Typography>
             <Box sx={{ display: "flex", gap: 1.5 }}>
-              <IconButton href="https://www.facebook.com/vith.vath.2025/" target="_blank" size="small"
+              <IconButton href="https://www.facebook.com/vith.vath.2025/" target="_blank" rel="noopener noreferrer" aria-label="Facebook" size="small"
                 sx={{ color: "#fff", backgroundColor: "#3b5998", "&:hover": { backgroundColor: "#2d4373", transform: "translateY(-2px)" }, transition: "0.2s" }}>
                 <Facebook fontSize="small" />
               </IconButton>
-              <IconButton href="https://t.me/blooddonatedkh" target="_blank" size="small"
+              <IconButton href="https://t.me/blooddonatedkh" target="_blank" rel="noopener noreferrer" aria-label="Telegram" size="small"
                 sx={{ color: "#fff", backgroundColor: "#0088cc", "&:hover": { backgroundColor: "#006699", transform: "translateY(-2px)" }, transition: "0.2s" }}>
                 <Telegram fontSize="small" />
               </IconButton>

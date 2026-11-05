@@ -255,7 +255,7 @@ const Header = () => {
                   {isDark ? <Brightness7 sx={{ fontSize: 18 }} /> : <Brightness4 sx={{ fontSize: 18 }} />}
                 </IconButton>
               </Tooltip>
-              <IconButton onClick={() => setDrawerOpen(true)}
+              <IconButton onClick={() => setDrawerOpen(true)} aria-label="Open menu"
                 sx={{ color: isDark ? "rgba(245,245,245,0.85)" : "#333333" }}>
                 <MenuIcon />
               </IconButton>
@@ -275,7 +275,7 @@ const Header = () => {
         {/* Drawer header */}
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 2.5, py: 2.5 }}>
           <BrandLogo href="/" caption={BRAND.tagline} onDark={false} onClick={() => setDrawerOpen(false)} />
-          <IconButton onClick={() => setDrawerOpen(false)} size="small"
+          <IconButton onClick={() => setDrawerOpen(false)} size="small" aria-label="Close menu"
             sx={{ color: isDark ? "rgba(245,245,245,0.6)" : "#666666" }}>
             <CloseIcon fontSize="small" />
           </IconButton>

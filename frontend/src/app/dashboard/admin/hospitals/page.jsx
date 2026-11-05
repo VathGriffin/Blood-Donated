@@ -168,7 +168,7 @@ export default function AdminHospitals() {
                     ))}
                   </TableCell>
                   <TableCell align="right">
-                    <IconButton size="small" color="error" onClick={() => deleteHospital(h._id)}><Delete fontSize="small" /></IconButton>
+                    <IconButton size="small" color="error" aria-label={`Delete ${h.name || "hospital"}`} onClick={() => deleteHospital(h._id)}><Delete fontSize="small" /></IconButton>
                   </TableCell>
                 </TableRow>
               ))}

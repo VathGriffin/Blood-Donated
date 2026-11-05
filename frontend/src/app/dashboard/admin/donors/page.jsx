@@ -4,7 +4,7 @@ import {
   Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   IconButton, Dialog, DialogTitle, DialogContent, TextField, DialogActions, Button,
   Box, Switch, useTheme, Tooltip, Chip, FormControl, InputLabel, Select, MenuItem,
-  InputAdornment, Avatar, Badge,
+  InputAdornment, Avatar, Badge, Alert, CircularProgress,
 } from "@mui/material";
 import {
   Delete, Edit, Bloodtype, PersonAdd, Search, CameraAlt, DeleteOutline,
@@ -36,14 +36,20 @@ const ManageDonors = () => {
   const [photoFile, setPhotoFile] = useState(null);
   const [photoError, setPhotoError] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const fileInputRef = useRef(null);
 
   const fetchDonors = useCallback(async () => {
     try {
       const res = await axios.get(API, authHeader());
       setDonors(Array.isArray(res.data) ? res.data : []);
+      setError("");
     } catch (err) {
-      console.error("Fetch failed:", err);
+      setError(err.response?.data?.message || "Could not load donors. Check your connection and try again.");
+    } finally {
+      setLoading(false);
     }
   }, [authHeader]);
 
@@ -109,6 +115,7 @@ const ManageDonors = () => {
       return;
     }
 
+    setSaving(true);
     try {
       let savedDonor;
 
@@ -150,6 +157,8 @@ const ManageDonors = () => {
       const log = status >= 400 && status < 500 ? console.warn : console.error;
       log("Save failed:", status, msg, err);
       alert(msg || (status === 401 ? "Session expired — please log in again." : "Failed to save donor."));
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -157,9 +166,10 @@ const ManageDonors = () => {
     if (window.confirm("Delete this donor?")) {
       try {
         await axios.delete(`${API}/${id}`, authHeader());
+        setError("");
         fetchDonors();
       } catch (err) {
-        console.error("Delete failed:", err);
+        setError(err.response?.data?.message || "Failed to delete donor. Please try again.");
       }
     }
   };
@@ -236,6 +246,12 @@ const ManageDonors = () => {
         }}
       />
 
+      {error && (
+        <Alert severity="error" onClose={() => setError("")} sx={{ mb: 2.5, borderRadius: 2 }}>
+          {error}
+        </Alert>
+      )}
+
       {/* Table */}
       <TableContainer
         component={Paper}
@@ -255,7 +271,14 @@ const ManageDonors = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {filtered.length === 0 && (
+            {loading && (
+              <TableRow>
+                <TableCell colSpan={8} align="center" sx={{ py: 6 }}>
+                  <CircularProgress size={28} color="error" />
+                </TableCell>
+              </TableRow>
+            )}
+            {!loading && filtered.length === 0 && (
               <TableRow>
                 <TableCell colSpan={8} align="center" sx={{ py: 6 }}>
                   <Bloodtype sx={{ fontSize: 40, color: "text.disabled", mb: 1 }} />
@@ -456,10 +479,10 @@ const ManageDonors = () => {
             onClick={handleUpdate}
             variant="contained"
             color="error"
-            disabled={uploading}
+            disabled={saving}
             sx={{ borderRadius: 2 }}
           >
-            {uploading ? "Uploading…" : "Save"}
+            {uploading ? "Uploading…" : saving ? "Saving…" : "Save"}
           </Button>
         </DialogActions>
       </Dialog>
