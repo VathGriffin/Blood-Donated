@@ -261,9 +261,11 @@ const KB = [
   {
     ask: { en: "Where can I donate?", km: "តើអាចបរិច្ចាគនៅឯណា?", vi: "Tôi có thể hiến máu ở đâu?" },
     tags: {
-      en: ["hospital","location","center","where"],
-      km: ["មន្ទីរពេទ្យ","ទីតាំង","ណា"],
-      vi: ["bệnh viện","địa điểm","trung tâm","ở đâu"],
+      // The "where …" phrases must be longer than eligibility's "can i donate" / "អាចបរិច្ចាគ" /
+      // "có thể hiến", or "Where can I donate?" gets the eligibility answer (longest match wins).
+      en: ["hospital","location","center","where","where can i donate","where do i donate","where to donate","where can i give blood","donation center near me"],
+      km: ["មន្ទីរពេទ្យ","ទីតាំង","ណា","អាចបរិច្ចាគនៅឯណា","បរិច្ចាគនៅឯណា","បរិច្ចាគនៅណា"],
+      vi: ["bệnh viện","địa điểm","trung tâm","ở đâu","hiến máu ở đâu","có thể hiến máu ở đâu","hiến ở đâu"],
     },
     answer: {
       en: "To find hospitals and clinics near you, open [Find a Hospital](/map) — search your city or province, or tap the location button. You can also book a donation slot on the [Appointments](/appointments) page.",
@@ -373,6 +375,23 @@ export const QUICK_PROMPTS = {
     "Sau khi hiến cần làm gì?",
   ],
 };
+
+// The chat widget's six quick-action cards. Each one sends a question the offline guide below also
+// answers, in the chosen language, so the cards work whether or not the AI is reachable. The
+// question text is read from that guide entry, so a card and the guide can never drift apart.
+const askOf = (en) => {
+  const entry = KB.find((e) => e.ask?.en === en);
+  if (!entry) throw new Error(`No guide entry asks "${en}"`);
+  return entry.ask;
+};
+export const QUICK_ACTIONS = [
+  { id: 'eligibility', prompt: askOf('Am I eligible to donate?') },
+  { id: 'appointment', prompt: askOf('How do I book an appointment?') },
+  { id: 'hospital',    prompt: askOf('Where can I donate?') },
+  { id: 'bloodTypes',  prompt: askOf('What are the blood types?') },
+  { id: 'preparation', prompt: askOf('How should I prepare?') },
+  { id: 'aftercare',   prompt: askOf('What to do after donating?') },
+];
 
 // Short plain-ASCII tags ("hi", "cold", "time") must match as whole words: as substrings they hit
 // unrelated words — "hi" inside the Vietnamese "hiến" or the English "this" — and hijack the answer.
