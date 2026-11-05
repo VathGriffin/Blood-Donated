@@ -34,7 +34,7 @@ export function replyLinks(text) {
 // `stepBadges` shows numbered lists as red numbered circles instead of "1." markers.
 export default function ChatMessage({ text, fontSize = '0.85rem', lineHeight = 1.7, stepBadges = false }) {
   const isDark = useTheme().palette.mode === 'dark';
-  const linkColor = isDark ? '#ef9a9a' : '#b71c1c';
+  const linkColor = isDark ? '#ef9a9a' : '#A91529';
   const blocks = [];
   let listBuffer = [];
   let listType = 'ul'; // numbered steps stay numbered
@@ -49,7 +49,7 @@ export default function ChatMessage({ text, fontSize = '0.85rem', lineHeight = 1
           {listBuffer.map((item, i) => (
             <Box component="li" key={i} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.1, fontSize, lineHeight }}>
               <Box aria-hidden="true" sx={{
-                width: 22, height: 22, mt: '1px', flexShrink: 0, borderRadius: '50%', bgcolor: '#B91C2C', color: '#fff',
+                width: 22, height: 22, mt: '1px', flexShrink: 0, borderRadius: '50%', bgcolor: '#C91D32', color: '#fff',
                 fontSize: '0.72rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>{i + 1}</Box>
               <Box sx={{ minWidth: 0 }}>{renderInline(item, `li-${key}-${i}`, linkColor)}</Box>

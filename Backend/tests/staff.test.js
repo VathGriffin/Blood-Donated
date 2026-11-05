@@ -136,3 +136,40 @@ describe('self-service password change', () => {
     expect(await bcrypt.compare('password123', reloaded.password)).toBe(true);
   });
 });
+
+describe('admin staff account management', () => {
+  test('creating a staff account enforces the password rules', async () => {
+    const { token } = await createAdmin();
+    const hospital = await createHospital();
+    const base = { fullName: 'New Staff', email: 'new.staff@test.com', role: 'hospital_staff', hospital: hospital._id };
+
+    const short = await request(app).post('/api/staff').set('Authorization', `Bearer ${token}`).send({ ...base, password: '123' });
+    expect(short.status).toBe(400);
+    expect(short.body.message).toMatch(/at least 8/);
+    expect(await StaffUser.countDocuments({ email: base.email })).toBe(0);
+
+    const ok = await request(app).post('/api/staff').set('Authorization', `Bearer ${token}`).send({ ...base, password: 'longEnough1' });
+    expect(ok.status).toBe(201);
+  });
+
+  test('an admin can rename, move, reset the password of and delete a staff account', async () => {
+    const { token } = await createAdmin();
+    const first = await createHospital();
+    const second = await createHospital({ name: 'Second Hospital' });
+    const { staff } = await createHospitalStaff(first._id);
+    const auth = { Authorization: `Bearer ${token}` };
+
+    expect((await request(app).patch(`/api/staff/${staff._id}`).set(auth).send({ password: 'short' })).status).toBe(400);
+
+    const updated = await request(app).patch(`/api/staff/${staff._id}`).set(auth)
+      .send({ fullName: 'Renamed Staff', hospital: second._id, password: 'brandNewPass1' });
+    expect(updated.status).toBe(200);
+    const reloaded = await StaffUser.findById(staff._id);
+    expect(reloaded.fullName).toBe('Renamed Staff');
+    expect(String(reloaded.hospital)).toBe(String(second._id));
+    expect(await bcrypt.compare('brandNewPass1', reloaded.password)).toBe(true);
+
+    expect((await request(app).delete(`/api/staff/${staff._id}`).set(auth)).status).toBe(200);
+    expect(await StaffUser.findById(staff._id)).toBeNull();
+  });
+});

@@ -10,7 +10,7 @@ const { authLimiter } = require('../common/middleware/auth-limiter');
 const { sendError } = require('../common/middleware/error-handler');
 const { createImageUpload } = require('../common/upload');
 const { sessionClaims } = require('../common/session');
-const { PASSWORD_MIN } = require('./password-rules');
+const { PASSWORD_MIN, newPasswordError } = require('./password-rules');
 
 const upload = createImageUpload('staff', (req) => req.auth?.id || 'unknown');
 
@@ -160,6 +160,9 @@ router.post('/', requireRole('admin'), async (req, res) => {
     return res.status(400).json({ message: 'Invalid role.' });
   if (role === 'hospital_staff' && !hospital)
     return res.status(400).json({ message: 'hospital is required for hospital_staff accounts.' });
+  // Same password rules as a staff member changing their own.
+  const passwordProblem = newPasswordError(String(password));
+  if (passwordProblem) return res.status(400).json({ message: passwordProblem.replace('New password', 'Password') });
   try {
     const existing = await StaffUser.findOne({ email: email.toLowerCase() });
     if (existing) return res.status(409).json({ message: 'Email is already registered.' });
@@ -194,7 +197,11 @@ router.patch('/:id', requireRole('admin'), async (req, res) => {
     const { fullName, hospital } = req.body;
     if (fullName?.trim()) update.fullName = fullName.trim();
     if (hospital !== undefined) update.hospital = hospital;
-    if (req.body.password) update.password = await bcrypt.hash(req.body.password, 10);
+    if (req.body.password) {
+      const passwordProblem = newPasswordError(String(req.body.password));
+      if (passwordProblem) return res.status(400).json({ message: passwordProblem });
+      update.password = await bcrypt.hash(req.body.password, 10);
+    }
     const staff = await StaffUser.findByIdAndUpdate(req.params.id, update, { new: true }).select('-password');
     if (!staff) return res.status(404).json({ message: 'Staff account not found' });
     res.json(staffPayload(staff));

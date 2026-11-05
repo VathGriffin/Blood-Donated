@@ -27,6 +27,8 @@ import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import Panel from "../appointments/_components/Panel";
 import { NeedHelp } from "../appointments/_components/SidePanels";
 import { BLOOD_TYPES, C } from "../appointments/_components/booking";
+import { localToday } from "@/lib/format";
+import { useUserAuth } from "@/store/UserAuthContext";
 
 // A donor's arm on the chair, giving blood.
 const HERO_IMG =
@@ -70,8 +72,8 @@ const fieldSx = { "& .MuiOutlinedInput-root": { borderRadius: "10px" } };
 
 const DonateBlood = () => {
   const isDark = useTheme().palette.mode === "dark";
-  const border = isDark ? "#262626" : C.border;
-  const softTile = isDark ? "rgba(185,28,44,0.16)" : C.soft;
+  const border = isDark ? "#334155" : C.border;
+  const softTile = isDark ? "rgba(201,29,50,0.16)" : C.soft;
 
   const [bloodType, setBloodType] = useState("");
   const [formData, setFormData] = useState({
@@ -85,6 +87,20 @@ const DonateBlood = () => {
   const [photoError, setPhotoError] = useState("");
   const photoInputRef = useRef(null);
   const router = useRouter();
+  const { user, isAuth } = useUserAuth();
+
+  // Signed in: start from the account's details and register under its email, so the
+  // registration is linked to the account and shows up in the profile's history.
+  useEffect(() => {
+    if (!isAuth || !user?.email) return;
+    setFormData((prev) => ({
+      ...prev,
+      fullName: prev.fullName || user.fullName || "",
+      email: user.email,
+      phone: prev.phone || user.phone || "",
+    }));
+    if (user.bloodType) setBloodType((prev) => prev || user.bloodType);
+  }, [isAuth, user?.email, user?.fullName, user?.phone, user?.bloodType]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -191,18 +207,18 @@ const DonateBlood = () => {
   );
 
   return (
-    <Box sx={{ bgcolor: isDark ? "#0f0f0f" : C.bg, pb: { xs: 6, md: 8 } }}>
+    <Box sx={{ bgcolor: isDark ? "#0B1220" : C.bg, pb: { xs: 6, md: 8 } }}>
 
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <Box sx={{
         position: "relative", overflow: "hidden",
         background: isDark
-          ? "linear-gradient(100deg, #1a1212 0%, #221416 60%, #2a1518 100%)"
-          : "linear-gradient(100deg, #FFF5F6 0%, #FDEBEE 55%, #FADADF 100%)",
+          ? "linear-gradient(100deg, #0F2038 0%, #13294A 60%, #17263D 100%)"
+          : "linear-gradient(100deg, #FFFFFF 0%, #F6F8FC 55%, #EEF2F7 100%)",
       }}>
         <Box aria-hidden="true" component="svg" viewBox="0 0 1440 60" preserveAspectRatio="none"
           sx={{ position: "absolute", left: 0, right: 0, bottom: -1, width: "100%", height: 36, display: "block" }}>
-          <path d="M0 40 C 360 0, 720 70, 1080 30 S 1440 20, 1440 20 V60 H0Z" fill={isDark ? "#0f0f0f" : C.bg} />
+          <path d="M0 40 C 360 0, 720 70, 1080 30 S 1440 20, 1440 20 V60 H0Z" fill={isDark ? "#0B1220" : C.bg} />
         </Box>
 
         <Container maxWidth={false} sx={{
@@ -212,8 +228,8 @@ const DonateBlood = () => {
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Box sx={{
               display: "inline-flex", alignItems: "center", gap: 0.75, px: 1.5, py: 0.5, mb: 2, borderRadius: "999px",
-              bgcolor: isDark ? "rgba(185,28,44,0.18)" : "#fff", color: C.primary, fontWeight: 700, fontSize: "0.8rem",
-              boxShadow: isDark ? "none" : "0 2px 10px rgba(185,28,44,0.10)",
+              bgcolor: isDark ? "rgba(201,29,50,0.18)" : "#fff", color: C.primary, fontWeight: 700, fontSize: "0.8rem",
+              boxShadow: isDark ? "none" : "0 2px 10px rgba(201,29,50,0.10)",
             }}>
               <FavoriteIcon sx={{ fontSize: 16 }} aria-hidden="true" /> Donor Registration
             </Box>
@@ -231,11 +247,11 @@ const DonateBlood = () => {
               {HERO_POINTS.map(({ icon, title, text }, i) => (
                 <Box component="li" key={title} sx={{
                   display: "flex", alignItems: "center", gap: 1.25, pr: { md: 4 }, mr: { md: 4 },
-                  borderRight: { md: i < HERO_POINTS.length - 1 ? `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(185,28,44,0.14)"}` : "none" },
+                  borderRight: { md: i < HERO_POINTS.length - 1 ? `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(201,29,50,0.14)"}` : "none" },
                 }}>
                   <Box aria-hidden="true" sx={{
                     width: 42, height: 42, borderRadius: "50%", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
-                    bgcolor: isDark ? "rgba(185,28,44,0.18)" : "#FBE3E6", color: C.primary, "& svg": { fontSize: 22 },
+                    bgcolor: isDark ? "rgba(201,29,50,0.18)" : "#FFF1F2", color: C.primary, "& svg": { fontSize: 22 },
                   }}>
                     {icon}
                   </Box>
@@ -252,7 +268,7 @@ const DonateBlood = () => {
           <Box aria-hidden="true" sx={{ display: { xs: "none", md: "block" }, position: "relative", flexShrink: 0, width: { md: 340, lg: 420 } }}>
             <Box sx={{
               position: "relative", borderRadius: "24px", overflow: "hidden", aspectRatio: "4 / 3",
-              boxShadow: "0 20px 50px rgba(136,29,42,0.25)",
+              boxShadow: "0 20px 50px rgba(16,37,65,0.25)",
             }}>
               <Image src={HERO_IMG} alt="" fill sizes="420px" style={{ objectFit: "cover" }} priority />
               <Box sx={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.45) 100%)" }} />
@@ -321,7 +337,7 @@ const DonateBlood = () => {
 
             {/* 2. Personal details */}
             <Panel icon={<PersonOutlineIcon />} title={<>Your Details{stepBadge(2)}</>} subtitle="So our team can contact you to confirm">
-              <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2.5, p: 1.5, borderRadius: "12px", border: `1px dashed ${isDark ? "#333" : "#CBD5E1"}` }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2.5, p: 1.5, borderRadius: "12px", border: `1px dashed ${isDark ? "#334155" : "#CBD5E1"}` }}>
                 <Avatar src={photoPreview || undefined} sx={{ width: 56, height: 56, bgcolor: softTile, color: C.primary }}>
                   <AddAPhotoIcon sx={{ fontSize: 24 }} />
                 </Avatar>
@@ -349,7 +365,9 @@ const DonateBlood = () => {
                   onChange={handleChange} required placeholder="e.g. Sok Dara" autoComplete="name"
                   sx={{ ...fieldSx, gridColumn: "1 / -1" }} />
                 <TextField fullWidth label="Email Address" name="email" value={formData.email}
-                  onChange={handleChange} type="email" required placeholder="you@example.com" autoComplete="email" sx={fieldSx} />
+                  onChange={handleChange} type="email" required placeholder="you@example.com" autoComplete="email" sx={fieldSx}
+                  slotProps={{ input: { readOnly: isAuth } }}
+                  helperText={isAuth ? "Your account’s email — this registration will show in your profile" : undefined} />
                 <TextField fullWidth label="Phone Number" name="phone" value={formData.phone}
                   onChange={handleChange} type="tel" required placeholder="012 345 678" autoComplete="tel" sx={fieldSx} />
                 <TextField fullWidth label="Location / City" name="location" value={formData.location}
@@ -364,7 +382,7 @@ const DonateBlood = () => {
                 <TextField fullWidth label="Last Donation Date" name="lastDonation" type="date"
                   value={formData.lastDonation} onChange={handleChange}
                   InputLabelProps={{ shrink: true }}
-                  inputProps={{ max: new Date().toISOString().slice(0, 10) }}
+                  inputProps={{ max: localToday() }}
                   helperText="Leave blank if this is your first donation" sx={fieldSx} />
                 <Box sx={{
                   display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1.5,
@@ -405,7 +423,7 @@ const DonateBlood = () => {
                 sx={{
                   mt: 2, mx: 0, width: "100%", pr: 2, py: 0.5, borderRadius: "10px",
                   border: `1px solid ${eligibilityAck ? C.primary : border}`,
-                  bgcolor: eligibilityAck ? (isDark ? "rgba(185,28,44,0.12)" : C.softer) : "transparent",
+                  bgcolor: eligibilityAck ? (isDark ? "rgba(201,29,50,0.12)" : C.softer) : "transparent",
                   transition: "all 0.15s ease",
                 }}
               />
@@ -419,7 +437,7 @@ const DonateBlood = () => {
               <Box sx={{ mt: 2.5, pt: 2.5, borderTop: `1px solid ${border}`, display: "flex", flexDirection: { xs: "column", sm: "row" }, alignItems: { sm: "center" }, gap: 2 }}>
                 <Box sx={{ flex: 1 }}>
                   <Typography sx={{ fontWeight: 700, fontSize: "0.9rem" }}>{done} of {required.length} required steps complete</Typography>
-                  <Box sx={{ mt: 0.75, height: 6, borderRadius: 3, bgcolor: isDark ? "#262626" : "#F1F5F9", overflow: "hidden", maxWidth: 260 }}>
+                  <Box sx={{ mt: 0.75, height: 6, borderRadius: 3, bgcolor: isDark ? "#334155" : "#F1F5F9", overflow: "hidden", maxWidth: 260 }}>
                     <Box sx={{ height: "100%", width: `${(done / required.length) * 100}%`, bgcolor: C.primary, transition: "width 0.3s ease" }} />
                   </Box>
                 </Box>

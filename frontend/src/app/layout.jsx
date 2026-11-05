@@ -24,7 +24,7 @@ export const metadata = {
   keywords: ['blood donation', 'blood bank', 'donor management', 'AI chatbot', 'hospital support', 'Cambodia'],
 };
 
-export const viewport = { themeColor: '#dc2626' };
+export const viewport = { themeColor: '#C91D32' };
 
 export default async function RootLayout({ children }) {
   // Saved light/dark choice, so the first paint already uses the right theme.

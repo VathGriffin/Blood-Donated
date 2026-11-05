@@ -114,14 +114,14 @@ const AdminLogin = () => {
             position: 'absolute',
             inset: 0,
             background:
-              'linear-gradient(155deg, rgba(40,4,8,0.94) 0%, rgba(110,8,16,0.86) 50%, rgba(190,24,32,0.74) 100%)',
+              'linear-gradient(155deg, rgba(11,26,47,0.95) 0%, rgba(16,37,65,0.88) 50%, rgba(36,84,129,0.76) 100%)',
           },
         }}
       >
         {/* Decorative drop + glow shapes */}
         <Box aria-hidden sx={{
           position: 'absolute', top: '6%', right: '8%', width: 170, height: 220, opacity: 0.22,
-          background: 'linear-gradient(180deg, #ff4d55, #b3121b)', borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
+          background: 'linear-gradient(135deg, #E63946 0%, #C91D32 100%)', borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
           clipPath: 'path("M85 0C85 0 0 95 0 140a85 85 0 0 0 170 0C170 95 85 0 85 0Z")',
         }} />
         <Box aria-hidden sx={{
@@ -136,10 +136,10 @@ const AdminLogin = () => {
         <Box sx={{ position: 'relative', zIndex: 1, maxWidth: 520 }}>
           <Box sx={{
             display: 'inline-flex', alignItems: 'center', gap: 1, mb: 3.5,
-            bgcolor: 'rgba(198,40,40,0.35)', border: '1px solid rgba(255,120,120,0.55)',
+            bgcolor: 'rgba(201,29,50,0.35)', border: '1px solid rgba(255,120,120,0.55)',
             borderRadius: 999, px: 2, py: 0.85, backdropFilter: 'blur(6px)', ...enter(0.08),
           }}>
-            <Shield sx={{ fontSize: 16, color: '#ffcdd2' }} />
+            <Shield sx={{ fontSize: 16, color: '#F5C6CC' }} />
             <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.06em' }}>
               SECURE ADMIN ACCESS
             </Typography>
@@ -149,9 +149,9 @@ const AdminLogin = () => {
             fontWeight: 800, fontSize: { md: '2.5rem', lg: '3.1rem' }, lineHeight: 1.12, letterSpacing: '-0.02em', ...enter(0.14),
           }}>
             Manage Every<br />
-            <Box component="span" sx={{ color: '#ff4d4f' }}>Drop</Box> That Matters
+            <Box component="span" sx={{ color: '#E63946' }}>Drop</Box> That Matters
           </Typography>
-          <Box sx={{ width: 46, height: 3, borderRadius: 2, bgcolor: '#ff4d4f', mt: 2.25, mb: 2.5, ...enter(0.18) }} />
+          <Box sx={{ width: 46, height: 3, borderRadius: 2, bgcolor: '#E63946', mt: 2.25, mb: 2.5, ...enter(0.18) }} />
           <Typography sx={{ fontSize: '1.05rem', color: 'rgba(255,255,255,0.82)', lineHeight: 1.6, mb: 4, ...enter(0.22) }}>
             Full control of the blood donation network — donors, requests, inventory, and lives saved.
           </Typography>
@@ -165,7 +165,7 @@ const AdminLogin = () => {
                 <Box className="cap-icon" sx={{
                   width: 52, height: 52, borderRadius: '14px', flexShrink: 0,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: 'linear-gradient(145deg, #c62828, #8e0e14)',
+                  background: 'linear-gradient(135deg, #E63946 0%, #C91D32 100%)',
                   border: '1px solid rgba(255,140,140,0.45)',
                   boxShadow: '0 4px 14px rgba(0,0,0,0.25)',
                   transition: 'transform 0.25s ease, box-shadow 0.25s ease',
@@ -184,7 +184,7 @@ const AdminLogin = () => {
         </Box>
 
         <Box sx={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: 2, ...enter(0.6) }}>
-          <Box sx={{ width: 46, height: 2, borderRadius: 2, bgcolor: '#ff4d4f' }} />
+          <Box sx={{ width: 46, height: 2, borderRadius: 2, bgcolor: '#E63946' }} />
           <Typography sx={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.75)' }}>
             {BRAND.name} • Admin Portal
           </Typography>
@@ -197,17 +197,17 @@ const AdminLogin = () => {
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
         px: 2, py: { xs: 4, sm: 6 },
         background: isDark
-          ? 'radial-gradient(circle at 85% 10%, rgba(198,40,40,0.14), transparent 45%), #0f0f0f'
-          : 'linear-gradient(160deg, #fdf3f3 0%, #ffffff 55%, #fdf5f5 100%)',
+          ? 'radial-gradient(circle at 85% 10%, rgba(201,29,50,0.14), transparent 45%), #0B1220'
+          : 'linear-gradient(160deg, #FFF1F2 0%, #FFFFFF 55%, #FFF1F2 100%)',
       }}>
         {/* Soft background circles */}
         <Box aria-hidden sx={{
           position: 'absolute', top: -120, right: -100, width: 380, height: 380, borderRadius: '50%',
-          bgcolor: isDark ? 'rgba(198,40,40,0.08)' : 'rgba(198,40,40,0.05)',
+          bgcolor: isDark ? 'rgba(201,29,50,0.08)' : 'rgba(201,29,50,0.05)',
         }} />
         <Box aria-hidden sx={{
           position: 'absolute', bottom: -140, left: -90, width: 320, height: 320, borderRadius: '50%',
-          bgcolor: isDark ? 'rgba(198,40,40,0.06)' : 'rgba(198,40,40,0.045)',
+          bgcolor: isDark ? 'rgba(201,29,50,0.06)' : 'rgba(201,29,50,0.045)',
         }} />
 
         {/* Mobile brand mark */}
@@ -218,14 +218,14 @@ const AdminLogin = () => {
         <Box sx={{
           position: 'relative', width: '100%', maxWidth: 600, bgcolor: 'background.paper',
           borderRadius: '28px', overflow: 'hidden',
-          border: `1px solid ${isDark ? '#262626' : '#f3e6e6'}`,
-          boxShadow: isDark ? '0 18px 50px rgba(0,0,0,0.5)' : '0 24px 70px rgba(120,20,20,0.12)',
+          border: `1px solid ${isDark ? '#334155' : '#E2E8F0'}`,
+          boxShadow: isDark ? '0 18px 50px rgba(0,0,0,0.5)' : '0 24px 70px rgba(16,24,40,0.12)',
           ...enter(0.1),
         }}>
           {/* Card header */}
           <Box sx={{
             position: 'relative', overflow: 'hidden',
-            background: 'linear-gradient(120deg, #7f0a10 0%, #b3141c 55%, #d32f2f 100%)',
+            background: 'linear-gradient(120deg, #102541 0%, #173B63 55%, #245481 100%)',
             px: { xs: 3, sm: 5 }, py: { xs: 3, sm: 3.5 },
             display: 'flex', alignItems: 'center', gap: { xs: 2, sm: 3 },
           }}>
@@ -264,7 +264,7 @@ const AdminLogin = () => {
                 display: 'flex', flexDirection: 'column', gap: 2.5,
                 '& .MuiOutlinedInput-root': {
                   minHeight: 54, borderRadius: '14px', transition: 'box-shadow 0.2s ease, background-color 0.2s ease',
-                  '&.Mui-focused': { boxShadow: '0 0 0 4px rgba(198,40,40,0.12)' },
+                  '&.Mui-focused': { boxShadow: '0 0 0 4px rgba(201,29,50,0.12)' },
                   '&.Mui-focused .MuiInputAdornment-positionStart': { color: RED },
                   ...noMotion,
                 },
@@ -308,7 +308,7 @@ const AdminLogin = () => {
                       checked={remember}
                       onChange={(e) => setRemember(e.target.checked)}
                       size="small"
-                      sx={{ color: isDark ? '#666' : '#cfc4c4', '&.Mui-checked': { color: RED } }}
+                      sx={{ color: isDark ? '#64748B' : '#CBD5E1', '&.Mui-checked': { color: RED } }}
                     />
                   }
                   label="Remember me"
@@ -316,7 +316,7 @@ const AdminLogin = () => {
                 />
                 <Box component={Link} href="/forgot-password" sx={{
                   color: RED, fontWeight: 600, fontSize: '0.9rem', textUnderlineOffset: 3,
-                  '&:hover': { color: '#8e0e14' }, '&:focus-visible': { outline: `2px solid ${RED}`, outlineOffset: 2, borderRadius: 1 },
+                  '&:hover': { color: '#A91529' }, '&:focus-visible': { outline: `2px solid ${RED}`, outlineOffset: 2, borderRadius: 1 },
                 }}>
                   Forgot password?
                 </Box>
@@ -327,8 +327,8 @@ const AdminLogin = () => {
                 endIcon={loading ? null : <ArrowForward className="arrow" />}
                 sx={{
                   py: 1.75, fontSize: '1.08rem', borderRadius: '14px', bgcolor: 'transparent',
-                  background: 'linear-gradient(120deg, #a3111a 0%, #d32f2f 100%)',
-                  boxShadow: '0 12px 28px rgba(198,40,40,0.32)',
+                  background: 'linear-gradient(135deg, #E63946 0%, #C91D32 100%)',
+                  boxShadow: '0 12px 28px rgba(201,29,50,0.32)',
                   transition: 'transform 0.2s ease, box-shadow 0.25s ease, filter 0.2s ease',
                   '& .arrow': { transition: 'transform 0.2s ease' },
                   '&:hover': {

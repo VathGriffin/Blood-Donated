@@ -29,18 +29,18 @@ function Section({ id, icon, title, children, isDark, border, card }) {
       <Box display="flex" alignItems="center" gap={1.5} mb={2.5}>
         <Box sx={{
           width: 42, height: 42, borderRadius: "12px", flexShrink: 0,
-          bgcolor: isDark ? "rgba(220,38,38,0.12)" : "#fff1f2",
+          bgcolor: isDark ? "rgba(201,29,50,0.12)" : "#fff1f2",
           display: "flex", alignItems: "center", justifyContent: "center",
-          color: "#dc2626",
+          color: "#C91D32",
         }}>
-          {React.cloneElement(icon, { sx: { fontSize: 20, color: "#dc2626" } })}
+          {React.cloneElement(icon, { sx: { fontSize: 20, color: "#C91D32" } })}
         </Box>
         <Typography fontWeight={800} fontSize="1.05rem" letterSpacing="-0.01em"
-          sx={{ color: isDark ? "#f5f5f5" : "#111" }}>
+          sx={{ color: isDark ? "#F8FAFC" : "#172B4D" }}>
           {title}
         </Typography>
       </Box>
-      <Divider sx={{ mb: 2.5, borderColor: isDark ? "#1f1f1f" : "#f0f0f0" }} />
+      <Divider sx={{ mb: 2.5, borderColor: isDark ? "#334155" : "#E2E8F0" }} />
       {children}
     </Paper>
   );
@@ -49,7 +49,7 @@ function Section({ id, icon, title, children, isDark, border, card }) {
 function Bullet({ children }) {
   return (
     <Box display="flex" gap={1.5} mb={1}>
-      <CheckCircleIcon sx={{ fontSize: 16, color: "#dc2626", mt: 0.3, flexShrink: 0 }} />
+      <CheckCircleIcon sx={{ fontSize: 16, color: "#C91D32", mt: 0.3, flexShrink: 0 }} />
       <Typography variant="body2" color="text.secondary" lineHeight={1.8}>{children}</Typography>
     </Box>
   );
@@ -58,9 +58,9 @@ function Bullet({ children }) {
 export default function PrivacyPolicy() {
   const theme  = useTheme();
   const isDark = theme.palette.mode === "dark";
-  const bg     = isDark ? "#0a0a0a" : "#f8f8f8";
-  const card   = isDark ? "#111111" : "#ffffff";
-  const border = isDark ? "#1f1f1f" : "#e5e5e5";
+  const bg     = isDark ? "#0B1220" : "#F6F8FC";
+  const card   = isDark ? "#17263D" : "#ffffff";
+  const border = isDark ? "#334155" : "#E2E8F0";
 
   return (
     <Box sx={{ bgcolor: bg, minHeight: "100vh", pt: { xs: 10, md: 12 }, pb: 10 }}>
@@ -70,14 +70,14 @@ export default function PrivacyPolicy() {
         <Box textAlign="center" mb={6}>
           <Box sx={{
             width: 64, height: 64, borderRadius: "18px", mx: "auto", mb: 3,
-            background: "linear-gradient(135deg, #dc2626 0%, #991b1b 100%)",
+            background: "linear-gradient(135deg, #E63946 0%, #C91D32 100%)",
             display: "flex", alignItems: "center", justifyContent: "center",
-            boxShadow: "0 8px 24px rgba(220,38,38,0.35)",
+            boxShadow: "0 8px 24px rgba(201,29,50,0.35)",
           }}>
             <ShieldIcon sx={{ color: "white", fontSize: 30 }} />
           </Box>
           <Typography fontWeight={900} fontSize={{ xs: "2rem", md: "2.6rem" }}
-            letterSpacing="-0.03em" sx={{ color: isDark ? "#f5f5f5" : "#111", mb: 1.5 }}>
+            letterSpacing="-0.03em" sx={{ color: isDark ? "#F8FAFC" : "#172B4D", mb: 1.5 }}>
             Privacy Policy
           </Typography>
           <Typography color="text.secondary" lineHeight={1.7} maxWidth={520} mx="auto">
@@ -86,7 +86,7 @@ export default function PrivacyPolicy() {
           </Typography>
           <Box display="flex" gap={1.5} justifyContent="center" flexWrap="wrap" mt={2.5}>
             <Chip label="Last updated: August 2026" size="small"
-              sx={{ bgcolor: isDark ? "rgba(220,38,38,0.12)" : "#fff1f2", color: "#dc2626", fontWeight: 600 }} />
+              sx={{ bgcolor: isDark ? "rgba(201,29,50,0.12)" : "#fff1f2", color: "#C91D32", fontWeight: 600 }} />
             <Chip label="GDPR Compliant" size="small" icon={<CheckCircleIcon sx={{ fontSize: "14px !important", color: "#16a34a !important" }} />}
               sx={{ bgcolor: isDark ? "rgba(22,163,74,0.1)" : "#f0fdf4", color: "#16a34a", fontWeight: 600 }} />
           </Box>
@@ -101,8 +101,8 @@ export default function PrivacyPolicy() {
               <Chip key={s.id} label={s.title} size="small" clickable
                 onClick={() => document.getElementById(s.id)?.scrollIntoView({ behavior: "smooth", block: "start" })}
                 sx={{ fontSize: "0.78rem", fontWeight: 600,
-                  bgcolor: isDark ? "#1a1a1a" : "#f5f5f5",
-                  "&:hover": { bgcolor: isDark ? "rgba(220,38,38,0.12)" : "#fff1f2", color: "#dc2626" } }} />
+                  bgcolor: isDark ? "#1C2E49" : "#F1F5F9",
+                  "&:hover": { bgcolor: isDark ? "rgba(201,29,50,0.12)" : "#fff1f2", color: "#C91D32" } }} />
             ))}
           </Box>
         </Paper>
@@ -112,12 +112,12 @@ export default function PrivacyPolicy() {
           <Typography variant="body2" color="text.secondary" mb={2} lineHeight={1.8}>
             We collect only the information necessary to operate the BloodLife platform and facilitate blood donation matching.
           </Typography>
-          <Typography fontWeight={700} fontSize="0.88rem" mb={1} sx={{ color: isDark ? "#f5f5f5" : "#111" }}>Personal Information</Typography>
+          <Typography fontWeight={700} fontSize="0.88rem" mb={1} sx={{ color: isDark ? "#F8FAFC" : "#172B4D" }}>Personal Information</Typography>
           <Bullet isDark={isDark}>Full name, email address, and phone number when you register</Bullet>
           <Bullet isDark={isDark}>Blood type, location, and donation history when you register as a donor</Bullet>
           <Bullet isDark={isDark}>Profile photo (optional) that you choose to upload</Bullet>
           <Bullet isDark={isDark}>Patient information provided in blood request forms</Bullet>
-          <Typography fontWeight={700} fontSize="0.88rem" mb={1} mt={2.5} sx={{ color: isDark ? "#f5f5f5" : "#111" }}>Technical Data</Typography>
+          <Typography fontWeight={700} fontSize="0.88rem" mb={1} mt={2.5} sx={{ color: isDark ? "#F8FAFC" : "#172B4D" }}>Technical Data</Typography>
           <Bullet isDark={isDark}>IP address, browser type, and device information for security logging</Bullet>
           <Bullet isDark={isDark}>Session tokens used for authentication (stored securely, never in cookies)</Bullet>
           <Bullet isDark={isDark}>API request logs retained for 30 days for security auditing</Bullet>
@@ -136,8 +136,8 @@ export default function PrivacyPolicy() {
           <Bullet isDark={isDark}>Improving the platform through aggregated, anonymized usage analytics</Bullet>
           <Box sx={{
             mt: 2.5, p: 2, borderRadius: "10px",
-            bgcolor: isDark ? "rgba(220,38,38,0.06)" : "#fff0f0",
-            border: `1px solid ${isDark ? "rgba(220,38,38,0.2)" : "#fecaca"}`,
+            bgcolor: isDark ? "rgba(201,29,50,0.06)" : "#FFF1F2",
+            border: `1px solid ${isDark ? "rgba(201,29,50,0.2)" : "#fecaca"}`,
           }}>
             <Typography variant="body2" fontWeight={600} color="error.main">
               We never use your data for advertising, marketing profiling, or sell it to third parties.
@@ -186,12 +186,12 @@ export default function PrivacyPolicy() {
           ].map(([right, desc]) => (
             <Box key={right} sx={{
               display: "flex", gap: 1.5, mb: 1.5, p: 1.5, borderRadius: "10px",
-              bgcolor: isDark ? "#1a1a1a" : "#f8f8f8",
+              bgcolor: isDark ? "#1C2E49" : "#F8FAFC",
               border: `1px solid ${border}`,
             }}>
-              <CheckCircleIcon sx={{ fontSize: 16, color: "#dc2626", mt: 0.3, flexShrink: 0 }} />
+              <CheckCircleIcon sx={{ fontSize: 16, color: "#C91D32", mt: 0.3, flexShrink: 0 }} />
               <Box>
-                <Typography fontWeight={700} fontSize="0.85rem" sx={{ color: isDark ? "#f0f0f0" : "#111" }}>{right}</Typography>
+                <Typography fontWeight={700} fontSize="0.85rem" sx={{ color: isDark ? "#F8FAFC" : "#172B4D" }}>{right}</Typography>
                 <Typography variant="caption" color="text.secondary" lineHeight={1.6}>{desc}</Typography>
               </Box>
             </Box>
@@ -199,7 +199,7 @@ export default function PrivacyPolicy() {
           <Typography variant="body2" color="text.secondary" mt={2} lineHeight={1.8}>
             To exercise any of these rights, contact us at{" "}
             <Box component="a" href="mailto:support@bloodlife.kh"
-              sx={{ color: "#dc2626", textDecoration: "none", fontWeight: 600 }}>
+              sx={{ color: "#C91D32", textDecoration: "none", fontWeight: 600 }}>
               support@bloodlife.kh
             </Box>. We will respond within 30 days.
           </Typography>
@@ -219,14 +219,14 @@ export default function PrivacyPolicy() {
           <Typography variant="body2" color="text.secondary" mb={2} lineHeight={1.8}>
             If you have any questions, concerns, or requests regarding this privacy policy or your personal data, please reach out:
           </Typography>
-          <Box sx={{ p: 2.5, borderRadius: "12px", bgcolor: isDark ? "#1a1a1a" : "#f8f8f8", border: `1px solid ${border}` }}>
-            <Typography fontWeight={700} fontSize="0.9rem" mb={1} sx={{ color: isDark ? "#f5f5f5" : "#111" }}>BloodLife Data Controller</Typography>
+          <Box sx={{ p: 2.5, borderRadius: "12px", bgcolor: isDark ? "#1C2E49" : "#F8FAFC", border: `1px solid ${border}` }}>
+            <Typography fontWeight={700} fontSize="0.9rem" mb={1} sx={{ color: isDark ? "#F8FAFC" : "#172B4D" }}>BloodLife Data Controller</Typography>
             <Typography variant="body2" color="text.secondary" lineHeight={2}>
               Hanoi University of Science and Technology (HUST)<br />
               Hanoi, Vietnam<br />
               Email:{" "}
               <Box component="a" href="mailto:support@bloodlife.kh"
-                sx={{ color: "#dc2626", textDecoration: "none", fontWeight: 600 }}>
+                sx={{ color: "#C91D32", textDecoration: "none", fontWeight: 600 }}>
                 support@bloodlife.kh
               </Box>
             </Typography>

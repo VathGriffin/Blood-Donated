@@ -33,7 +33,7 @@ feature is one folder in `Backend/src/` holding its database model (`*.model.js`
 | Hospitals & staff | `Backend/src/hospital/`, `Backend/src/staff/` | `app/dashboard/admin/hospitals`, `app/dashboard/hospital/profile` | `hospital.test.js`, `staff.test.js` |
 | Admin dashboard & analytics | `Backend/src/dashboard/stats.routes.js`, `Backend/src/analytics/` | `app/dashboard/admin/` (overview), `admin/analytics` | `stats.test.js`, `analytics.test.js` |
 | Hospital map | `Backend/src/nearby/nearby.routes.js` (OpenStreetMap lookup) | `app/(public)/map/` | `nearby.test.js` |
-| Messages & notifications | `Backend/src/notification/` | `app/(donor)/notification` | `message.test.js`, `notifications.test.js` |
+| Messages & notifications | `Backend/src/notification/` (donor, admin and hospital-staff feeds) | `app/(donor)/notification`, `components/notifications/` | `message.test.js`, `notifications.test.js`, `admin-notifications.test.js`, `hospital-notifications.test.js` |
 | Contact form | `Backend/src/contact/` | `app/(public)/contact` | `contact.test.js` |
 | About page creator photo | `Backend/src/about/` (`/api/about`) | `app/(public)/about/_components/CreatorProfile.jsx`, admin `app/dashboard/admin/settings` → *About Page* | `about.test.js` |
 | Photo uploads | `Backend/src/common/upload.js` (JPG/PNG/WebP/GIF, 10 MB, unique filenames) | — | `staff-photo.test.js`, `hospital-image.test.js` |
@@ -77,8 +77,10 @@ This project presents the design and development of an intelligent blood donatio
 ### Hospital Dashboard (`/dashboard/hospital`)
 - Separate login for hospital staff accounts (role: `hospital_staff`)
 - Scoped strictly to that hospital's own data — enforced server-side, not just hidden in the UI
-- Manage that hospital's appointments, inventory, and incoming blood requests
+- Manage that hospital's appointments (confirm, check in, cancel, approve reschedules), inventory, and incoming blood requests
 - QR-code scanner for donor check-in at appointments
+- Notification feed for that hospital: new and critical requests, bookings, cancellations, reschedule requests, today's bookings and low stock — with a per-person unread badge
+- Own profile: photo, display name and password
 
 ---
 
@@ -155,6 +157,10 @@ Run the test suite:
 ```bash
 npm test
 ```
+
+Every push to `main` and every pull request also runs the backend tests and the frontend lint
+and build on GitHub Actions (`.github/workflows/ci.yml`). To lint the frontend locally:
+`cd frontend && npm run lint`.
 
 ### Frontend
 

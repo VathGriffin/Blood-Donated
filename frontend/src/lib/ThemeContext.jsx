@@ -8,7 +8,7 @@ export const ColorModeContext = createContext({ toggleColorMode: () => {}, mode:
 // The mode is kept in a cookie so the server can render the right theme on the first
 // paint (no light-mode flash for dark-mode users). localStorage is the older store and
 // is still read once so existing visitors keep their choice.
-export const THEME_COOKIE = 'mui-theme';
+const THEME_COOKIE = 'mui-theme';
 const isMode = (m) => m === 'light' || m === 'dark';
 
 function persistMode(mode) {

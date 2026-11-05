@@ -20,26 +20,27 @@ const InventoryTypeChart = dynamic(() => import("@/components/inventory/Inventor
 
 const MAX_UNITS = 200;
 
+// Blood types share the brand red (as on the hospital inventory); stock level is shown by STATUS_MAP.
 const BLOOD_COLORS = {
-  "A+": "#dc2626", "A-": "#b91c1c",
-  "B+": "#7c3aed", "B-": "#6d28d9",
-  "O+": "#2563eb", "O-": "#1d4ed8",
-  "AB+": "#059669", "AB-": "#047857",
+  "A+": "#C91D32", "A-": "#C91D32",
+  "B+": "#C91D32", "B-": "#C91D32",
+  "O+": "#C91D32", "O-": "#C91D32",
+  "AB+": "#C91D32", "AB-": "#C91D32",
 };
 
 const STATUS_MAP = {
-  empty:    { label: "Empty",    color: "#dc2626" },
-  critical: { label: "Critical", color: "#dc2626" },
-  low:      { label: "Low",      color: "#d97706" },
-  adequate: { label: "Normal",   color: "#16a34a" },
+  empty:    { label: "Empty",    color: "#64748B" },
+  critical: { label: "Critical", color: "#C91D32" },
+  low:      { label: "Low",      color: "#F59E0B" },
+  adequate: { label: "Normal",   color: "#16A34A" },
 };
 
 const statusBg = (status, isDark) => ({
-  empty:    isDark ? "rgba(220,38,38,0.15)" : "#ffebee",
-  critical: isDark ? "rgba(220,38,38,0.15)" : "#ffebee",
-  low:      isDark ? "rgba(217,119,6,0.15)"  : "#fff8e1",
-  adequate: isDark ? "rgba(22,163,74,0.15)"  : "#e8f5e9",
-}[status] || "#f5f5f5");
+  empty:    isDark ? "rgba(148,163,184,0.15)" : "#F1F5F9",
+  critical: isDark ? "rgba(201,29,50,0.15)" : "#FFF1F2",
+  low:      isDark ? "rgba(245,158,11,0.15)" : "#FEF3C7",
+  adequate: isDark ? "rgba(22,163,74,0.15)"  : "#DCFCE7",
+}[status] || "#F1F5F9");
 
 export default function Inventory() {
   const theme = useTheme();
@@ -53,8 +54,8 @@ export default function Inventory() {
   const [editItem, setEditItem]   = useState(null);
   const [editValue, setEditValue] = useState("");
 
-  const cardBg = isDark ? "#111111" : "#ffffff";
-  const border = isDark ? "#1f1f1f" : "#e5e5e5";
+  const cardBg = isDark ? "#17263D" : "#ffffff";
+  const border = isDark ? "#334155" : "#E2E8F0";
 
   const fetchInventory = useCallback(async () => {
     setLoading(true);
@@ -116,7 +117,7 @@ export default function Inventory() {
       <Box display="flex" alignItems="flex-start" justifyContent="space-between" mb={4}>
         <Box>
           <Typography sx={{ fontSize: "1.6rem", fontWeight: 800, letterSpacing: "-0.025em",
-            color: isDark ? "#f5f5f5" : "#111111", lineHeight: 1.2 }}>
+            color: isDark ? "#F8FAFC" : "#172B4D", lineHeight: 1.2 }}>
             Blood Inventory
           </Typography>
           <Typography variant="body2" color="text.secondary" mt={0.5}>
@@ -128,11 +129,11 @@ export default function Inventory() {
             <Chip icon={<WarningAmberIcon sx={{ fontSize: "14px !important" }} />}
               label={`${criticalCount} type${criticalCount > 1 ? "s" : ""} critically low`}
               size="small"
-              sx={{ bgcolor: "#ffebee", color: "#dc2626", fontWeight: 700, border: "1px solid #fca5a5" }} />
+              sx={{ bgcolor: "#FFF1F2", color: "#C91D32", fontWeight: 700, border: "1px solid #F5C6CC" }} />
           )}
           <Tooltip title="Refresh">
             <IconButton onClick={fetchInventory} size="small"
-              sx={{ bgcolor: isDark ? "#1a1a1a" : "#f5f5f5", borderRadius: "8px" }}>
+              sx={{ bgcolor: isDark ? "#1C2E49" : "#F1F5F9", borderRadius: "8px" }}>
               <RefreshIcon sx={{ fontSize: 18 }} />
             </IconButton>
           </Tooltip>
@@ -146,9 +147,9 @@ export default function Inventory() {
       {/* Summary Cards */}
       <Grid container spacing={2} mb={4}>
         {[
-          { label: "Total Units",  value: totalUnits,    color: "#3b82f6", bg: isDark ? "rgba(59,130,246,0.10)" : "#eff6ff" },
-          { label: "Blood Types",  value: inventory.length, color: "#8b5cf6", bg: isDark ? "rgba(139,92,246,0.10)" : "#f5f3ff" },
-          { label: "Critical / Empty", value: criticalCount, color: "#dc2626", bg: isDark ? "rgba(220,38,38,0.10)" : "#fff0f0" },
+          { label: "Total Units",  value: totalUnits,    color: "#2563EB", bg: isDark ? "rgba(37,99,235,0.12)" : "#EFF6FF" },
+          { label: "Blood Types",  value: inventory.length, color: "#173B63", bg: isDark ? "rgba(148,163,184,0.12)" : "#EEF2F7" },
+          { label: "Critical / Empty", value: criticalCount, color: "#C91D32", bg: isDark ? "rgba(201,29,50,0.10)" : "#FFF1F2" },
           { label: "Normal",       value: normalCount,   color: "#16a34a", bg: isDark ? "rgba(22,163,74,0.10)" : "#f0fdf4" },
         ].map((s, i) => (
           <Grid size={{ xs: 6, sm: 3 }} key={i}>
@@ -175,7 +176,7 @@ export default function Inventory() {
       <Grid container spacing={2} mb={4}>
         {inventory.map((item) => {
           const pct    = Math.min((item.units / MAX_UNITS) * 100, 100);
-          const color  = BLOOD_COLORS[item.bloodType] || "#dc2626";
+          const color  = BLOOD_COLORS[item.bloodType] || "#C91D32";
           const st     = STATUS_MAP[item.status] || STATUS_MAP.adequate;
           const isBad  = item.status === "critical" || item.status === "empty";
 
@@ -183,7 +184,7 @@ export default function Inventory() {
             <Grid size={{ xs: 12, sm: 6, md: 3 }} key={item.bloodType}>
               <Card elevation={0} sx={{
                 borderRadius: "16px",
-                border: `1px solid ${isBad ? "rgba(220,38,38,0.4)" : border}`,
+                border: `1px solid ${item.status === "critical" ? "rgba(201,29,50,0.4)" : border}`,
                 bgcolor: cardBg, position: "relative", overflow: "visible",
                 transition: "all 0.22s ease",
                 "&:hover": { transform: "translateY(-4px)",
@@ -192,9 +193,9 @@ export default function Inventory() {
               }}>
                 {isBad && (
                   <Box sx={{ position: "absolute", top: -8, right: -8,
-                    bgcolor: "#dc2626", borderRadius: "50%", width: 24, height: 24, zIndex: 1,
+                    bgcolor: st.color, borderRadius: "50%", width: 24, height: 24, zIndex: 1,
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    boxShadow: "0 2px 8px rgba(220,38,38,0.5)" }}>
+                    boxShadow: `0 2px 8px ${st.color}80` }}>
                     <WarningAmberIcon sx={{ fontSize: 13, color: "white" }} />
                   </Box>
                 )}
@@ -212,8 +213,8 @@ export default function Inventory() {
                     <Tooltip title="Edit units">
                       <IconButton size="small" onClick={() => { setEditItem(item); setEditValue(String(item.units)); }}
                         sx={{ color: "text.secondary", borderRadius: "8px",
-                          bgcolor: isDark ? "#1a1a1a" : "#f5f5f5",
-                          "&:hover": { bgcolor: isDark ? "#2a2a2a" : "#ebebeb" } }}>
+                          bgcolor: isDark ? "#1C2E49" : "#F1F5F9",
+                          "&:hover": { bgcolor: isDark ? "#334155" : "#E2E8F0" } }}>
                         <EditIcon sx={{ fontSize: 16 }} />
                       </IconButton>
                     </Tooltip>
@@ -230,8 +231,8 @@ export default function Inventory() {
                       <Typography variant="caption" color="text.secondary" fontWeight={700}>{Math.round(pct)}%</Typography>
                     </Box>
                     <LinearProgress variant="determinate" value={pct} sx={{
-                      height: 7, borderRadius: "100px", bgcolor: `${color}18`,
-                      "& .MuiLinearProgress-bar": { bgcolor: color, borderRadius: "100px" },
+                      height: 7, borderRadius: "100px", bgcolor: `${st.color}18`,
+                      "& .MuiLinearProgress-bar": { bgcolor: st.color, borderRadius: "100px" },
                     }} />
                   </Box>
                 </CardContent>

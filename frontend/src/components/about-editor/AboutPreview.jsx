@@ -8,7 +8,7 @@ import {
 import RichText from '@/components/ui/RichText';
 import { initialsOf } from '@/lib/format';
 
-const RED = '#c62828';
+const RED = '#C91D32';
 const valueIcons = [<Shield key="s" />, <Groups key="g" />, <Favorite key="f" />];
 const pillarIcons = [<TrackChanges key="t" />, <Visibility key="v" />, <TrendingUp key="u" />];
 const statIcons = [<People key="p" />, <Bloodtype key="b" />, <LocalHospital key="h" />, <TaskAlt key="t" />];
@@ -26,22 +26,22 @@ const mid = (sx) => ({ '@container about-preview (min-width: 480px)': sx });
 function AboutPreview({ sections, images, stats }) {
   const isDark = useTheme().palette.mode === 'dark';
   const { hero, purpose, team, cta } = sections;
-  const heading = isDark ? '#fff' : '#161a23';
+  const heading = isDark ? '#fff' : '#172B4D';
   const tile = {
-    borderRadius: '12px', bgcolor: isDark ? '#1a1a1a' : '#fff',
-    border: `1px solid ${isDark ? '#2a2a2a' : '#f0e6e6'}`,
+    borderRadius: '12px', bgcolor: isDark ? '#1C2E49' : '#fff',
+    border: `1px solid ${isDark ? '#334155' : '#f0e6e6'}`,
     boxShadow: isDark ? 'none' : '0 4px 16px rgba(0,0,0,0.05)',
   };
   const iconDot = (size = 30) => ({
     width: size, height: size, borderRadius: '50%', flexShrink: 0, display: 'grid', placeItems: 'center',
-    bgcolor: isDark ? 'rgba(198,40,40,0.18)' : '#fdeaea', color: RED, '& svg': { fontSize: size * 0.55 },
+    bgcolor: isDark ? 'rgba(201,29,50,0.18)' : '#FFF1F2', color: RED, '& svg': { fontSize: size * 0.55 },
   });
   const statValues = stats ? [stats.donors, stats.donations, stats.hospitals, stats.fulfilledRequests] : [];
 
   return (
-    <Box sx={{ containerType: 'inline-size', containerName: 'about-preview', bgcolor: isDark ? '#121212' : '#f6f6f6', fontSize: 12 }}>
+    <Box sx={{ containerType: 'inline-size', containerName: 'about-preview', bgcolor: isDark ? '#0B1220' : '#F8FAFC', fontSize: 12 }}>
       {/* Mini site bar */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, px: 2, py: 1.25, bgcolor: isDark ? '#0f0f0f' : '#fff', borderBottom: `1px solid ${isDark ? '#222' : '#f1e6e6'}` }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, px: 2, py: 1.25, bgcolor: isDark ? '#0B1220' : '#fff', borderBottom: `1px solid ${isDark ? '#334155' : '#f1e6e6'}` }}>
         <Favorite sx={{ color: RED, fontSize: 16 }} />
         <Typography sx={{ fontWeight: 800, fontSize: 12, color: heading, mr: 'auto' }}>BloodLife AI</Typography>
         <Box sx={{ display: 'none', gap: 1.75, ...mid({ display: 'flex' }) }}>
@@ -55,7 +55,7 @@ function AboutPreview({ sections, images, stats }) {
       {/* Hero */}
       <Box sx={{
         display: 'grid', gap: 2, alignItems: 'center', p: 2.25,
-        background: isDark ? 'linear-gradient(135deg, #161112, #121212)' : 'linear-gradient(135deg, #fdf3f3, #f9fafb)',
+        background: isDark ? 'linear-gradient(135deg, #0F2038, #0B1220)' : 'linear-gradient(135deg, #FFFFFF, #FFF1F2)',
         ...wide({ gridTemplateColumns: '1.05fr 1fr', p: 3 }),
       }}>
         <Box sx={{ minWidth: 0 }}>
@@ -128,20 +128,20 @@ function AboutPreview({ sections, images, stats }) {
       </Box>
 
       {/* Team */}
-      <Box sx={{ bgcolor: isDark ? '#0f0f0f' : '#fff', px: 2.25, py: 2.5, ...wide({ px: 3 }) }}>
+      <Box sx={{ bgcolor: isDark ? '#0B1220' : '#fff', px: 2.25, py: 2.5, ...wide({ px: 3 }) }}>
         <Typography sx={{ textAlign: 'center', fontWeight: 800, fontSize: 15, color: heading, mb: 1.5 }}>
           The Builders <Box component="span" sx={{ color: RED }}>Behind It</Box>
         </Typography>
         <Box sx={{
           ...tile, display: 'grid', gap: 1.5, alignItems: 'center', p: 1.75, textAlign: 'center',
-          background: isDark ? 'linear-gradient(135deg, #1f1416, #161112)' : 'linear-gradient(135deg, #fff5f5, #fff)',
+          background: isDark ? 'linear-gradient(135deg, #1C2E49, #17263D)' : 'linear-gradient(135deg, #FFF1F2, #fff)',
           ...wide({ gridTemplateColumns: 'auto 1fr', textAlign: 'left' }),
         }}>
           <Box sx={{ position: 'relative', mx: 'auto', width: 84, height: 84 }}>
             <Avatar src={images.creatorPhoto || undefined} alt="" sx={{
               width: '100%', height: '100%', fontWeight: 800, fontSize: 26, color: '#fff',
-              background: `radial-gradient(circle at 35% 30%, #ef5350, ${RED} 55%, #8e0000)`,
-              border: `3px solid ${isDark ? '#1f1416' : '#fff'}`, boxShadow: '0 8px 20px rgba(183,28,28,0.25)',
+              background: `radial-gradient(circle at 35% 30%, #E63946, ${RED} 55%, #A91529)`,
+              border: `3px solid ${isDark ? '#1C2E49' : '#fff'}`, boxShadow: '0 8px 20px rgba(201,29,50,0.25)',
             }}>
               {initialsOf(team.name)}
             </Avatar>
@@ -161,10 +161,10 @@ function AboutPreview({ sections, images, stats }) {
       {/* CTA */}
       <Box sx={{ p: 2.25, ...wide({ px: 3 }) }}>
         <Box sx={{
-          borderRadius: '12px', p: 1.75, bgcolor: isDark ? 'rgba(183,28,28,0.1)' : '#fdeaea',
+          borderRadius: '12px', p: 1.75, bgcolor: isDark ? 'rgba(201,29,50,0.1)' : '#FFF1F2',
           display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap',
         }}>
-          <Box sx={{ width: 36, height: 36, borderRadius: '50%', display: 'grid', placeItems: 'center', background: 'linear-gradient(135deg, #b71c1c, #7f0000)', color: '#fff' }}>
+          <Box sx={{ width: 36, height: 36, borderRadius: '50%', display: 'grid', placeItems: 'center', background: 'linear-gradient(135deg, #A91529, #A91529)', color: '#fff' }}>
             <VolunteerActivism sx={{ fontSize: 18 }} />
           </Box>
           <Box sx={{ flex: '1 1 160px', minWidth: 0 }}>

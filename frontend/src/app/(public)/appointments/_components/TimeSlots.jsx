@@ -48,7 +48,7 @@ export default function TimeSlots({ date, value, onChange, hospitalId }) {
     <Panel icon={<AccessTimeIcon />} title="Select Time" subtitle={date ? 'Pick an available time slot' : 'Pick a date first'}
       sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       {date && !open.length ? (
-        <Box role="status" sx={{ textAlign: 'center', py: 4, px: 2, borderRadius: '14px', border: `1px dashed ${isDark ? '#333' : C.border}` }}>
+        <Box role="status" sx={{ textAlign: 'center', py: 4, px: 2, borderRadius: '14px', border: `1px dashed ${isDark ? '#334155' : C.border}` }}>
           <EventBusyOutlinedIcon sx={{ fontSize: 34, color: 'text.disabled' }} aria-hidden="true" />
           <Typography sx={{ fontWeight: 700, mt: 1 }}>{isToday ? 'No more slots today' : 'This day is fully booked'}</Typography>
           <Typography sx={{ color: 'text.secondary', fontSize: '0.85rem', mt: 0.5 }}>
@@ -71,10 +71,10 @@ export default function TimeSlots({ date, value, onChange, hospitalId }) {
                   position: 'relative', py: 0.9, px: 0.5, borderRadius: '10px', font: 'inherit', lineHeight: 1.2,
                   display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 0.25,
                   cursor: s.disabled ? 'not-allowed' : 'pointer', transition: 'border-color .14s, background-color .14s',
-                  border: '1.5px solid', borderColor: selected ? C.primary : isDark ? '#2c2c2c' : C.border,
-                  bgcolor: selected ? (isDark ? 'rgba(185,28,44,0.16)' : C.soft) : s.disabled ? (isDark ? 'rgba(255,255,255,0.02)' : C.bg) : 'background.paper',
+                  border: '1.5px solid', borderColor: selected ? C.primary : isDark ? '#334155' : C.border,
+                  bgcolor: selected ? (isDark ? 'rgba(201,29,50,0.16)' : C.soft) : s.disabled ? (isDark ? 'rgba(255,255,255,0.02)' : C.bg) : 'background.paper',
                   color: s.disabled ? 'text.disabled' : 'text.primary',
-                  '&:hover:not(:disabled)': { borderColor: C.primary, bgcolor: selected ? undefined : isDark ? 'rgba(185,28,44,0.1)' : C.softer },
+                  '&:hover:not(:disabled)': { borderColor: C.primary, bgcolor: selected ? undefined : isDark ? 'rgba(201,29,50,0.1)' : C.softer },
                   '&:focus-visible': { outline: 'none', boxShadow: `0 0 0 3px ${C.ring}` },
                 }}>
                 {selected && (

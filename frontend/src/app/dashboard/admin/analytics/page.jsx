@@ -15,8 +15,8 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import API_BASE from '@/lib/config';
 import { useAuth } from '@/store/AuthContext';
 
-const BLOOD_COLORS = ['#dc2626','#b91c1c','#7c3aed','#6d28d9','#2563eb','#1d4ed8','#059669','#047857'];
-const STATUS_COLORS = { pending: '#d97706', fulfilled: '#16a34a', rejected: '#dc2626', approved: '#2563eb' };
+const BLOOD_COLORS = Array(8).fill('#C91D32'); // one brand red for every blood type
+const STATUS_COLORS = { pending: '#F59E0B', approved: '#16A34A', fulfilled: '#15803D', rejected: '#DC2626', cancelled: '#94A3B8' };
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
@@ -26,8 +26,8 @@ function StatCard({ icon, label, value, sub, color, loading }) {
   return (
     <Paper elevation={0} sx={{
       p: 3, borderRadius: '16px',
-      border: `1px solid ${isDark ? '#1f1f1f' : '#e5e5e5'}`,
-      bgcolor: isDark ? '#111' : '#fff',
+      border: `1px solid ${isDark ? '#334155' : '#E2E8F0'}`,
+      bgcolor: isDark ? '#17263D' : '#fff',
       display: 'flex', gap: 2, alignItems: 'flex-start',
     }}>
       <Box sx={{
@@ -60,8 +60,8 @@ export default function Analytics() {
   const [loading, setLoading] = useState(true);
   const [error, setError]   = useState('');
 
-  const card   = isDark ? '#111111' : '#ffffff';
-  const border = isDark ? '#1f1f1f' : '#e5e5e5';
+  const card   = isDark ? '#17263D' : '#ffffff';
+  const border = isDark ? '#334155' : '#E2E8F0';
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -105,7 +105,7 @@ export default function Analytics() {
       <Box display='flex' justifyContent='space-between' alignItems='center' mb={4}>
         <Box>
           <Typography sx={{ fontSize: '1.6rem', fontWeight: 800, letterSpacing: '-0.025em',
-            color: isDark ? '#f5f5f5' : '#111', lineHeight: 1.2 }}>
+            color: isDark ? '#F8FAFC' : '#172B4D', lineHeight: 1.2 }}>
             Analytics
           </Typography>
           <Typography variant='body2' color='text.secondary' mt={0.5}>
@@ -135,11 +135,11 @@ export default function Analytics() {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard icon={<BloodtypeIcon />} label='Total Requests' loading={loading}
-            value={ov.totalRequests} sub={`${ov.pendingRequests || 0} pending`} color='#dc2626' />
+            value={ov.totalRequests} sub={`${ov.pendingRequests || 0} pending`} color='#C91D32' />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard icon={<WarningAmberIcon />} label='Urgent Pending' loading={loading}
-            value={ov.urgentRequests} sub='Critical blood requests' color='#d97706' />
+            value={ov.urgentRequests} sub='Critical blood requests' color='#F59E0B' />
         </Grid>
       </Grid>
 
@@ -161,17 +161,17 @@ export default function Analytics() {
                       <stop offset='95%' stopColor='#2563eb' stopOpacity={0} />
                     </linearGradient>
                     <linearGradient id='gRequests' x1='0' y1='0' x2='0' y2='1'>
-                      <stop offset='5%' stopColor='#dc2626' stopOpacity={0.15} />
-                      <stop offset='95%' stopColor='#dc2626' stopOpacity={0} />
+                      <stop offset='5%' stopColor='#C91D32' stopOpacity={0.15} />
+                      <stop offset='95%' stopColor='#C91D32' stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray='3 3' stroke={isDark ? '#1f1f1f' : '#f0f0f0'} vertical={false} />
+                  <CartesianGrid strokeDasharray='3 3' stroke={isDark ? '#334155' : '#E2E8F0'} vertical={false} />
                   <XAxis dataKey='label' tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
                   <Tooltip contentStyle={{ borderRadius: 10, fontSize: 12, border: `1px solid ${border}`, backgroundColor: card }} />
                   <Legend />
                   <Area type='monotone' dataKey='donors' name='New Donors' stroke='#2563eb' strokeWidth={2} fill='url(#gDonors)' dot={false} />
-                  <Area type='monotone' dataKey='requests' name='Requests' stroke='#dc2626' strokeWidth={2} fill='url(#gRequests)' dot={false} />
+                  <Area type='monotone' dataKey='requests' name='Requests' stroke='#C91D32' strokeWidth={2} fill='url(#gRequests)' dot={false} />
                 </AreaChart>
               </ResponsiveContainer>
             )}
@@ -191,7 +191,7 @@ export default function Analytics() {
                   <Pie data={ch.requestsByStatus || []} dataKey='count' nameKey='status' cx='50%' cy='50%'
                     innerRadius={55} outerRadius={85} paddingAngle={3}>
                     {(ch.requestsByStatus || []).map((entry, i) => (
-                      <Cell key={i} fill={STATUS_COLORS[entry.status] || BLOOD_COLORS[i % BLOOD_COLORS.length]} />
+                      <Cell key={i} fill={STATUS_COLORS[String(entry.status).toLowerCase()] || "#94A3B8"} />
                     ))}
                   </Pie>
                   <Tooltip formatter={(v, n) => [v, n.charAt(0).toUpperCase() + n.slice(1)]}
@@ -214,7 +214,7 @@ export default function Analytics() {
             {loading ? <Skeleton variant='rounded' height={200} /> : (
               <ResponsiveContainer width='100%' height={200}>
                 <BarChart data={ch.donorsByBloodType || []} barSize={24} margin={{ left: -20 }}>
-                  <CartesianGrid strokeDasharray='3 3' stroke={isDark ? '#1f1f1f' : '#f0f0f0'} vertical={false} />
+                  <CartesianGrid strokeDasharray='3 3' stroke={isDark ? '#334155' : '#E2E8F0'} vertical={false} />
                   <XAxis dataKey='bloodType' tick={{ fontSize: 11, fontWeight: 700 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
                   <Tooltip contentStyle={{ borderRadius: 10, fontSize: 12, border: `1px solid ${border}`, backgroundColor: card }} />
@@ -237,15 +237,15 @@ export default function Analytics() {
             {loading ? <Skeleton variant='rounded' height={200} /> : (
               <ResponsiveContainer width='100%' height={200}>
                 <BarChart data={ch.inventory || []} barSize={24} margin={{ left: -20 }}>
-                  <CartesianGrid strokeDasharray='3 3' stroke={isDark ? '#1f1f1f' : '#f0f0f0'} vertical={false} />
+                  <CartesianGrid strokeDasharray='3 3' stroke={isDark ? '#334155' : '#E2E8F0'} vertical={false} />
                   <XAxis dataKey='bloodType' tick={{ fontSize: 11, fontWeight: 700 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
                   <Tooltip contentStyle={{ borderRadius: 10, fontSize: 12, border: `1px solid ${border}`, backgroundColor: card }} />
                   <Bar dataKey='units' name='Units' radius={[5, 5, 0, 0]}>
                     {(ch.inventory || []).map((entry, i) => (
                       <Cell key={i} fill={
-                        entry.status === 'critical' || entry.status === 'empty' ? '#dc2626' :
-                        entry.status === 'low' ? '#d97706' : '#16a34a'
+                        entry.status === 'critical' || entry.status === 'empty' ? '#C91D32' :
+                        entry.status === 'low' ? '#F59E0B' : '#16A34A'
                       } />
                     ))}
                   </Bar>
@@ -261,10 +261,10 @@ export default function Analytics() {
         <Paper elevation={0} sx={{
           p: 2.5, borderRadius: '16px',
           border: '1px solid #fca5a5',
-          bgcolor: isDark ? 'rgba(220,38,38,0.06)' : '#fff0f0',
+          bgcolor: isDark ? 'rgba(201,29,50,0.06)' : '#FFF1F2',
           display: 'flex', gap: 1.5, alignItems: 'flex-start',
         }}>
-          <WarningAmberIcon sx={{ color: '#dc2626', mt: 0.1, flexShrink: 0 }} />
+          <WarningAmberIcon sx={{ color: '#C91D32', mt: 0.1, flexShrink: 0 }} />
           <Box>
             <Typography fontWeight={700} fontSize='0.9rem' color='error.main'>Critical Blood Inventory Alert</Typography>
             <Typography variant='caption' color='text.secondary'>

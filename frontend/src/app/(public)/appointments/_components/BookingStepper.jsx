@@ -3,7 +3,7 @@ import { Box, Typography, useTheme } from '@mui/material';
 import CheckIcon from '@mui/icons-material/Check';
 import { C } from './booking';
 
-export const STEPS = [
+const STEPS = [
   { label: 'Select', rest: 'Donation Center' },
   { label: 'Choose', rest: 'Date & Time' },
   { label: 'Your', rest: 'Information' },
@@ -15,7 +15,7 @@ const fullLabel = (s) => `${s.label} ${s.rest}`;
 // a compact horizontal bar on tablets and phones.
 export default function BookingStepper({ active }) {
   const isDark = useTheme().palette.mode === 'dark';
-  const track = isDark ? '#2a2a2a' : C.border;
+  const track = isDark ? '#334155' : C.border;
 
   const dot = (i, size) => {
     const done = i < active;
@@ -26,8 +26,8 @@ export default function BookingStepper({ active }) {
         display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .2s ease', position: 'relative', zIndex: 1,
         bgcolor: done || current ? C.primary : 'background.paper',
         color: done || current ? '#fff' : 'text.secondary',
-        border: '1.5px solid', borderColor: done || current ? C.primary : isDark ? '#3a3a3a' : '#CBD5E1',
-        boxShadow: current ? `0 0 0 5px ${isDark ? 'rgba(185,28,44,0.2)' : 'rgba(185,28,44,0.12)'}` : 'none',
+        border: '1.5px solid', borderColor: done || current ? C.primary : isDark ? '#475569' : '#CBD5E1',
+        boxShadow: current ? `0 0 0 5px ${isDark ? 'rgba(201,29,50,0.2)' : 'rgba(201,29,50,0.12)'}` : 'none',
       }}>
         {done ? <CheckIcon sx={{ fontSize: 18 }} /> : i + 1}
       </Box>

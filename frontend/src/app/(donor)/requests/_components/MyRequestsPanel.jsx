@@ -30,7 +30,7 @@ const STATUS_ICON = {
   Fulfilled: <VerifiedIcon />, Cancelled: <RemoveCircleIcon />,
 };
 
-export function StatusBadge({ status }) {
+function StatusBadge({ status }) {
   const meta = STATUS_META[status] || STATUS_META.Pending;
   return <Pill tone={meta.tone} icon={STATUS_ICON[status]}>{meta.label}</Pill>;
 }

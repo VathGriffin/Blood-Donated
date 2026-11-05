@@ -96,9 +96,9 @@ export default function AdminSettings() {
   const [section, setSection] = useState('profile');
   const railNav = SECTIONS.find((s) => s.id === section)?.wide;
 
-  const card  = isDark ? '#111111' : '#ffffff';
-  const border = isDark ? '#1f1f1f' : '#e5e5e5';
-  const subBg  = isDark ? '#0a0a0a' : '#f8f8f8';
+  const card  = isDark ? '#17263D' : '#ffffff';
+  const border = isDark ? '#334155' : '#E2E8F0';
+  const subBg  = isDark ? '#0B1220' : '#F8FAFC';
   const cardSx = { borderRadius: 3, border: `1px solid ${border}`, bgcolor: card, overflow: 'hidden' };
 
   const authHeader = React.useMemo(() => ({ Authorization: `Bearer ${token}` }), [token]);
@@ -406,7 +406,7 @@ export default function AdminSettings() {
               <Box px={3} py={2}>
                 <Row label="Profile Photo" border={border}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Avatar src={adminPhotoSrc} alt="" sx={{ width: 64, height: 64, bgcolor: '#b71c1c', fontWeight: 800, opacity: photoBusy ? 0.5 : 1 }}>
+                    <Avatar src={adminPhotoSrc} alt="" sx={{ width: 64, height: 64, bgcolor: '#A91529', fontWeight: 800, opacity: photoBusy ? 0.5 : 1 }}>
                       {initials}
                     </Avatar>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, alignItems: 'flex-start' }}>
@@ -435,7 +435,7 @@ export default function AdminSettings() {
                 </Row>
                 <Row label="Role" border={border}>
                   <Chip label={ROLE_LABEL[staff?.role] || staff?.role} size="small"
-                    sx={{ bgcolor: isDark ? 'rgba(220,38,38,0.12)' : '#fff0f0', color: '#dc2626', fontWeight: 700 }} />
+                    sx={{ bgcolor: isDark ? 'rgba(201,29,50,0.12)' : '#FFF1F2', color: '#C91D32', fontWeight: 700 }} />
                 </Row>
               </Box>
             </Paper>
@@ -495,7 +495,7 @@ export default function AdminSettings() {
                           <Box component="img" src={photoUrl} alt={p.name}
                             sx={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 25%', opacity: hidden ? 0.5 : 1 }} />
                         ) : (
-                          <Avatar sx={{ width: 88, height: 88, fontSize: '1.6rem', fontWeight: 900, bgcolor: p.color || '#dc2626', opacity: hidden ? 0.5 : 1 }}>
+                          <Avatar sx={{ width: 88, height: 88, fontSize: '1.6rem', fontWeight: 900, bgcolor: p.color || '#C91D32', opacity: hidden ? 0.5 : 1 }}>
                             {p.initials}
                           </Avatar>
                         )}
@@ -523,7 +523,7 @@ export default function AdminSettings() {
 
                       <Box sx={{ p: 2.5, display: 'flex', flexDirection: 'column', gap: 0.5, flex: 1 }}>
                         <Typography fontWeight={800} fontSize="1rem">{p.name}</Typography>
-                        <Typography fontSize="0.8rem" fontWeight={600} color="#dc2626">{p.role}</Typography>
+                        <Typography fontSize="0.8rem" fontWeight={600} color="#C91D32">{p.role}</Typography>
                         <Typography fontSize="0.82rem" color="text.secondary" sx={{
                           mt: 0.5, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
                         }}>
@@ -548,7 +548,7 @@ export default function AdminSettings() {
                                 onClick={() => {
                                   if (window.confirm(`Delete "${p.name}"? This can't be undone.`)) handleDeleteProfile(p._id);
                                 }}
-                                sx={{ color: 'text.secondary', '&:hover': { color: '#dc2626' } }}>
+                                sx={{ color: 'text.secondary', '&:hover': { color: '#C91D32' } }}>
                                 {isDeleting ? <CircularProgress size={16} /> : <Delete sx={{ fontSize: 19 }} />}
                               </IconButton>
                             </span>
@@ -581,7 +581,7 @@ export default function AdminSettings() {
             </Menu>
 
             <Dialog open={hpDialogOpen} onClose={() => !hpSaving && setHpDialogOpen(false)} maxWidth="xs" fullWidth
-              PaperProps={{ sx: { borderRadius: 3, bgcolor: isDark ? '#111' : '#fff' } }}>
+              PaperProps={{ sx: { borderRadius: 3, bgcolor: isDark ? '#17263D' : '#fff' } }}>
               <DialogTitle sx={{ fontWeight: 800, fontSize: '1.05rem', pb: 1 }}>
                 {hpEditingId ? 'Edit Profile' : 'Add Profile'}
               </DialogTitle>
@@ -589,7 +589,7 @@ export default function AdminSettings() {
                 <Box>
                   <Typography fontSize="0.8rem" fontWeight={700} color="text.secondary" mb={1}>Photo</Typography>
                   <Box display="flex" alignItems="center" gap={2}>
-                    <Avatar src={hpPhotoPreview || undefined} sx={{ width: 64, height: 64, bgcolor: '#dc2626', fontWeight: 800 }}>
+                    <Avatar src={hpPhotoPreview || undefined} sx={{ width: 64, height: 64, bgcolor: '#C91D32', fontWeight: 800 }}>
                       {(hpForm.name.trim() || '?').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase()}
                     </Avatar>
                     <Button size="small" variant="outlined" color="error" startIcon={<AddAPhoto sx={{ fontSize: 16 }} />}
@@ -672,8 +672,8 @@ export default function AdminSettings() {
                       size="small"
                       sx={{
                         fontWeight: 700,
-                        bgcolor: aiStatus.configured ? (isDark ? 'rgba(22,163,74,0.15)' : '#f0fdf4') : (isDark ? 'rgba(220,38,38,0.12)' : '#fff0f0'),
-                        color: aiStatus.configured ? '#16a34a' : '#dc2626',
+                        bgcolor: aiStatus.configured ? (isDark ? 'rgba(22,163,74,0.15)' : '#f0fdf4') : (isDark ? 'rgba(201,29,50,0.12)' : '#FFF1F2'),
+                        color: aiStatus.configured ? '#16A34A' : '#DC2626',
                       }}
                     />
                   </Row>
@@ -779,13 +779,12 @@ export default function AdminSettings() {
     <Box>
       {/* Header */}
       <Box display="flex" alignItems="center" gap={1.5} mb={3}>
-        <Avatar sx={{ bgcolor: '#b71c1c', width: 52, height: 52 }}>
+        <Avatar sx={{ bgcolor: '#A91529', width: 52, height: 52 }}>
           <Settings sx={{ fontSize: 26 }} />
         </Avatar>
         <Box>
           <Typography variant="h5" fontWeight={800}
-            sx={{ background: 'linear-gradient(to right, #b71c1c, #d32f2f)',
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1.2 }}>
+            sx={{ color: 'text.primary', lineHeight: 1.2 }}>
             System Settings
           </Typography>
           <Typography variant="caption" color="text.secondary">
@@ -809,13 +808,13 @@ export default function AdminSettings() {
                 sx={{
                   mx: 1, borderRadius: 2, mb: 0.3, py: 0.9, px: railNav ? 1.25 : 2, whiteSpace: 'nowrap',
                   '&.Mui-selected': {
-                    bgcolor: isDark ? 'rgba(220,38,38,0.12)' : '#fff0f0',
-                    color: '#dc2626',
-                    '& .MuiListItemIcon-root': { color: '#dc2626' },
+                    bgcolor: isDark ? 'rgba(201,29,50,0.12)' : '#FFF1F2',
+                    color: '#C91D32',
+                    '& .MuiListItemIcon-root': { color: '#C91D32' },
                   },
-                  '&:hover': { bgcolor: isDark ? 'rgba(255,255,255,0.04)' : '#fafafa' },
+                  '&:hover': { bgcolor: isDark ? 'rgba(255,255,255,0.04)' : '#F8FAFC' },
                 }}>
-                <ListItemIcon sx={{ minWidth: 32, color: section === s.id ? '#dc2626' : 'text.disabled' }}>
+                <ListItemIcon sx={{ minWidth: 32, color: section === s.id ? '#C91D32' : 'text.disabled' }}>
                   {s.icon}
                 </ListItemIcon>
                 <ListItemText primary={s.label} sx={{ opacity: railNav ? 0 : 1, transition: 'opacity 0.2s' }}

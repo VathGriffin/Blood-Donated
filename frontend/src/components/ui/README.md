@@ -35,11 +35,11 @@ import { PageHeader, SectionCard, StatCard, StatusBadge, TableCard, EmptyState, 
 |---|---|
 | `PageHeader` | Page title, subtitle, optional `icon` tile, action buttons (stacks on phones) |
 | `SectionCard` | Standard white card, optional header with `icon`, title and action |
-| `StatCard` | KPI tile — `tone`: primary · success · warning · error · info · neutral, or a hex `color`. Pass `trend` (from `/api/stats/trends`) for a comparison footer and sparkline |
+| `StatCard` | KPI tile — `tone`: primary · success · warning · error · info · neutral, or a hex `color`. Pass `trend` (from `/api/stats/trends`) for a comparison footer and sparkline. `decorated` gives the richer KPI style (stronger tint, corner wave, larger number) used on the hospital dashboard |
 | `StatusBadge` | Any status. Colour comes from `statusTone` in the tokens, so "Pending" is the same everywhere |
 | `TableCard` | Card around a `<Table>` with header, toolbar and horizontal scroll on small screens |
 | `CardError` | Error alert with a Retry button, inside a card |
-| `BloodPill` · `RowMenu` | Blood-type pill and single-link row menu for compact dashboard tables (`compactHeadCell`, `compactTableContainerSx`) |
+| `BloodPill` · `RowMenu` | Blood-type pill (always brand red, even under the hospital theme) and single-link row menu for compact dashboard tables (`compactHeadCell`, `compactTableContainerSx`) |
 | `Sparkline` · `TrendChip` | Small trend line and ↑/↓ percentage pill (used by `StatCard`) |
 | `EmptyState` | Empty lists / tables / search results |
 | `ResponsiveGrid` | Auto-wrapping card grid. Use instead of MUI `<Grid>`, whose v7 API dropped `item`/`xs` |
@@ -49,7 +49,7 @@ import { PageHeader, SectionCard, StatCard, StatusBadge, TableCard, EmptyState, 
 - **Spacing:** MUI's 8px unit. `1`=8 (tight) · `2`=16 (default gap) · `3`=24 (card padding, gap between cards) · `4`=32 (between sections).
 - **Radius:** `theme.custom.radius` — `md` 10 (buttons, inputs) · `card` 14 · `dialog` 18 · `pill` (badges).
 - **Type:** `h1`–`h6`, `subtitle1/2`, `body1/2`, `caption`, `overline`. Display sizes shrink below 900px.
-- **Colour:** brand `#B91C2C` / dark `#8F1522`. Semantic: success `#16A34A`, warning `#F59E0B`, error `#DC2626`, info `#2563EB`.
+- **Colour:** brand `#C91D32` / hover `#A91529` on navy `#102541` / `#173B63`. Semantic: success `#16A34A`, warning `#F59E0B`, error `#DC2626`, info `#2563EB`.
 
 ## Notes
 

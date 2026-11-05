@@ -5,6 +5,8 @@ import { Box, Container, Typography, Button, Paper, useTheme } from "@mui/materi
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import VolunteerActivismIcon from "@mui/icons-material/VolunteerActivism";
 import GroupIcon from "@mui/icons-material/Group";
+import HistoryIcon from "@mui/icons-material/History";
+import { useUserAuth } from "@/store/UserAuthContext";
 
 const steps = [
   "Our team will review your registration within 24 hours.",
@@ -13,6 +15,7 @@ const steps = [
 ];
 
 const ThankYou = () => {
+  const { isAuth } = useUserAuth();
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
   const [visible, setVisible] = useState(false);
@@ -26,7 +29,7 @@ const ThankYou = () => {
     <Box
       sx={{
         minHeight: "100vh",
-        backgroundColor: isDark ? "#121212" : "#f9f9f9",
+        backgroundColor: isDark ? "#0B1220" : "#F6F8FC",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -49,8 +52,8 @@ const ThankYou = () => {
           <Box
             sx={{
               background: isDark
-                ? "linear-gradient(135deg, #1a0000 0%, #2d0505 100%)"
-                : "linear-gradient(135deg, #b71c1c 0%, #7f0000 100%)",
+                ? "linear-gradient(160deg, #0F2038 0%, #0B1220 100%)"
+                : "linear-gradient(120deg, #102541 0%, #173B63 55%, #245481 100%)",
               py: 5,
               textAlign: "center",
             }}
@@ -91,7 +94,7 @@ const ThankYou = () => {
             <Typography
               variant="subtitle1"
               fontWeight={700}
-              color="error.main"
+              color="primary.main"
               gutterBottom
               sx={{ mb: 2 }}
             >
@@ -116,8 +119,8 @@ const ThankYou = () => {
                       minWidth: 28,
                       height: 28,
                       borderRadius: "50%",
-                      backgroundColor: "error.main",
-                      bgcolor: "#b71c1c",
+                      backgroundColor: "primary.main",
+                      bgcolor: "#A91529",
                       color: "white",
                       display: "flex",
                       alignItems: "center",
@@ -139,7 +142,7 @@ const ThankYou = () => {
             <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
               <Button
                 variant="contained"
-                color="error"
+                color="primary"
                 size="large"
                 component={Link}
                 href="/donors"
@@ -149,15 +152,15 @@ const ThankYou = () => {
                   fontWeight: 700,
                   borderRadius: 3,
                   py: 1.3,
-                  boxShadow: "0 4px 14px rgba(183,28,28,0.35)",
-                  "&:hover": { boxShadow: "0 6px 20px rgba(183,28,28,0.5)" },
+                  boxShadow: "0 4px 14px rgba(201,29,50,0.35)",
+                  "&:hover": { boxShadow: "0 6px 20px rgba(201,29,50,0.5)" },
                 }}
               >
                 View Donors
               </Button>
               <Button
                 variant="outlined"
-                color="error"
+                color="primary"
                 size="large"
                 component={Link}
                 href="/donate"
@@ -168,6 +171,12 @@ const ThankYou = () => {
               </Button>
             </Box>
 
+            {isAuth && (
+              <Button fullWidth variant="text" color="primary" component={Link} href="/profile?tab=history"
+                startIcon={<HistoryIcon />} sx={{ mt: 2, fontWeight: 700 }}>
+                View it in My Profile → Donation History
+              </Button>
+            )}
             <Button
               fullWidth
               component={Link}

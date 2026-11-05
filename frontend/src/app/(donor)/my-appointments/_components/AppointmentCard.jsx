@@ -26,7 +26,7 @@ import {
 } from './appointments';
 
 /** The status badge for an appointment, taking reschedule state into account. */
-export function badgeFor(a) {
+function badgeFor(a) {
   const cat = categoryOf(a);
   if (cat === 'completed') return { tone: 'success', label: 'Completed', icon: <TaskAltIcon /> };
   if (cat === 'cancelled') return { tone: 'neutral', label: 'Cancelled', icon: <CancelIcon /> };

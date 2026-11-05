@@ -21,8 +21,9 @@ import {
   PageHeader, SectionCard, StatCard, StatusBadge, EmptyState, CardError, BloodPill, RowMenu, compactHeadCell, compactTableContainerSx,
 } from '@/components/ui';
 import LowStockAlert from '@/components/inventory/LowStockAlert';
-import { STOCK, completeByType, summarize } from '@/lib/inventory';
+import { STOCK, completeByType, stockRanges, summarize } from '@/lib/inventory';
 import { formatDate, initialsOf } from '@/lib/format';
+import { brand } from '@/lib/design-tokens';
 
 // recharts is large and sits below the stat cards, so load it on demand.
 const StockBarChart = dynamic(() => import('@/components/inventory/StockCharts').then((m) => m.StockBarChart), {
@@ -64,8 +65,30 @@ const greeting = () => {
 };
 
 // Patient avatars get a stable colour from their name (same palette as the admin dashboard).
-const AVATAR_HUES = ['#2563EB', '#7C3AED', '#DB2777', '#0891B2', '#EA580C', '#16A34A'];
+const AVATAR_HUES = ['#C91D32', '#173B63', '#2563EB', '#16A34A', '#F59E0B', '#102541'];
 const hueOf = (name = '') => AVATAR_HUES[[...name].reduce((s, c) => s + c.charCodeAt(0), 0) % AVATAR_HUES.length];
+
+// Panels share the KPI cards' rounder corners.
+const panelSx = { borderRadius: '20px' };
+
+// Pale-red abstract shapes behind the page header (decoration only).
+const headerGlow = (t) => ({
+  position: 'absolute', zIndex: 0, pointerEvents: 'none', top: { xs: -24, md: -40 }, left: { xs: -16, md: -32 }, right: 0, height: 260, // never past the right edge: no sideways scroll
+  background: t.palette.mode === 'dark'
+    ? `radial-gradient(420px 180px at 8% 10%, ${alpha(t.palette.primary.main, 0.14)}, transparent 70%)`
+    : `radial-gradient(460px 200px at 6% 0%, ${alpha(t.palette.primary.light, 0.14)}, transparent 70%),
+       radial-gradient(380px 160px at 38% -10%, ${alpha(t.palette.primary.main, 0.07)}, transparent 70%)`,
+});
+
+// Medical-red gradient for the main action (the same in light and dark mode).
+const checkInSx = {
+  color: '#fff',
+  background: `linear-gradient(135deg, ${brand.primaryLight} 0%, ${brand.primary} 100%)`,
+  boxShadow: `0 6px 16px ${alpha(brand.primary, 0.32)}`,
+  transition: 'box-shadow .2s ease, transform .2s ease',
+  '&:hover': { background: `linear-gradient(135deg, ${brand.primary} 0%, ${brand.primaryDark} 100%)`, boxShadow: `0 8px 20px ${alpha(brand.primary, 0.4)}`, transform: 'translateY(-1px)' },
+  '@media (prefers-reduced-motion: reduce)': { transition: 'none', '&:hover': { transform: 'none' } },
+};
 
 const splitRow = (main = 2, side = 1) => ({
   display: 'grid',
@@ -88,7 +111,14 @@ export default function HospitalOverview() {
 
   // One in-flight request per kind, so a slow old response can't overwrite a newer one.
   const inflight = useRef({});
-  useEffect(() => () => Object.values(inflight.current).forEach((c) => c.abort()), []);
+  const refreshing$ = useRef(false);
+  // On unmount, cancel what's in flight and clear the "refresh running" flag — otherwise a
+  // remount (React dev mode mounts twice) would skip its first load and show skeletons
+  // until the next poll.
+  useEffect(() => () => {
+    Object.values(inflight.current).forEach((c) => c.abort());
+    refreshing$.current = false;
+  }, []);
 
   const load = useCallback(async (key, url, setter, message, withAuth = true) => {
     inflight.current[key]?.abort();
@@ -107,7 +137,6 @@ export default function HospitalOverview() {
   const loadInventory = useCallback(() => load('inventory', `${API_BASE}/api/inventory?hospital=${hospital}`, setInventory, 'Could not load blood inventory.', false), [load, hospital]);
   const loadAppointments = useCallback(() => load('appointments', `${API_BASE}/api/appointments?hospital=${hospital}`, setAppointments, 'Could not load appointments.'), [load, hospital]);
 
-  const refreshing$ = useRef(false);
   const refresh = useCallback(async ({ silent = false } = {}) => {
     if (!hospital || refreshing$.current) return;
     refreshing$.current = true;
@@ -160,9 +189,11 @@ export default function HospitalOverview() {
   }, [appointments, today]);
 
   const statusLegend = ['adequate', 'low', 'critical', 'empty'];
+  const ranges = useMemo(() => stockRanges(stock), [stock]);
 
   return (
-    <Box>
+    <Box sx={{ position: 'relative', '& > :not(.header-glow)': { position: 'relative', zIndex: 1 } }}>
+      <Box className="header-glow" aria-hidden="true" sx={headerGlow} />
       <PageHeader
         icon={<LocalHospitalRoundedIcon />}
         title="Hospital Dashboard"
@@ -178,7 +209,7 @@ export default function HospitalOverview() {
                 </IconButton>
               </span>
             </Tooltip>
-            <Button component={Link} href={LINKS.scan} variant="contained" startIcon={<QrCodeScannerIcon />}>
+            <Button component={Link} href={LINKS.scan} variant="contained" startIcon={<QrCodeScannerIcon />} sx={checkInSx}>
               Check in donor
             </Button>
           </>
@@ -201,29 +232,29 @@ export default function HospitalOverview() {
       )}
 
       {/* ── Stat cards ── */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0,1fr)', sm: 'repeat(2, minmax(0,1fr))', xl: 'repeat(4, minmax(0,1fr))' }, gap: { xs: 2, md: 2.5 } }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0,1fr)', sm: 'repeat(2, minmax(0,1fr))' }, gap: { xs: 2, md: 2.5 } }}>
         <StatCard
           label="Pending Requests" value={req.pending} loading={requests === null && !errors.requests}
-          icon={<DescriptionRoundedIcon />} color="#F59E0B" href={LINKS.requests}
+          icon={<DescriptionRoundedIcon />} color="#F59E0B" href={LINKS.requests} decorated
           hint={req.critical > 0
             ? <Box component="span" sx={{ color: 'error.main', fontWeight: 700 }}>{req.critical} critical · {req.approved} approved</Box>
             : `${req.approved} approved, awaiting fulfilment`}
         />
         <StatCard
           label="Blood Units in Stock" value={totals.totalUnits.toLocaleString()} loading={inventory === null && !errors.inventory}
-          icon={<WaterDropIcon />} color="#E11D48" href={LINKS.inventory}
+          icon={<WaterDropIcon />} color="#C91D32" href={LINKS.inventory} decorated
           hint={attentionTypes > 0
             ? <Box component="span" sx={{ color: 'warning.main', fontWeight: 700 }}>{attentionTypes} type{attentionTypes === 1 ? '' : 's'} low or out</Box>
             : 'All 8 types adequately stocked'}
         />
         <StatCard
           label="Upcoming Appointments" value={appt.upcoming.length} loading={appointments === null && !errors.appointments}
-          icon={<CalendarMonthRoundedIcon />} color="#2563EB" href={LINKS.appointments}
+          icon={<CalendarMonthRoundedIcon />} color="#2563EB" href={LINKS.appointments} decorated
           hint={`${appt.today} today · ${appt.awaitingConfirm} to confirm`}
         />
         <StatCard
           label="Requests Fulfilled" value={req.fulfilled} loading={requests === null && !errors.requests}
-          icon={<TaskAltRoundedIcon />} color="#16A34A" href={LINKS.requests}
+          icon={<TaskAltRoundedIcon />} color="#16A34A" href={LINKS.requests} decorated
           hint={req.total ? `${Math.round((req.fulfilled / req.total) * 100)}% of ${req.total} requests` : 'No requests yet'}
         />
       </Box>
@@ -235,6 +266,7 @@ export default function HospitalOverview() {
           icon={<WaterDropIcon />}
           title="Blood Inventory by Type"
           subtitle="Units in stock, coloured by stock level"
+          sx={panelSx}
           action={<Button component={Link} href={LINKS.inventory} size="small" sx={{ fontWeight: 700 }}>Manage</Button>}
         >
           {errors.inventory && inventory === null && <CardError message={errors.inventory} onRetry={loadInventory} />}
@@ -256,7 +288,7 @@ export default function HospitalOverview() {
                     <Box key={k} sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
                       <Box sx={{ width: 10, height: 10, borderRadius: '50%', ...(k === 'empty' ? { border: 2, borderColor: STOCK[k].color } : { bgcolor: STOCK[k].color }) }} />
                       <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-                        {STOCK[k].label}{totals[k].types ? ` (${totals[k].types})` : ''}
+                        {STOCK[k].label} ({ranges[k]}){totals[k].types ? <Box component="span" sx={{ fontWeight: 700, color: 'text.primary' }}> · {totals[k].types}</Box> : ''}
                       </Typography>
                     </Box>
                   ))}
@@ -270,6 +302,7 @@ export default function HospitalOverview() {
           padded={false}
           icon={<EventAvailableRoundedIcon />}
           title="Upcoming Appointments"
+          sx={panelSx}
           subtitle={appt.checkedInToday ? `${appt.checkedInToday} donor${appt.checkedInToday === 1 ? '' : 's'} checked in today` : 'Next donors booked at your hospital'}
           action={<Button component={Link} href={LINKS.appointments} size="small" sx={{ fontWeight: 700 }}>View All</Button>}
         >
@@ -323,6 +356,7 @@ export default function HospitalOverview() {
           padded={false}
           icon={<DescriptionRoundedIcon />}
           title="Recent Blood Requests"
+          sx={panelSx}
           action={<Button component={Link} href={LINKS.requests} size="small" sx={{ fontWeight: 700 }}>View All</Button>}
         >
           {errors.requests && requests === null ? (
@@ -369,6 +403,7 @@ export default function HospitalOverview() {
         </SectionCard>
 
         <LowStockAlert
+          sx={panelSx}
           items={inventory}
           href={LINKS.inventory}
           error={errors.inventory && 'Stock alerts could not be loaded.'}

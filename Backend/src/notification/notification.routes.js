@@ -22,6 +22,8 @@ const dayStart = (iso) => {
   return Number.isNaN(t.getTime()) ? null : t;
 };
 const shortDate = (iso) => dayStart(iso)?.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) ?? iso;
+// Today as "YYYY-MM-DD" (server local time), the format appointment dates are stored in.
+const localIsoDay = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const clip = (text, n = 110) => (text.length > n ? `${text.slice(0, n - 1)}…` : text);
 
 const APPOINTMENT_STATUS = {
@@ -229,6 +231,107 @@ router.post('/admin/seen', adminAuth, async (req, res) => {
   try {
     const seenAt = new Date();
     await StaffUser.updateOne({ _id: req.admin.id }, { $set: { notificationsSeenAt: seenAt } });
+    res.json({ seenAt });
+  } catch (err) {
+    sendError(res, err, req);
+  }
+});
+
+// ── Hospital staff feed ─────────────────────────────────────────────────────────
+// Real events for the staff member's own hospital (the same scope as their requests and
+// appointments lists), newest first, with "unread" measured per staff account.
+const staffAuth = requireRole('hospital_staff');
+const HOSPITAL = '/dashboard/hospital';
+
+async function buildHospitalFeed(hospitalId) {
+  const scope = { hospital: hospitalId };
+  const [requests, cancelledRequests, booked, cancelledAppts, rescheduling, todays, stock] = await Promise.all([
+    BloodRequest.find(scope).sort({ createdAt: -1 }).limit(LIMIT).lean(),
+    BloodRequest.find({ ...scope, status: 'Cancelled', cancelledAt: { $ne: null } }).sort({ cancelledAt: -1 }).limit(LIMIT).lean(),
+    Appointment.find(scope).sort({ createdAt: -1 }).limit(LIMIT).lean(),
+    Appointment.find({ ...scope, status: 'Cancelled', cancelledBy: 'donor', cancelledAt: { $ne: null } }).sort({ cancelledAt: -1 }).limit(LIMIT).lean(),
+    Appointment.find({ ...scope, 'rescheduleRequests.status': 'Pending' }).sort({ updatedAt: -1 }).limit(LIMIT).lean(),
+    Appointment.find({ ...scope, date: localIsoDay(), status: { $in: ['Pending', 'Confirmed'] } }).select('status').lean(),
+    Inventory.find(scope).lean(),
+  ]);
+
+  const items = [];
+  requests.forEach((r) => items.push({
+    id: `request-new-${r._id}`, type: 'request', tone: URGENCY_TONE[r.urgency] || 'info',
+    title: r.urgency === 'Critical' ? 'Critical blood request' : 'New blood request',
+    body: `${r.bloodType} · ${units(r.unitsNeeded)} for ${r.patientName}${r.urgency ? ` · ${r.urgency} urgency` : ''}`,
+    href: `${HOSPITAL}/requests`, at: r.createdAt,
+  }));
+  cancelledRequests.forEach((r) => items.push({
+    id: `request-cancelled-${r._id}`, type: 'cancelled', tone: 'neutral',
+    title: 'Blood request cancelled by the requester',
+    body: `${r.bloodType} for ${r.patientName}${r.cancellationReason ? ` — “${clip(r.cancellationReason, 80)}”` : ''}`,
+    href: `${HOSPITAL}/requests`, at: r.cancelledAt,
+  }));
+  booked.forEach((a) => items.push({
+    id: `appointment-new-${a._id}`, type: 'appointment', tone: 'info',
+    title: 'New appointment booked',
+    body: `${a.fullName} (${a.bloodType}) · ${shortDate(a.date)}, ${a.time}`,
+    href: `${HOSPITAL}/appointments`, at: a.createdAt,
+  }));
+  cancelledAppts.forEach((a) => items.push({
+    id: `appointment-cancelled-${a._id}`, type: 'cancelled', tone: 'neutral',
+    title: 'Donor cancelled an appointment',
+    body: `${a.fullName} · ${shortDate(a.date)}, ${a.time}${a.cancellationReason ? ` — “${clip(a.cancellationReason, 80)}”` : ''}`,
+    href: `${HOSPITAL}/appointments`, at: a.cancelledAt,
+  }));
+  rescheduling.forEach((a) => (a.rescheduleRequests || []).forEach((r) => {
+    if (r.status !== 'Pending') return;
+    items.push({
+      id: `reschedule-${r._id}`, type: 'appointment', tone: 'warning',
+      title: 'Donor asked to reschedule',
+      body: `${a.fullName} · ${shortDate(r.fromDate)}, ${r.fromTime} → ${shortDate(r.toDate)}, ${r.toTime}`,
+      href: `${HOSPITAL}/appointments`, at: r.requestedAt,
+    });
+  }));
+  // Today's workload, as one morning summary (a state, dated at the start of the day; the id
+  // includes the count so a booking added later in the day shows up as new).
+  if (todays.length) {
+    const toConfirm = todays.filter((a) => a.status === 'Pending').length;
+    const start = new Date(); start.setHours(0, 0, 0, 0);
+    items.push({
+      id: `today-${localIsoDay()}-${todays.length}-${toConfirm}`, type: 'reminder', tone: 'warning',
+      title: `${todays.length} donor${todays.length === 1 ? '' : 's'} booked for today`,
+      body: toConfirm ? `${toConfirm} still to confirm — check donors in as they arrive.` : 'All confirmed — check donors in as they arrive.',
+      href: `${HOSPITAL}/appointments`, at: start,
+    });
+  }
+  // This hospital's stock below its minimum right now (the id carries the level, so a further drop is new).
+  stock.filter((i) => i.units < i.minUnits).forEach((i) => items.push({
+    id: `stock-${i._id}-${i.units}`, type: 'stock', tone: 'error',
+    title: i.units === 0 ? `${i.bloodType} is out of stock` : `${i.bloodType} stock is critically low`,
+    body: `${i.units} of minimum ${i.minUnits} units left`,
+    href: `${HOSPITAL}/inventory`, at: i.lastUpdated || i.updatedAt || new Date(0),
+  }));
+
+  items.sort((x, y) => new Date(y.at) - new Date(x.at));
+  return items.slice(0, LIMIT);
+}
+
+router.get('/hospital', staffAuth, async (req, res) => {
+  try {
+    if (!req.staff.hospitalId) return res.status(403).json({ message: 'Your account is not linked to a hospital' });
+    const account = await StaffUser.findById(req.staff.id).select('notificationsSeenAt').lean();
+    const seenAt = account?.notificationsSeenAt || null;
+    const items = (await buildHospitalFeed(req.staff.hospitalId)).map((item) => ({
+      ...item, unread: !seenAt || new Date(item.at) > new Date(seenAt),
+    }));
+    res.json({ items, unread: items.filter((i) => i.unread).length, seenAt });
+  } catch (err) {
+    sendError(res, err, req);
+  }
+});
+
+// Per staff account, so each person at the hospital has their own badge.
+router.post('/hospital/seen', staffAuth, async (req, res) => {
+  try {
+    const seenAt = new Date();
+    await StaffUser.updateOne({ _id: req.staff.id }, { $set: { notificationsSeenAt: seenAt } });
     res.json({ seenAt });
   } catch (err) {
     sendError(res, err, req);

@@ -11,12 +11,12 @@ export default function Panel({ icon, title, subtitle, action, children, sx }) {
   return (
     <Box component="section" aria-labelledby={headingId} sx={{
       bgcolor: 'background.paper', borderRadius: '14px', p: { xs: 2, sm: 2.25 },
-      border: `1px solid ${isDark ? '#262626' : C.border}`,
+      border: `1px solid ${isDark ? '#334155' : C.border}`,
       boxShadow: isDark ? 'none' : '0 1px 2px rgba(15,23,42,0.04)',
       ...sx,
     }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2.5, flexWrap: 'wrap' }}>
-        <Box aria-hidden="true" sx={{ width: 40, height: 40, borderRadius: '12px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.primary, bgcolor: isDark ? 'rgba(185,28,44,0.16)' : C.soft, '& svg': { fontSize: 22 } }}>
+        <Box aria-hidden="true" sx={{ width: 40, height: 40, borderRadius: '12px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.primary, bgcolor: isDark ? 'rgba(201,29,50,0.16)' : C.soft, '& svg': { fontSize: 22 } }}>
           {icon}
         </Box>
         <Box sx={{ flex: 1, minWidth: 180 }}>

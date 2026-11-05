@@ -17,3 +17,10 @@ export const telHref = (phone) => (phone ? `tel:${phone.replace(/[^\d+]/g, '')}`
 
 /** "Vanna Donor" -> "VD" (max two letters; "?" when there is no name). */
 export const initialsOf = (name) => name?.trim().split(/\s+/).filter(Boolean).map((n) => n[0]).join('').toUpperCase().slice(0, 2) || '?';
+
+/** Today as "YYYY-MM-DD" in the viewer's own time zone, for date inputs. (toISOString gives the
+ *  UTC date, which in Cambodia is still "yesterday" until 7 a.m.) */
+export const localToday = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};

@@ -60,7 +60,7 @@ export default function CalendarPicker({ value, onChange }) {
     if (next.getMonth() !== view.month || next.getFullYear() !== view.year) setView({ year: next.getFullYear(), month: next.getMonth() });
   };
 
-  const arrow = { border: '1px solid', borderColor: isDark ? '#333' : C.border, borderRadius: '10px', width: 36, height: 36, '&:focus-visible': { boxShadow: `0 0 0 3px ${C.ring}` } };
+  const arrow = { border: '1px solid', borderColor: isDark ? '#334155' : C.border, borderRadius: '10px', width: 36, height: 36, '&:focus-visible': { boxShadow: `0 0 0 3px ${C.ring}` } };
 
   return (
     <Panel icon={<CalendarMonthIcon />} title="Select Date" subtitle="Choose a date for your donation" sx={{ height: '100%' }}>
@@ -91,12 +91,12 @@ export default function CalendarPicker({ value, onChange }) {
                 position: 'relative', mx: 'auto', width: { xs: 36, sm: 40 }, height: { xs: 36, sm: 40 }, borderRadius: '10px', border: 'none', font: 'inherit', fontSize: '0.88rem',
                 fontWeight: selected || isToday ? 700 : 500, cursor: past ? 'not-allowed' : 'pointer', transition: 'background-color .12s',
                 bgcolor: selected ? C.primary : 'transparent',
-                color: selected ? '#fff' : past ? (isDark ? '#4a4a4a' : '#CBD5E1') : !inMonth ? 'text.secondary' : 'text.primary',
+                color: selected ? '#fff' : past ? (isDark ? '#475569' : '#CBD5E1') : !inMonth ? 'text.secondary' : 'text.primary',
                 opacity: !inMonth && !selected ? 0.6 : 1,
                 textDecoration: past && inMonth ? 'line-through' : 'none',
                 outline: isToday && !selected ? `1.5px solid ${C.primary}` : 'none', outlineOffset: -2,
-                boxShadow: selected ? '0 4px 12px rgba(185,28,44,0.35)' : 'none',
-                '&:hover:not(:disabled)': { bgcolor: selected ? C.dark : isDark ? 'rgba(185,28,44,0.18)' : C.soft },
+                boxShadow: selected ? '0 4px 12px rgba(201,29,50,0.35)' : 'none',
+                '&:hover:not(:disabled)': { bgcolor: selected ? C.dark : isDark ? 'rgba(201,29,50,0.18)' : C.soft },
                 '&:focus-visible': { boxShadow: `0 0 0 3px ${C.ring}` },
                 // small dot under open days in this month = bookable
                 '&::after': !past && inMonth && !selected ? {
@@ -112,7 +112,7 @@ export default function CalendarPicker({ value, onChange }) {
       <Box component="ul" aria-label="Calendar legend" sx={{ listStyle: 'none', p: 0, m: 0, mt: 2, display: 'flex', flexWrap: 'wrap', justifyContent: 'center', columnGap: 2.5, rowGap: 1, fontSize: '0.75rem', color: 'text.secondary' }}>
         <Legend swatch={{ width: 8, height: 8, borderRadius: '50%', bgcolor: C.ok }}>Available</Legend>
         <Legend swatch={{ width: 8, height: 8, borderRadius: '50%', border: `1.5px solid ${C.primary}` }}>Today</Legend>
-        <Legend swatch={{ width: 8, height: 8, borderRadius: '50%', bgcolor: isDark ? '#444' : '#CBD5E1' }}>Unavailable</Legend>
+        <Legend swatch={{ width: 8, height: 8, borderRadius: '50%', bgcolor: isDark ? '#475569' : '#CBD5E1' }}>Unavailable</Legend>
       </Box>
     </Panel>
   );

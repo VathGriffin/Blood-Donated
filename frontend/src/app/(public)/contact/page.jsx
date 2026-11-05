@@ -48,7 +48,7 @@ const findUsDetails = [
   { icon: <LocationOnIcon sx={{ fontSize: 18 }} />, label: "Address", value: CONTACT_ADDRESS },
   { icon: <PhoneIcon sx={{ fontSize: 18 }} />, label: "Phone", value: CONTACT_PHONE_DISPLAY, href: CONTACT_PHONE_HREF },
   { icon: <EmailIcon sx={{ fontSize: 18 }} />, label: "Email", value: CONTACT_EMAIL, href: `mailto:${CONTACT_EMAIL}` },
-  { icon: <AccessTimeIcon sx={{ fontSize: 18 }} />, label: "Working Hours", value: "Mon – Fri, 8AM–5PM" },
+  { icon: <AccessTimeIcon sx={{ fontSize: 18 }} />, label: "Working Hours", value: CONTACT.hours },
 ];
 
 const subjectOptions = [
@@ -56,17 +56,17 @@ const subjectOptions = [
 ];
 
 const cardSx = (isDark) => ({
-  borderRadius: 4,
-  backgroundColor: isDark ? "#1a1a1a" : "#fff",
-  border: `1px solid ${isDark ? "#2a2a2a" : "#efefef"}`,
-  boxShadow: isDark ? "none" : "0 4px 24px rgba(0,0,0,0.06)",
+  borderRadius: "16px",
+  backgroundColor: isDark ? "#1C2E49" : "#fff",
+  border: `1px solid ${isDark ? "#334155" : "#E2E8F0"}`,
+  boxShadow: isDark ? "none" : "0 1px 2px rgba(16,24,40,0.04), 0 6px 20px rgba(16,24,40,0.05)",
 });
 
 const iconBoxSx = {
   width: 48, height: 48, borderRadius: "50%", flexShrink: 0,
-  background: "linear-gradient(135deg, #b71c1c 0%, #d32f2f 100%)",
+  background: "linear-gradient(135deg, #E63946 0%, #C91D32 100%)",
   display: "flex", alignItems: "center", justifyContent: "center",
-  boxShadow: "0 4px 12px rgba(183,28,28,0.35)",
+  boxShadow: "0 4px 12px rgba(201,29,50,0.35)",
   color: "white",
   "& svg": { fontSize: 22 },
 };
@@ -116,7 +116,7 @@ const Contact = () => {
   };
 
   return (
-    <Box sx={{ backgroundColor: isDark ? "#121212" : "#f4f4f4" }}>
+    <Box sx={{ backgroundColor: "background.default" }}>
 
       {/* ── Hero — Photo Background ────────────────────────────────────────── */}
       <Box sx={{
@@ -129,36 +129,36 @@ const Contact = () => {
           content: '""',
           position: "absolute", inset: 0,
           background: isDark
-            ? "linear-gradient(100deg, rgba(10,0,0,0.96) 0%, rgba(10,0,0,0.9) 52%, rgba(70,0,0,0.55) 68%, rgba(70,0,0,0.35) 100%)"
-            : "linear-gradient(100deg, rgba(255,255,255,0.97) 0%, rgba(255,255,255,0.9) 52%, rgba(183,28,28,0.5) 68%, rgba(90,0,0,0.4) 100%)",
+            ? "linear-gradient(100deg, rgba(11,18,32,0.96) 0%, rgba(11,18,32,0.9) 52%, rgba(16,37,65,0.55) 68%, rgba(16,37,65,0.35) 100%)"
+            : "linear-gradient(100deg, rgba(255,255,255,0.97) 0%, rgba(255,255,255,0.92) 52%, rgba(16,37,65,0.55) 70%, rgba(16,37,65,0.4) 100%)",
         },
       }}>
         <Container maxWidth="lg" sx={{ position: "relative", pt: { xs: 7, md: 9 }, pb: { xs: 11, md: 15 } }}>
           <Box sx={{ maxWidth: 640 }}>
             <Chip
-              icon={<ChatIcon sx={{ color: "#b71c1c !important", fontSize: "18px !important" }} />}
+              icon={<ChatIcon sx={{ color: "#A91529 !important", fontSize: "18px !important" }} />}
               label="We're Here to Help"
               sx={{
-                backgroundColor: isDark ? "rgba(183,28,28,0.18)" : "#fdeaea",
-                color: "error.main", fontWeight: 700, mb: 3, fontSize: "0.82rem",
+                backgroundColor: isDark ? "rgba(201,29,50,0.18)" : "#FFF1F2",
+                color: "primary.main", fontWeight: 700, mb: 3, fontSize: "0.82rem",
               }}
             />
             <Typography sx={{
               fontWeight: 800, lineHeight: 1.1, mb: 1.5,
               fontSize: { xs: "2.4rem", md: "3.2rem" },
-              color: isDark ? "#fff" : "#161a23",
+              color: isDark ? "#fff" : "#172B4D",
             }}>
-              Contact <Box component="span" sx={{ color: "error.main" }}>Us</Box>
+              Contact <Box component="span" sx={{ color: "primary.main" }}>Us</Box>
             </Typography>
             <Typography sx={{
               fontWeight: 700, mb: 2, fontSize: { xs: "1.15rem", md: "1.3rem" },
-              color: isDark ? "#fff" : "#161a23",
+              color: isDark ? "#fff" : "#172B4D",
             }}>
               Have a question or need help?
             </Typography>
             <Typography sx={{
               fontSize: "1.05rem", lineHeight: 1.7, mb: 5,
-              color: isDark ? "rgba(255,255,255,0.75)" : "rgba(40,30,30,0.72)",
+              color: isDark ? "rgba(255,255,255,0.75)" : "#64748B",
             }}>
               Whether you&apos;re a donor, patient, or hospital partner — our team is
               always ready to assist you.
@@ -167,16 +167,16 @@ const Contact = () => {
             <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(3, auto)" }, gap: { xs: 2.5, sm: 4 } }}>
               {heroFeatures.map((f) => (
                 <Box key={f.title} sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
-                  <Box sx={{ color: "error.main", mt: 0.2, "& svg": { fontSize: 24 } }}>{f.icon}</Box>
+                  <Box sx={{ color: "primary.main", mt: 0.2, "& svg": { fontSize: 24 } }}>{f.icon}</Box>
                   <Box>
                     <Typography fontWeight={700} sx={{
-                      fontSize: "0.95rem", lineHeight: 1.3, color: isDark ? "#fff" : "#161a23",
+                      fontSize: "0.95rem", lineHeight: 1.3, color: isDark ? "#fff" : "#172B4D",
                     }}>
                       {f.title}
                     </Typography>
                     <Typography variant="caption" sx={{
                       lineHeight: 1.3, display: "block",
-                      color: isDark ? "rgba(255,255,255,0.65)" : "rgba(40,30,30,0.65)",
+                      color: isDark ? "rgba(255,255,255,0.65)" : "#64748B",
                     }}>
                       {f.subtitle}
                     </Typography>
@@ -199,13 +199,14 @@ const Contact = () => {
 
       {/* ── Quick info strip ──────────────────────────────────────────────── */}
       <Container maxWidth="lg" sx={{ mt: { xs: -3, md: -4 }, position: "relative", zIndex: 3 }}>
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "repeat(4, 1fr)" }, gap: 2.5 }}>
+        {/* minmax(0, 1fr): columns may shrink below their no-wrap text, so the strip never forces sideways scroll. */}
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", lg: "repeat(4, minmax(0, 1fr))" }, gap: 2.5 }}>
           {topInfoCards.map((card) => (
-            <Paper key={card.title} elevation={0} sx={{ ...cardSx(isDark), p: 3, display: "flex", alignItems: "center", gap: 2 }}>
+            <Paper key={card.title} elevation={0} sx={{ ...cardSx(isDark), p: 3, display: "flex", alignItems: "center", gap: 2, minWidth: 0 }}>
               <Box sx={{
                 width: 48, height: 48, borderRadius: "50%", flexShrink: 0,
-                backgroundColor: isDark ? "rgba(183,28,28,0.16)" : "#fdeaea",
-                color: "error.main", display: "flex", alignItems: "center", justifyContent: "center",
+                backgroundColor: isDark ? "rgba(201,29,50,0.16)" : "#FFF1F2",
+                color: "primary.main", display: "flex", alignItems: "center", justifyContent: "center",
                 "& svg": { fontSize: 22 },
               }}>
                 {card.icon}
@@ -214,7 +215,7 @@ const Contact = () => {
                 <Typography fontWeight={700} sx={{ fontSize: "0.95rem" }}>{card.title}</Typography>
                 {card.href ? (
                   <Typography component="a" href={card.href} variant="body2" fontWeight={600}
-                    sx={{ color: "text.primary", textDecoration: "none", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", "&:hover": { color: "error.main" } }}>
+                    sx={{ color: "text.primary", textDecoration: "none", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", "&:hover": { color: "primary.main" } }}>
                     {card.value}
                   </Typography>
                 ) : (
@@ -240,7 +241,7 @@ const Contact = () => {
             <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1 }}>
               <Box sx={iconBoxSx}><SendIcon sx={{ fontSize: 20 }} /></Box>
               <Box>
-                <Typography variant="overline" color="error" fontWeight={700} letterSpacing="0.12em" sx={{ lineHeight: 1 }}>
+                <Typography variant="overline" color="primary" fontWeight={700} letterSpacing="0.12em" sx={{ lineHeight: 1 }}>
                   Send Us a Message
                 </Typography>
                 <Typography variant="h5" fontWeight={800} sx={{ lineHeight: 1.2 }}>
@@ -253,23 +254,23 @@ const Contact = () => {
             </Typography>
 
             <Box component="form" onSubmit={handleSubmit} noValidate autoComplete="off">
-              <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
+              <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: { xs: 2, sm: 2.5 } }}>
                 <TextField
                   fullWidth label="Full Name" name="fullName" value={form.fullName}
                   onChange={handleChange} required placeholder="Enter your full name"
-                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2.5 } }}
+                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px" } }}
                 />
                 <TextField
                   fullWidth label="Email Address" name="email" type="email" value={form.email}
                   onChange={handleChange} required placeholder="Enter your email"
-                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2.5 } }}
+                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px" } }}
                 />
                 <FormControl fullWidth required>
                   <InputLabel id="contact-subject-label">Subject</InputLabel>
                   <Select
                     labelId="contact-subject-label" name="subject" value={form.subject}
                     onChange={handleChange} label="Subject"
-                    sx={{ borderRadius: 2.5 }}
+                    sx={{ borderRadius: "10px" }}
                   >
                     {subjectOptions.map((s) => (
                       <MenuItem key={s} value={s}>{s}</MenuItem>
@@ -279,13 +280,13 @@ const Contact = () => {
                 <TextField
                   fullWidth label="Phone Number" name="phone" type="tel" value={form.phone}
                   onChange={handleChange} placeholder="Enter your phone number"
-                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2.5 } }}
+                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px" } }}
                 />
                 <TextField
                   fullWidth label="Message" name="message" value={form.message}
                   onChange={handleChange} required multiline minRows={6}
                   placeholder="Type your message here..."
-                  sx={{ gridColumn: "1 / -1", "& .MuiOutlinedInput-root": { borderRadius: 2.5 } }}
+                  sx={{ gridColumn: "1 / -1", "& .MuiOutlinedInput-root": { borderRadius: "10px" } }}
                 />
               </Box>
 
@@ -302,15 +303,16 @@ const Contact = () => {
 
               <Box mt={3}>
                 <Button
-                  type="submit" variant="contained" color="error" size="large"
+                  type="submit" variant="contained" color="primary" size="large"
                   disabled={loading} startIcon={<SendIcon />}
                   sx={{
-                    py: 1.6, px: 5, fontWeight: 700, fontSize: "1rem", borderRadius: 3,
-                    background: "linear-gradient(135deg, #b71c1c 0%, #d32f2f 100%)",
-                    boxShadow: "0 6px 20px rgba(183,28,28,0.4)",
-                    "&:hover": { boxShadow: "0 8px 28px rgba(183,28,28,0.55)", transform: "translateY(-1px)" },
-                    "&.Mui-disabled": { background: isDark ? "#2a2a2a" : "#e0e0e0" },
-                    transition: "all 0.25s ease",
+                    py: 1.5, px: 5, fontWeight: 700, fontSize: "1rem", borderRadius: "10px",
+                    width: { xs: "100%", sm: "auto" },
+                    background: "linear-gradient(135deg, #E63946 0%, #C91D32 100%)",
+                    boxShadow: "0 6px 16px rgba(201,29,50,0.3)",
+                    "&:hover": { background: "linear-gradient(135deg, #C91D32 0%, #A91529 100%)", boxShadow: "0 8px 22px rgba(201,29,50,0.4)", transform: "translateY(-1px)" },
+                    "&.Mui-disabled": { background: isDark ? "#334155" : "#E2E8F0" },
+                    transition: "background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease",
                   }}
                 >
                   {loading ? "Sending…" : "Send Message"}
@@ -324,7 +326,7 @@ const Contact = () => {
             <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1 }}>
               <Box sx={iconBoxSx}><RoomIcon sx={{ fontSize: 20 }} /></Box>
               <Box>
-                <Typography variant="overline" color="error" fontWeight={700} letterSpacing="0.12em" sx={{ lineHeight: 1 }}>
+                <Typography variant="overline" color="primary" fontWeight={700} letterSpacing="0.12em" sx={{ lineHeight: 1 }}>
                   Our Location
                 </Typography>
                 <Typography variant="h5" fontWeight={800} sx={{ lineHeight: 1.2 }}>
@@ -342,35 +344,37 @@ const Contact = () => {
               sx={{
                 position: "relative", display: "block", height: 200, borderRadius: 3, overflow: "hidden",
                 mb: 3, textDecoration: "none",
-                backgroundColor: isDark ? "#20291f" : "#e7efe3",
+                backgroundColor: isDark ? "#0F2038" : "#EEF2F7",
                 backgroundImage: isDark
                   ? "linear-gradient(0deg, rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)"
                   : "linear-gradient(0deg, rgba(0,0,0,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px)",
                 backgroundSize: "28px 28px",
-                border: `1px solid ${isDark ? "#2a2a2a" : "#dbe6d6"}`,
+                border: `1px solid ${isDark ? "#334155" : "#E2E8F0"}`,
+                transition: "border-color 0.2s ease, box-shadow 0.2s ease",
+                "&:hover": { borderColor: "primary.main", boxShadow: "0 0 0 3px rgba(201,29,50,0.08)" },
               }}
             >
               {/* decorative "roads" */}
-              <Box sx={{ position: "absolute", left: 0, right: 0, top: "38%", height: 10, backgroundColor: isDark ? "#333" : "#fff", boxShadow: "0 0 0 1px rgba(0,0,0,0.04)" }} />
-              <Box sx={{ position: "absolute", top: 0, bottom: 0, left: "62%", width: 8, backgroundColor: isDark ? "#333" : "#fff", boxShadow: "0 0 0 1px rgba(0,0,0,0.04)" }} />
+              <Box sx={{ position: "absolute", left: 0, right: 0, top: "38%", height: 10, backgroundColor: isDark ? "#334155" : "#fff", boxShadow: "0 0 0 1px rgba(0,0,0,0.04)" }} />
+              <Box sx={{ position: "absolute", top: 0, bottom: 0, left: "62%", width: 8, backgroundColor: isDark ? "#334155" : "#fff", boxShadow: "0 0 0 1px rgba(0,0,0,0.04)" }} />
 
               {/* marker card */}
               <Box sx={{
                 position: "absolute", top: 22, left: 22, zIndex: 2,
                 display: "flex", alignItems: "center", gap: 1, px: 1.5, py: 1, borderRadius: 2.5,
-                backgroundColor: isDark ? "#1a1a1a" : "#fff",
-                boxShadow: "0 6px 18px rgba(0,0,0,0.18)",
+                backgroundColor: isDark ? "#1C2E49" : "#fff",
+                boxShadow: "0 6px 18px rgba(16,24,40,0.16)",
               }}>
-                <LocationOnIcon color="error" sx={{ fontSize: 22 }} />
+                <LocationOnIcon color="primary" sx={{ fontSize: 22 }} />
                 <Box>
-                  <Typography sx={{ fontSize: "0.8rem", fontWeight: 700, lineHeight: 1.2 }}>Blood Donated</Typography>
+                  <Typography sx={{ fontSize: "0.8rem", fontWeight: 700, lineHeight: 1.2, color: "text.primary" }}>Blood Donated</Typography>
                   <Typography variant="caption" color="text.secondary">Phnom Penh, Cambodia</Typography>
                 </Box>
               </Box>
 
               <Typography sx={{
                 position: "absolute", bottom: 18, left: 22, fontWeight: 800, fontSize: "1.15rem",
-                color: isDark ? "rgba(255,255,255,0.5)" : "rgba(30,30,30,0.35)",
+                color: isDark ? "rgba(255,255,255,0.5)" : "rgba(16,37,65,0.35)",
               }}>
                 Phnom Penh
               </Typography>
@@ -380,8 +384,8 @@ const Contact = () => {
                 {[AddIcon, RemoveIcon].map((Icon, i) => (
                   <Box key={i} sx={{
                     width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center",
-                    backgroundColor: isDark ? "#1a1a1a" : "#fff",
-                    borderBottom: i === 0 ? `1px solid ${isDark ? "#2a2a2a" : "#eee"}` : "none",
+                    backgroundColor: isDark ? "#1C2E49" : "#fff",
+                    borderBottom: i === 0 ? `1px solid ${isDark ? "#334155" : "#E2E8F0"}` : "none",
                   }}>
                     <Icon sx={{ fontSize: 16, color: "text.secondary" }} />
                   </Box>
@@ -389,18 +393,18 @@ const Contact = () => {
               </Box>
             </Box>
 
-            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", rowGap: 2.5, columnGap: 2 }}>
+            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, rowGap: 2.5, columnGap: 2, pt: 2.5, borderTop: "1px solid", borderColor: "divider" }}>
               {findUsDetails.map((d) => (
-                <Box key={d.label} sx={{ display: "flex", alignItems: "flex-start", gap: 1.2 }}>
-                  <Box sx={{ color: "error.main", mt: 0.2 }}>{d.icon}</Box>
+                <Box key={d.label} sx={{ display: "flex", alignItems: "flex-start", gap: 1.2, minWidth: 0, ...(d.label === "Address" && { gridColumn: "1 / -1" }) }}>
+                  <Box sx={{ color: "primary.main", mt: 0.2 }}>{d.icon}</Box>
                   <Box sx={{ minWidth: 0 }}>
-                    <Typography variant="caption" color="text.disabled" fontWeight={700}
+                    <Typography variant="caption" color="text.secondary" fontWeight={700}
                       sx={{ textTransform: "uppercase", letterSpacing: "0.06em", display: "block" }}>
                       {d.label}
                     </Typography>
                     {d.href ? (
                       <Typography component="a" href={d.href} variant="body2" fontWeight={600}
-                        sx={{ color: "text.primary", textDecoration: "none", "&:hover": { color: "error.main" } }}>
+                        sx={{ color: "text.primary", textDecoration: "none", overflowWrap: "anywhere", "&:hover": { color: "primary.main" } }}>
                         {d.value}
                       </Typography>
                     ) : (

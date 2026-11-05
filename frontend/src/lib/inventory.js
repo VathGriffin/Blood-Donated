@@ -1,4 +1,4 @@
-import { semantic } from '@/lib/design-tokens';
+import { neutral, semantic } from '@/lib/design-tokens';
 
 export const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
@@ -7,7 +7,7 @@ export const STOCK = {
   adequate: { label: 'Adequate',     color: semantic.success.main },
   low:      { label: 'Low',          color: semantic.warning.main },
   critical: { label: 'Critical',     color: semantic.error.main },
-  empty:    { label: 'Out of stock', color: semantic.error.dark },
+  empty:    { label: 'Out of stock', color: neutral[400] }, // grey: nothing left to colour
 };
 
 /** One row per blood type — types the pool has no row for yet show as empty. */
@@ -32,3 +32,20 @@ export function summarize(items = []) {
 /** Types that need attention, most urgent (fewest units) first. */
 export const lowStockItems = (items = []) =>
   items.filter((i) => ['empty', 'critical', 'low'].includes(i.status)).sort((a, b) => a.units - b.units);
+
+/**
+ * Unit ranges per stock level, for chart legends — the same rule as Backend/src/common/stock-status.js
+ * (empty 0 · critical below the minimum · low below twice the minimum · adequate from there).
+ * Exact numbers when every type shares one minimum, otherwise the rule in words.
+ */
+export function stockRanges(items = []) {
+  const mins = [...new Set(items.map((i) => i.minUnits ?? 10))];
+  if (mins.length !== 1) return { adequate: '≥ 2× min', low: 'min – 2× min', critical: 'below min', empty: '0' };
+  const m = mins[0];
+  return {
+    adequate: `≥ ${2 * m}`,
+    low: m === 1 ? `${m}` : `${m} – ${2 * m - 1}`,
+    critical: m <= 1 ? '—' : m === 2 ? '1' : `1 – ${m - 1}`,
+    empty: '0',
+  };
+}

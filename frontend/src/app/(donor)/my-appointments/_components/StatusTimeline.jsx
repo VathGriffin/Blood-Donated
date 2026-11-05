@@ -55,8 +55,8 @@ function stepsFor(a) {
 const DOT = {
   done: { icon: <CheckIcon />, bg: (t) => t.palette.primary.main, fg: '#fff' },
   current: { icon: <PriorityHighIcon />, bg: (t) => t.custom.tones.warning.dot, fg: '#fff' },
-  failed: { icon: <CloseIcon />, bg: (t) => (t.palette.mode === 'dark' ? '#3A3A3A' : t.palette.grey[300]), fg: '#fff' },
-  todo: { icon: <AddIcon />, bg: (t) => (t.palette.mode === 'dark' ? '#2A2A2A' : t.palette.grey[300]), fg: '#fff' },
+  failed: { icon: <CloseIcon />, bg: (t) => (t.palette.mode === 'dark' ? '#475569' : t.palette.grey[300]), fg: '#fff' },
+  todo: { icon: <AddIcon />, bg: (t) => (t.palette.mode === 'dark' ? '#334155' : t.palette.grey[300]), fg: '#fff' },
 };
 
 export default function StatusTimeline({ appt }) {

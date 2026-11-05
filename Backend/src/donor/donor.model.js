@@ -25,6 +25,9 @@ const donorSchema = new mongoose.Schema(
     location: { type: String, required: [true, 'Location is required'] },
     available: { type: Boolean, default: false },
     lastDonation: { type: Date, default: null },
+    // The last donation date the donor entered when registering. Kept apart from lastDonation,
+    // which check-ins overwrite, so the donor's history can still show it.
+    reportedLastDonation: { type: Date, default: null },
     photo: { type: String, default: null },
     donationCount: { type: Number, default: 0 },
     donationHistory: [{

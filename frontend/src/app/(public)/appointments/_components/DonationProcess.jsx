@@ -21,12 +21,12 @@ export default function DonationProcess() {
   const isDark = useTheme().palette.mode === 'dark';
   const circle = (size) => ({
     width: size, height: size, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-    color: C.primary, bgcolor: isDark ? 'rgba(185,28,44,0.2)' : '#FFFFFF', '& svg': { fontSize: size * 0.5 },
+    color: C.primary, bgcolor: isDark ? 'rgba(201,29,50,0.2)' : '#FFFFFF', '& svg': { fontSize: size * 0.5 },
   });
   return (
     <Box component="section" aria-labelledby="donation-process-title" sx={{
       height: '100%', borderRadius: '16px', px: { xs: 2, sm: 2.5 }, py: 2,
-      bgcolor: isDark ? 'rgba(185,28,44,0.08)' : '#FDF0F2', border: `1px solid ${isDark ? 'rgba(185,28,44,0.2)' : '#F6D5DA'}`,
+      bgcolor: isDark ? 'rgba(201,29,50,0.08)' : '#FFF1F2', border: `1px solid ${isDark ? 'rgba(201,29,50,0.2)' : '#F5C6CC'}`,
       display: 'flex', alignItems: 'center', flexWrap: { xs: 'wrap', xl: 'nowrap' }, gap: { xs: 2, md: 2.5 },
     }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexShrink: 0, width: { xs: '100%', xl: 'auto' } }}>
@@ -45,7 +45,7 @@ export default function DonationProcess() {
         {STAGES.map((s, i) => (
           <Fragment key={s.title}>
             <Box component="li" sx={{ display: 'flex', alignItems: 'center', gap: 1.1, minWidth: 0 }}>
-              <Box aria-hidden="true" sx={{ ...circle(42), bgcolor: C.primary, color: '#fff', boxShadow: '0 4px 12px rgba(185,28,44,0.25)' }}>{s.icon}</Box>
+              <Box aria-hidden="true" sx={{ ...circle(42), bgcolor: C.primary, color: '#fff', boxShadow: '0 4px 12px rgba(201,29,50,0.25)' }}>{s.icon}</Box>
               <Box sx={{ minWidth: 0 }}>
                 <Typography component="h3" sx={{ fontWeight: 700, fontSize: '0.86rem', lineHeight: 1.25 }}>
                   <Box component="span" sx={srOnly}>Step {i + 1}: </Box>{s.title}

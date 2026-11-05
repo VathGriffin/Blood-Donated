@@ -22,7 +22,7 @@ import { PageHeader, StatCard, StatusBadge, TableCard, EmptyState, ResponsiveGri
 const API_BASE = `${API_BASE_URL}/api/requests`;
 
 // BloodLife AI palette for this page.
-const C = { primary: "#B91C2C", dark: "#881D2A", surface: "#F8FAFC", ink: "#1E293B" };
+const C = { primary: "#C91D32", dark: "#A91529", surface: "#F8FAFC", ink: "#172B4D" };
 
 const URGENCY_LEVELS = ["Low", "Medium", "High", "Critical"];
 const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
@@ -40,9 +40,9 @@ const noFilters = { bloodType: "", hospital: "", urgency: "", status: "" };
 
 const reqStatus = (r) => r.status || "Pending";
 
-// Badge colours for this page: green = approved / low, amber = pending / medium,
+// Badge colours for this page: green = approved / fulfilled / low, amber = pending / medium,
 // orange = high, red = critical / rejected.
-const STATUS_TONE  = { Pending: "warning", Approved: "success", Rejected: "error", Fulfilled: "info", Cancelled: "neutral" };
+const STATUS_TONE  = { Pending: "warning", Approved: "success", Rejected: "error", Fulfilled: "success", Cancelled: "neutral" };
 const URGENCY_TONE = { Low: "success", Medium: "warning", High: "warning", Critical: "error" };
 // The theme has no orange tone, so High gets its own colours on top of the amber one.
 const highUrgencySx = (t) => {
@@ -62,8 +62,8 @@ const UrgencyBadge = ({ urgency, size }) => (
 const BloodChip = ({ type }) => (
     <Box component="span" sx={{
         display: "inline-flex", alignItems: "center", gap: 0.4, px: 1, height: 24, borderRadius: 1.5,
-        bgcolor: "rgba(185,28,44,0.08)", color: C.primary, fontWeight: 800, fontSize: "0.78rem",
-        border: "1px solid rgba(185,28,44,0.18)",
+        bgcolor: "rgba(201,29,50,0.08)", color: C.primary, fontWeight: 800, fontSize: "0.78rem",
+        border: "1px solid rgba(201,29,50,0.18)",
     }}>
         <WaterDrop sx={{ fontSize: 13 }} />{type || "—"}
     </Box>
@@ -74,7 +74,7 @@ const PatientAvatar = ({ req, size = 38, onOpenPhoto }) => (
         onClick={() => req.photo && onOpenPhoto?.({ url: uploadUrl(req?.photo), name: req.patientName })}
         sx={{
             width: size, height: size, flexShrink: 0, fontSize: size * 0.4, fontWeight: 700,
-            bgcolor: "rgba(185,28,44,0.1)", color: C.primary,
+            bgcolor: "rgba(201,29,50,0.1)", color: C.primary,
             cursor: req.photo ? "pointer" : "default",
         }}>
         {req.patientName?.charAt(0)?.toUpperCase()}
@@ -322,7 +322,7 @@ const ManageRequests = () => {
                         ) : (
                             <>
                                 {action("Approve request", `Approve request for ${who}`, <CheckCircle fontSize="small" />, "#16a34a", () => handleSetStatus(req._id, "Approved"))}
-                                {action("Reject request", `Reject request for ${who}`, <Cancel fontSize="small" />, "#dc2626", () => handleSetStatus(req._id, "Rejected"))}
+                                {action("Reject request", `Reject request for ${who}`, <Cancel fontSize="small" />, "#DC2626", () => handleSetStatus(req._id, "Rejected"))}
                             </>
                         )}
                         <Box aria-hidden="true" sx={{ width: "1px", height: 20, bgcolor: "divider", mx: 0.5 }} />
@@ -571,7 +571,7 @@ const ManageRequests = () => {
                 </DialogTitle>
                 <DialogContent sx={{ p: 0 }}>
                     <Box component="img" src={viewPhoto?.url} alt={viewPhoto?.name}
-                        sx={{ width: "100%", maxHeight: 480, objectFit: "contain", display: "block", bgcolor: isDark ? "#111" : C.surface }} />
+                        sx={{ width: "100%", maxHeight: 480, objectFit: "contain", display: "block", bgcolor: isDark ? "#17263D" : C.surface }} />
                 </DialogContent>
             </Dialog>
 
@@ -620,7 +620,7 @@ const ManageRequests = () => {
                                 ].map((row, i, arr) => (
                                     <Box key={row.label} sx={{
                                         display: "flex", alignItems: "flex-start", gap: 1.5, px: 2, py: 1.4,
-                                        bgcolor: i % 2 ? (isDark ? "#0d0d0d" : C.surface) : "background.paper",
+                                        bgcolor: i % 2 ? (isDark ? "#0B1220" : C.surface) : "background.paper",
                                         borderBottom: i < arr.length - 1 ? 1 : 0, borderColor: "divider",
                                     }}>
                                         <Box mt={0.3} flexShrink={0} sx={{ color: C.primary, display: "flex", "& svg": { fontSize: 18 } }}>{row.icon}</Box>
@@ -666,7 +666,7 @@ const ManageRequests = () => {
             <Dialog open={!!confirmDelete} onClose={() => !deleting && setConfirmDelete(null)} maxWidth="xs" fullWidth>
                 <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1.5, fontWeight: 800 }}>
                     <Box sx={{ width: 40, height: 40, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
-                        bgcolor: "rgba(185,28,44,0.1)", color: C.primary }}>
+                        bgcolor: "rgba(201,29,50,0.1)", color: C.primary }}>
                         <Delete />
                     </Box>
                     Delete this request?
@@ -709,7 +709,7 @@ const ManageRequests = () => {
                                 </Tooltip>
                             }>
                             <Avatar src={photoPreview || undefined}
-                                sx={{ width: 96, height: 96, bgcolor: "rgba(185,28,44,0.1)", color: C.primary, fontSize: "2rem", fontWeight: 700, cursor: "pointer" }}
+                                sx={{ width: 96, height: 96, bgcolor: "rgba(201,29,50,0.1)", color: C.primary, fontSize: "2rem", fontWeight: 700, cursor: "pointer" }}
                                 onClick={() => fileInputRef.current?.click()}>
                                 {!photoPreview && formData.patientName?.charAt(0)?.toUpperCase()}
                             </Avatar>

@@ -120,8 +120,8 @@ export default function BloodSupplySection() {
     <Box component="section" id="compatibility" aria-labelledby="supply-title" sx={{
       pt: { xs: 5, md: 7 }, pb: { xs: 7, md: 9 }, scrollMarginTop: { xs: 64, md: 68 },
       background: (t) => (t.palette.mode === 'dark'
-        ? 'linear-gradient(180deg, #0a0a0a 0%, #140c0d 100%)'
-        : 'linear-gradient(180deg, #FFFFFF 0%, #FFF5F6 100%)'),
+        ? 'linear-gradient(180deg, #0B1220 0%, #0F2038 100%)'
+        : 'linear-gradient(180deg, #FFFFFF 0%, #FFF1F2 100%)'),
     }}>
       <Container maxWidth="lg">
         <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, alignItems: { md: 'flex-end' }, justifyContent: 'space-between', gap: 2, mb: { xs: 3, md: 4 } }}>

@@ -11,7 +11,7 @@ import { PROVINCES } from '@/lib/places';
 import { BLOOD_COLORS, BLOOD_TYPES, TYPE_FILTERS, TYPE_META, formatKm, isOpen247 } from './map-utils';
 
 const PROVINCE_NAMES = PROVINCES.map((p) => p.name);
-const RED = '#b71c1c';
+const RED = '#A91529';
 
 const fieldSx = { '& .MuiOutlinedInput-root': { borderRadius: '12px', bgcolor: 'background.default' } };
 
@@ -31,10 +31,10 @@ const PlaceCard = memo(function PlaceCard({ item, isHosp, isSelected, isDark, on
       aria-pressed={isSelected}
       sx={{
         display: 'flex', width: '100%', alignItems: 'flex-start', gap: 1.5, p: 1.25, mb: 1, textAlign: 'left', borderRadius: '16px',
-        border: '1.5px solid', borderColor: isSelected ? '#e53935' : 'transparent',
-        bgcolor: isSelected ? (isDark ? 'rgba(229,57,53,0.14)' : '#fdecec') : 'transparent',
+        border: '1.5px solid', borderColor: isSelected ? '#C91D32' : 'transparent',
+        bgcolor: isSelected ? (isDark ? 'rgba(229,57,53,0.14)' : '#FFF1F2') : 'transparent',
         transition: 'background-color .15s, border-color .15s',
-        '&:hover': { bgcolor: isSelected ? undefined : (isDark ? 'rgba(255,255,255,0.05)' : '#faf5f5') },
+        '&:hover': { bgcolor: isSelected ? undefined : (isDark ? 'rgba(255,255,255,0.05)' : '#F8FAFC') },
       }}
     >
       <Avatar variant="rounded" src={isHosp ? item.image || undefined : undefined} alt="" imgProps={{ loading: 'lazy', referrerPolicy: 'no-referrer' }}
@@ -57,14 +57,14 @@ const PlaceCard = memo(function PlaceCard({ item, isHosp, isSelected, isDark, on
             <>
               <Chip label={item.type} size="small" sx={{ height: 20, fontSize: '0.68rem', fontWeight: 700, bgcolor: isDark ? `${meta.color}2e` : meta.tint, color: meta.color }} />
               {isOpen247(item) && (
-                <Typography sx={{ fontSize: '0.72rem', fontWeight: 700, color: '#2e7d32', display: 'flex', alignItems: 'center', gap: 0.4 }}>
+                <Typography sx={{ fontSize: '0.72rem', fontWeight: 700, color: '#16A34A', display: 'flex', alignItems: 'center', gap: 0.4 }}>
                   <FiberManualRecord sx={{ fontSize: 9 }} /> Open 24/7
                 </Typography>
               )}
               {item.emergency && !isOpen247(item) && <Typography sx={{ fontSize: '0.72rem', fontWeight: 600, color: 'text.secondary' }}>Emergency care</Typography>}
             </>
           ) : (
-            <Typography sx={{ fontSize: '0.72rem', fontWeight: 700, color: item.available ? '#2e7d32' : 'text.disabled', display: 'flex', alignItems: 'center', gap: 0.4 }}>
+            <Typography sx={{ fontSize: '0.72rem', fontWeight: 700, color: item.available ? '#16A34A' : 'text.disabled', display: 'flex', alignItems: 'center', gap: 0.4 }}>
               <FiberManualRecord sx={{ fontSize: 9 }} /> {item.available ? 'Available' : 'Unavailable'}
             </Typography>
           )}
@@ -90,14 +90,14 @@ export default function PlaceListPanel({
   const chip = (active, color = 'error') => ({ color: active ? color : 'default', variant: active ? 'filled' : 'outlined' });
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%', bgcolor: 'background.paper', border: '1px solid', borderColor: isDark ? '#262626' : '#f0e4e4', borderRadius: '20px', overflow: 'hidden', boxShadow: isDark ? 'none' : '0 6px 24px rgba(120,20,20,0.06)' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%', bgcolor: 'background.paper', border: '1px solid', borderColor: isDark ? '#334155' : '#E2E8F0', borderRadius: '20px', overflow: 'hidden', boxShadow: isDark ? 'none' : '0 6px 24px rgba(16,24,40,0.06)' }}>
       <Box sx={{ p: 2, pb: 1.5 }}>
         {/* Hospitals | Donors */}
-        <Box role="tablist" aria-label="What to look for" sx={{ display: 'flex', p: 0.5, borderRadius: '14px', bgcolor: isDark ? '#1c1c1c' : '#f6efef', mb: 1.75 }}>
+        <Box role="tablist" aria-label="What to look for" sx={{ display: 'flex', p: 0.5, borderRadius: '14px', bgcolor: isDark ? '#1C2E49' : '#F8FAFC', mb: 1.75 }}>
           {[['Hospitals', <LocalHospital key="h" sx={{ fontSize: 18 }} />], ['Donors', <PersonSearch key="d" sx={{ fontSize: 18 }} />]].map(([label, icon], i) => (
             <ButtonBase key={label} role="tab" aria-selected={tab === i} onClick={() => onTab(i)} sx={{
               flex: 1, gap: 0.75, py: 1, borderRadius: '11px', fontWeight: 700, fontSize: '0.88rem', transition: 'all .15s',
-              color: tab === i ? '#fff' : 'text.secondary', bgcolor: tab === i ? '#c62828' : 'transparent', boxShadow: tab === i ? '0 4px 12px rgba(198,40,40,0.35)' : 'none',
+              color: tab === i ? '#fff' : 'text.secondary', bgcolor: tab === i ? '#C91D32' : 'transparent', boxShadow: tab === i ? '0 4px 12px rgba(201,29,50,0.35)' : 'none',
             }}>{icon}{label}</ButtonBase>
           ))}
         </Box>
@@ -117,13 +117,13 @@ export default function PlaceListPanel({
                   input: {
                     ...params.InputProps,
                     startAdornment: <InputAdornment position="start"><SearchIcon sx={{ fontSize: 19 }} /></InputAdornment>,
-                    endAdornment: <>{searching && <CircularProgress color="error" size={16} />}{params.InputProps.endAdornment}</>,
+                    endAdornment: <>{searching && <CircularProgress color="primary" size={16} />}{params.InputProps.endAdornment}</>,
                   },
                 }}
               />
             )}
           />
-          <IconButton type="submit" aria-label="Search" sx={{ width: 42, height: 40, borderRadius: '12px', flexShrink: 0, bgcolor: '#c62828', color: '#fff', '&:hover': { bgcolor: '#8e1111' } }}>
+          <IconButton type="submit" aria-label="Search" sx={{ width: 42, height: 40, borderRadius: '12px', flexShrink: 0, bgcolor: '#C91D32', color: '#fff', '&:hover': { bgcolor: '#A91529' } }}>
             <SearchIcon fontSize="small" />
           </IconButton>
         </Box>
@@ -140,7 +140,7 @@ export default function PlaceListPanel({
                 <Chip key={bt} label={bt} size="small" clickable onClick={() => onBloodFilter(bloodFilter === bt ? '' : bt)} {...chip(bloodFilter === bt)} sx={{ fontWeight: 700 }} />
               ))}
               <Chip label="Available only" size="small" clickable onClick={() => onAvailableOnly(!availableOnly)}
-                icon={<FiberManualRecord sx={{ fontSize: '10px !important', color: availableOnly ? '#fff !important' : '#4caf50 !important' }} />}
+                icon={<FiberManualRecord sx={{ fontSize: '10px !important', color: availableOnly ? '#fff !important' : '#16A34A !important' }} />}
                 {...chip(availableOnly, 'success')} sx={{ fontWeight: 600 }} />
             </>
           )}
@@ -176,8 +176,8 @@ export default function PlaceListPanel({
       </Box>
 
       <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', px: 1.25, pb: 1,
-        '&::-webkit-scrollbar': { width: 5 }, '&::-webkit-scrollbar-thumb': { bgcolor: isDark ? '#2a2a2a' : '#e0d6d6', borderRadius: 3 } }}>
-        {loading && <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress color="error" size={32} /></Box>}
+        '&::-webkit-scrollbar': { width: 5 }, '&::-webkit-scrollbar-thumb': { bgcolor: isDark ? '#334155' : '#CBD5E1', borderRadius: 3 } }}>
+        {loading && <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress color="primary" size={32} /></Box>}
 
         {failed && (
           <Alert severity="warning" sx={{ mt: 1, fontSize: '0.8rem', borderRadius: 3 }}

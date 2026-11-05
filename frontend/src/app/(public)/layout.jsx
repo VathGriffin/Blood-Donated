@@ -1,5 +1,5 @@
 'use client';
-import Header, { URGENT_STRIP_HEIGHT } from '@/components/layout/Header';
+import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import ChatBotWrapper from '@/components/chat/ChatBotWrapper';
 import CookieConsent from '@/components/layout/CookieConsent';
@@ -11,13 +11,13 @@ export default function PublicLayout({ children }) {
 
   return (
     <Box sx={{
-      bgcolor: isDark ? '#121212' : '#f8f8f8',
+      bgcolor: isDark ? '#0B1220' : '#F6F8FC',
       color: 'text.primary',
       minHeight: '100vh',
     }}>
       <Header />
-      {/* Spacer: urgent strip + AppBar so the two fixed bars never overlap content */}
-      <Box sx={{ height: { xs: 64 + URGENT_STRIP_HEIGHT, md: 68 + URGENT_STRIP_HEIGHT } }} />
+      {/* Spacer the height of the fixed header, so it never covers the page */}
+      <Box sx={{ height: { xs: 64, md: 68 } }} />
       <Box component="main" sx={{ minHeight: 'calc(100vh - 200px)' }}>
         {children}
       </Box>

@@ -12,6 +12,10 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      # Dates like "today" (appointment days, reminders, the hospital feed) follow the
+      # server clock — run it on Cambodia time rather than Render's default UTC.
+      - key: TZ
+        value: Asia/Phnom_Penh
       - key: MONGO_URI            # MongoDB Atlas connection string
         sync: false
       - key: JWT_SECRET

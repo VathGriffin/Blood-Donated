@@ -107,7 +107,6 @@ export default function DashboardShell({ role, children }) {
           role={role}
           profile={session.profile}
           hospitalName={role === ROLES.HOSPITAL_STAFF ? session.account?.hospitalName : null}
-          notifications={notifications}
           onMenuClick={() => setMobileOpen(true)}
           onLogout={session.logout}
         />

@@ -83,6 +83,36 @@ describe('donor CRUD', () => {
     expect(res.body.bloodType).toBe('O+');
   });
 
+  test('lookup returns the donor\'s own registration date and donation history for their profile', async () => {
+    const created = await request(app).post('/api/donors').send({ ...donorBody, lastDonation: '2026-01-15' });
+    await Donor.findByIdAndUpdate(created.body._id, {
+      donationCount: 1,
+      $push: { donationHistory: { date: new Date('2026-03-01'), location: 'Calmette Hospital', units: 1 } },
+    });
+    const token = signDonor({ id: created.body._id, email: donorBody.email, fullName: donorBody.fullName });
+    const res = await request(app).get(`/api/donors/lookup?email=${donorBody.email}`).set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(200);
+    expect(new Date(res.body.createdAt).getTime()).not.toBeNaN();
+    expect(res.body.lastDonation).toMatch(/^2026-01-15/);
+    expect(res.body.donationCount).toBe(1);
+    expect(res.body.donationHistory).toHaveLength(1);
+    expect(res.body.donationHistory[0].location).toBe('Calmette Hospital');
+    expect(res.body.reportedLastDonation).toMatch(/^2026-01-15/);
+    expect(res.body.email).toBeUndefined(); // still only the fields the profile needs
+  });
+
+  test('public registration ignores fields only staff may set', async () => {
+    const res = await request(app).post('/api/donors').send({
+      ...donorBody, donationCount: 999, photo: '/uploads/x.jpg',
+      donationHistory: [{ date: '2026-01-01', location: 'Fake', units: 5 }],
+    });
+    expect(res.status).toBe(201);
+    const saved = await Donor.findById(res.body._id).lean();
+    expect(saved.donationCount).toBe(0);
+    expect(saved.donationHistory).toHaveLength(0);
+    expect(saved.photo).toBeNull();
+  });
+
   test('lookup for unknown email returns found:false', async () => {
     const token = signDonor({ id: '64b000000000000000000002', email: 'nobody@test.com', fullName: 'Nobody' });
     const res = await request(app).get('/api/donors/lookup?email=nobody@test.com').set('Authorization', `Bearer ${token}`);

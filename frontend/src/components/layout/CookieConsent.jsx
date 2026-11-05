@@ -34,8 +34,8 @@ export default function CookieConsent() {
         right: { xs: 0, sm: "auto" },
         zIndex: 9999,
         maxWidth: { sm: 420 },
-        bgcolor: isDark ? "#111111" : "#ffffff",
-        border: `1px solid ${isDark ? "#2a2a2a" : "#e5e5e5"}`,
+        bgcolor: isDark ? "#17263D" : "#ffffff",
+        border: `1px solid ${isDark ? "#334155" : "#E2E8F0"}`,
         borderRadius: { xs: "16px 16px 0 0", sm: "16px" },
         boxShadow: isDark
           ? "0 -4px 40px rgba(0,0,0,0.6)"
@@ -46,18 +46,18 @@ export default function CookieConsent() {
         <Box display="flex" gap={1.5} alignItems="flex-start">
           <Box sx={{
             width: 36, height: 36, borderRadius: "10px", flexShrink: 0,
-            bgcolor: isDark ? "rgba(220,38,38,0.12)" : "#fff1f2",
+            bgcolor: isDark ? "rgba(201,29,50,0.12)" : "#fff1f2",
             display: "flex", alignItems: "center", justifyContent: "center",
           }}>
-            <CookieIcon sx={{ fontSize: 18, color: "#dc2626" }} />
+            <CookieIcon sx={{ fontSize: 18, color: "#C91D32" }} />
           </Box>
           <Box>
-            <Typography fontWeight={700} fontSize="0.9rem" sx={{ color: isDark ? "#f5f5f5" : "#111", mb: 0.5 }}>
+            <Typography fontWeight={700} fontSize="0.9rem" sx={{ color: isDark ? "#F8FAFC" : "#172B4D", mb: 0.5 }}>
               We use cookies
             </Typography>
             <Typography variant="caption" color="text.secondary" lineHeight={1.7}>
               We use essential cookies for authentication and security. No tracking or advertising cookies.{" "}
-              <Link href="/privacy" style={{ color: "#dc2626", fontWeight: 600, textDecoration: "none" }}>
+              <Link href="/privacy" style={{ color: "#C91D32", fontWeight: 600, textDecoration: "none" }}>
                 Privacy Policy
               </Link>
             </Typography>
@@ -67,19 +67,19 @@ export default function CookieConsent() {
         <Box display="flex" gap={1}>
           <Button fullWidth variant="contained" size="small" onClick={accept}
             sx={{
-              bgcolor: "#dc2626", fontWeight: 700, borderRadius: "8px",
+              bgcolor: "#C91D32", fontWeight: 700, borderRadius: "8px",
               textTransform: "none", fontSize: "0.82rem",
-              "&:hover": { bgcolor: "#b91c1c" },
+              "&:hover": { bgcolor: "#A91529" },
             }}>
             Accept
           </Button>
           <Button fullWidth variant="outlined" size="small" onClick={decline}
             sx={{
-              borderColor: isDark ? "#2a2a2a" : "#e0e0e0",
-              color: isDark ? "#aaa" : "#666",
+              borderColor: isDark ? "#334155" : "#E2E8F0",
+              color: isDark ? "#94A3B8" : "#64748B",
               fontWeight: 600, borderRadius: "8px",
               textTransform: "none", fontSize: "0.82rem",
-              "&:hover": { borderColor: "#dc2626", color: "#dc2626" },
+              "&:hover": { borderColor: "#C91D32", color: "#C91D32" },
             }}>
             Decline
           </Button>

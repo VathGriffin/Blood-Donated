@@ -62,7 +62,7 @@ function BaseLayerToggle({ value, onChange }) {
     <Box role="group" aria-label="Map style" sx={{ position: 'absolute', top: 12, left: 12, zIndex: 1000, display: 'flex', p: '3px', borderRadius: '12px', bgcolor: 'background.paper', boxShadow: '0 2px 10px rgba(0,0,0,0.22)' }}>
       {[['map', 'Map'], ['satellite', 'Satellite']].map(([key, label]) => (
         <ButtonBase key={key} onClick={() => onChange(key)} aria-pressed={value === key}
-          sx={{ px: 2, py: 0.85, borderRadius: '9px', fontWeight: 700, fontSize: '0.84rem', color: value === key ? '#fff' : 'text.primary', bgcolor: value === key ? '#c62828' : 'transparent' }}>
+          sx={{ px: 2, py: 0.85, borderRadius: '9px', fontWeight: 700, fontSize: '0.84rem', color: value === key ? '#fff' : 'text.primary', bgcolor: value === key ? '#C91D32' : 'transparent' }}>
           {label}
         </ButtonBase>
       ))}
@@ -73,8 +73,8 @@ function BaseLayerToggle({ value, onChange }) {
 function Legend({ isHosp }) {
   const dot = (bg, ring) => <Box aria-hidden="true" sx={{ width: 16, height: 16, borderRadius: '50%', bgcolor: bg, border: `2px solid ${ring || '#fff'}`, boxShadow: '0 0 0 1px rgba(0,0,0,0.18)', flexShrink: 0 }} />;
   const entries = isHosp
-    ? [['Your Location', '#1565c0'], ['Hospital', TYPE_META.Hospital.color], ['Clinic', TYPE_META.Clinic.color], ['Blood Center', TYPE_META['Blood Center'].color]]
-    : [['Your Location', '#1565c0'], ['Donor', '#c62828']];
+    ? [['Your Location', '#2563EB'], ['Hospital', TYPE_META.Hospital.color], ['Clinic', TYPE_META.Clinic.color], ['Blood Center', TYPE_META['Blood Center'].color]]
+    : [['Your Location', '#2563EB'], ['Donor', '#C91D32']];
   return (
     <Box sx={{ position: 'absolute', bottom: 28, left: '50%', transform: 'translateX(-50%)', zIndex: 1000, maxWidth: 'calc(100% - 24px)', display: 'flex', flexWrap: 'wrap', justifyContent: 'center', columnGap: 2, rowGap: 0.5, px: 2, py: 1, borderRadius: '14px', bgcolor: 'background.paper', boxShadow: '0 2px 10px rgba(0,0,0,0.22)' }}>
       {entries.map(([label, color]) => (
@@ -398,7 +398,7 @@ export default function Maps() {
         {/* Map */}
         <Box ref={mapBoxRef} sx={{
           gridArea: 'map', position: 'relative', height: { xs: 400, md: '100%' }, borderRadius: '20px', overflow: 'hidden', isolation: 'isolate', scrollMarginTop: '76px',
-          border: '1px solid', borderColor: isDark ? '#262626' : '#f0e4e4', boxShadow: isDark ? 'none' : '0 6px 24px rgba(120,20,20,0.06)',
+          border: '1px solid', borderColor: isDark ? '#334155' : '#E2E8F0', boxShadow: isDark ? 'none' : '0 6px 24px rgba(16,24,40,0.06)',
           // Dark theme: invert the light street tiles (satellite imagery, markers and popups are unaffected).
           '& .leaflet-tile-pane': { filter: isDark && baseLayer === 'map' ? 'invert(100%) hue-rotate(180deg) brightness(92%) contrast(88%)' : 'none' },
           '& .leaflet-control-scale-line': { bgcolor: 'rgba(255,255,255,0.85)' },
@@ -440,8 +440,8 @@ export default function Maps() {
               variant="contained" disableElevation startIcon={<SearchIcon />} onClick={() => setAreaCenter(mapView.pos)}
               sx={{
                 position: 'absolute', top: { xs: 62, sm: 14 }, left: '50%', transform: 'translateX(-50%)', zIndex: 1000,
-                textTransform: 'none', fontWeight: 700, borderRadius: 5, px: 2.5, bgcolor: '#b71c1c',
-                boxShadow: '0 4px 14px rgba(0,0,0,0.3)', '&:hover': { bgcolor: '#7f0000' },
+                textTransform: 'none', fontWeight: 700, borderRadius: 5, px: 2.5, bgcolor: '#A91529',
+                boxShadow: '0 4px 14px rgba(0,0,0,0.3)', '&:hover': { bgcolor: '#A91529' },
               }}
             >
               Search this area
@@ -457,7 +457,7 @@ export default function Maps() {
             <PlaceDetails key={selectedItem.id} item={selectedItem} isHosp={isHosp} onClose={() => setSelected(null)} />
           ) : (
             <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1, p: 3, textAlign: 'center', color: 'text.secondary', bgcolor: 'background.paper', border: '1px dashed', borderColor: 'divider', borderRadius: '20px' }}>
-              <TouchApp sx={{ fontSize: 40, color: '#c62828' }} />
+              <TouchApp sx={{ fontSize: 40, color: '#C91D32' }} />
               <Typography sx={{ fontWeight: 700 }}>Pick a place</Typography>
               <Typography sx={{ fontSize: '0.85rem' }}>Choose a pin on the map or a card in the list to see its address, phone and directions.</Typography>
             </Box>

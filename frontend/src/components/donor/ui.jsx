@@ -9,10 +9,11 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import WaterDropIcon from '@mui/icons-material/WaterDrop';
 
 // Status → theme tone (theme.custom.tones) and label. Only states the API can return.
+// Green = approved/completed, orange = pending, red = rejected, gray = cancelled.
 export const REQUEST_STATUS = {
   Pending:   { tone: 'warning', label: 'Pending' },
   Approved:  { tone: 'success', label: 'Approved' },
-  Fulfilled: { tone: 'info',    label: 'Fulfilled' },
+  Fulfilled: { tone: 'success', label: 'Fulfilled' },
   Rejected:  { tone: 'error',   label: 'Rejected' },
   Cancelled: { tone: 'neutral', label: 'Cancelled' },
 };
@@ -21,7 +22,7 @@ export const REQUEST_FILTERS = ['All', 'Pending', 'Approved', 'Fulfilled', 'Reje
 export const APPT_STATUS = {
   Pending:   { tone: 'warning', label: 'Pending' },
   Confirmed: { tone: 'success', label: 'Confirmed' },
-  CheckedIn: { tone: 'info',    label: 'Checked in' },
+  CheckedIn: { tone: 'success', label: 'Checked in' },
   Cancelled: { tone: 'neutral', label: 'Cancelled' },
 };
 export const APPT_FILTERS = ['All', 'Pending', 'Confirmed', 'CheckedIn', 'Cancelled'];
@@ -81,12 +82,12 @@ export function BloodBadge({ type, width = 64, height = 80 }) {
       <Box aria-hidden="true" sx={{
         position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: 14, height: 10,
         borderRadius: '4px 4px 0 0', bgcolor: (t) => t.custom.tones.primary.bg,
-        border: '1px solid', borderBottom: 0, borderColor: (t) => (t.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : '#F3C1C7'),
+        border: '1px solid', borderBottom: 0, borderColor: (t) => (t.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : '#F5C6CC'),
       }} />
       <Box sx={{
         width, height, borderRadius: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 0.5,
         bgcolor: (t) => t.custom.tones.primary.bg, color: 'primary.main',
-        border: '1px solid', borderColor: (t) => (t.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : '#F3C1C7'),
+        border: '1px solid', borderColor: (t) => (t.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : '#F5C6CC'),
       }}>
         <WaterDropIcon aria-hidden="true" sx={{ fontSize: 20 }} />
         <Typography component="span" sx={{ fontWeight: 800, fontSize: '1.3rem', lineHeight: 1, letterSpacing: '-0.02em' }}>{type || '—'}</Typography>

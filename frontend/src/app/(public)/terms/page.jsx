@@ -8,10 +8,10 @@ function Section({ title, children, isDark, border, card }) {
   return (
     <Paper elevation={0} sx={{ p: { xs: 3, md: 4 }, borderRadius: "20px", mb: 3, border: `1px solid ${border}`, bgcolor: card }}>
       <Typography fontWeight={800} fontSize="1.05rem" letterSpacing="-0.01em" mb={1.5}
-        sx={{ color: isDark ? "#f5f5f5" : "#111" }}>
+        sx={{ color: isDark ? "#F8FAFC" : "#172B4D" }}>
         {title}
       </Typography>
-      <Divider sx={{ mb: 2.5, borderColor: isDark ? "#1f1f1f" : "#f0f0f0" }} />
+      <Divider sx={{ mb: 2.5, borderColor: isDark ? "#334155" : "#E2E8F0" }} />
       {children}
     </Paper>
   );
@@ -21,8 +21,8 @@ function Bullet({ children, warn }) {
   return (
     <Box display="flex" gap={1.5} mb={1.2}>
       {warn
-        ? <WarningAmberIcon sx={{ fontSize: 16, color: "#d97706", mt: 0.3, flexShrink: 0 }} />
-        : <CheckCircleIcon  sx={{ fontSize: 16, color: "#dc2626", mt: 0.3, flexShrink: 0 }} />}
+        ? <WarningAmberIcon sx={{ fontSize: 16, color: "#F59E0B", mt: 0.3, flexShrink: 0 }} />
+        : <CheckCircleIcon  sx={{ fontSize: 16, color: "#C91D32", mt: 0.3, flexShrink: 0 }} />}
       <Typography variant="body2" color="text.secondary" lineHeight={1.8}>{children}</Typography>
     </Box>
   );
@@ -31,9 +31,9 @@ function Bullet({ children, warn }) {
 export default function Terms() {
   const theme  = useTheme();
   const isDark = theme.palette.mode === "dark";
-  const bg     = isDark ? "#0a0a0a" : "#f8f8f8";
-  const card   = isDark ? "#111111" : "#ffffff";
-  const border = isDark ? "#1f1f1f" : "#e5e5e5";
+  const bg     = isDark ? "#0B1220" : "#F6F8FC";
+  const card   = isDark ? "#17263D" : "#ffffff";
+  const border = isDark ? "#334155" : "#E2E8F0";
 
   return (
     <Box sx={{ bgcolor: bg, minHeight: "100vh", pt: { xs: 10, md: 12 }, pb: 10 }}>
@@ -43,21 +43,21 @@ export default function Terms() {
         <Box textAlign="center" mb={6}>
           <Box sx={{
             width: 64, height: 64, borderRadius: "18px", mx: "auto", mb: 3,
-            background: "linear-gradient(135deg, #dc2626 0%, #991b1b 100%)",
+            background: "linear-gradient(135deg, #E63946 0%, #C91D32 100%)",
             display: "flex", alignItems: "center", justifyContent: "center",
-            boxShadow: "0 8px 24px rgba(220,38,38,0.35)",
+            boxShadow: "0 8px 24px rgba(201,29,50,0.35)",
           }}>
             <GavelIcon sx={{ color: "white", fontSize: 30 }} />
           </Box>
           <Typography fontWeight={900} fontSize={{ xs: "2rem", md: "2.6rem" }}
-            letterSpacing="-0.03em" sx={{ color: isDark ? "#f5f5f5" : "#111", mb: 1.5 }}>
+            letterSpacing="-0.03em" sx={{ color: isDark ? "#F8FAFC" : "#172B4D", mb: 1.5 }}>
             Terms of Service
           </Typography>
           <Typography color="text.secondary" lineHeight={1.7} maxWidth={520} mx="auto">
             By using BloodLife you agree to these terms. Please read them carefully.
           </Typography>
           <Chip label="Effective: August 2026" size="small" sx={{ mt: 2,
-            bgcolor: isDark ? "rgba(220,38,38,0.12)" : "#fff1f2", color: "#dc2626", fontWeight: 600 }} />
+            bgcolor: isDark ? "rgba(201,29,50,0.12)" : "#fff1f2", color: "#C91D32", fontWeight: 600 }} />
         </Box>
 
         <Section title="1. Acceptance of Terms" isDark={isDark} border={border} card={card}>
@@ -96,7 +96,7 @@ export default function Terms() {
             bgcolor: isDark ? "rgba(217,119,6,0.1)" : "#fffbeb",
             border: `1px solid ${isDark ? "rgba(217,119,6,0.25)" : "#fde68a"}`,
           }}>
-            <Typography variant="body2" fontWeight={700} sx={{ color: "#d97706" }}>
+            <Typography variant="body2" fontWeight={700} sx={{ color: "#B45309" }}>
               BloodLife is not a medical provider.
             </Typography>
           </Box>
@@ -147,13 +147,13 @@ export default function Terms() {
 
         <Paper elevation={0} sx={{
           p: 3, borderRadius: "16px", textAlign: "center",
-          border: `1px solid ${isDark ? "rgba(220,38,38,0.2)" : "#fecaca"}`,
-          bgcolor: isDark ? "rgba(220,38,38,0.06)" : "#fff0f0",
+          border: `1px solid ${isDark ? "rgba(201,29,50,0.2)" : "#fecaca"}`,
+          bgcolor: isDark ? "rgba(201,29,50,0.06)" : "#FFF1F2",
         }}>
           <Typography variant="body2" color="text.secondary" lineHeight={1.8}>
             Questions about these terms? Contact us at{" "}
             <Box component="a" href="mailto:support@bloodlife.kh"
-              sx={{ color: "#dc2626", textDecoration: "none", fontWeight: 700 }}>
+              sx={{ color: "#C91D32", textDecoration: "none", fontWeight: 700 }}>
               support@bloodlife.kh
             </Box>
           </Typography>

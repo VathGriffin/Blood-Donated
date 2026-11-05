@@ -38,7 +38,7 @@ export const sortAppointments = (list, today = todayKey()) => [...list].sort((a,
 // ── Time and reschedule helpers ─────────────────────────────────────────────────────────────
 
 // Slots are half an hour long and stored as "09:00 AM".
-export const SLOT_MINUTES = 30;
+const SLOT_MINUTES = 30;
 const to24 = (slot) => {
   const m = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i.exec(slot || '');
   if (!m) return null;

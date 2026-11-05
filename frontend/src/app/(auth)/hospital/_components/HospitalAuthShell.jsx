@@ -2,21 +2,24 @@
 import { Alert, Box, Paper, Typography } from '@mui/material';
 import { Favorite, CheckCircle, QrCodeScanner, Inventory2, EventAvailable } from '@mui/icons-material';
 
-const BLUE_GRADIENT = 'linear-gradient(135deg, #0d47a1 0%, #1565c0 100%)';
+// Same palette as the hospital dashboard: deep navy structure, medical-red actions.
+const NAVY_GRADIENT = 'linear-gradient(135deg, #102541 0%, #173B63 100%)';
+const RED_GRADIENT = 'linear-gradient(135deg, #E63946 0%, #C91D32 100%)';
+const RED = '#C91D32';
 
 // Shared by every hospital-portal auth page so they stay visually identical.
 export const fieldSx = { '& .MuiOutlinedInput-root': { borderRadius: 2.5 } };
 export const primaryButtonSx = {
     borderRadius: 2.5, fontWeight: 700, fontSize: '0.95rem', py: 1.4, textTransform: 'none',
-    background: BLUE_GRADIENT,
-    boxShadow: '0 4px 16px rgba(13,71,161,0.35)',
-    '&:hover': { background: 'linear-gradient(135deg, #0a3880 0%, #1257a8 100%)' },
-    '&.Mui-disabled': { background: BLUE_GRADIENT, color: 'rgba(255,255,255,0.9)', opacity: 0.5, boxShadow: 'none' },
+    background: RED_GRADIENT,
+    boxShadow: '0 6px 16px rgba(201,29,50,0.32)',
+    '&:hover': { background: 'linear-gradient(135deg, #C91D32 0%, #A91529 100%)' },
+    '&.Mui-disabled': { background: RED_GRADIENT, color: 'rgba(255,255,255,0.9)', opacity: 0.5, boxShadow: 'none' },
 };
 export const linkSx = {
-    color: '#1565c0', fontWeight: 600, fontSize: '0.82rem', textDecoration: 'none',
+    color: RED, fontWeight: 600, fontSize: '0.82rem', textDecoration: 'none',
     '&:hover': { textDecoration: 'underline' },
-    '&:focus-visible': { outline: '2px solid #1565c0', outlineOffset: 2, borderRadius: 0.5 },
+    '&:focus-visible': { outline: `2px solid ${RED}`, outlineOffset: 2, borderRadius: 0.5 },
 };
 
 export function ErrorAlert({ children }) {
@@ -24,7 +27,7 @@ export function ErrorAlert({ children }) {
 }
 
 // Outcome screen (email sent, link invalid, password changed): round icon, title, text, actions.
-const TONES = { info: ['#e3f2fd', '#1565c0'], error: ['#fdecea', '#c62828'], success: ['#e8f5e9', '#2e7d32'] };
+const TONES = { info: ['#EFF6FF', '#102541'], error: ['#FEE2E2', '#991B1B'], success: ['#DCFCE7', '#166534'] };
 export function ResultPanel({ tone = 'info', icon, title, role = 'status', children }) {
     const [bg, fg] = TONES[tone];
     return (
@@ -50,11 +53,11 @@ const capabilities = [
  */
 export default function HospitalAuthShell({ icon, title, subtitle, children, footer = 'Hospital staff only · accounts are created by BloodLife admins' }) {
     return (
-        <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f5f5f5' }}>
+        <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#F6F8FC' }}>
             <Box sx={{
                 display: { xs: 'none', md: 'flex' }, width: '45%', flexShrink: 0,
                 position: 'relative', flexDirection: 'column', justifyContent: 'space-between', p: 5,
-                background: 'linear-gradient(160deg, #0d1b2a 0%, #1b3a4b 60%, #1565c0 100%)',
+                background: 'linear-gradient(160deg, #102541 0%, #173B63 100%)',
             }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                     <Box sx={{
@@ -62,7 +65,7 @@ export default function HospitalAuthShell({ icon, title, subtitle, children, foo
                         backdropFilter: 'blur(6px)', border: '1.5px solid rgba(255,255,255,0.25)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}>
-                        <Favorite sx={{ color: '#ef5350', fontSize: 24 }} />
+                        <Favorite sx={{ color: '#E63946', fontSize: 24 }} />
                     </Box>
                     <Box>
                         <Typography fontWeight={800} fontSize="1.05rem" color="white" lineHeight={1.2}>BloodLife</Typography>
@@ -84,7 +87,7 @@ export default function HospitalAuthShell({ icon, title, subtitle, children, foo
                             <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                                 <Box sx={{
                                     width: 32, height: 32, borderRadius: 1.5, bgcolor: 'rgba(255,255,255,0.12)',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#bbdefb', flexShrink: 0,
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#F28B95', flexShrink: 0,
                                 }}>{c.icon}</Box>
                                 <Typography fontSize="0.875rem" color="rgba(255,255,255,0.85)" fontWeight={500}>{c.text}</Typography>
                                 <CheckCircle sx={{ fontSize: 15, color: 'rgba(255,255,255,0.35)', ml: 'auto', flexShrink: 0 }} />
@@ -100,8 +103,8 @@ export default function HospitalAuthShell({ icon, title, subtitle, children, foo
 
             <Box component="main" sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', p: { xs: 2, sm: 4 } }}>
                 <Box sx={{ width: '100%', maxWidth: 440 }}>
-                    <Paper elevation={0} sx={{ borderRadius: 4, overflow: 'hidden', border: '1px solid #ebebeb', bgcolor: '#fff' }}>
-                        <Box sx={{ background: BLUE_GRADIENT, borderBottom: '3px solid #e53935', px: { xs: 3, sm: 4 }, py: 3.5, display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Paper elevation={0} sx={{ borderRadius: 4, overflow: 'hidden', border: '1px solid #E2E8F0', bgcolor: '#fff' }}>
+                        <Box sx={{ background: NAVY_GRADIENT, borderBottom: `3px solid ${RED}`, px: { xs: 3, sm: 4 }, py: 3.5, display: 'flex', alignItems: 'center', gap: 2 }}>
                             <Box sx={{
                                 width: 48, height: 48, borderRadius: 2.5, bgcolor: 'rgba(255,255,255,0.15)', flexShrink: 0,
                                 border: '1.5px solid rgba(255,255,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center',

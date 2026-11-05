@@ -64,7 +64,7 @@ function BloodChip({ type }) {
         display: "inline-flex", alignItems: "center", justifyContent: "center", minWidth: 40, height: 26, px: 1,
         borderRadius: "8px", fontWeight: 800, fontSize: "0.78rem",
         bgcolor: t.custom.tones.primary.bg, color: t.custom.tones.primary.fg,
-        border: 1, borderColor: t.palette.mode === "dark" ? "transparent" : "#F3C1C7",
+        border: 1, borderColor: t.palette.mode === "dark" ? "transparent" : "#F5C6CC",
       })}
     >
       {type}

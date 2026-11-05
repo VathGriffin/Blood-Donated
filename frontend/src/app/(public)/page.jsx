@@ -3,8 +3,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from 'next/navigation';
-import { script } from '@/lib/fonts';
-import { Container, Box, Typography, Button, useTheme, Paper, InputBase, Autocomplete } from "@mui/material";
+import { navy } from '@/lib/design-tokens';
+import { Container, Box, Typography, Button, useTheme, Paper, InputBase, Autocomplete, alpha } from "@mui/material";
 import API_BASE from "@/lib/config";
 import { PROVINCES } from "@/lib/places";
 import HelpSection from "./_components/HelpSection";
@@ -26,20 +26,21 @@ import StarIcon from "@mui/icons-material/Star";
 import Diversity3Icon from "@mui/icons-material/Diversity3";
 import Inventory2Icon from "@mui/icons-material/Inventory2";
 import LocalHospitalOutlinedIcon from "@mui/icons-material/LocalHospitalOutlined";
+import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
 
 // A real donation photo (donor's arm on the chair, squeezing a ball).
 const HERO_PHOTO = "https://images.unsplash.com/photo-1536856136534-bb679c52a9aa?auto=format&fit=crop";
 
 const FALLBACK_PROFILES = [
-  { name: "Sophea Meas", role: "Regular Blood Donor (Demo)", initials: "SM", color: "#dc2626",
+  { name: "Sophea Meas", role: "Regular Blood Donor (Demo)", initials: "SM", color: "#C91D32",
     photo: "https://i.pravatar.cc/640?img=47", bloodType: "A+", donations: 3, badge: "Blood Donor", location: "Phnom Penh",
     quote: "I donate blood because it can give someone else a second chance at life.",
     bio: "A demo profile representing a typical blood donor on BloodLife AI. This donor regularly donates blood and supports local blood drives." },
-  { name: "Dara Keo", role: "Volunteer & Blood Drive Support (Demo)", initials: "DK", color: "#dc2626",
+  { name: "Dara Keo", role: "Volunteer & Blood Drive Support (Demo)", initials: "DK", color: "#C91D32",
     photo: "https://i.pravatar.cc/640?img=68", bloodType: "O-", donations: 5, badge: "Community Volunteer", location: "Kandal",
     quote: "I believe a stronger community can save more lives through awareness and action.",
     bio: "A demo profile representing a community volunteer who helps organize blood donation campaigns, raises awareness, and supports donors." },
-  { name: "Chan Bopha", role: "Hospital Representative (Demo)", initials: "CB", color: "#dc2626",
+  { name: "Chan Bopha", role: "Hospital Representative (Demo)", initials: "CB", color: "#C91D32",
     photo: "https://i.pravatar.cc/640?img=32", bloodType: "B+", donations: 2, badge: "Healthcare Partner", location: "Siem Reap",
     quote: "Our hospital relies on the support of donors and the community to save more lives.",
     bio: "A demo profile representing a partner hospital on BloodLife AI. Hospitals can request blood units, manage inventory, and connect with donors." },
@@ -76,11 +77,6 @@ const HOW = [
   { icon: <FavoriteIcon />,      title: "4. Save Lives",       desc: "Your donation helps patients in need." },
 ];
 
-const TRUST = [
-  { icon: <GroupsIcon />,       title: "Safe & Secure",    desc: "Your safety is our priority" },
-  { icon: <VerifiedUserIcon />, title: "Trusted Hospitals", desc: "Verified medical centers" },
-  { icon: <FavoriteIcon />,     title: "Real Impact",      desc: "Help save up to 3 lives" },
-];
 
 // Animated number that counts up once `active` turns true.
 function CountUp({ value, active }) {
@@ -100,6 +96,14 @@ function SectionHeading({ title, subtitle, light }) {
     </Box>
   );
 }
+
+// Organic left edge for the hero photo (desktop only), scaled to its box.
+const HERO_SHAPE = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath d='M30 0C6 22 0 42 9 58C22 78 52 90 92 100H100V0Z'/%3E%3C/svg%3E")`;
+const heroMask = (position) => {
+  const md = { WebkitMaskImage: HERO_SHAPE, maskImage: HERO_SHAPE, WebkitMaskSize: "100% 100%", maskSize: "100% 100%",
+    WebkitMaskRepeat: "no-repeat", maskRepeat: "no-repeat", WebkitMaskPosition: position, maskPosition: position };
+  return Object.fromEntries(Object.entries(md).map(([k, v]) => [k, { xs: "none", md: v }]));
+};
 
 const PROVINCE_NAMES = PROVINCES.map((p) => p.name);
 
@@ -139,7 +143,16 @@ export default function Home() {
     goToMap(city);
   };
 
-  const bg     = isDark ? "#0a0a0a" : "#ffffff";
+  const bg     = isDark ? "#0B1220" : "#ffffff";
+
+  // Hero benefits. "Growing Community" quotes the live donor count when it has loaded.
+  const benefits = [
+    { icon: <VerifiedUserIcon />,    title: "Safe & Secure",      desc: "Your safety is our priority" },
+    { icon: <LocalHospitalIcon />,   title: "Trusted Hospitals",  desc: "Verified medical centers" },
+    { icon: <GroupsIcon />,          title: "Growing Community",
+      desc: pub?.donors > 0 ? `Join ${pub.donors.toLocaleString()} registered donor${pub.donors !== 1 ? "s" : ""}` : "Join our donor network" },
+    { icon: <FavoriteIcon />,        title: "Real Impact",        desc: "Help save up to 3 lives" },
+  ];
 
   const statItems = [
     { icon: <PeopleIcon />,      value: pub?.donors,            label: "Registered Donors" },
@@ -158,79 +171,102 @@ export default function Home() {
     <Box sx={{ backgroundColor: bg }}>
 
       {/* ── Hero ───────────────────────────────────────────────────────── */}
-      <Box component="section" sx={{ position: "relative", overflow: "hidden", bgcolor: "background.paper" }}>
-        {/* Photo: fades into the page on its left edge (top edge on phones). The mask sits on
-            the wrapper and the image is flipped inside it, so the donor's hand and the ball
-            land on the visible right side and the fade covers the far side of the frame. */}
-        <Box
-          aria-hidden
-          sx={{
-            position: { xs: "relative", md: "absolute" }, top: 0, right: 0, bottom: 0, overflow: "hidden",
-            width: { xs: "100%", md: "64%" }, height: { xs: 260, md: "auto" },
-            WebkitMaskImage: { xs: "linear-gradient(180deg, transparent 0%, #000 40%)", md: "linear-gradient(90deg, transparent 0%, transparent 22%, #000 60%)" },
-            maskImage: { xs: "linear-gradient(180deg, transparent 0%, #000 40%)", md: "linear-gradient(90deg, transparent 0%, transparent 22%, #000 60%)" },
-          }}
-        >
-          {/* Loaded first (it is the largest thing on screen) and sized to the visitor's screen. */}
-          <Image
-            src={HERO_PHOTO}
-            alt=""
-            fill
-            priority
-            sizes="(min-width: 900px) 64vw, 100vw"
-            style={{ objectFit: "cover", objectPosition: "center 35%", transform: "scaleX(-1)" }}
-          />
-        </Box>
-        {/* Handwritten tagline on the faded part of the photo */}
-        <Box
-          aria-hidden
-          className={script.className}
-          sx={{
-            display: { xs: "none", md: "block" }, position: "absolute", top: 54, left: "56%", zIndex: 1,
-            transform: "rotate(-8deg)", fontSize: "3.1rem", lineHeight: 1.05, fontWeight: 700,
-            color: isDark ? "#f5f5f5" : "#1f2937", textShadow: isDark ? "0 2px 12px rgba(0,0,0,0.6)" : "0 1px 0 rgba(255,255,255,0.6)",
-          }}
-        >
-          Be a Hero<br />Give Blood<br />Give Hope
-          <FavoriteIcon sx={{ fontSize: 30, color: "primary.main", ml: 0.75, transform: "rotate(12deg)", verticalAlign: "top" }} />
+      <Box
+        component="section"
+        sx={{
+          position: "relative", overflow: "hidden",
+          background: isDark
+            ? "linear-gradient(180deg, #0B1220 0%, #0F2038 100%)"
+            : "linear-gradient(135deg, #FFFFFF 0%, #FFF1F2 100%)",
+          pb: { xs: 9, md: 12 },
+        }}
+      >
+        {/* Soft pink waves behind the copy — decoration only */}
+        <Box aria-hidden component="svg" viewBox="0 0 1440 520" preserveAspectRatio="none"
+          sx={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none", opacity: isDark ? 0.18 : 1 }}>
+          <path d="M0 360 C 220 300, 420 430, 700 380 S 1120 300, 1440 360 L 1440 520 L 0 520 Z" fill="#F5C6CC" fillOpacity="0.55" />
+          <path d="M0 420 C 260 380, 520 480, 820 430 S 1220 380, 1440 420 L 1440 520 L 0 520 Z" fill="#F5C6CC" fillOpacity="0.45" />
+          <path d="M-40 90 C 180 20, 360 160, 620 100" fill="none" stroke="#F5C6CC" strokeOpacity="0.6" strokeWidth="2" />
         </Box>
 
-        <Container maxWidth="lg" sx={{ position: "relative", zIndex: 2, pt: { xs: 4, md: 7 }, pb: { xs: 3, md: 8 } }}>
-          <Box sx={{ maxWidth: { md: 640 } }}>
+        {/* Photo in a curved red frame: right half on desktop (organic shape that sweeps back
+            right at the bottom, clear of the benefits row), a rounded banner on phones. The red
+            layer and the photo share one shape; the photo's is shifted right so red shows as a border. */}
+        <Box
+          aria-hidden
+          sx={{
+            position: { xs: "relative", md: "absolute" }, top: 0, right: 0, bottom: { md: 0 }, zIndex: 1,
+            width: { xs: "100%", md: "52%", lg: "54%" }, height: { xs: 240, sm: 300, md: "auto" },
+            filter: isDark ? "none" : "drop-shadow(-14px 10px 28px rgba(201,29,50,0.18))",
+          }}
+        >
+          <Box sx={{
+            position: "absolute", inset: 0,
+            background: "linear-gradient(160deg, #E63946 0%, #C91D32 100%)",
+            borderRadius: { xs: "0 0 0 90px", md: 0 },
+            ...heroMask("0 0"),
+          }} />
+          <Box sx={{
+            position: "absolute", top: 0, right: 0, bottom: { xs: 8, md: 0 }, left: { xs: 8, md: 0 }, overflow: "hidden",
+            borderRadius: { xs: "0 0 0 84px", md: 0 },
+            ...heroMask("12px 0"),
+          }}>
+            {/* Loaded first (it is the largest thing on screen) and sized to the visitor's screen. */}
+            <Image
+              src={HERO_PHOTO}
+              alt=""
+              fill
+              priority
+              sizes="(min-width: 900px) 54vw, 100vw"
+              style={{ objectFit: "cover", objectPosition: "center 35%", transform: "scaleX(-1)" }}
+            />
+          </Box>
+        </Box>
+
+        <Container maxWidth="lg" sx={{ position: "relative", zIndex: 2, pt: { xs: 4, md: 6 } }}>
+          <Box sx={{ maxWidth: { md: "48%", lg: 600 } }}>
             {pub?.availableDonors > 0 ? (
               <Box component={Link} href="/donors" sx={{
                 display: "inline-flex", alignItems: "center", gap: 1, mb: 2, px: 1.5, py: 0.6, borderRadius: "999px", textDecoration: "none",
                 bgcolor: "background.paper", color: "text.primary", fontSize: "0.82rem", fontWeight: 600,
                 border: "1px solid", borderColor: "divider", boxShadow: (t) => t.custom.shadow.sm,
+                transition: "border-color .18s ease",
                 "&:hover": { borderColor: "primary.main" },
+                "&:focus-visible": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: 2 },
               }}>
                 <Box component="span" aria-hidden="true" sx={{
                   width: 8, height: 8, borderRadius: "50%", bgcolor: (t) => t.custom.tones.success.dot,
                   boxShadow: (t) => `0 0 0 4px ${t.custom.tones.success.bg}`,
                 }} />
-                <Box component="span"><Box component="strong" sx={{ color: "primary.main" }}>{pub.availableDonors.toLocaleString()}</Box> donor{pub.availableDonors !== 1 ? "s" : ""} available to donate now</Box>
+                <Box component="span">{pub.availableDonors.toLocaleString()} donor{pub.availableDonors !== 1 ? "s" : ""} available to donate now</Box>
                 <ArrowForwardIcon aria-hidden="true" sx={{ fontSize: 15, color: "text.secondary" }} />
               </Box>
             ) : (
-              <Typography sx={{ fontSize: { xs: "0.78rem", md: "0.9rem" }, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", color: "text.secondary", mb: 1.5 }}>
+              <Typography sx={{ fontSize: { xs: "0.78rem", md: "0.85rem" }, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "primary.main", mb: 1.5 }}>
                 A small act makes a big difference
               </Typography>
             )}
-            <Typography component="h1" sx={{ fontSize: { xs: "2.6rem", sm: "3.4rem", md: "4.4rem" }, fontWeight: 800, lineHeight: 1.04, letterSpacing: "-0.035em", color: "text.primary" }}>
+            <Typography component="h1" sx={{
+              fontSize: { xs: "2.5rem", sm: "3.3rem", lg: "4rem" }, fontWeight: 800, lineHeight: 1.04, letterSpacing: "-0.035em",
+              color: isDark ? "text.primary" : navy.dark,
+            }}>
               Donate Blood
               <Box component="span" sx={{ display: "block", color: "primary.main" }}>Save Lives</Box>
             </Typography>
-            <Typography sx={{ mt: 2.5, maxWidth: 520, fontSize: { xs: "1rem", md: "1.15rem" }, lineHeight: 1.65, color: "text.secondary" }}>
+            <Typography sx={{ mt: 2, maxWidth: 480, fontSize: { xs: "1rem", md: "1.08rem" }, lineHeight: 1.65, color: "text.secondary" }}>
               Join our community of heroes. Your blood donation can give someone a second chance at life.
             </Typography>
 
-            <Box sx={{ mt: 4, display: "flex", gap: 1.5, flexWrap: "wrap" }}>
+            <Box sx={{ mt: 3.5, display: "flex", gap: 1.5, flexWrap: "wrap" }}>
               <Button component={Link} href="/map" variant="contained" size="large" startIcon={<FavoriteIcon />} endIcon={<ArrowForwardIcon />}
-                sx={{ px: 3, py: 1.4, fontSize: "0.95rem", fontWeight: 700, width: { xs: "100%", sm: "auto" } }}>
+                sx={{
+                  px: 3, py: 1.35, fontSize: "0.95rem", fontWeight: 700, width: { xs: "100%", sm: "auto" }, borderRadius: "10px",
+                  boxShadow: (t) => `0 8px 20px ${alpha(t.palette.primary.main, 0.3)}`,
+                }}>
                 Find a Donation Center
               </Button>
               <Button component={Link} href="/appointments" variant="outlined" size="large" startIcon={<CalendarMonthIcon />}
-                sx={{ px: 3, py: 1.4, fontSize: "0.95rem", fontWeight: 700, borderWidth: 1.5, bgcolor: "background.paper", "&:hover": { borderWidth: 1.5 }, width: { xs: "100%", sm: "auto" } }}>
+                sx={{ px: 3, py: 1.35, fontSize: "0.95rem", fontWeight: 700, borderWidth: 1.5, borderRadius: "10px", bgcolor: "background.paper", "&:hover": { borderWidth: 1.5 }, width: { xs: "100%", sm: "auto" } }}>
                 Book an Appointment
               </Button>
             </Box>
@@ -241,29 +277,37 @@ export default function Home() {
                 Request blood <ArrowForwardIcon aria-hidden="true" sx={{ fontSize: 16 }} />
               </Box>
             </Typography>
+          </Box>
 
-            <Box sx={{ mt: 4, display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(3, auto)" }, justifyContent: "start", columnGap: 4, rowGap: 1.75 }}>
-              {TRUST.map((t) => (
-                <Box key={t.title} sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
-                  <Box sx={{ color: "primary.main", display: "flex", "& svg": { fontSize: 34 } }}>{t.icon}</Box>
-                  <Box>
-                    <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, lineHeight: 1.3 }}>{t.title}</Typography>
-                    <Typography sx={{ fontSize: "0.75rem", color: "text.secondary", lineHeight: 1.3 }}>{t.desc}</Typography>
-                  </Box>
+          {/* Benefits: one row on wide screens, two-by-two below. */}
+          <Box component="ul" sx={{
+            listStyle: "none", p: 0, m: 0, mt: { xs: 4, md: 4.5 },
+            display: "grid", gridTemplateColumns: { xs: "1fr 1fr", lg: "repeat(4, auto)" }, justifyContent: "start",
+            columnGap: { xs: 2, lg: 3.5 }, rowGap: 2, maxWidth: { md: "48%", lg: "none" },
+          }}>
+            {benefits.map((b) => (
+              <Box component="li" key={b.title} sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0 }}>
+                <Box aria-hidden sx={{ color: "primary.main", display: "flex", flexShrink: 0, "& svg": { fontSize: 32 } }}>{b.icon}</Box>
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, lineHeight: 1.3, color: isDark ? "text.primary" : navy.dark }}>{b.title}</Typography>
+                  <Typography sx={{ fontSize: "0.75rem", color: "text.secondary", lineHeight: 1.35 }}>{b.desc}</Typography>
                 </Box>
-              ))}
-            </Box>
+              </Box>
+            ))}
           </Box>
         </Container>
       </Box>
 
-      {/* ── Stats bar (real, public totals) — sits below the hero, not over its photo ── */}
-      <Container maxWidth="lg" sx={{ position: "relative", zIndex: 3, mt: { xs: 5, md: 7 } }}>
+      {/* ── Stats bar (real, public totals) — floats over the bottom of the hero ── */}
+      <Container maxWidth="lg" sx={{ position: "relative", zIndex: 3, mt: { xs: -6, md: -8 } }}>
         <Paper
           ref={statsRef}
-          variant="outlined"
+          component="section"
+          aria-label="BloodLife in numbers"
+          elevation={0}
           sx={{
-            borderRadius: "16px", overflow: "hidden", boxShadow: (t) => t.custom.shadow.md,
+            borderRadius: "18px", overflow: "hidden", border: "1px solid", borderColor: "divider",
+            boxShadow: isDark ? (t) => t.custom.shadow.md : "0 18px 40px rgba(16,37,65,0.10)",
             display: "grid", gridTemplateColumns: { xs: "repeat(2, 1fr)", md: "repeat(4, 1fr)" },
           }}
         >
@@ -271,18 +315,23 @@ export default function Home() {
             <Box
               key={s.label}
               sx={{
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 2, py: { xs: 2.5, md: 3.5 }, px: 2,
+                position: "relative", display: "flex", alignItems: "center", justifyContent: { xs: "flex-start", sm: "center" },
+                gap: { xs: 1.5, sm: 2 }, py: { xs: 2.25, md: 3 }, px: { xs: 2, sm: 2.5 }, minWidth: 0,
                 borderStyle: "solid", borderWidth: 0, borderColor: "divider",
-                borderLeftWidth: { xs: i % 2 === 1 ? 1 : 0, md: i > 0 ? 1 : 0 },
                 borderTopWidth: { xs: i > 1 ? 1 : 0, md: 0 },
+                // Short vertical separators rather than full-height rules.
+                "&::before": {
+                  content: '""', position: "absolute", left: 0, top: "22%", bottom: "22%", width: "1px", bgcolor: "divider",
+                  display: { xs: i % 2 === 1 ? "block" : "none", md: i > 0 ? "block" : "none" },
+                },
               }}
             >
-              <Box sx={{ ...iconCircle(52), "& svg": { fontSize: 26 } }}>{s.icon}</Box>
-              <Box>
-                <Typography sx={{ fontSize: { xs: "1.5rem", md: "1.75rem" }, fontWeight: 800, lineHeight: 1.1, letterSpacing: "-0.02em", color: "primary.main" }}>
+              <Box sx={{ ...iconCircle(52), width: { xs: 44, sm: 52 }, height: { xs: 44, sm: 52 }, "& svg": { fontSize: { xs: 22, sm: 26 } } }}>{s.icon}</Box>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography sx={{ fontSize: { xs: "1.4rem", md: "1.8rem" }, fontWeight: 800, lineHeight: 1.1, letterSpacing: "-0.02em", color: "primary.main" }}>
                   {s.value == null ? "—" : <CountUp value={s.value} active={statsOn} />}
                 </Typography>
-                <Typography sx={{ fontSize: "0.82rem", color: "text.secondary" }}>{s.label}</Typography>
+                <Typography sx={{ fontSize: { xs: "0.76rem", sm: "0.85rem" }, color: "text.secondary" }}>{s.label}</Typography>
               </Box>
             </Box>
           ))}
@@ -377,14 +426,14 @@ export default function Home() {
               inputValue={city}
               onInputChange={(_, value) => setCity(value)}
               onChange={(_, value, reason) => { if (reason === "selectOption" && value) goToMap(value); }}
-              slotProps={{ popper: { sx: { minWidth: 240 } }, paper: { sx: { color: "#1f2937" } } }}
+              slotProps={{ popper: { sx: { minWidth: 240 } }, paper: { sx: { color: "#172B4D" } } }}
               sx={{ flex: 1 }}
               renderInput={(params) => (
                 <InputBase
                   ref={params.InputProps.ref}
                   inputProps={{ ...params.inputProps, "aria-label": "City or province" }}
                   placeholder="Enter your city or province..."
-                  sx={{ width: "100%", color: "#1f2937", fontSize: "0.95rem" }}
+                  sx={{ width: "100%", color: "#172B4D", fontSize: "0.95rem" }}
                 />
               )}
             />

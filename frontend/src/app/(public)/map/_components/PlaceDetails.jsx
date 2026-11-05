@@ -9,7 +9,7 @@ import {
   BLOOD_COLORS, TYPE_META, firstPhone, formatKm, isOpen247, openDirections, osmUrl, telHref, websiteHost,
 } from './map-utils';
 
-const RED = '#c62828';
+const RED = '#C91D32';
 
 function InfoRow({ icon, children }) {
   return (
@@ -25,10 +25,10 @@ function ActionLink({ href, icon, title, hint }) {
   return (
     <Box component={Link} href={href} sx={{
       display: 'flex', alignItems: 'center', gap: 1.25, p: 1.1, borderRadius: '12px', textDecoration: 'none', color: 'inherit',
-      bgcolor: isDark ? '#1a1a1a' : '#fff', border: '1px solid', borderColor: isDark ? '#2c2c2c' : '#f1dede', transition: 'border-color .15s',
+      bgcolor: isDark ? '#1C2E49' : '#fff', border: '1px solid', borderColor: isDark ? '#334155' : '#E2E8F0', transition: 'border-color .15s',
       '&:hover': { borderColor: RED }, '&:focus-visible': { outline: `2px solid ${RED}`, outlineOffset: 2 },
     }}>
-      <Box aria-hidden="true" sx={{ width: 34, height: 34, borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: isDark ? 'rgba(198,40,40,0.2)' : '#ffebee', color: RED, '& svg': { fontSize: 19 } }}>{icon}</Box>
+      <Box aria-hidden="true" sx={{ width: 34, height: 34, borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: isDark ? 'rgba(201,29,50,0.2)' : '#FFF1F2', color: RED, '& svg': { fontSize: 19 } }}>{icon}</Box>
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Typography sx={{ fontWeight: 700, fontSize: '0.86rem', lineHeight: 1.25 }}>{title}</Typography>
         <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>{hint}</Typography>
@@ -52,7 +52,7 @@ export default function PlaceDetails({ item, isHosp, onClose }) {
   const hasContact = Boolean(phoneHref || item.website);
 
   return (
-    <Box component="aside" aria-label={`${name} details`} sx={{ height: '100%', overflowY: 'auto', bgcolor: 'background.paper', border: '1px solid', borderColor: isDark ? '#262626' : '#f0e4e4', borderRadius: '20px', boxShadow: isDark ? 'none' : '0 6px 24px rgba(120,20,20,0.06)' }}>
+    <Box component="aside" aria-label={`${name} details`} sx={{ height: '100%', overflowY: 'auto', bgcolor: 'background.paper', border: '1px solid', borderColor: isDark ? '#334155' : '#E2E8F0', borderRadius: '20px', boxShadow: isDark ? 'none' : '0 6px 24px rgba(16,24,40,0.06)' }}>
       <Box sx={{ position: 'relative' }}>
         <Avatar variant="square" src={isHosp ? item.image || undefined : undefined} alt="" imgProps={{ referrerPolicy: 'no-referrer' }}
           sx={{ width: '100%', height: 150, borderRadius: 0, color: 'rgba(255,255,255,0.9)', background: `linear-gradient(135deg, ${accent} 0%, ${accent}b8 100%)`, '& img': { objectFit: 'cover' } }}>
@@ -66,7 +66,7 @@ export default function PlaceDetails({ item, isHosp, onClose }) {
       <Box sx={{ p: 2.25 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
           <Typography component="h2" sx={{ fontWeight: 800, fontSize: '1.3rem', lineHeight: 1.25, letterSpacing: '-0.01em' }}>{name}</Typography>
-          {open24 && <Chip label="Open 24/7" size="small" sx={{ fontWeight: 700, bgcolor: isDark ? 'rgba(46,125,50,0.25)' : '#e8f5e9', color: '#2e7d32' }} />}
+          {open24 && <Chip label="Open 24/7" size="small" sx={{ fontWeight: 700, bgcolor: isDark ? 'rgba(46,125,50,0.25)' : '#DCFCE7', color: '#16A34A' }} />}
         </Box>
 
         <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', mt: 1, mb: 1.25 }}>
@@ -76,7 +76,7 @@ export default function PlaceDetails({ item, isHosp, onClose }) {
               {item.ownership && <Chip label={`${item.ownership} facility`} size="small" variant="outlined" sx={{ fontWeight: 600 }} />}
             </>
           ) : (
-            <Chip icon={<FiberManualRecord sx={{ fontSize: '10px !important', color: item.available ? '#4caf50 !important' : '#9e9e9e !important' }} />}
+            <Chip icon={<FiberManualRecord sx={{ fontSize: '10px !important', color: item.available ? '#16A34A !important' : '#94A3B8 !important' }} />}
               label={item.available ? 'Available to donate' : 'Not available right now'} size="small" variant="outlined" sx={{ fontWeight: 600 }} />
           )}
           <Chip label={`${formatKm(item.dist)} km away`} size="small" variant="outlined" sx={{ fontWeight: 600 }} />
@@ -108,7 +108,7 @@ export default function PlaceDetails({ item, isHosp, onClose }) {
         )}
 
         {/* Blood services: real actions on this platform, not claims about what the place offers */}
-        <Box sx={{ mt: 2, p: 1.5, borderRadius: '16px', bgcolor: isDark ? 'rgba(198,40,40,0.1)' : '#fbf1f1' }}>
+        <Box sx={{ mt: 2, p: 1.5, borderRadius: '16px', bgcolor: isDark ? 'rgba(201,29,50,0.1)' : '#F8FAFC' }}>
           <Typography sx={{ display: 'flex', alignItems: 'center', gap: 0.75, fontWeight: 800, fontSize: '0.95rem', mb: 1, color: RED }}>
             <WaterDrop sx={{ fontSize: 20 }} /> Blood Services
           </Typography>
@@ -120,13 +120,13 @@ export default function PlaceDetails({ item, isHosp, onClose }) {
 
         <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.25, mt: 2 }}>
           <Button variant="contained" disableElevation startIcon={<Directions />} onClick={() => openDirections(...(item.base || item.pos))}
-            sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '12px', py: 1.15, bgcolor: RED, '&:hover': { bgcolor: '#8e1111' } }}>
+            sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '12px', py: 1.15, bgcolor: RED, '&:hover': { bgcolor: '#A91529' } }}>
             Get Directions
           </Button>
           {phoneHref ? (
-            <Button variant="outlined" component="a" href={phoneHref} startIcon={<Phone />} color="error" sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '12px', py: 1.15, borderWidth: 1.5, '&:hover': { borderWidth: 1.5 } }}>Contact</Button>
+            <Button variant="outlined" component="a" href={phoneHref} startIcon={<Phone />} color="primary" sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '12px', py: 1.15, borderWidth: 1.5, '&:hover': { borderWidth: 1.5 } }}>Contact</Button>
           ) : item.website ? (
-            <Button variant="outlined" component="a" href={item.website} target="_blank" rel="noopener noreferrer" startIcon={<Language />} color="error" sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '12px', py: 1.15, borderWidth: 1.5, '&:hover': { borderWidth: 1.5 } }}>Website</Button>
+            <Button variant="outlined" component="a" href={item.website} target="_blank" rel="noopener noreferrer" startIcon={<Language />} color="primary" sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '12px', py: 1.15, borderWidth: 1.5, '&:hover': { borderWidth: 1.5 } }}>Website</Button>
           ) : (
             <Button variant="outlined" disabled startIcon={<Phone />} sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '12px', py: 1.15 }}>Contact</Button>
           )}

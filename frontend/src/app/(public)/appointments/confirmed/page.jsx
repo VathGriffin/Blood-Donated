@@ -26,7 +26,7 @@ const AppointmentConfirmed = () => {
     <Box
       sx={{
         minHeight: "100vh",
-        backgroundColor: isDark ? "#121212" : "#f9f9f9",
+        backgroundColor: isDark ? "#0B1220" : "#F6F8FC",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -49,8 +49,8 @@ const AppointmentConfirmed = () => {
           <Box
             sx={{
               background: isDark
-                ? "linear-gradient(135deg, #1a0000 0%, #2d0505 100%)"
-                : "linear-gradient(135deg, #b71c1c 0%, #7f0000 100%)",
+                ? "linear-gradient(160deg, #0F2038 0%, #0B1220 100%)"
+                : "linear-gradient(120deg, #102541 0%, #173B63 55%, #245481 100%)",
               py: 5,
               textAlign: "center",
             }}
@@ -88,7 +88,7 @@ const AppointmentConfirmed = () => {
 
           {/* Body */}
           <Box sx={{ p: { xs: 3, sm: 5 } }}>
-            <Typography variant="subtitle1" fontWeight={700} color="error.main" sx={{ mb: 2 }}>
+            <Typography variant="subtitle1" fontWeight={700} color="primary.main" sx={{ mb: 2 }}>
               What to expect next
             </Typography>
 
@@ -110,7 +110,7 @@ const AppointmentConfirmed = () => {
                       minWidth: 28,
                       height: 28,
                       borderRadius: "50%",
-                      bgcolor: "#b71c1c",
+                      bgcolor: "#A91529",
                       color: "white",
                       display: "flex",
                       alignItems: "center",
@@ -132,7 +132,7 @@ const AppointmentConfirmed = () => {
             <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
               <Button
                 variant="contained"
-                color="error"
+                color="primary"
                 size="large"
                 component={Link}
                 href="/appointments"
@@ -142,15 +142,15 @@ const AppointmentConfirmed = () => {
                   fontWeight: 700,
                   borderRadius: 3,
                   py: 1.3,
-                  boxShadow: "0 4px 14px rgba(183,28,28,0.35)",
-                  "&:hover": { boxShadow: "0 6px 20px rgba(183,28,28,0.5)" },
+                  boxShadow: "0 4px 14px rgba(201,29,50,0.35)",
+                  "&:hover": { boxShadow: "0 6px 20px rgba(201,29,50,0.5)" },
                 }}
               >
                 Book Another
               </Button>
               <Button
                 variant="outlined"
-                color="error"
+                color="primary"
                 size="large"
                 component={Link}
                 href="/"

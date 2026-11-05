@@ -16,7 +16,7 @@ import { PHOTO_TYPES, photoFileError } from '@/lib/validation';
 import AboutPreview from './AboutPreview';
 import RichTextEditor from './RichTextEditor';
 
-const RED = '#c62828';
+const RED = '#C91D32';
 const IMAGE_FIELD = { hero: 'heroImage', purpose: 'purposeImage', creator: 'creatorPhoto' };
 
 const TABS = [
@@ -70,7 +70,7 @@ const Field = memo(function Field({ id, label, value, onChange, max, multiline, 
         sx={{
           '& .MuiOutlinedInput-root': {
             borderRadius: '12px', fontSize: '0.92rem', transition: 'box-shadow 0.2s ease',
-            '&.Mui-focused': { boxShadow: '0 0 0 4px rgba(198,40,40,0.12)' },
+            '&.Mui-focused': { boxShadow: '0 0 0 4px rgba(201,29,50,0.12)' },
             '&.Mui-focused fieldset': { borderColor: RED, borderWidth: 1.5 },
             ...calm,
           },
@@ -101,7 +101,7 @@ function ImageSlot({ label, hint, src, custom, busy, round, fallback, onFile, on
       <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: round ? 'auto 1fr' : '1fr 1fr' }, alignItems: 'stretch' }}>
         <Box sx={{ position: 'relative', justifySelf: round ? 'center' : 'stretch' }}>
           {round ? (
-            <Avatar src={src || undefined} alt="" sx={{ width: 132, height: 132, fontSize: 36, fontWeight: 800, bgcolor: RED, boxShadow: '0 10px 26px rgba(183,28,28,0.25)', opacity: busy ? 0.5 : 1 }}>{fallback}</Avatar>
+            <Avatar src={src || undefined} alt="" sx={{ width: 132, height: 132, fontSize: 36, fontWeight: 800, bgcolor: RED, boxShadow: '0 10px 26px rgba(201,29,50,0.25)', opacity: busy ? 0.5 : 1 }}>{fallback}</Avatar>
           ) : (
             <Box component="img" src={src} alt="" sx={{ width: '100%', height: { xs: 170, sm: '100%' }, minHeight: 150, maxHeight: 190, objectFit: 'cover', borderRadius: '14px', display: 'block', opacity: busy ? 0.5 : 1, transition: 'opacity 0.2s' }} />
           )}
@@ -121,10 +121,10 @@ function ImageSlot({ label, hint, src, custom, busy, round, fallback, onFile, on
           sx={{
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center',
             gap: 0.5, p: 2.5, minHeight: 150, borderRadius: '14px', cursor: busy ? 'wait' : 'pointer',
-            border: `1.5px dashed ${over ? RED : isDark ? '#3a3a3a' : '#e3d6d6'}`,
-            bgcolor: over ? (isDark ? 'rgba(198,40,40,0.12)' : '#fff3f3') : (isDark ? 'rgba(255,255,255,0.02)' : '#fcfafa'),
+            border: `1.5px dashed ${over ? RED : isDark ? '#475569' : '#CBD5E1'}`,
+            bgcolor: over ? (isDark ? 'rgba(201,29,50,0.12)' : '#FFF1F2') : (isDark ? 'rgba(255,255,255,0.02)' : '#fcfafa'),
             transition: 'border-color 0.2s, background-color 0.2s, transform 0.2s',
-            '&:hover, &:focus-visible': { borderColor: RED, bgcolor: isDark ? 'rgba(198,40,40,0.08)' : '#fff6f6', outline: 'none' },
+            '&:hover, &:focus-visible': { borderColor: RED, bgcolor: isDark ? 'rgba(201,29,50,0.08)' : '#fff6f6', outline: 'none' },
             '&:hover .up-icon': { transform: 'translateY(-3px)' },
             ...calm,
           }}
@@ -403,8 +403,8 @@ export default function AboutEditor({ token }) {
 
   const cardSx = {
     bgcolor: 'background.paper', borderRadius: '20px',
-    border: `1px solid ${isDark ? '#242424' : '#f0e8e8'}`,
-    boxShadow: isDark ? 'none' : '0 10px 34px rgba(120,20,20,0.06)',
+    border: `1px solid ${isDark ? '#334155' : '#E2E8F0'}`,
+    boxShadow: isDark ? 'none' : '0 10px 34px rgba(16,24,40,0.06)',
   };
   // Typing stays responsive: the preview catches up with the draft when React has time.
   const previewSections = useDeferredValue(draft);
@@ -421,7 +421,7 @@ export default function AboutEditor({ token }) {
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start', flexWrap: 'wrap', mb: 3 }}>
           <Box sx={{
             width: 52, height: 52, borderRadius: '14px', flexShrink: 0, display: 'grid', placeItems: 'center', color: '#fff',
-            background: 'linear-gradient(135deg, #b71c1c, #e53935)', boxShadow: '0 8px 20px rgba(198,40,40,0.3)',
+            background: 'linear-gradient(135deg, #E63946 0%, #C91D32 100%)', boxShadow: '0 8px 20px rgba(201,29,50,0.3)',
           }}>
             <ArticleOutlined />
           </Box>
@@ -445,8 +445,8 @@ export default function AboutEditor({ token }) {
             )}
             <Button component="a" href="/about" target="_blank" rel="noopener" variant="outlined" startIcon={<Visibility />}
               sx={{
-                textTransform: 'none', fontWeight: 700, borderRadius: '12px', px: 2, py: 1, color: RED, borderColor: isDark ? '#5a2a2a' : '#f0caca',
-                transition: 'transform 0.2s, background-color 0.2s', '&:hover': { borderColor: RED, bgcolor: isDark ? 'rgba(198,40,40,0.08)' : '#fff5f5', transform: 'translateY(-1px)' }, ...calm,
+                textTransform: 'none', fontWeight: 700, borderRadius: '12px', px: 2, py: 1, color: RED, borderColor: isDark ? '#475569' : '#F5C6CC',
+                transition: 'transform 0.2s, background-color 0.2s', '&:hover': { borderColor: RED, bgcolor: isDark ? 'rgba(201,29,50,0.08)' : '#FFF1F2', transform: 'translateY(-1px)' }, ...calm,
               }}>
               Preview Page
             </Button>
@@ -454,10 +454,10 @@ export default function AboutEditor({ token }) {
               startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <Save />}
               sx={{
                 textTransform: 'none', fontWeight: 700, borderRadius: '12px', px: 2.5, py: 1, color: '#fff',
-                background: 'linear-gradient(120deg, #a3111a, #e53935)', boxShadow: '0 8px 20px rgba(198,40,40,0.3)',
+                background: 'linear-gradient(135deg, #E63946 0%, #C91D32 100%)', boxShadow: '0 8px 20px rgba(201,29,50,0.3)',
                 transition: 'transform 0.2s, box-shadow 0.25s, filter 0.2s',
                 '&:hover': { transform: 'translateY(-1px) scale(1.02)', boxShadow: '0 12px 30px rgba(220,40,40,0.45)', filter: 'brightness(1.05)' },
-                '&.Mui-disabled': { color: '#fff', opacity: 0.55, background: 'linear-gradient(120deg, #a3111a, #e53935)' },
+                '&.Mui-disabled': { color: '#fff', opacity: 0.55, background: 'linear-gradient(135deg, #E63946 0%, #C91D32 100%)' },
                 ...calm,
               }}>
               {saving ? 'Saving…' : 'Save Changes'}
@@ -511,7 +511,7 @@ export default function AboutEditor({ token }) {
           '@container about-editor (min-width: 1040px)': { position: 'sticky', top: 88 },
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, px: 2.5, py: 1.75, borderBottom: 1, borderColor: 'divider' }}>
-            <Box sx={{ width: 36, height: 36, borderRadius: '10px', display: 'grid', placeItems: 'center', bgcolor: isDark ? 'rgba(198,40,40,0.16)' : '#fdeaea', color: RED }}>
+            <Box sx={{ width: 36, height: 36, borderRadius: '10px', display: 'grid', placeItems: 'center', bgcolor: isDark ? 'rgba(201,29,50,0.16)' : '#FFF1F2', color: RED }}>
               <Visibility fontSize="small" />
             </Box>
             <Box sx={{ mr: 'auto', minWidth: 0 }}>
@@ -520,7 +520,7 @@ export default function AboutEditor({ token }) {
                 {dirty ? 'Showing unsaved changes' : 'This is how your About page looks'}
               </Typography>
             </Box>
-            <Box role="group" aria-label="Preview size" sx={{ display: 'flex', gap: 0.5, p: 0.5, borderRadius: '10px', bgcolor: isDark ? '#1a1a1a' : '#f6f1f1' }}>
+            <Box role="group" aria-label="Preview size" sx={{ display: 'flex', gap: 0.5, p: 0.5, borderRadius: '10px', bgcolor: isDark ? '#1C2E49' : '#f6f1f1' }}>
               {DEVICES.map((d) => (
                 <Tooltip key={d.id} title={d.label}>
                   <IconButton size="small" aria-label={`${d.label} preview`} aria-pressed={device === d.id} onClick={() => setDevice(d.id)}
@@ -536,9 +536,9 @@ export default function AboutEditor({ token }) {
               ))}
             </Box>
           </Box>
-          <Box sx={{ p: 2, bgcolor: isDark ? '#0c0c0c' : '#faf7f7', maxHeight: { lg: 'calc(100vh - 210px)' }, overflowY: 'auto' }}>
+          <Box sx={{ p: 2, bgcolor: isDark ? '#0B1220' : '#faf7f7', maxHeight: { lg: 'calc(100vh - 210px)' }, overflowY: 'auto' }}>
             <ScaledFrame width={frameWidth}>
-              <Box sx={{ borderRadius: '14px', overflow: 'hidden', border: `1px solid ${isDark ? '#262626' : '#eee3e3'}` }}>
+              <Box sx={{ borderRadius: '14px', overflow: 'hidden', border: `1px solid ${isDark ? '#334155' : '#E2E8F0'}` }}>
                 <AboutPreview sections={previewSections} images={previewImages} stats={stats} />
               </Box>
             </ScaledFrame>

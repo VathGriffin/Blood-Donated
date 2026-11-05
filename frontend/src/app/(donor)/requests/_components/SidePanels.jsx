@@ -41,15 +41,15 @@ export function LifeBanner() {
       position: 'relative', overflow: 'hidden', borderRadius: '16px', minHeight: { xs: 150, sm: 150 },
       border: '1px solid', borderColor: 'divider', boxShadow: (t) => t.custom.shadow.sm,
       background: (t) => (t.palette.mode === 'dark'
-        ? 'linear-gradient(100deg, #161616 0%, #1d1415 55%, #3a1018 100%)'
-        : 'linear-gradient(100deg, #FFFFFF 0%, #FFF5F6 50%, #FBD5DB 100%)'),
+        ? 'linear-gradient(100deg, #0F2038 0%, #13294A 60%, #17263D 100%)'
+        : 'linear-gradient(100deg, #FFFFFF 0%, #FFF1F2 50%, #F5C6CC 100%)'),
       px: { xs: 2.5, sm: 3.5 }, py: { xs: 2.5, sm: 2.75 },
     }}>
       {/* red sweep along the bottom-right corner, like the reference */}
       <Box aria-hidden="true" component="svg" viewBox="0 0 400 120" preserveAspectRatio="none"
         sx={{ position: 'absolute', right: 0, bottom: 0, width: { xs: '70%', sm: '55%' }, height: '60%' }}>
-        <path d="M0 120 C 120 110, 220 60, 400 20 V120 Z" fill="#D71920" opacity="0.92" />
-        <path d="M60 120 C 170 100, 260 70, 400 50 V120 Z" fill="#B91C2C" opacity="0.6" />
+        <path d="M0 120 C 120 110, 220 60, 400 20 V120 Z" fill="#C91D32" opacity="0.92" />
+        <path d="M60 120 C 170 100, 260 70, 400 50 V120 Z" fill="#C91D32" opacity="0.6" />
       </Box>
       <Box aria-hidden="true" sx={{
         position: 'absolute', right: { xs: -30, sm: 10 }, top: { xs: 10, sm: 0 }, width: { xs: 170, sm: 240 }, height: { xs: 110, sm: 150 },
@@ -75,7 +75,7 @@ export function ImportantNotice({ hospital }) {
   return (
     <Box component="section" aria-labelledby="notice-title" sx={{
       position: 'relative', overflow: 'hidden', borderRadius: '16px', p: { xs: 2, sm: 2.5 }, pr: { sm: 12 },
-      bgcolor: (t) => t.custom.tones.primary.bg, border: '1px solid', borderColor: (t) => (t.palette.mode === 'dark' ? 'rgba(215,25,32,0.3)' : '#F6CDD2'),
+      bgcolor: (t) => t.custom.tones.primary.bg, border: '1px solid', borderColor: (t) => (t.palette.mode === 'dark' ? 'rgba(215,25,32,0.3)' : '#F5C6CC'),
     }}>
       <CampaignOutlinedIcon aria-hidden="true" sx={{
         position: 'absolute', right: 20, top: '50%', transform: 'translateY(-50%) rotate(-12deg)', fontSize: 84,

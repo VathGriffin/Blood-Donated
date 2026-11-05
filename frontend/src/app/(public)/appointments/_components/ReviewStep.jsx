@@ -35,8 +35,8 @@ export default function ReviewStep({ center, form, onEditSelection, onEditDetail
     <Panel icon={<FactCheckOutlinedIcon />} title="Review & Confirm" subtitle="Please check everything before you book">
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {groups.map((g) => (
-          <Box key={g.title} sx={{ borderRadius: '12px', border: `1px solid ${isDark ? '#2c2c2c' : C.border}`, overflow: 'hidden' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2, py: 1.1, bgcolor: isDark ? 'rgba(255,255,255,0.03)' : C.bg, borderBottom: `1px solid ${isDark ? '#2c2c2c' : C.border}` }}>
+          <Box key={g.title} sx={{ borderRadius: '12px', border: `1px solid ${isDark ? '#334155' : C.border}`, overflow: 'hidden' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2, py: 1.1, bgcolor: isDark ? 'rgba(255,255,255,0.03)' : C.bg, borderBottom: `1px solid ${isDark ? '#334155' : C.border}` }}>
               <Typography component="h3" sx={{ fontWeight: 700, fontSize: '0.9rem' }}>{g.title}</Typography>
               <Button size="small" onClick={g.onEdit} aria-label={g.editLabel} startIcon={<EditOutlinedIcon sx={{ fontSize: 15 }} />}
                 sx={{ textTransform: 'none', fontWeight: 700, color: C.primary, minWidth: 0 }}>

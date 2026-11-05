@@ -12,8 +12,8 @@ import StarterKit from '@tiptap/starter-kit';
 import { CharacterCount, Placeholder } from '@tiptap/extensions';
 import { toEditorHtml, normalizeLink } from '@/lib/richText';
 
-const RED = '#c62828';
-const NAVY = '#1f2937';
+const RED = '#C91D32';
+const NAVY = '#102541';
 const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
 const mod = isMac ? '⌘' : 'Ctrl+';
 
@@ -29,9 +29,9 @@ function ToolButton({ label, shortcut, active, disabled, onClick, children }) {
           onClick={onClick}
           sx={{
             width: 34, height: 34, borderRadius: '8px', color: active ? RED : 'text.secondary',
-            bgcolor: active ? 'rgba(198,40,40,0.1)' : 'transparent',
+            bgcolor: active ? 'rgba(201,29,50,0.1)' : 'transparent',
             transition: 'background-color 0.15s, color 0.15s',
-            '&:hover': { bgcolor: active ? 'rgba(198,40,40,0.16)' : 'action.hover', color: active ? RED : 'text.primary' },
+            '&:hover': { bgcolor: active ? 'rgba(201,29,50,0.16)' : 'action.hover', color: active ? RED : 'text.primary' },
             '&.Mui-focusVisible': { outline: `2px solid ${RED}`, outlineOffset: 1 },
             '& svg': { fontSize: 20 },
           }}
@@ -176,10 +176,10 @@ function RichTextEditor({ id, label, helper, value, onChange, max, placeholder }
 
       <Box sx={{
         borderRadius: '12px', bgcolor: isDark ? 'rgba(255,255,255,0.03)' : '#fff',
-        border: `1px solid ${s.focused ? RED : isDark ? '#3a3a3a' : '#dcdfe4'}`,
-        boxShadow: s.focused ? '0 0 0 4px rgba(198,40,40,0.12)' : 'none',
+        border: `1px solid ${s.focused ? RED : isDark ? '#475569' : '#dcdfe4'}`,
+        boxShadow: s.focused ? '0 0 0 4px rgba(201,29,50,0.12)' : 'none',
         transition: 'border-color 0.2s, box-shadow 0.2s',
-        '&:hover': { borderColor: s.focused ? RED : isDark ? '#555' : '#b8bec7' },
+        '&:hover': { borderColor: s.focused ? RED : isDark ? '#64748B' : '#b8bec7' },
         '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
       }}>
         {/* Toolbar */}
@@ -263,7 +263,7 @@ function RichTextEditor({ id, label, helper, value, onChange, max, placeholder }
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 1.5 }}>
             {s.link && <Button onClick={removeLink} color="inherit" sx={{ textTransform: 'none', mr: 'auto' }}>Remove</Button>}
             <Button onClick={closeLink} color="inherit" sx={{ textTransform: 'none' }}>Cancel</Button>
-            <Button type="submit" variant="contained" sx={{ textTransform: 'none', fontWeight: 700, bgcolor: RED, '&:hover': { bgcolor: '#b71c1c' } }}>Apply</Button>
+            <Button type="submit" variant="contained" sx={{ textTransform: 'none', fontWeight: 700, bgcolor: RED, '&:hover': { bgcolor: '#A91529' } }}>Apply</Button>
           </Box>
         </Box>
       </Popover>

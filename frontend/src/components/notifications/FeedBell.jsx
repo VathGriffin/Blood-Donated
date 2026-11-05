@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import axios from 'axios';
 import {
-  Badge, Box, Button, IconButton, List, ListItemButton, Popover, Skeleton, Tooltip, Typography, useTheme,
+  Badge, Box, Button, IconButton, List, ListItemButton, Popover, Skeleton, Tooltip, Typography, alpha, useTheme,
 } from '@mui/material';
 import NotificationsNoneOutlined from '@mui/icons-material/NotificationsNoneOutlined';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
@@ -18,7 +18,7 @@ import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
 import API_BASE from '@/lib/config';
 
 const POLL_MS = 60 * 1000;
-const RED = '#B91C2C';
+const RED = '#C91D32';
 
 const ICONS = {
   message: <ChatBubbleOutlineIcon />,
@@ -33,8 +33,8 @@ const TONES = {
   info: { fg: '#1D4ED8', bg: '#DBEAFE', darkBg: 'rgba(59,130,246,0.18)', darkFg: '#93C5FD' },
   success: { fg: '#15803D', bg: '#DCFCE7', darkBg: 'rgba(34,197,94,0.16)', darkFg: '#86EFAC' },
   warning: { fg: '#B45309', bg: '#FEF3C7', darkBg: 'rgba(245,158,11,0.16)', darkFg: '#FCD34D' },
-  error: { fg: RED, bg: '#FDECEE', darkBg: 'rgba(185,28,44,0.2)', darkFg: '#FCA5A5' },
-  primary: { fg: RED, bg: '#FCEBED', darkBg: 'rgba(214,64,79,0.16)', darkFg: '#F0868F' },
+  error: { fg: RED, bg: '#FFF1F2', darkBg: 'rgba(201,29,50,0.2)', darkFg: '#FCA5A5' },
+  primary: { fg: RED, bg: '#FCEBED', darkBg: 'rgba(214,64,79,0.16)', darkFg: '#F0868F' }, // admin/donor items only
   neutral: { fg: '#475569', bg: '#F1F5F9', darkBg: 'rgba(255,255,255,0.08)', darkFg: '#B5B5B5' },
 };
 
@@ -50,11 +50,15 @@ const timeAgo = (at) => {
 /**
  * Bell with a real activity feed: `feedUrl` returns { items, unread } built from database records,
  * and opening the list POSTs to `seenUrl`, which records "seen" on the server — so the badge
- * clears on every device. Used for donors (GET /api/notifications) and admins
- * (GET /api/notifications/admin). `links` are the footer buttons; `emptyText` the caught-up line.
+ * clears on every device. Used for donors (GET /api/notifications), admins
+ * (GET /api/notifications/admin) and hospital staff (GET /api/notifications/hospital). `links` are the footer buttons; `emptyText` the caught-up line.
  */
 export default function FeedBell({ token, feedUrl, seenUrl, links = [], emptyText, size = 38 }) {
-  const isDark = useTheme().palette.mode === 'dark';
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  // Accents follow the area's main colour (red for admins and donors, blue for hospital
+  // staff); the count badge stays red because it's an alert.
+  const accent = theme.palette.primary.main;
   const [anchor, setAnchor] = useState(null);
   const [data, setData] = useState(null); // { items, unread }
   const [error, setError] = useState(false);
@@ -99,7 +103,7 @@ export default function FeedBell({ token, feedUrl, seenUrl, links = [], emptyTex
 
   const unread = data?.unread || 0;
   const items = (data?.items || []).map((i) => (highlight.has(i.id) ? { ...i, unread: true } : i));
-  const border = isDark ? '#262626' : '#E2E8F0';
+  const border = isDark ? '#334155' : '#E2E8F0';
 
   return (
     <>
@@ -108,7 +112,7 @@ export default function FeedBell({ token, feedUrl, seenUrl, links = [], emptyTex
           aria-label={unread ? `Notifications, ${unread} unread` : 'Notifications'}
           sx={{ color: isDark ? 'rgba(245,245,245,0.7)' : '#475569', width: size, height: size }}>
           <Badge badgeContent={unread} max={9} overlap="circular"
-            sx={{ '& .MuiBadge-badge': { bgcolor: RED, color: '#fff', fontWeight: 700, fontSize: '0.65rem', minWidth: 17, height: 17, px: 0.5, border: `2px solid ${isDark ? '#0a0a0a' : '#fff'}` } }}>
+            sx={{ '& .MuiBadge-badge': { bgcolor: RED, color: '#fff', fontWeight: 700, fontSize: '0.65rem', minWidth: 17, height: 17, px: 0.5, border: `2px solid ${isDark ? '#0B1220' : '#fff'}` } }}>
             <NotificationsNoneOutlined sx={{ fontSize: 22 }} />
           </Badge>
         </IconButton>
@@ -118,12 +122,12 @@ export default function FeedBell({ token, feedUrl, seenUrl, links = [], emptyTex
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} transformOrigin={{ vertical: 'top', horizontal: 'right' }}
         slotProps={{ paper: { role: 'dialog', 'aria-label': 'Notifications', sx: {
           mt: 1.25, width: 380, maxWidth: 'calc(100vw - 24px)', borderRadius: '16px', overflow: 'hidden',
-          border: `1px solid ${border}`, boxShadow: '0 20px 50px rgba(15,23,42,0.16)', bgcolor: isDark ? '#111' : '#fff',
+          border: `1px solid ${border}`, boxShadow: '0 20px 50px rgba(15,23,42,0.16)', bgcolor: isDark ? '#17263D' : '#fff',
         } } }}>
         <Box sx={{ px: 2.25, py: 1.75, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${border}` }}>
           <Typography sx={{ fontWeight: 800, fontSize: '1rem' }}>Notifications</Typography>
           {items.some((i) => i.unread) && (
-            <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: RED, bgcolor: isDark ? 'rgba(185,28,44,0.2)' : '#FDECEE', px: 1, py: 0.25, borderRadius: 999 }}>
+            <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: accent, bgcolor: alpha(accent, isDark ? 0.2 : 0.1), px: 1, py: 0.25, borderRadius: 999 }}>
               {items.filter((i) => i.unread).length} new
             </Typography>
           )}
@@ -144,7 +148,7 @@ export default function FeedBell({ token, feedUrl, seenUrl, links = [], emptyTex
           <Box sx={{ py: 4, px: 3, textAlign: 'center' }} role="alert">
             <ErrorOutlineIcon sx={{ fontSize: 32, color: 'text.disabled', mb: 1 }} />
             <Typography sx={{ fontWeight: 700, fontSize: '0.92rem' }}>Couldn’t load notifications</Typography>
-            <Button size="small" onClick={load} sx={{ mt: 1, textTransform: 'none', fontWeight: 700, color: RED }}>Try again</Button>
+            <Button size="small" onClick={load} sx={{ mt: 1, textTransform: 'none', fontWeight: 700, color: accent }}>Try again</Button>
           </Box>
         )}
 
@@ -165,7 +169,7 @@ export default function FeedBell({ token, feedUrl, seenUrl, links = [], emptyTex
               return (
                 <ListItemButton key={item.id} component={Link} href={item.href} onClick={close}
                   sx={{ alignItems: 'flex-start', gap: 1.5, py: 1.25, px: 1.5, borderRadius: '12px', mb: 0.25,
-                    bgcolor: item.unread ? (isDark ? 'rgba(185,28,44,0.1)' : '#FEF7F8') : 'transparent' }}>
+                    bgcolor: item.unread ? alpha(accent, isDark ? 0.1 : 0.05) : 'transparent' }}>
                   <Box aria-hidden="true" sx={{
                     width: 36, height: 36, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
                     bgcolor: isDark ? tone.darkBg : tone.bg, color: isDark ? tone.darkFg : tone.fg, '& svg': { fontSize: 19 },
@@ -179,7 +183,7 @@ export default function FeedBell({ token, feedUrl, seenUrl, links = [], emptyTex
                     </Box>
                     <Typography sx={{ color: 'text.secondary', fontSize: '0.8rem', mt: 0.25, lineHeight: 1.4, overflowWrap: 'anywhere' }}>{item.body}</Typography>
                   </Box>
-                  {item.unread && <Box component="span" aria-label="unread" sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: RED, mt: 0.75, flexShrink: 0 }} />}
+                  {item.unread && <Box component="span" aria-label="unread" sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: accent, mt: 0.75, flexShrink: 0 }} />}
                 </ListItemButton>
               );
             })}
@@ -190,7 +194,7 @@ export default function FeedBell({ token, feedUrl, seenUrl, links = [], emptyTex
           <Box sx={{ borderTop: `1px solid ${border}`, display: 'flex' }}>
             {links.map((l, i) => (
               <Button key={l.href} component={Link} href={l.href} onClick={close} fullWidth
-                sx={{ py: 1.25, borderRadius: 0, textTransform: 'none', fontWeight: 700, color: i === 0 ? RED : 'text.secondary', borderLeft: i ? `1px solid ${border}` : 0 }}>
+                sx={{ py: 1.25, borderRadius: 0, textTransform: 'none', fontWeight: 700, color: i === 0 ? accent : 'text.secondary', borderLeft: i ? `1px solid ${border}` : 0 }}>
                 {l.label}
               </Button>
             ))}

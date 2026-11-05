@@ -32,8 +32,8 @@ const purposeIcons = [<TrackChangesIcon key="t" />, <VisibilityIcon key="v" />, 
 
 const cardSx = (isDark) => ({
   borderRadius: 4,
-  backgroundColor: isDark ? "#1a1a1a" : "#fff",
-  border: `1px solid ${isDark ? "#2a2a2a" : "#efefef"}`,
+  backgroundColor: isDark ? "#1C2E49" : "#fff",
+  border: `1px solid ${isDark ? "#334155" : "#E2E8F0"}`,
   boxShadow: isDark ? "none" : "0 4px 24px rgba(0,0,0,0.06)",
 });
 
@@ -69,18 +69,18 @@ const About = () => {
   ].map((s, i) => ({ ...s, ...content.stats[i] }));
 
   return (
-    <Box sx={{ backgroundColor: isDark ? "#121212" : "#f4f4f4" }}>
+    <Box sx={{ backgroundColor: isDark ? "#0B1220" : "#F6F8FC" }}>
 
       {/* ── Hero — split layout: copy left, photo right ─────────────────────── */}
       <Box sx={{
         position: "relative", overflow: "hidden",
         background: isDark
-          ? "linear-gradient(135deg, #161112 0%, #121212 100%)"
-          : "linear-gradient(135deg, #fdf3f3 0%, #f9fafb 100%)",
+          ? "linear-gradient(135deg, #0F2038 0%, #0B1220 100%)"
+          : "linear-gradient(135deg, #FFFFFF 0%, #FFF1F2 100%)",
       }}>
         <Box aria-hidden="true" sx={{
           position: "absolute", left: "-10%", top: "-25%", width: 480, height: 480, borderRadius: "50%",
-          background: `radial-gradient(circle, ${isDark ? "rgba(183,28,28,0.10)" : "rgba(198,40,40,0.08)"} 0%, transparent 68%)`,
+          background: `radial-gradient(circle, ${isDark ? "rgba(201,29,50,0.10)" : "rgba(201,29,50,0.08)"} 0%, transparent 68%)`,
           pointerEvents: "none",
         }} />
 
@@ -94,39 +94,39 @@ const About = () => {
             {/* Left: copy */}
             <Box>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
-                <Typography variant="overline" color="error" fontWeight={700} letterSpacing="0.12em">
+                <Typography variant="overline" color="primary" fontWeight={700} letterSpacing="0.12em">
                   {hero.eyebrow}
                 </Typography>
-                <Box sx={{ width: 36, height: 3, borderRadius: 2, backgroundColor: "error.main", flexShrink: 0 }} />
+                <Box sx={{ width: 36, height: 3, borderRadius: 2, backgroundColor: "primary.main", flexShrink: 0 }} />
               </Box>
               <Typography sx={{
                 fontWeight: 800, lineHeight: 1.1, mb: 1.5,
                 fontSize: { xs: "2.2rem", md: "2.9rem" },
-                color: isDark ? "#fff" : "#161a23",
+                color: isDark ? "#fff" : "#172B4D",
               }}>
                 {hero.title}
-                <Box component="span" sx={{ display: "block", color: "error.main" }}>{hero.titleAccent}</Box>
+                <Box component="span" sx={{ display: "block", color: "primary.main" }}>{hero.titleAccent}</Box>
               </Typography>
               <Typography sx={{
                 fontWeight: 700, mb: 2, fontSize: { xs: "1.05rem", md: "1.2rem" },
-                color: isDark ? "#fff" : "#161a23",
+                color: isDark ? "#fff" : "#172B4D",
               }}>
                 {hero.headline}
               </Typography>
               <RichText value={hero.intro} sx={{ mb: 3.5, color: "text.secondary", fontSize: "1.02rem", lineHeight: 1.75 }} />
 
               <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 4 }}>
-                <Button component={Link} href="/donate" variant="contained" color="error" size="large"
+                <Button component={Link} href="/donate" variant="contained" color="primary" size="large"
                   startIcon={<FavoriteIcon />} endIcon={<ArrowForwardIcon />}
                   sx={{
                     fontWeight: 700, px: 3.5, py: 1.3, borderRadius: 3,
-                    background: "linear-gradient(135deg, #b71c1c 0%, #d32f2f 100%)",
-                    boxShadow: "0 6px 20px rgba(183,28,28,0.4)",
-                    "&:hover": { boxShadow: "0 8px 28px rgba(183,28,28,0.55)" },
+                    background: "linear-gradient(135deg, #E63946 0%, #C91D32 100%)",
+                    boxShadow: "0 6px 20px rgba(201,29,50,0.4)",
+                    "&:hover": { boxShadow: "0 8px 28px rgba(201,29,50,0.55)" },
                   }}>
                   Become a Donor
                 </Button>
-                <Button component={Link} href="#team-section" variant="outlined" color="error" size="large"
+                <Button component={Link} href="#team-section" variant="outlined" color="primary" size="large"
                   startIcon={<GroupsIcon />}
                   sx={{ fontWeight: 700, px: 3.5, py: 1.3, borderRadius: 3 }}>
                   Meet the Team
@@ -136,7 +136,7 @@ const About = () => {
               <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(3, auto)" }, gap: { xs: 2.5, sm: 4 } }}>
                 {heroFeatures.map((f, i) => (
                   <Box key={i} sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
-                    <Box sx={{ color: "error.main", mt: 0.2, "& svg": { fontSize: 22 } }}>{f.icon}</Box>
+                    <Box sx={{ color: "primary.main", mt: 0.2, "& svg": { fontSize: 22 } }}>{f.icon}</Box>
                     <Box>
                       <Typography fontWeight={700} sx={{ fontSize: "0.9rem", lineHeight: 1.3 }}>{f.title}</Typography>
                       <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.3, display: "block" }}>
@@ -195,7 +195,7 @@ const About = () => {
                 ...cardSx(isDark), mt: -3.5, mr: { xs: 0, md: 2 }, ml: "auto", maxWidth: 260,
                 position: "relative", p: 2.5, display: "flex", alignItems: "center", gap: 1.5,
               }}>
-                <FormatQuoteIcon sx={{ fontSize: 30, color: "error.main", flexShrink: 0, transform: "scaleX(-1)" }} />
+                <FormatQuoteIcon sx={{ fontSize: 30, color: "primary.main", flexShrink: 0, transform: "scaleX(-1)" }} />
                 <Typography fontWeight={800} sx={{ fontSize: "0.95rem", lineHeight: 1.3 }}>
                   Together<br />We Save Lives
                 </Typography>
@@ -212,14 +212,14 @@ const About = () => {
             <Paper key={s.label} elevation={0} sx={{ ...cardSx(isDark), p: { xs: 1.75, sm: 2.5 }, display: "flex", alignItems: "center", gap: { xs: 1.25, sm: 1.75 } }}>
               <Box sx={{
                 width: { xs: 40, sm: 48 }, height: { xs: 40, sm: 48 }, borderRadius: "50%", flexShrink: 0,
-                backgroundColor: isDark ? "rgba(183,28,28,0.16)" : "#fdeaea",
-                color: "error.main", display: "flex", alignItems: "center", justifyContent: "center",
+                backgroundColor: isDark ? "rgba(201,29,50,0.16)" : "#FFF1F2",
+                color: "primary.main", display: "flex", alignItems: "center", justifyContent: "center",
                 "& svg": { fontSize: { xs: 19, sm: 22 } },
               }}>
                 {s.icon}
               </Box>
               <Box sx={{ minWidth: 0, overflowWrap: "anywhere" }}>
-                <Typography fontWeight={800} color="error.main" sx={{ fontSize: "1.4rem", lineHeight: 1.15 }}>{s.value}</Typography>
+                <Typography fontWeight={800} color="primary.main" sx={{ fontSize: "1.4rem", lineHeight: 1.15 }}>{s.value}</Typography>
                 <Typography fontWeight={700} sx={{ fontSize: "0.85rem", lineHeight: 1.25 }}>{s.label}</Typography>
                 <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>{s.caption}</Typography>
               </Box>
@@ -245,23 +245,23 @@ const About = () => {
               ...cardSx(isDark), position: "absolute", top: 20, right: -16,
               maxWidth: 200, p: 2.5, display: { xs: "none", sm: "block" },
             }}>
-              <FormatQuoteIcon sx={{ fontSize: 26, color: "error.main", transform: "scaleX(-1)", display: "block", mb: 0.5 }} />
+              <FormatQuoteIcon sx={{ fontSize: 26, color: "primary.main", transform: "scaleX(-1)", display: "block", mb: 0.5 }} />
               <Typography fontWeight={800} sx={{ fontSize: "0.95rem", lineHeight: 1.35 }}>
                 {purpose.quote}
               </Typography>
-              <Box sx={{ width: 32, height: 3, borderRadius: 2, backgroundColor: "error.main", mt: 1.5 }} />
+              <Box sx={{ width: 32, height: 3, borderRadius: 2, backgroundColor: "primary.main", mt: 1.5 }} />
             </Paper>
           </Box>
 
           {/* Copy + mini cards */}
           <Box>
-            <Typography variant="overline" color="error" fontWeight={700} letterSpacing="0.12em">
+            <Typography variant="overline" color="primary" fontWeight={700} letterSpacing="0.12em">
               {purpose.eyebrow}
             </Typography>
             <Typography sx={{
               fontWeight: 800, mt: 0.5, mb: 2, lineHeight: 1.25,
               fontSize: { xs: "1.6rem", md: "1.9rem" },
-              color: isDark ? "#fff" : "#161a23",
+              color: isDark ? "#fff" : "#172B4D",
             }}>
               {purpose.title}
             </Typography>
@@ -272,8 +272,8 @@ const About = () => {
                 <Paper key={i} elevation={0} sx={{ ...cardSx(isDark), p: 2.5 }}>
                   <Box sx={{
                     width: 38, height: 38, borderRadius: 2, mb: 1.5,
-                    backgroundColor: isDark ? "rgba(183,28,28,0.16)" : "#fdeaea",
-                    color: "error.main", display: "flex", alignItems: "center", justifyContent: "center",
+                    backgroundColor: isDark ? "rgba(201,29,50,0.16)" : "#FFF1F2",
+                    color: "primary.main", display: "flex", alignItems: "center", justifyContent: "center",
                     "& svg": { fontSize: 19 },
                   }}>
                     {c.icon}
@@ -294,16 +294,16 @@ const About = () => {
       <Container maxWidth="lg" sx={{ py: { xs: 6, md: 8 } }}>
         <Paper elevation={0} sx={{
           borderRadius: 4, p: { xs: 3.5, md: 5 },
-          backgroundColor: isDark ? "rgba(183,28,28,0.08)" : "#fdeaea",
+          backgroundColor: isDark ? "rgba(201,29,50,0.08)" : "#FFF1F2",
           display: "flex", alignItems: "center", justifyContent: "space-between",
           flexWrap: "wrap", gap: 3,
         }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 3, flexWrap: "wrap" }}>
             <Box sx={{
               width: 64, height: 64, borderRadius: "50%", flexShrink: 0,
-              background: "linear-gradient(135deg, #b71c1c 0%, #7f0000 100%)",
+              background: "linear-gradient(120deg, #102541 0%, #173B63 55%, #245481 100%)",
               display: "flex", alignItems: "center", justifyContent: "center",
-              boxShadow: "0 8px 24px rgba(183,28,28,0.4)",
+              boxShadow: "0 8px 24px rgba(201,29,50,0.4)",
             }}>
               <VolunteerActivismIcon sx={{ color: "white", fontSize: 30 }} />
             </Box>
@@ -316,13 +316,13 @@ const About = () => {
               </Typography>
             </Box>
           </Box>
-          <Button component={Link} href="/donate" variant="contained" color="error" size="large"
+          <Button component={Link} href="/donate" variant="contained" color="primary" size="large"
             startIcon={<FavoriteIcon />} endIcon={<ArrowForwardIcon />}
             sx={{
               fontWeight: 700, px: 4, py: 1.4, borderRadius: 3, flexShrink: 0,
-              background: "linear-gradient(135deg, #b71c1c 0%, #d32f2f 100%)",
-              boxShadow: "0 6px 20px rgba(183,28,28,0.4)",
-              "&:hover": { boxShadow: "0 8px 28px rgba(183,28,28,0.55)" },
+              background: "linear-gradient(135deg, #E63946 0%, #C91D32 100%)",
+              boxShadow: "0 6px 20px rgba(201,29,50,0.4)",
+              "&:hover": { boxShadow: "0 8px 28px rgba(201,29,50,0.55)" },
             }}>
             {cta.button}
           </Button>

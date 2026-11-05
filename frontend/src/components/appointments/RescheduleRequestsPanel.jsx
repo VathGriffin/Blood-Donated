@@ -20,7 +20,7 @@ const fmtDay = (iso) => {
 const fmtStamp = (v) => (v ? new Date(v).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '');
 
 /** Every pending reschedule request in `appointments`, oldest first (first come, first served). */
-export const pendingRescheduleRequests = (appointments = []) => appointments
+const pendingRescheduleRequests = (appointments = []) => appointments
   .flatMap((a) => (a.rescheduleRequests || []).filter((r) => r.status === 'Pending').map((r) => ({ appt: a, request: r })))
   .sort((x, y) => new Date(x.request.requestedAt) - new Date(y.request.requestedAt));
 

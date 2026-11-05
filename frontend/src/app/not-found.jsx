@@ -17,11 +17,11 @@ const NotFound = () => {
         justifyContent: "center",
         textAlign: "center",
         px: 3,
-        backgroundColor: isDark ? "#121212" : "#f9f9f9",
+        backgroundColor: isDark ? "#0B1220" : "#F6F8FC",
       }}
     >
-      <BloodtypeIcon sx={{ fontSize: 72, color: "#b71c1c", mb: 2, opacity: 0.7 }} />
-      <Typography variant="h1" fontWeight={900} sx={{ color: "#b71c1c", fontSize: { xs: "5rem", md: "8rem" }, lineHeight: 1 }}>
+      <BloodtypeIcon sx={{ fontSize: 72, color: "#A91529", mb: 2, opacity: 0.7 }} />
+      <Typography variant="h1" fontWeight={900} sx={{ color: "#A91529", fontSize: { xs: "5rem", md: "8rem" }, lineHeight: 1 }}>
         404
       </Typography>
       <Typography variant="h5" fontWeight={700} gutterBottom sx={{ mt: 1 }}>

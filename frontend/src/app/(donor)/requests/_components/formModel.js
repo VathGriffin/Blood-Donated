@@ -5,7 +5,7 @@ import { isPhone } from '@/lib/validation';
 export const MAX_UNITS = 10;
 export const MAX_REASON = 500; // the API allows 1000; the form keeps requests short and readable
 export const MAX_AGE = 120;
-export const MAX_REQUIRED_BY_DAYS = 365;
+const MAX_REQUIRED_BY_DAYS = 365;
 export const COMPONENTS = ['Whole Blood', 'Red Blood Cells', 'Plasma', 'Platelets'];
 export { BLOOD_TYPES };
 
@@ -57,7 +57,7 @@ export const clearDraft = () => { try { sessionStorage.removeItem(DRAFT_KEY); } 
 
 // ── Dates: <input type="datetime-local"> works in local "YYYY-MM-DDTHH:mm" strings ──
 const pad = (n) => String(n).padStart(2, '0');
-export const toLocalInput = (d) =>
+const toLocalInput = (d) =>
   `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 export const minRequiredBy = () => toLocalInput(new Date());
 export const maxRequiredBy = () => toLocalInput(new Date(Date.now() + MAX_REQUIRED_BY_DAYS * 86400000));

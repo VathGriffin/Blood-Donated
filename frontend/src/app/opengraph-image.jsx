@@ -9,7 +9,7 @@ export default function OpengraphImage() {
   return new ImageResponse(
     (
       <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center',
-        padding: '80px', background: 'linear-gradient(135deg, #7f1d1d 0%, #dc2626 100%)', color: '#fff', fontFamily: 'sans-serif' }}>
+        padding: '80px', background: 'linear-gradient(135deg, #8E1424 0%, #C91D32 100%)', color: '#fff', fontFamily: 'sans-serif' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
           <svg width="96" height="96" viewBox="0 0 24 24" fill="#fff">
             <path d="M12 2C8 7 5 10.5 5 14a7 7 0 0 0 14 0c0-3.5-3-7-7-12z" />

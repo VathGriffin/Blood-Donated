@@ -41,7 +41,13 @@ router.post('/', async (req, res) => {
     const existing = await Donor.findOne({ email }).select('_id').lean();
     if (existing)
       return res.status(409).json({ message: 'This email is already registered as a donor.' });
-    const donor = await new Donor({ ...req.body, email }).save();
+    // Only the fields the registration form has: counts, history and photo are set by staff
+    // and check-ins, never by a public request.
+    const { fullName, phone, bloodType, location, available, lastDonation } = req.body;
+    const donor = await new Donor({
+      fullName, email, phone, bloodType, location, available, lastDonation,
+      reportedLastDonation: lastDonation || null,
+    }).save();
     res.status(201).json({ ...donor.toObject(), photoUploadToken: signPhotoUploadToken(donor._id) });
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -66,7 +72,8 @@ router.get('/lookup', requireRole('donor'), async (req, res) => {
     return res.status(403).json({ message: 'You can only look up your own donor record' });
   try {
     const donor = await Donor.findOne({ email: email.toLowerCase().trim() })
-      .select('fullName bloodType available lastDonation location')
+      // Registration date and donation history feed the donor's own profile history.
+      .select('fullName bloodType available lastDonation reportedLastDonation location createdAt donationCount donationHistory')
       .lean();
     if (!donor) return res.json({ found: false });
     res.json({ found: true, ...donor });

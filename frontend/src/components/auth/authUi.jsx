@@ -6,8 +6,8 @@ import { Visibility, VisibilityOff, ArrowBack, VerifiedUser, LocalHospital, Favo
 import BrandLogo from '@/components/dashboard/BrandLogo';
 import { BRAND } from '@/lib/brand';
 
-export const RED = '#c62828';
-export const RED_DARK = '#b71c1c';
+export const RED = '#C91D32';
+export const RED_DARK = '#A91529';
 
 // Page frame shared by login and register: soft tinted background, brand top-left,
 // "Back to Home" top-right, content centred underneath.
@@ -17,8 +17,8 @@ export function AuthFrame({ children, sx }) {
     <Box sx={{
       position: 'relative', minHeight: '100vh', overflow: 'hidden',
       background: isDark
-        ? 'radial-gradient(circle at 15% 20%, rgba(198,40,40,0.16), transparent 45%), #0f0f0f'
-        : 'radial-gradient(circle at 12% 18%, rgba(198,40,40,0.09), transparent 42%), radial-gradient(circle at 88% 85%, rgba(198,40,40,0.07), transparent 40%), linear-gradient(160deg, #ffffff 0%, #fdf3f3 100%)',
+        ? 'radial-gradient(circle at 15% 20%, rgba(201,29,50,0.16), transparent 45%), #0B1220'
+        : 'radial-gradient(circle at 12% 18%, rgba(201,29,50,0.06), transparent 42%), linear-gradient(160deg, #FFFFFF 0%, #F6F8FC 100%)',
       ...sx,
     }}>
       {children}
@@ -45,8 +45,8 @@ export function AuthCard({ children, maxWidth = 470, sx }) {
     <Box sx={{
       width: '100%', maxWidth, bgcolor: 'background.paper', borderRadius: '22px',
       px: { xs: 3, sm: 5 }, py: { xs: 3.5, sm: 4.5 },
-      border: `1px solid ${isDark ? '#262626' : '#f1e6e6'}`,
-      boxShadow: isDark ? 'none' : '0 18px 60px rgba(120,20,20,0.10)',
+      border: `1px solid ${isDark ? '#334155' : '#f1e6e6'}`,
+      boxShadow: isDark ? 'none' : '0 18px 60px rgba(16,24,40,0.10)',
       ...sx,
     }}>
       {children}
@@ -98,8 +98,8 @@ export function AuthField({ label, icon, type = 'text', hideLabel = false, endAd
       sx={{
         '& .MuiOutlinedInput-root': {
           borderRadius: '10px', minHeight: 46, bgcolor: isDark ? 'rgba(255,255,255,0.04)' : '#fff', fontSize: '0.92rem',
-          '& fieldset': { borderColor: isDark ? '#333' : '#e4dede' },
-          '&:hover fieldset': { borderColor: isDark ? '#555' : '#cfc4c4' },
+          '& fieldset': { borderColor: isDark ? '#334155' : '#e4dede' },
+          '&:hover fieldset': { borderColor: isDark ? '#64748B' : '#CBD5E1' },
           '&.Mui-focused fieldset': { borderColor: RED, borderWidth: 1.5 },
         },
         ...sx,
@@ -121,8 +121,8 @@ export function PrimaryButton({ children, loading, sx, ...rest }) {
     <Button type="submit" fullWidth variant="contained" disabled={loading}
       sx={{
         py: 1.35, fontWeight: 700, fontSize: '1rem', textTransform: 'none', borderRadius: '10px',
-        bgcolor: RED, boxShadow: '0 8px 22px rgba(198,40,40,0.32)',
-        '&:hover': { bgcolor: RED_DARK, boxShadow: '0 10px 26px rgba(198,40,40,0.42)' },
+        bgcolor: RED, boxShadow: '0 8px 22px rgba(201,29,50,0.32)',
+        '&:hover': { bgcolor: RED_DARK, boxShadow: '0 10px 26px rgba(201,29,50,0.42)' },
         ...sx,
       }}
       {...rest}
@@ -158,7 +158,7 @@ export function TrustBadges() {
         <Box key={b.title} sx={{ textAlign: 'center', width: { xs: 96, sm: 130 } }}>
           <Box sx={{
             width: 46, height: 46, mx: 'auto', mb: 0.75, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            bgcolor: isDark ? 'rgba(198,40,40,0.18)' : '#fdeaea', color: RED,
+            bgcolor: isDark ? 'rgba(201,29,50,0.18)' : '#FFF1F2', color: RED,
           }}>{b.icon}</Box>
           <Typography sx={{ fontWeight: 700, fontSize: '0.8rem' }}>{b.title}</Typography>
           <Typography sx={{ color: 'text.secondary', fontSize: '0.7rem', lineHeight: 1.35 }}>{b.text}</Typography>

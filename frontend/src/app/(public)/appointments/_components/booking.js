@@ -59,14 +59,14 @@ export const hospitalImageUrl = (image) => {
 
 // BloodLife AI palette for the booking page.
 export const C = {
-  primary: '#B91C2C',
-  dark: '#881D2A',
+  primary: '#C91D32',
+  dark: '#A91529',
   bg: '#F8FAFC',
-  soft: '#FDF2F3',
-  softer: '#FEF7F8',
+  soft: '#FFF1F2',
+  softer: '#F8FAFC',
   border: '#E2E8F0',
-  borderSoft: '#F1E4E6',
-  ring: 'rgba(185,28,44,0.32)',
+  borderSoft: '#E2E8F0',
+  ring: 'rgba(201,29,50,0.32)',
   ok: '#15803D',
   okSoft: '#DCFCE7',
 };

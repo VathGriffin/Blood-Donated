@@ -6,7 +6,7 @@ const Maps = dynamic(() => import('./_components/MapClient'), {
   ssr: false,
   loading: () => (
     <Box sx={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <CircularProgress color="error" />
+      <CircularProgress color="primary" />
     </Box>
   ),
 });

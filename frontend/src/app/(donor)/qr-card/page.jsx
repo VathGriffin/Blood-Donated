@@ -256,7 +256,7 @@ export default function QRCardPage() {
           </Typography>
           {qrToken && (
             <Box sx={{ p: 2, bgcolor: '#fff', borderRadius: '16px', border: '1px solid', borderColor: 'divider', width: 'min(100%, 300px)', mx: 'auto' }}>
-              <QRCode value={qrToken} size={512} fgColor="#1A1A1A" bgColor="#FFFFFF" level="M" style={{ width: '100%', height: 'auto' }} />
+              <QRCode value={qrToken} size={512} fgColor="#1C2E49" bgColor="#FFFFFF" level="M" style={{ width: '100%', height: 'auto' }} />
             </Box>
           )}
           <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>

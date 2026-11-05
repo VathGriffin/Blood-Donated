@@ -1,7 +1,7 @@
 import { createTheme, alpha } from '@mui/material/styles';
 import * as tokens from './design-tokens';
 
-const { brand, neutral, semantic, surfaces, radius, layout, sidebar, statusTone, motion } = tokens;
+const { brand, neutral, semantic, surfaces, radius, layout, sidebar, statusTone, motion, gradients, navy } = tokens;
 
 // `theme.breakpoints` isn't available while the theme is being defined, so the one
 // breakpoint the type scale needs is written out (matches MUI's default `md`).
@@ -14,15 +14,14 @@ const buildShadows = (mode) => {
   return ['none', s.xs, s.sm, s.sm, s.md, s.md, s.md, s.md, ...Array(17).fill(s.lg)];
 };
 
-const buildPalette = (mode) => {
+const buildPalette = (mode, accent = brand, s = surfaces[mode]) => {
   const dark = mode === 'dark';
-  const s = surfaces[mode];
   const pick = ({ main, light, dark: d, contrastText }) => ({ main, light, dark: d, contrastText });
   return {
     mode,
     primary: dark
-      ? { main: brand.primaryLight, light: '#E8737D', dark: brand.primary, contrastText: '#FFFFFF' }
-      : { main: brand.primary, light: brand.primaryLight, dark: brand.primaryDark, contrastText: '#FFFFFF' },
+      ? { main: accent.primaryLight, light: accent.primaryLighter, dark: accent.primary, contrastText: '#FFFFFF' }
+      : { main: accent.primary, light: accent.primaryLight, dark: accent.primaryDark, contrastText: '#FFFFFF' },
     secondary: dark
       ? { main: neutral[400], light: neutral[300], dark: neutral[500], contrastText: '#111111' }
       : { main: neutral[700], light: neutral[500], dark: neutral[900], contrastText: '#FFFFFF' },
@@ -39,11 +38,11 @@ const buildPalette = (mode) => {
 
 // Soft "badge" colours per tone: a tint with readable text. Light mode uses fixed
 // pastel tints; dark mode tints the semantic colour by alpha over the surface.
-const buildTones = (mode) => {
+const buildTones = (mode, accent = brand) => {
   if (mode === 'light') {
     const soft = (k) => ({ bg: semantic[k].soft, fg: semantic[k].softText, dot: semantic[k].main });
     return {
-      primary: { bg: brand.primarySoft, fg: brand.primaryDark, dot: brand.primary },
+      primary: { bg: accent.primarySoft, fg: accent.primaryDark, dot: accent.primary },
       success: soft('success'),
       warning: soft('warning'),
       error:   soft('error'),
@@ -54,7 +53,7 @@ const buildTones = (mode) => {
   }
   const soft = (k) => ({ bg: alpha(semantic[k].main, 0.16), fg: semantic[k].light, dot: semantic[k].light });
   return {
-    primary: { bg: alpha(brand.primaryLight, 0.16), fg: '#F0868F', dot: brand.primaryLight },
+    primary: { bg: alpha(accent.primaryLight, 0.16), fg: accent.toneFgDark, dot: accent.primaryLight },
     success: soft('success'),
     warning: soft('warning'),
     error:   soft('error'),
@@ -85,11 +84,16 @@ const buildTypography = () => ({
   button:    { fontSize: '0.875rem',  fontWeight: 600, lineHeight: 1.4, letterSpacing: '-0.005em', textTransform: 'none' },
 });
 
-export function buildTheme(mode = 'light') {
-  const s = surfaces[mode];
-  const palette = buildPalette(mode);
+/**
+ * One theme for the whole platform (public site and every dashboard). `accent`,
+ * `sidebarTokens` and `lightSurfaces` remain as optional overrides.
+ */
+export function buildTheme(mode = 'light', { accent = brand, sidebarTokens = sidebar, lightSurfaces } = {}) {
+  // `lightSurfaces` overrides background / text colours in light mode only.
+  const s = mode === 'light' && lightSurfaces ? { ...surfaces.light, ...lightSurfaces } : surfaces[mode];
+  const palette = buildPalette(mode, accent, s);
   const primary = palette.primary.main;
-  const tones = buildTones(mode);
+  const tones = buildTones(mode, accent);
   const elevation = tokens.shadow[mode];
 
   return createTheme({
@@ -106,7 +110,10 @@ export function buildTheme(mode = 'light') {
       radius,
       motion,
       layout,
-      sidebar,
+      // Dark mode uses a deeper navy so the sidebar sits below the cards.
+      sidebar: mode === 'dark' && sidebarTokens.bgGradientDark ? { ...sidebarTokens, bgGradient: sidebarTokens.bgGradientDark } : sidebarTokens,
+      gradients,
+      navy,
       statusTone,
       tones,
       shadow: elevation,
@@ -129,6 +136,23 @@ export function buildTheme(mode = 'light') {
             WebkitTapHighlightColor: 'transparent',
           },
           '::selection': { backgroundColor: alpha(primary, 0.22) },
+          // The palette as CSS variables, for plain CSS, SVG and third-party widgets (e.g. map popups).
+          ':root': {
+            '--color-primary': palette.primary.main,
+            '--color-primary-hover': mode === 'light' ? accent.primaryDark : accent.primary,
+            '--color-primary-light': tones.primary.bg,
+            '--color-navy': navy.dark,
+            '--color-navy-light': navy.mid,
+            '--color-background': s.background,
+            '--color-surface': s.paper,
+            '--color-text-primary': s.textPrimary,
+            '--color-text-secondary': s.textSecondary,
+            '--color-border': s.border,
+            '--color-success': semantic.success.main,
+            '--color-warning': semantic.warning.main,
+            '--color-error': semantic.error.main,
+            '--color-info': semantic.info.main,
+          },
           // Set briefly by the light/dark toggle so colours cross-fade instead of snapping.
           'html.theme-transition, html.theme-transition *, html.theme-transition *::before, html.theme-transition *::after': {
             transition: `background-color ${motion.theme}, border-color ${motion.theme}, color ${motion.theme}, fill ${motion.theme}, box-shadow ${motion.theme} !important`,
@@ -180,6 +204,19 @@ export function buildTheme(mode = 'light') {
           sizeSmall:  { minHeight: 32, padding: '4px 12px', fontSize: '0.8125rem' },
           sizeMedium: { minHeight: 40, padding: '8px 18px' },
           sizeLarge:  { minHeight: 48, padding: '11px 24px', fontSize: '0.9375rem' },
+          // Primary actions: the brand red gradient. Pages that need another fill set
+          // `background` (not just bgcolor) so the gradient is replaced, not layered under.
+          containedPrimary: {
+            backgroundImage: gradients.primary,
+            boxShadow: `0 4px 12px ${alpha(accent.primary, 0.22)}`,
+            '&:hover': { backgroundImage: gradients.primaryHover, boxShadow: `0 6px 16px ${alpha(accent.primary, 0.3)}` },
+            '&.Mui-disabled': { backgroundImage: 'none' },
+          },
+          // Secondary actions: white fill, red border and text.
+          outlinedPrimary: {
+            borderWidth: 1.5, borderColor: palette.primary.main, backgroundColor: s.paper,
+            '&:hover': { borderWidth: 1.5, backgroundColor: tones.primary.bg },
+          },
           // White on #16A34A is only ~3.3:1; the darker step clears AA for label text.
           containedSuccess: { backgroundColor: semantic.success.dark, '&:hover': { backgroundColor: '#166534' } },
         },
@@ -214,7 +251,11 @@ export function buildTheme(mode = 'light') {
         },
       },
       MuiInputLabel: {
-        styleOverrides: { root: { fontSize: '0.9375rem', fontWeight: 500 } },
+        // Navy once the label sits on the border; red while the field is focused (MUI default).
+        styleOverrides: { root: { fontSize: '0.9375rem', fontWeight: 500, '&.MuiInputLabel-shrink:not(.Mui-focused):not(.Mui-error)': { color: s.textPrimary } } },
+      },
+      MuiFormLabel: {
+        styleOverrides: { root: { '&:not(.MuiInputLabel-root):not(.Mui-focused):not(.Mui-error)': { color: s.textPrimary, fontWeight: 600 } } },
       },
       MuiFormHelperText: {
         styleOverrides: { root: { marginLeft: 2, marginRight: 2, fontSize: '0.75rem' } },
@@ -307,8 +348,8 @@ export function buildTheme(mode = 'light') {
       },
       MuiTooltip: {
         styleOverrides: {
-          tooltip: { backgroundColor: neutral[800], fontSize: '0.75rem', fontWeight: 500, borderRadius: 8, padding: '6px 10px' },
-          arrow: { color: neutral[800] },
+          tooltip: { backgroundColor: navy.dark, fontSize: '0.75rem', fontWeight: 500, borderRadius: 8, padding: '6px 10px' },
+          arrow: { color: navy.dark },
         },
       },
 
@@ -319,7 +360,7 @@ export function buildTheme(mode = 'light') {
           sizeSmall: { padding: '10px 16px' },
           head: {
             backgroundColor: s.subtle,
-            color: s.textSecondary,
+            color: s.textPrimary,
             fontSize: '0.72rem',
             fontWeight: 600,
             letterSpacing: '0.06em',

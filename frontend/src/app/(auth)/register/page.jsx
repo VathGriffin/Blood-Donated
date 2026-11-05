@@ -18,6 +18,7 @@ import { RegisterPanel } from '@/components/auth/AuthArt';
 import {
   AuthFrame, AuthTopBar, AuthCard, AuthHeading, AuthField, PrimaryButton, AuthLink, RED, RED_DARK,
 } from '@/components/auth/authUi';
+import { localToday as today } from '@/lib/format';
 
 const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 const PROVINCE_NAMES = PROVINCES.map((p) => p.name);
@@ -36,7 +37,6 @@ const STAFF_NOTICE = {
   cta: 'Go to Hospital Staff Login',
 };
 
-const today = () => new Date().toISOString().slice(0, 10);
 
 const UserSignUp = () => {
   const router = useRouter();
@@ -110,7 +110,7 @@ const UserSignUp = () => {
                       minWidth: 0, '& .MuiButton-startIcon': { mr: { xs: 0.5, sm: 1 } },
                       color: active ? '#fff' : 'text.primary', bgcolor: active ? RED : 'transparent',
                       border: '1px solid', borderColor: active ? RED : 'divider',
-                      boxShadow: active ? '0 6px 16px rgba(198,40,40,0.28)' : 'none',
+                      boxShadow: active ? '0 6px 16px rgba(201,29,50,0.28)' : 'none',
                       '&:hover': { bgcolor: active ? RED_DARK : 'action.hover' },
                     }}>
                     {r.label}
@@ -170,7 +170,7 @@ const UserSignUp = () => {
                       />
                     </Box>
 
-                    <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', p: 2, borderRadius: '12px', bgcolor: (t) => (t.palette.mode === 'dark' ? 'rgba(198,40,40,0.12)' : '#fdeeee') }}>
+                    <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', p: 2, borderRadius: '12px', bgcolor: (t) => (t.palette.mode === 'dark' ? 'rgba(201,29,50,0.12)' : '#FFF1F2') }}>
                       <Favorite sx={{ color: RED, fontSize: 30, flexShrink: 0 }} />
                       <Box>
                         <Typography sx={{ color: RED, fontWeight: 800, fontSize: '0.85rem' }}>Your information is safe with us</Typography>

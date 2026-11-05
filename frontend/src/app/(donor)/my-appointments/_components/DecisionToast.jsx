@@ -8,7 +8,7 @@ import { whenLabel } from './appointments';
 
 const SEEN_KEY = 'bl:seenRescheduleDecisions';
 
-export const seenDecisions = () => {
+const seenDecisions = () => {
   try { return new Set(JSON.parse(localStorage.getItem(SEEN_KEY) || '[]')); } catch { return new Set(); }
 };
 export const markDecisionSeen = (id) => {

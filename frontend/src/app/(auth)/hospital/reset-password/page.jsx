@@ -14,8 +14,8 @@ const MIN = 8;  // same rules as the backend
 const MAX = 72;
 
 const LEVELS = [
-    { label: 'Too short', color: '#d32f2f' }, { label: 'Weak', color: '#d32f2f' }, { label: 'Fair', color: '#ed6c02' },
-    { label: 'Good', color: '#1565c0' }, { label: 'Strong', color: '#2e7d32' }, { label: 'Very strong', color: '#2e7d32' },
+    { label: 'Too short', color: '#C91D32' }, { label: 'Weak', color: '#C91D32' }, { label: 'Fair', color: '#B45309' },
+    { label: 'Good', color: '#2563EB' }, { label: 'Strong', color: '#16A34A' }, { label: 'Very strong', color: '#16A34A' },
 ];
 
 // Rough guide only (0 = too short … 5 = very strong); the server enforces the length rules.
@@ -125,7 +125,7 @@ export default function HospitalResetPassword() {
                         {form.password && (
                             <Box sx={{ mt: -0.5, mb: 1.5 }} aria-live="polite">
                                 <LinearProgress variant="determinate" value={Math.max(8, (level / 5) * 100)}
-                                    sx={{ height: 5, borderRadius: 3, bgcolor: '#eceff1', '& .MuiLinearProgress-bar': { bgcolor: meter.color } }} />
+                                    sx={{ height: 5, borderRadius: 3, bgcolor: '#F1F5F9', '& .MuiLinearProgress-bar': { bgcolor: meter.color } }} />
                                 <Typography sx={{ fontSize: '0.74rem', mt: 0.5, color: meter.color, fontWeight: 600 }}>{meter.label}</Typography>
                             </Box>
                         )}

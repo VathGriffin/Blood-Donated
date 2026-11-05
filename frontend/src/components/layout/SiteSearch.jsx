@@ -294,7 +294,7 @@ const SiteSearch = ({ size = 34, variant = "icon", placeholder = "Search hospita
             color: "text.secondary", font: "inherit", fontSize: "0.92rem", textAlign: "left", cursor: "text",
             transition: "border-color .15s, box-shadow .15s",
             "&:hover": { borderColor: isDark ? "rgba(255,255,255,0.2)" : "#CBD5E1" },
-            "&:focus-visible": { outline: "none", borderColor: "primary.main", boxShadow: `0 0 0 3px ${theme.palette.mode === "dark" ? "rgba(214,64,79,0.25)" : "rgba(185,28,44,0.14)"}` },
+            "&:focus-visible": { outline: "none", borderColor: "primary.main", boxShadow: `0 0 0 3px ${theme.palette.mode === "dark" ? "rgba(214,64,79,0.25)" : "rgba(201,29,50,0.14)"}` },
           }}>
           <SearchIcon aria-hidden="true" sx={{ fontSize: 22 }} />
           <Box component="span" sx={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{placeholder}</Box>
@@ -306,9 +306,9 @@ const SiteSearch = ({ size = 34, variant = "icon", placeholder = "Search hospita
       <Tooltip title="Search (Ctrl+K)">
         <IconButton onClick={() => setOpen(true)} aria-label="Open search" aria-haspopup="dialog"
           sx={{
-            color: isDark ? "rgba(245,245,245,0.7)" : "#555555",
+            color: isDark ? "#94A3B8" : "#64748B",
             borderRadius: "8px", width: size, height: size,
-            "&:hover": { bgcolor: isDark ? "rgba(255,255,255,0.08)" : "rgba(220,38,38,0.06)", color: "primary.main" },
+            "&:hover": { bgcolor: isDark ? "rgba(255,255,255,0.08)" : "rgba(201,29,50,0.06)", color: "primary.main" },
           }}>
           <SearchIcon sx={{ fontSize: 20 }} />
         </IconButton>
@@ -322,7 +322,7 @@ const SiteSearch = ({ size = 34, variant = "icon", placeholder = "Search hospita
           backdrop: { sx: { backdropFilter: "blur(4px)", bgcolor: "rgba(15,23,42,0.35)" } },
           paper: { sx: {
             mt: { sm: "10vh" }, borderRadius: { xs: 0, sm: "18px" }, overflow: "hidden",
-            bgcolor: isDark ? "#111111" : "#ffffff", backgroundImage: "none",
+            bgcolor: isDark ? "#17263D" : "#ffffff", backgroundImage: "none",
             border: { sm: `1px solid ${border}` },
             boxShadow: "0 24px 64px rgba(15,23,42,0.22)",
             display: "flex", flexDirection: "column", maxHeight: { sm: "75vh" },
@@ -373,7 +373,7 @@ const SiteSearch = ({ size = 34, variant = "icon", placeholder = "Search hospita
           {anyError && (
             <Box role="alert" sx={{
               display: "flex", alignItems: "center", gap: 1.25, mx: 1, my: 1, p: 1.25, borderRadius: "12px",
-              bgcolor: isDark ? "rgba(220,38,38,0.12)" : "#FEF2F2", color: isDark ? "#FCA5A5" : "#B91C1C",
+              bgcolor: isDark ? "rgba(201,29,50,0.12)" : "#FFF1F2", color: isDark ? "#FCA5A5" : "#A91529",
             }}>
               <ErrorOutline fontSize="small" />
               <Typography sx={{ flex: 1, fontSize: "0.85rem" }}>Some results couldn&apos;t be loaded.</Typography>
@@ -405,11 +405,11 @@ const SiteSearch = ({ size = 34, variant = "icon", placeholder = "Search hospita
                     sx={{
                       display: "flex", alignItems: "center", gap: 1.5, px: 1.25, py: 1.1, borderRadius: "12px",
                       cursor: "pointer", transition: "background-color 0.12s ease",
-                      bgcolor: selected ? (isDark ? "rgba(220,38,38,0.14)" : "#FEF2F2") : "transparent",
+                      bgcolor: selected ? (isDark ? "rgba(201,29,50,0.14)" : "#FFF1F2") : "transparent",
                     }}>
                     <Box sx={{
                       width: 38, height: 38, borderRadius: "10px", flexShrink: 0, display: "grid", placeItems: "center",
-                      bgcolor: selected ? "primary.main" : isDark ? "rgba(220,38,38,0.14)" : "#FEE2E2",
+                      bgcolor: selected ? "primary.main" : isDark ? "rgba(201,29,50,0.14)" : "#FEE2E2",
                       color: selected ? "#fff" : "primary.main", transition: "all 0.12s ease",
                     }}>
                       <Icon sx={{ fontSize: 20 }} />
@@ -436,7 +436,7 @@ const SiteSearch = ({ size = 34, variant = "icon", placeholder = "Search hospita
           {trimmed && !pending && !anyLoading && !flat.length && !anyError && (
             <Box role="status" sx={{ textAlign: "center", px: 3, py: 5 }}>
               <Box sx={{ width: 52, height: 52, mx: "auto", mb: 1.5, borderRadius: "50%", display: "grid", placeItems: "center",
-                bgcolor: isDark ? "rgba(220,38,38,0.14)" : "#FEE2E2", color: "primary.main" }}>
+                bgcolor: isDark ? "rgba(201,29,50,0.14)" : "#FEE2E2", color: "primary.main" }}>
                 <SearchOff />
               </Box>
               <Typography sx={{ fontWeight: 700, fontSize: "0.95rem" }}>No results for “{trimmed}”</Typography>
@@ -450,7 +450,7 @@ const SiteSearch = ({ size = 34, variant = "icon", placeholder = "Search hospita
         {/* Footer hints */}
         <Box sx={{
           display: { xs: "none", sm: "flex" }, alignItems: "center", gap: 2, px: 2.25, py: 1.1,
-          borderTop: `1px solid ${border}`, bgcolor: isDark ? "#0c0c0c" : "#FAFAFA", color: muted, fontSize: "0.72rem",
+          borderTop: `1px solid ${border}`, bgcolor: isDark ? "#0B1220" : "#F8FAFC", color: muted, fontSize: "0.72rem",
         }}>
           <span><b>↑↓</b> to navigate</span>
           <span><b>Enter</b> to open</span>

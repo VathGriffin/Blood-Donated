@@ -12,7 +12,7 @@ export function HeartArt({ size = 300 }) {
     <svg viewBox="0 0 300 300" width={size} height={size} aria-hidden="true">
       <defs>
         <linearGradient id="heartGrad" x1="0.15" y1="0" x2="0.85" y2="1">
-          <stop offset="0%" stopColor="#ef5350" />
+          <stop offset="0%" stopColor="#E63946" />
           <stop offset="100%" stopColor="#a91717" />
         </linearGradient>
         <linearGradient id="dropGrad" x1="0" y1="0" x2="0" y2="1">
@@ -20,22 +20,22 @@ export function HeartArt({ size = 300 }) {
           <stop offset="100%" stopColor="#ffe0e0" />
         </linearGradient>
         <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0%" stopColor="#c62828" stopOpacity="0.16" />
-          <stop offset="100%" stopColor="#c62828" stopOpacity="0" />
+          <stop offset="0%" stopColor="#C91D32" stopOpacity="0.16" />
+          <stop offset="100%" stopColor="#C91D32" stopOpacity="0" />
         </radialGradient>
       </defs>
       <circle cx="150" cy="150" r="148" fill="url(#glow)" />
-      <circle cx="150" cy="150" r="128" fill="none" stroke="#c62828" strokeOpacity="0.10" strokeWidth="1.5" />
-      <circle cx="150" cy="150" r="98" fill="none" stroke="#c62828" strokeOpacity="0.14" strokeWidth="1.5" strokeDasharray="3 7" />
-      <ellipse cx="150" cy="262" rx="62" ry="8" fill="#7f0000" opacity="0.14" />
+      <circle cx="150" cy="150" r="128" fill="none" stroke="#C91D32" strokeOpacity="0.10" strokeWidth="1.5" />
+      <circle cx="150" cy="150" r="98" fill="none" stroke="#C91D32" strokeOpacity="0.14" strokeWidth="1.5" strokeDasharray="3 7" />
+      <ellipse cx="150" cy="262" rx="62" ry="8" fill="#A91529" opacity="0.14" />
       <path d="M150 250C62 192 34 146 34 104c0-34 26-58 56-58 24 0 46 13 60 34 14-21 36-34 60-34 30 0 56 24 56 58 0 42-28 88-116 146Z" fill="url(#heartGrad)" />
       <path d="M62 92c4-20 20-32 40-32" stroke="#fff" strokeOpacity="0.35" strokeWidth="6" strokeLinecap="round" fill="none" />
       <path d="M150 96c0 0-34 40-34 66a34 34 0 0 0 68 0c0-26-34-66-34-66Z" fill="url(#dropGrad)" />
       <path d="M134 166c1 10 8 18 18 20" stroke="#ef9a9a" strokeOpacity="0.7" strokeWidth="4" strokeLinecap="round" fill="none" />
       {/* small drifting drops */}
-      <path d="M262 84c0 0-9 11-9 18a9 9 0 0 0 18 0c0-7-9-18-9-18Z" fill="#c62828" opacity="0.5" />
-      <path d="M40 196c0 0-7 9-7 15a7 7 0 0 0 14 0c0-6-7-15-7-15Z" fill="#c62828" opacity="0.35" />
-      <path d="M248 214c0 0-5 7-5 11a5 5 0 0 0 10 0c0-4-5-11-5-11Z" fill="#c62828" opacity="0.3" />
+      <path d="M262 84c0 0-9 11-9 18a9 9 0 0 0 18 0c0-7-9-18-9-18Z" fill="#C91D32" opacity="0.5" />
+      <path d="M40 196c0 0-7 9-7 15a7 7 0 0 0 14 0c0-6-7-15-7-15Z" fill="#C91D32" opacity="0.35" />
+      <path d="M248 214c0 0-5 7-5 11a5 5 0 0 0 10 0c0-4-5-11-5-11Z" fill="#C91D32" opacity="0.3" />
     </svg>
   );
 }
@@ -86,7 +86,7 @@ export function RegisterPanel({ width = 300 }) {
       display: { xs: 'none', lg: 'flex' }, position: 'absolute', top: 0, right: 0, bottom: 0, width, zIndex: 1,
       flexDirection: 'column', justifyContent: 'space-between', overflow: 'hidden',
       px: 5, py: 6, color: '#fff',
-      background: 'linear-gradient(170deg, #c62828 0%, #8e1515 100%)',
+      background: 'linear-gradient(170deg, #173B63 0%, #102541 100%)',
       borderRadius: '90px 0 0 90px / 50% 0 0 50%',
       pl: 8,
     }}>

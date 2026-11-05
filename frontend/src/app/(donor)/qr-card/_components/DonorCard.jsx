@@ -10,8 +10,8 @@ import { BRAND } from '@/lib/brand';
 
 // The card uses fixed colours (not theme colours) so it looks the same in light and dark
 // mode, in the downloaded PNG and on paper.
-const RED = 'linear-gradient(125deg, #A3172A 0%, #B91C2C 45%, #8E1424 100%)';
-const QR_INK = '#1A1A1A'; // near-black: the most reliable contrast for scanners
+const RED = 'linear-gradient(125deg, #A91529 0%, #C91D32 45%, #A91529 100%)';
+const QR_INK = '#1C2E49'; // near-black: the most reliable contrast for scanners
 
 function Field({ label, children }) {
   return (
@@ -37,7 +37,7 @@ const DonorCard = forwardRef(function DonorCard(
   return (
     <Box ref={ref} id="donor-card" sx={{
       position: 'relative', overflow: 'hidden', borderRadius: '20px', color: '#fff', background: RED,
-      boxShadow: '0 18px 40px rgba(136,29,42,0.28)', width: '100%', maxWidth: 560, mx: 'auto',
+      boxShadow: '0 18px 40px rgba(16,37,65,0.28)', width: '100%', maxWidth: 560, mx: 'auto',
       printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact',
     }}>
       {/* Decoration */}
@@ -51,7 +51,7 @@ const DonorCard = forwardRef(function DonorCard(
 
       {/* Header */}
       <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 1.25, px: { xs: 2.25, sm: 3 }, pt: { xs: 2.25, sm: 2.75 } }}>
-        <Box aria-hidden="true" sx={{ width: 34, height: 34, borderRadius: '10px', bgcolor: '#fff', color: '#B91C2C', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+        <Box aria-hidden="true" sx={{ width: 34, height: 34, borderRadius: '10px', bgcolor: '#fff', color: '#C91D32', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
           <FavoriteIcon sx={{ fontSize: 20 }} />
         </Box>
         <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -61,10 +61,10 @@ const DonorCard = forwardRef(function DonorCard(
           </Typography>
         </Box>
         <Box sx={{
-          px: 1.5, py: 0.5, borderRadius: '12px', bgcolor: '#fff', color: '#B91C2C', textAlign: 'center', flexShrink: 0,
+          px: 1.5, py: 0.5, borderRadius: '12px', bgcolor: '#fff', color: '#C91D32', textAlign: 'center', flexShrink: 0,
           boxShadow: '0 6px 14px rgba(0,0,0,0.18)',
         }}>
-          <Typography sx={{ fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.12em', color: 'rgba(185,28,44,0.75)', lineHeight: 1.2 }}>TYPE</Typography>
+          <Typography sx={{ fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.12em', color: 'rgba(201,29,50,0.75)', lineHeight: 1.2 }}>TYPE</Typography>
           <Typography sx={{ fontWeight: 900, fontSize: '1.45rem', lineHeight: 1, letterSpacing: '-0.02em' }}>{bloodType || '—'}</Typography>
         </Box>
       </Box>
@@ -75,7 +75,7 @@ const DonorCard = forwardRef(function DonorCard(
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2, minWidth: 0 }}>
             <Avatar src={photoSrc || undefined} alt="" imgProps={{ crossOrigin: 'anonymous' }} sx={{
               width: { xs: 52, sm: 64 }, height: { xs: 52, sm: 64 }, fontSize: { xs: '1.2rem', sm: '1.45rem' }, fontWeight: 800,
-              bgcolor: '#F3C1C7', color: '#7F1220', border: '3px solid #fff', boxShadow: '0 6px 16px rgba(0,0,0,0.2)',
+              bgcolor: '#F5C6CC', color: '#A91529', border: '3px solid #fff', boxShadow: '0 6px 16px rgba(0,0,0,0.2)',
             }}>
               {!photoSrc && initials}
             </Avatar>
@@ -108,17 +108,17 @@ const DonorCard = forwardRef(function DonorCard(
             <QRCode value={qrToken} size={256} fgColor={QR_INK} bgColor="#FFFFFF" level="M"
               style={{ width: '100%', height: '100%' }} title="Donor QR code" />
           ) : qrState === 'loading' ? (
-            <CircularProgress size={26} sx={{ color: '#B91C2C' }} aria-label="Generating QR code" />
+            <CircularProgress size={26} sx={{ color: '#C91D32' }} aria-label="Generating QR code" />
           ) : qrState === 'error' ? (
-            <Box sx={{ textAlign: 'center', color: '#5F5F5F' }}>
+            <Box sx={{ textAlign: 'center', color: '#64748B' }}>
               <Typography sx={{ fontSize: '0.7rem', fontWeight: 600, mb: 0.5 }}>Couldn’t load QR</Typography>
               <Button size="small" onClick={onRetry} startIcon={<RefreshIcon sx={{ fontSize: 16 }} />}
-                sx={{ fontSize: '0.72rem', fontWeight: 700, color: '#B91C2C', minWidth: 0, px: 1 }}>
+                sx={{ fontSize: '0.72rem', fontWeight: 700, color: '#C91D32', minWidth: 0, px: 1 }}>
                 Retry
               </Button>
             </Box>
           ) : (
-            <Box sx={{ textAlign: 'center', color: '#8A8A8A' }}>
+            <Box sx={{ textAlign: 'center', color: '#94A3B8' }}>
               <LockIcon sx={{ fontSize: 28 }} />
               <Typography sx={{ fontSize: '0.66rem', fontWeight: 600, mt: 0.25, lineHeight: 1.3 }}>Register to<br />unlock</Typography>
             </Box>

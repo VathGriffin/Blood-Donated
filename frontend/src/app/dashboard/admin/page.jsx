@@ -64,7 +64,7 @@ const keepIfSame = (next) => (prev) => (same(prev, next) ? prev : next);
 const rangeText = ([from, to]) => `${formatDate(from)} - ${formatDate(new Date(to - 1))}`;
 
 // Patient avatars get a stable colour from their name.
-const AVATAR_HUES = ['#2563EB', '#7C3AED', '#DB2777', '#0891B2', '#EA580C', '#16A34A'];
+const AVATAR_HUES = ['#C91D32', '#173B63', '#2563EB', '#16A34A', '#F59E0B', '#102541'];
 const hueOf = (name = '') => AVATAR_HUES[[...name].reduce((s, c) => s + c.charCodeAt(0), 0) % AVATAR_HUES.length];
 
 const headerBtnSx = { border: 1, borderColor: 'divider', borderRadius: '10px', bgcolor: 'background.paper' };
@@ -212,7 +212,7 @@ const Dashboard = () => {
   // Memoised on `stats` so the (memoised) cards skip re-rendering when nothing they show changed.
   // Accent colours are fixed hues, so they read the same in light and dark mode.
   const cards = useMemo(() => [
-    { key: 'donors', color: '#E11D48', label: 'Total Donors', icon: <PeopleAltRoundedIcon />, value: stats?.donors.total, hint: stats && `${stats.donors.available} available`, noun: 'new', href: '/dashboard/admin/donors' },
+    { key: 'donors', color: '#C91D32', label: 'Total Donors', icon: <PeopleAltRoundedIcon />, value: stats?.donors.total, hint: stats && `${stats.donors.available} available`, noun: 'new', href: '/dashboard/admin/donors' },
     { key: 'donations', color: '#2563EB', label: 'Total Donations', icon: <WaterDropIcon />, value: stats?.donations.total, hint: 'Completed donations', noun: 'recorded' },
     { key: 'requests', color: '#F59E0B', label: 'Blood Requests', icon: <DescriptionRoundedIcon />, value: stats?.requests.total, noun: 'new', href: '/dashboard/admin/requests',
       hint: stats && (
@@ -221,7 +221,7 @@ const Dashboard = () => {
           {stats.requests.critical > 0 && <Box component="span" sx={{ color: 'error.main', fontWeight: 700, ml: 0.75 }}>· {stats.requests.critical} critical</Box>}
         </>
       ) },
-    { key: 'hospitals', color: '#7C3AED', label: 'Partner Hospitals', icon: <ApartmentRoundedIcon />, value: stats?.hospitals.total, hint: 'Registered partners', noun: 'added', href: '/dashboard/admin/hospitals' },
+    { key: 'hospitals', color: '#16A34A', label: 'Partner Hospitals', icon: <ApartmentRoundedIcon />, value: stats?.hospitals.total, hint: 'Registered partners', noun: 'added', href: '/dashboard/admin/hospitals' },
   ], [stats]);
 
   const inventoryHref = '/dashboard/admin/inventory';

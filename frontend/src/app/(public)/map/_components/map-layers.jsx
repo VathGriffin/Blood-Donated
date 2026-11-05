@@ -28,7 +28,7 @@ const pinIcon = (color, shape, size = 34, ring = '#fff') => {
 };
 
 const userIcon = L.divIcon({
-  html: `<div style="width:18px;height:18px;background:#1565c0;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 3px rgba(21,101,192,0.35),0 2px 8px rgba(0,0,0,0.3);"></div>`,
+  html: `<div style="width:18px;height:18px;background:#2563EB;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 3px rgba(21,101,192,0.35),0 2px 8px rgba(0,0,0,0.3);"></div>`,
   className: '',
   iconSize: [18, 18],
   iconAnchor: [9, 9],
@@ -36,7 +36,7 @@ const userIcon = L.divIcon({
 
 // The selected place is bigger, ringed in gold, and drawn on top so it stands out from its neighbours.
 const iconFor = (item, isHosp, selected) => {
-  const color = isHosp ? (TYPE_META[item.type] || TYPE_META.Hospital).color : '#c62828';
+  const color = isHosp ? (TYPE_META[item.type] || TYPE_META.Hospital).color : '#C91D32';
   const shape = isHosp && item.type !== 'Blood Center' ? 'cross' : 'drop';
   return selected ? pinIcon(color, shape, 44, '#ffca28') : pinIcon(color, shape);
 };
@@ -47,7 +47,7 @@ const clusterIcon = (count) => {
   if (!clusterIcons.has(count)) {
     const size = count < 10 ? 38 : count < 30 ? 46 : 54;
     clusterIcons.set(count, L.divIcon({
-      html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:rgba(183,28,28,0.92);border:4px solid rgba(255,255,255,0.9);
+      html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:rgba(201,29,50,0.92);border:4px solid rgba(255,255,255,0.9);
         box-shadow:0 2px 10px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:${size > 46 ? 16 : 14}px;">${count}</div>`,
       className: '',
       iconSize: [size, size],
@@ -149,14 +149,14 @@ export function MapControls({ onLocate, locating, located }) {
   }, []);
   const button = {
     width: 40, height: 40, borderRadius: '12px', bgcolor: 'background.paper', color: 'text.primary',
-    boxShadow: '0 2px 10px rgba(0,0,0,0.22)', '&:hover': { bgcolor: 'background.paper', color: '#b71c1c' },
+    boxShadow: '0 2px 10px rgba(0,0,0,0.22)', '&:hover': { bgcolor: 'background.paper', color: '#A91529' },
   };
   return (
     <Box ref={shield} sx={{ position: 'absolute', top: 12, right: 12, zIndex: 1000, display: 'flex', flexDirection: 'column', gap: 1 }}>
       <Tooltip title="Use my location" placement="left">
         <span>
-          <IconButton onClick={onLocate} disabled={locating} aria-label="Use my location" sx={{ ...button, color: located ? '#1565c0' : '#b71c1c' }}>
-            {locating ? <CircularProgress color="error" size={20} /> : <MyLocation fontSize="small" />}
+          <IconButton onClick={onLocate} disabled={locating} aria-label="Use my location" sx={{ ...button, color: located ? '#2563EB' : '#A91529' }}>
+            {locating ? <CircularProgress color="primary" size={20} /> : <MyLocation fontSize="small" />}
           </IconButton>
         </span>
       </Tooltip>
@@ -186,7 +186,7 @@ function PopupBody({ item, isHosp }) {
         </>
       ) : (
         <>
-          <span style={{ display: 'inline-block', marginTop: 2, padding: '1px 8px', borderRadius: 9, fontSize: 12, fontWeight: 700, background: `${BLOOD_COLORS[item.bloodType] || '#b71c1c'}18`, color: BLOOD_COLORS[item.bloodType] || '#b71c1c' }}>{item.bloodType}</span>
+          <span style={{ display: 'inline-block', marginTop: 2, padding: '1px 8px', borderRadius: 9, fontSize: 12, fontWeight: 700, background: `${BLOOD_COLORS[item.bloodType] || '#A91529'}18`, color: BLOOD_COLORS[item.bloodType] || '#A91529' }}>{item.bloodType}</span>
           <p style={muted}>{item.location}</p>
         </>
       )}
@@ -195,7 +195,7 @@ function PopupBody({ item, isHosp }) {
         ? <p style={{ ...muted, color: '#333' }}>📞 <a href={telHref(item.phone)} style={{ color: '#333' }}>{firstPhone(item.phone)}</a></p>
         : <p style={{ ...muted, color: '#333' }}>📞 {item.phone}</p>)}
       <a href={directionsUrl(...(item.base || item.pos))} target="_blank" rel="noopener noreferrer"
-        style={{ display: 'inline-block', marginTop: 8, fontSize: 12, fontWeight: 700, color: '#b71c1c', textDecoration: 'none' }}>
+        style={{ display: 'inline-block', marginTop: 8, fontSize: 12, fontWeight: 700, color: '#A91529', textDecoration: 'none' }}>
         ➜ Get Directions
       </a>
     </div>

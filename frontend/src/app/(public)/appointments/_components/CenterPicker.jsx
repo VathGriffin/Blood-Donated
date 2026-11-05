@@ -38,7 +38,7 @@ export default function CenterPicker({ centers, loading, source, onRetry, select
   const tabbable = selectedIndex >= 0 && selectedIndex < visible.length ? selectedIndex : 0;
   const items = visible.map((_, i) => ({ get el() { return refs.current[i]; } }));
 
-  const border = isDark ? '#2c2c2c' : C.border;
+  const border = isDark ? '#334155' : C.border;
 
   return (
     <Panel icon={<ApartmentIcon />} title="Select Donation Center" subtitle="Choose a hospital or blood donation center near you">
@@ -65,8 +65,8 @@ export default function CenterPicker({ centers, loading, source, onRetry, select
           startIcon={locating ? <CircularProgress size={14} color="inherit" /> : <PlaceIcon sx={{ fontSize: 18 }} />}
           sx={{
             height: 42, px: 2.25, textTransform: 'none', fontWeight: 600, fontSize: '0.88rem', borderRadius: '10px',
-            color: C.primary, borderColor: isDark ? 'rgba(185,28,44,0.5)' : C.border, bgcolor: isDark ? 'transparent' : '#fff',
-            '&:hover': { borderColor: C.primary, bgcolor: isDark ? 'rgba(185,28,44,0.1)' : C.softer },
+            color: C.primary, borderColor: isDark ? 'rgba(201,29,50,0.5)' : C.border, bgcolor: isDark ? 'transparent' : '#fff',
+            '&:hover': { borderColor: C.primary, bgcolor: isDark ? 'rgba(201,29,50,0.1)' : C.softer },
             '&:focus-visible': { boxShadow: `0 0 0 3px ${C.ring}` },
           }}>
           {locating ? 'Locating…' : 'Use My Location'}
@@ -124,10 +124,10 @@ export default function CenterPicker({ centers, loading, source, onRetry, select
                   position: 'relative', cursor: 'pointer', p: 1, borderRadius: '14px', outline: 'none',
                   display: 'flex', flexDirection: 'column',
                   border: '1.5px solid', borderColor: selected ? C.primary : border,
-                  bgcolor: selected ? (isDark ? 'rgba(185,28,44,0.1)' : C.softer) : 'background.paper',
-                  boxShadow: selected ? '0 8px 22px rgba(185,28,44,0.14)' : '0 1px 2px rgba(15,23,42,0.04)',
+                  bgcolor: selected ? (isDark ? 'rgba(201,29,50,0.1)' : C.softer) : 'background.paper',
+                  boxShadow: selected ? '0 8px 22px rgba(201,29,50,0.14)' : '0 1px 2px rgba(15,23,42,0.04)',
                   transition: 'border-color .18s, box-shadow .18s, transform .18s',
-                  '&:hover': { borderColor: selected ? C.primary : isDark ? '#555' : '#CBD5E1', transform: 'translateY(-1px)' },
+                  '&:hover': { borderColor: selected ? C.primary : isDark ? '#64748B' : '#CBD5E1', transform: 'translateY(-1px)' },
                   '&:focus-visible': { boxShadow: `0 0 0 3px ${C.ring}` },
                   '@media (prefers-reduced-motion: reduce)': { transition: 'none', '&:hover': { transform: 'none' } },
                 }}>
@@ -136,7 +136,7 @@ export default function CenterPicker({ centers, loading, source, onRetry, select
                   <Box aria-hidden="true" sx={{
                     position: 'absolute', top: 7, right: 7, width: 22, height: 22, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
                     bgcolor: selected ? C.primary : 'rgba(255,255,255,0.92)', border: selected ? '2px solid #fff' : '1.5px solid #94A3B8',
-                    boxShadow: selected ? '0 2px 6px rgba(185,28,44,0.4)' : 'none',
+                    boxShadow: selected ? '0 2px 6px rgba(201,29,50,0.4)' : 'none',
                   }}>
                     {selected && <CheckIcon sx={{ fontSize: 14, color: '#fff' }} />}
                   </Box>

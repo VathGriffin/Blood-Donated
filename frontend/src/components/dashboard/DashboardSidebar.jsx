@@ -79,16 +79,18 @@ function SidebarContent({ role, profile, badges = {}, onNavigate }) {
                     sx={{
                       position: 'relative', mb: 0.5, py: 1.1, px: 1.75, borderRadius: '10px',
                       color: active ? sb.textActive : sb.text,
-                      bgcolor: active ? sb.itemActive : 'transparent',
-                      boxShadow: active ? 'inset 0 0 0 1px rgba(255,255,255,0.08)' : 'none',
-                      transition: 'background-color .15s ease, color .15s ease',
+                      // `background` (not bgcolor) so a sidebar can use a gradient for the active item.
+                      background: active ? sb.itemActive : 'transparent',
+                      boxShadow: active ? (sb.itemActiveShadow || 'inset 0 0 0 1px rgba(255,255,255,0.08)') : 'none',
+                      transition: 'background-color .2s ease, color .2s ease, transform .2s ease, box-shadow .2s ease',
                       // Bar beside the active item, so the current page doesn't rely on tint alone.
                       '&::before': {
                         content: '""', position: 'absolute', left: -12, top: 8, bottom: 8, width: 4,
                         borderRadius: '0 4px 4px 0', bgcolor: sb.indicator,
                         opacity: active ? 1 : 0, transition: 'opacity .15s ease',
                       },
-                      '&:hover': { bgcolor: active ? sb.itemActive : sb.itemHover, color: sb.textActive },
+                      '&:hover': { background: active ? sb.itemActive : sb.itemHover, color: sb.textActive, transform: active ? 'none' : 'translateX(2px)' },
+                      '@media (prefers-reduced-motion: reduce)': { transition: 'none', '&:hover': { transform: 'none' } },
                       '&.Mui-focusVisible': { outlineColor: '#FFFFFF' },
                     }}
                   >
@@ -102,7 +104,7 @@ function SidebarContent({ role, profile, badges = {}, onNavigate }) {
                     {item.badge && badges[item.href] > 0 && (
                       <Box component="span" aria-label={`${badges[item.href]} new`} sx={{
                         minWidth: 20, height: 20, px: 0.6, borderRadius: '999px', display: 'grid', placeItems: 'center',
-                        bgcolor: '#fff', color: 'primary.main', fontSize: '0.7rem', fontWeight: 800,
+                        bgcolor: '#fff', color: sb.badgeColor || 'primary.main', fontSize: '0.7rem', fontWeight: 800,
                       }}>
                         {badges[item.href] > 99 ? '99+' : badges[item.href]}
                       </Box>
@@ -135,7 +137,8 @@ function SidebarContent({ role, profile, badges = {}, onNavigate }) {
 }
 
 /**
- * Role-specific navigation. A permanent rail from `md` up; below that, a slide-in
+ * Role-specific navigation. A permanent rail from `lg` (1200px) up — tablets get the full
+ * content width — and below that a slide-in
  * drawer controlled by `open` / `onClose`. Items come from ROLE_CONFIG — see the note
  * in lib/navigation.js: hiding links is presentation, not access control.
  */
@@ -148,7 +151,7 @@ export default function DashboardSidebar({ role, profile, badges, open, onClose 
       <Drawer
         variant="permanent"
         open
-        sx={{ display: { xs: 'none', md: 'block' }, width: layout.sidebarWidth, flexShrink: 0, '& .MuiDrawer-paper': paper }}
+        sx={{ display: { xs: 'none', lg: 'block' }, width: layout.sidebarWidth, flexShrink: 0, '& .MuiDrawer-paper': paper }}
       >
         <SidebarContent role={role} profile={profile} badges={badges} />
       </Drawer>
@@ -157,7 +160,7 @@ export default function DashboardSidebar({ role, profile, badges, open, onClose 
         open={open}
         onClose={onClose}
         ModalProps={{ keepMounted: true }}
-        sx={{ display: { xs: 'block', md: 'none' }, '& .MuiDrawer-paper': { ...paper, maxWidth: '86vw' } }}
+        sx={{ display: { xs: 'block', lg: 'none' }, '& .MuiDrawer-paper': { ...paper, maxWidth: '86vw' } }}
       >
         <SidebarContent role={role} profile={profile} badges={badges} onNavigate={onClose} />
       </Drawer>

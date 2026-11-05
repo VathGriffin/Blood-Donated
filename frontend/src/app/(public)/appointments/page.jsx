@@ -165,15 +165,15 @@ export default function AppointmentPage() {
 
   const ctaSx = {
     py: 1.6, fontWeight: 700, fontSize: '1.05rem', textTransform: 'none', borderRadius: '12px', bgcolor: C.primary,
-    background: `linear-gradient(180deg, #D0243A 0%, ${C.primary} 100%)`,
-    boxShadow: '0 10px 24px rgba(185,28,44,0.28)',
-    '&:hover': { background: C.dark, boxShadow: '0 12px 28px rgba(185,28,44,0.36)' },
+    background: `linear-gradient(180deg, #E63946 0%, ${C.primary} 100%)`,
+    boxShadow: '0 10px 24px rgba(201,29,50,0.28)',
+    '&:hover': { background: C.dark, boxShadow: '0 12px 28px rgba(201,29,50,0.36)' },
     '&:focus-visible': { outline: `3px solid ${C.ring}`, outlineOffset: 2 },
     '&.Mui-disabled': { bgcolor: C.primary, color: '#fff', opacity: 0.7 },
   };
   const backSx = {
-    ...ctaSx, background: 'none', bgcolor: 'background.paper', color: 'text.primary', borderColor: isDark ? '#333' : C.border, boxShadow: 'none', flexShrink: 0,
-    '&:hover': { background: 'none', bgcolor: 'action.hover', boxShadow: 'none', borderColor: isDark ? '#555' : '#CBD5E1' },
+    ...ctaSx, background: 'none', bgcolor: 'background.paper', color: 'text.primary', borderColor: isDark ? '#334155' : C.border, boxShadow: 'none', flexShrink: 0,
+    '&:hover': { background: 'none', bgcolor: 'action.hover', boxShadow: 'none', borderColor: isDark ? '#64748B' : '#CBD5E1' },
   };
   const back = { details: 'select', review: 'details' }[screen];
   const next = {
@@ -182,11 +182,11 @@ export default function AppointmentPage() {
     review: { label: submitting ? 'Booking…' : 'Confirm Booking', onClick: submit },
   }[screen];
 
-  const cardBorder = `1px solid ${isDark ? '#262626' : C.border}`;
+  const cardBorder = `1px solid ${isDark ? '#334155' : C.border}`;
   const columns = { xs: '1fr', lg: 'minmax(0, 1fr) 380px', xl: 'minmax(0, 1fr) 410px' };
 
   return (
-    <Box sx={{ bgcolor: isDark ? '#0f0f0f' : C.bg, minHeight: '100vh', pb: { xs: 10, md: 8 } }}>
+    <Box sx={{ bgcolor: isDark ? '#0B1220' : C.bg, minHeight: '100vh', pb: { xs: 10, md: 8 } }}>
       <BookingHero />
 
       <Container maxWidth={false} sx={{ maxWidth: 1440, pt: { xs: 1, md: 1.5 } }}>

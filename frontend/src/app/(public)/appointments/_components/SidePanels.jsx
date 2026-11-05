@@ -17,20 +17,20 @@ import { C, formatLongDate, openAssistant } from './booking';
 
 const cardSx = (isDark) => ({
   bgcolor: 'background.paper', borderRadius: '16px', p: { xs: 2, sm: 2.5 },
-  border: `1px solid ${isDark ? '#262626' : C.border}`,
+  border: `1px solid ${isDark ? '#334155' : C.border}`,
   boxShadow: isDark ? 'none' : '0 1px 2px rgba(15,23,42,0.04), 0 8px 24px rgba(15,23,42,0.04)',
 });
 
 const tile = (isDark, size = 36) => ({
   width: size, height: size, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-  color: C.primary, bgcolor: isDark ? 'rgba(185,28,44,0.16)' : C.soft, '& svg': { fontSize: size * 0.52 },
+  color: C.primary, bgcolor: isDark ? 'rgba(201,29,50,0.16)' : C.soft, '& svg': { fontSize: size * 0.52 },
 });
 
 function Row({ icon, primary, secondary, placeholder }) {
   const isDark = useTheme().palette.mode === 'dark';
   return (
     <Box component="li" sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 1.1 }}>
-      <Box aria-hidden="true" sx={{ ...tile(isDark), ...(placeholder && { color: 'text.disabled', bgcolor: isDark ? '#1f1f1f' : '#F1F5F9' }) }}>{icon}</Box>
+      <Box aria-hidden="true" sx={{ ...tile(isDark), ...(placeholder && { color: 'text.disabled', bgcolor: isDark ? '#334155' : '#F1F5F9' }) }}>{icon}</Box>
       <Box sx={{ minWidth: 0 }}>
         <Typography sx={{ fontWeight: secondary ? 700 : 500, fontSize: '0.92rem', lineHeight: 1.35, color: placeholder ? 'text.disabled' : 'text.primary', overflowWrap: 'anywhere' }}>{primary}</Typography>
         {secondary && <Typography sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>{secondary}</Typography>}
@@ -50,7 +50,7 @@ export function AppointmentSummary({ center, date, time, name, role, bloodType, 
         <Typography component="h2" id="appt-summary-title" sx={{ flex: 1, fontWeight: 800, fontSize: '1.15rem', letterSpacing: '-0.01em' }}>Your Appointment</Typography>
         {onChange && (
           <Button size="small" variant="outlined" onClick={onChange}
-            sx={{ textTransform: 'none', fontWeight: 600, color: C.primary, borderColor: isDark ? '#333' : C.border, borderRadius: '8px', px: 1.5, minWidth: 0, '&:hover': { borderColor: C.primary, bgcolor: C.softer } }}>
+            sx={{ textTransform: 'none', fontWeight: 600, color: C.primary, borderColor: isDark ? '#334155' : C.border, borderRadius: '8px', px: 1.5, minWidth: 0, '&:hover': { borderColor: C.primary, bgcolor: C.softer } }}>
             Change
           </Button>
         )}
@@ -58,11 +58,11 @@ export function AppointmentSummary({ center, date, time, name, role, bloodType, 
 
       <Box component="ul" aria-live="polite" sx={{ listStyle: 'none', m: 0, p: 0 }}>
         {/* Hospital */}
-        <Box component="li" sx={{ display: 'flex', alignItems: 'center', gap: 1.5, pb: 1.5, mb: 0.5, borderBottom: `1px solid ${isDark ? '#262626' : C.border}` }}>
+        <Box component="li" sx={{ display: 'flex', alignItems: 'center', gap: 1.5, pb: 1.5, mb: 0.5, borderBottom: `1px solid ${isDark ? '#334155' : C.border}` }}>
           {center ? (
             <Box sx={{ width: 96, flexShrink: 0 }}><HospitalPhoto src={center.image} name={center.name} height={60} radius={8} /></Box>
           ) : (
-            <Box aria-hidden="true" sx={{ width: 96, height: 56, flexShrink: 0, borderRadius: '8px', bgcolor: isDark ? '#1f1f1f' : '#F1F5F9', border: `1px dashed ${isDark ? '#333' : '#CBD5E1'}` }} />
+            <Box aria-hidden="true" sx={{ width: 96, height: 56, flexShrink: 0, borderRadius: '8px', bgcolor: isDark ? '#334155' : '#F1F5F9', border: `1px dashed ${isDark ? '#334155' : '#CBD5E1'}` }} />
           )}
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography sx={{ fontWeight: 700, fontSize: '0.95rem', lineHeight: 1.3, color: center ? 'text.primary' : 'text.disabled' }}>{center ? center.name : 'No center selected'}</Typography>
@@ -103,11 +103,11 @@ export function DonateChecklist() {
   return (
     <Box component="section" aria-labelledby="before-donate-title" sx={{
       position: 'relative', overflow: 'hidden', borderRadius: '16px', p: { xs: 2, sm: 2.5 },
-      bgcolor: isDark ? 'rgba(185,28,44,0.1)' : '#FDF0F2', border: `1px solid ${isDark ? 'rgba(185,28,44,0.25)' : '#F6D5DA'}`,
+      bgcolor: isDark ? 'rgba(201,29,50,0.1)' : '#FFF1F2', border: `1px solid ${isDark ? 'rgba(201,29,50,0.25)' : '#F5C6CC'}`,
     }}>
       <BloodBagArt />
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2, position: 'relative' }}>
-        <Box aria-hidden="true" sx={{ ...tile(isDark, 44), bgcolor: isDark ? 'rgba(185,28,44,0.2)' : '#FFFFFF' }}><FavoriteIcon /></Box>
+        <Box aria-hidden="true" sx={{ ...tile(isDark, 44), bgcolor: isDark ? 'rgba(201,29,50,0.2)' : '#FFFFFF' }}><FavoriteIcon /></Box>
         <Box>
           <Typography component="h2" id="before-donate-title" sx={{ fontWeight: 800, fontSize: '1.1rem', color: C.primary, lineHeight: 1.25 }}>Before You Donate</Typography>
           <Typography sx={{ color: 'text.secondary', fontSize: '0.82rem' }}>Make sure you meet the basic requirements</Typography>
@@ -137,14 +137,14 @@ function BloodBagArt() {
   return (
     <Box aria-hidden="true" sx={{ display: { xs: 'none', sm: 'block' }, position: 'absolute', right: 10, top: 64, opacity: 0.95 }}>
       <svg width="78" height="130" viewBox="0 0 78 130">
-        <path d="M44 4c0 0-10 13-10 20a10 10 0 0 0 20 0c0-7-10-20-10-20Z" fill="#E11D2E" />
-        <path d="M18 34c0 0-6 8-6 12a6 6 0 0 0 12 0c0-4-6-12-6-12Z" fill="#F87171" opacity="0.7" />
+        <path d="M44 4c0 0-10 13-10 20a10 10 0 0 0 20 0c0-7-10-20-10-20Z" fill="#E63946" />
+        <path d="M18 34c0 0-6 8-6 12a6 6 0 0 0 12 0c0-4-6-12-6-12Z" fill="#F5C6CC" opacity="0.7" />
         <rect x="24" y="48" width="44" height="58" rx="10" fill="#FFFFFF" stroke="#FCA5A5" strokeWidth="2" />
-        <rect x="28" y="66" width="36" height="36" rx="7" fill="#F43F5E" />
+        <rect x="28" y="66" width="36" height="36" rx="7" fill="#E63946" />
         <rect x="42" y="72" width="8" height="24" rx="2" fill="#FFFFFF" />
         <rect x="34" y="80" width="24" height="8" rx="2" fill="#FFFFFF" />
-        <rect x="40" y="42" width="12" height="8" rx="2" fill="#FECDD3" />
-        <path d="M46 106 v8 c0 8 -14 6 -14 14" fill="none" stroke="#F87171" strokeWidth="2" strokeLinecap="round" />
+        <rect x="40" y="42" width="12" height="8" rx="2" fill="#F5C6CC" />
+        <path d="M46 106 v8 c0 8 -14 6 -14 14" fill="none" stroke="#F5C6CC" strokeWidth="2" strokeLinecap="round" />
       </svg>
     </Box>
   );

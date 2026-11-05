@@ -17,18 +17,18 @@ const POINTS = [
 // and a heart illustration with a "Give Blood" speech bubble on wide screens.
 export default function BookingHero() {
   const isDark = useTheme().palette.mode === 'dark';
-  const tile = isDark ? 'rgba(185,28,44,0.18)' : '#FBE3E6';
+  const tile = isDark ? 'rgba(201,29,50,0.18)' : '#FFF1F2';
   return (
     <Box sx={{
       position: 'relative', overflow: 'hidden',
       background: isDark
-        ? 'linear-gradient(100deg, #1a1212 0%, #221416 60%, #2a1518 100%)'
-        : 'linear-gradient(100deg, #FFF5F6 0%, #FDEBEE 55%, #FADADF 100%)',
+        ? 'linear-gradient(100deg, #0F2038 0%, #13294A 60%, #17263D 100%)'
+        : 'linear-gradient(100deg, #FFFFFF 0%, #F6F8FC 55%, #EEF2F7 100%)',
     }}>
       {/* soft wave along the bottom edge */}
       <Box aria-hidden="true" component="svg" viewBox="0 0 1440 60" preserveAspectRatio="none"
         sx={{ position: 'absolute', left: 0, right: 0, bottom: -1, width: '100%', height: 36, display: 'block' }}>
-        <path d="M0 40 C 360 0, 720 70, 1080 30 S 1440 20, 1440 20 V60 H0Z" fill={isDark ? '#0f0f0f' : C.bg} />
+        <path d="M0 40 C 360 0, 720 70, 1080 30 S 1440 20, 1440 20 V60 H0Z" fill={isDark ? '#0B1220' : C.bg} />
       </Box>
 
       <Container maxWidth={false} sx={{ maxWidth: 1440, position: 'relative', pt: { xs: 3.5, md: 4 }, pb: { xs: 5, md: 5.5 }, display: 'flex', alignItems: 'center', gap: 3 }}>
@@ -51,7 +51,7 @@ export default function BookingHero() {
               {POINTS.map(({ icon, title, text }, i) => (
                 <Box component="li" key={title} sx={{
                   display: 'flex', alignItems: 'center', gap: 1.25, pr: { md: 4 }, mr: { md: 4 },
-                  borderRight: { md: i < POINTS.length - 1 ? `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(185,28,44,0.14)'}` : 'none' },
+                  borderRight: { md: i < POINTS.length - 1 ? `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(201,29,50,0.14)'}` : 'none' },
                 }}>
                   <Box aria-hidden="true" sx={{ width: 42, height: 42, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: tile, color: C.primary, '& svg': { fontSize: 22 } }}>
                     {icon}
@@ -74,7 +74,7 @@ export default function BookingHero() {
           </svg>
           <Box sx={{
             position: 'absolute', left: 36, top: 6, px: 2, py: 1.25, borderRadius: '16px', bgcolor: 'background.paper',
-            boxShadow: '0 10px 30px rgba(185,28,44,0.14)', color: C.primary, fontWeight: 700, fontSize: '0.88rem', lineHeight: 1.35,
+            boxShadow: '0 10px 30px rgba(201,29,50,0.14)', color: C.primary, fontWeight: 700, fontSize: '0.88rem', lineHeight: 1.35,
             '&::after': { content: '""', position: 'absolute', left: 30, bottom: -8, width: 16, height: 16, bgcolor: 'background.paper', transform: 'rotate(45deg)', borderRadius: '3px' },
           }}>
             Give Blood<br />Give Hope<br />Save Lives

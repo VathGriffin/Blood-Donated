@@ -10,12 +10,33 @@
  */
 
 // ── Colour ───────────────────────────────────────────────────────────────────
+// One brand for the whole platform: medical red for actions, active navigation and
+// blood-related elements, on a deep navy structure (sidebars, banners, headings).
 export const brand = {
-  primary:      '#B91C2C',
-  primaryDark:  '#8F1522',
-  primaryLight: '#D6404F',
-  primarySoft:  '#FCEBED', // tinted backgrounds, selected rows, soft badges
-  primaryBorder:'#F3C1C7',
+  primary:      '#C91D32', // medical red
+  primaryDark:  '#A91529', // hover / pressed
+  primaryLight: '#E63946', // red accent (gradients, dark-mode primary)
+  primarySoft:  '#FFF1F2', // soft pink: tinted backgrounds, selected rows, soft badges
+  primaryBorder:'#F5C6CC',
+  // dark mode: kept saturated so red doesn't turn pink on navy
+  primaryLighter: '#EF5361',
+  toneFgDark:     '#F28B95',
+};
+
+export const navy = {
+  deep: '#142D50',
+  dark: '#102541', // primary navy
+  mid:  '#173B63', // secondary navy
+  light:'#245481',
+};
+
+// Brand gradients, used by buttons, banners and sidebars.
+export const gradients = {
+  primary: `linear-gradient(135deg, ${brand.primaryLight} 0%, ${brand.primary} 100%)`,
+  primaryHover: `linear-gradient(135deg, ${brand.primary} 0%, ${brand.primaryDark} 100%)`,
+  sidebar: `linear-gradient(160deg, ${navy.dark} 0%, ${navy.mid} 100%)`,
+  banner: `linear-gradient(120deg, ${navy.dark} 0%, ${navy.mid} 55%, ${navy.light} 100%)`,
+  hero: 'linear-gradient(135deg, #FFFFFF 0%, #FFF1F2 100%)',
 };
 
 // Cool neutral ramp (light-mode surfaces and text).
@@ -41,56 +62,59 @@ export const semantic = {
   info:    { main: '#2563EB', light: '#3B82F6', dark: '#1D4ED8', contrastText: '#FFFFFF', soft: '#DBEAFE', softText: '#1E40AF' },
 };
 
-// Surfaces per mode. Dark values intentionally stay close to the near-black
-// hard-coded across existing pages (#0a0a0a / #111 / #1f1f1f) so nothing clashes
-// while pages are migrated onto the theme.
+// Surfaces per mode.
 export const surfaces = {
   light: {
-    background: '#F5F7FA',
+    background: '#F6F8FC',
     paper:      '#FFFFFF',
-    subtle:     neutral[50],   // table headers, input fills, hover rows
-    border:     neutral[200],
-    borderStrong: neutral[300],
-    textPrimary:   neutral[800],
-    textSecondary: neutral[500],
-    textDisabled:  neutral[400],
+    subtle:     '#F8FAFC',   // table headers, input fills, hover rows
+    border:     '#E2E8F0',
+    borderStrong: '#CBD5E1',
+    textPrimary:   '#172B4D',
+    textSecondary: '#64748B',
+    textDisabled:  '#94A3B8',
   },
+  // Navy dark mode.
   dark: {
-    background: '#0A0A0A',
-    paper:      '#111111',
-    subtle:     '#181818',
-    border:     '#1F1F1F',
-    borderStrong: '#2A2A2A',
-    textPrimary:   '#F5F5F5',
-    textSecondary: '#9A9A9A',
-    textDisabled:  '#5C5C5C',
+    background: '#0B1220',
+    paper:      '#17263D',
+    subtle:     '#1C2E49',
+    border:     '#334155',
+    borderStrong: '#475569',
+    textPrimary:   '#F8FAFC',
+    textSecondary: '#94A3B8',
+    textDisabled:  '#64748B',
   },
 };
 
-// Dark-red app sidebar (used by the dashboard shells).
+// Navy dashboard sidebar (every role), with the active item in a red gradient.
 export const sidebar = {
-  bg:          '#881D2A',
-  bgGradient:  'linear-gradient(180deg, #B91C2C 0%, #9B1726 55%, #881D2A 100%)',
-  border:      'rgba(255,255,255,0.08)',
-  text:        'rgba(255,255,255,0.72)',
-  textActive:  '#FFFFFF',
-  itemHover:   'rgba(255,255,255,0.08)',
-  itemActive:  'rgba(255,255,255,0.14)',
-  indicator:   '#FFFFFF',  // bar beside the active item
-  sectionLabel:'rgba(255,255,255,0.45)',
+  bg:           navy.dark,
+  bgGradient:   gradients.sidebar,
+  bgGradientDark: 'linear-gradient(160deg, #0F2038 0%, #13294A 100%)',
+  border:       'rgba(255,255,255,0.08)',
+  text:         'rgba(255,255,255,0.78)',
+  textActive:   '#FFFFFF',
+  itemHover:    'rgba(255,255,255,0.07)',
+  itemActive:   gradients.primary,
+  itemActiveShadow: '0 6px 16px rgba(201,29,50,0.35)',
+  indicator:    'transparent', // the red pill marks the active item on its own
+  sectionLabel: 'rgba(255,255,255,0.45)',
+  badgeColor:   brand.primary,
 };
 
 // Which semantic tone each domain status uses — keeps every table and card
 // colouring "Pending" (etc.) identically. Consumed by <StatusBadge />.
 export const statusTone = {
   // blood requests
-  Pending: 'warning', Approved: 'info', Fulfilled: 'success', Rejected: 'error',
+  // Approved / completed = green, confirmed = blue, pending = orange, rejected = red, cancelled = gray.
+  Pending: 'warning', Approved: 'success', Fulfilled: 'success', Rejected: 'error',
   // appointments
-  Confirmed: 'info', CheckedIn: 'success', Cancelled: 'neutral',
+  Confirmed: 'info', CheckedIn: 'success', Completed: 'success', Cancelled: 'neutral',
   // urgency
-  Low: 'neutral', Medium: 'info', High: 'warning', Critical: 'error',
+  Low: 'neutral', Medium: 'warning', High: 'warning', Critical: 'error',
   // inventory
-  adequate: 'success', low: 'warning', critical: 'error', empty: 'error',
+  adequate: 'success', low: 'warning', critical: 'error', empty: 'neutral',
   // donors
   Available: 'success', Unavailable: 'neutral',
 };

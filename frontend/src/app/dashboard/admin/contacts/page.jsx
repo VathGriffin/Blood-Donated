@@ -31,7 +31,7 @@ const MAX_LENGTH = 2000;     // must match MAX_MESSAGE_LENGTH in Backend/src/not
 const NEAR_BOTTOM_PX = 120;
 
 // Stable avatar colour per donor (brand red first, then muted accents that keep white text readable).
-const AVATAR_COLORS = ['#B91C2C', '#7C3AED', '#2563EB', '#0F766E', '#C2410C', '#BE185D'];
+const AVATAR_COLORS = ['#C91D32', '#173B63', '#2563EB', '#16A34A', '#B45309', '#102541'];
 const colorFor = (id = '') => AVATAR_COLORS[[...String(id)].reduce((a, c) => a + c.charCodeAt(0), 0) % AVATAR_COLORS.length];
 const initial = (name) => (name || '?').trim().charAt(0).toUpperCase();
 

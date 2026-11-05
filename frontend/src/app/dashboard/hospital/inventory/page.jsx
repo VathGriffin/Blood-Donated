@@ -147,7 +147,7 @@ export default function HospitalInventory() {
             )}
             {visible.map((r) => (
               <TableRow key={r.bloodType} hover>
-                <TableCell sx={{ color: 'primary.main', fontWeight: 800, fontSize: '1rem' }}>{r.bloodType}</TableCell>
+                <TableCell sx={{ color: 'error.main', fontWeight: 800, fontSize: '1rem' }}>{r.bloodType}</TableCell>
                 <TableCell sx={{ minWidth: 170 }}>
                   <Typography sx={{ fontWeight: 700 }}>{r.units}</Typography>
                   <LinearProgress

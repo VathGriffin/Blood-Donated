@@ -76,8 +76,9 @@ async function loadDonor({ token, account, onMessagesPage }) {
 }
 
 /**
- * Real, role-specific notifications for the top bar. Refreshes on route change and
- * every minute. `session` is the object from useDashboardSession.
+ * Live, role-specific to-do counts for the sidebar badges (e.g. "3" beside Appointments).
+ * The top-bar bells use the activity feeds in components/notifications instead. Refreshes
+ * on route change and every minute. `session` is the object from useDashboardSession.
  */
 export function useDashboardNotifications(session) {
   const { status, role, token, account } = session;

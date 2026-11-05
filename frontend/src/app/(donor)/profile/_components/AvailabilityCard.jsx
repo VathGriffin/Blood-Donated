@@ -34,14 +34,14 @@ export default function AvailabilityCard({ donor, saving, error, onToggle, onRet
   } else {
     control = (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <Switch checked={available} onChange={(e) => onToggle(e.target.checked)} disabled={saving} color="primary"
+        <Switch checked={available} onChange={(e) => onToggle(e.target.checked)} disabled={saving} color="success"
           inputProps={{ 'aria-labelledby': 'availability-title', 'aria-describedby': 'availability-state' }}
           sx={{
             width: 58, height: 34, p: 0.75, ml: -0.75,
             '& .MuiSwitch-switchBase': { p: 0.95, '&.Mui-checked': { transform: 'translateX(24px)' } },
             '& .MuiSwitch-thumb': { width: 16, height: 16, bgcolor: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.3)' },
-            '& .MuiSwitch-track': { borderRadius: 10, opacity: '1 !important', bgcolor: (t) => (t.palette.mode === 'dark' ? '#3A3A3A' : '#CBD5E1') },
-            '& .Mui-checked + .MuiSwitch-track': { bgcolor: 'primary.main' },
+            '& .MuiSwitch-track': { borderRadius: 10, opacity: '1 !important', bgcolor: (t) => (t.palette.mode === 'dark' ? '#475569' : '#CBD5E1') },
+            '& .Mui-checked + .MuiSwitch-track': { bgcolor: 'success.main' },
           }} />
         <Typography id="availability-state" aria-live="polite" sx={{
           display: 'flex', alignItems: 'center', gap: 0.75, fontWeight: 700, fontSize: '0.86rem', color: (t) => t.custom.tones[tone].fg,

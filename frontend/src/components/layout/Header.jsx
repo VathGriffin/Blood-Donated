@@ -18,11 +18,7 @@ import SiteSearch from "./SiteSearch";
 import { ColorModeContext } from "@/lib/ThemeContext";
 import { useUserAuth } from "@/store/UserAuthContext";
 import { uploadUrl } from "@/lib/config";
-
-// Height of any bar stacked above the AppBar (px). The public layout uses it for the
-// content spacer. The old "urgent needs" strip showed hard-coded shortage notices that
-// weren't connected to any data, so it was removed; keep this at 0 unless a bar returns.
-export const URGENT_STRIP_HEIGHT = 0;
+import { navy } from "@/lib/design-tokens";
 
 const sections = [
   { label: "Home",      path: "/" },
@@ -35,13 +31,13 @@ const sections = [
 ];
 
 const mobileIcons = {
-  Home: <Favorite sx={{ color: "#dc2626", fontSize: 20 }} />,
-  About: <Info sx={{ color: "#64b5f6", fontSize: 20 }} />,
-  Donate: <Favorite sx={{ color: "#dc2626", fontSize: 20 }} />,
-  "Find a Hospital": <LocalHospital sx={{ color: "#d81b60", fontSize: 20 }} />,
-  Donors: <Group sx={{ color: "#8e24aa", fontSize: 20 }} />,
-  Assistant: <SmartToy sx={{ color: "#dc2626", fontSize: 20 }} />,
-  Contact: <ContactMail sx={{ color: "#fbc02d", fontSize: 20 }} />,
+  Home: <Favorite sx={{ color: "#C91D32", fontSize: 20 }} />,
+  About: <Info sx={{ color: "#C91D32", fontSize: 20 }} />,
+  Donate: <Favorite sx={{ color: "#C91D32", fontSize: 20 }} />,
+  "Find a Hospital": <LocalHospital sx={{ color: "#C91D32", fontSize: 20 }} />,
+  Donors: <Group sx={{ color: "#C91D32", fontSize: 20 }} />,
+  Assistant: <SmartToy sx={{ color: "#C91D32", fontSize: 20 }} />,
+  Contact: <ContactMail sx={{ color: "#C91D32", fontSize: 20 }} />,
 };
 
 const Header = () => {
@@ -79,9 +75,10 @@ const Header = () => {
     router.push("/");
   };
 
-  const bgColor = isDark ? "rgba(10,10,10,0.94)" : "rgba(255,255,255,0.96)";
-
-  const border = isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.07)";
+  // White header in light mode (navy in dark mode), with a thin slate rule underneath.
+  const bgColor = isDark ? "rgba(11,18,32,0.96)" : "#FFFFFF";
+  const border = isDark ? "rgba(255,255,255,0.07)" : "#E2E8F0";
+  const navText = isDark ? "#E2E8F0" : navy.dark;
 
   return (
     <>
@@ -98,7 +95,7 @@ const Header = () => {
         boxShadow: scrolled
           ? isDark
             ? "0 1px 24px rgba(0,0,0,0.4)"
-            : "0 1px 24px rgba(0,0,0,0.08)"
+            : "0 1px 3px rgba(16,24,40,0.05), 0 6px 18px rgba(16,24,40,0.06)"
           : "none",
       }}>
         <Toolbar sx={{ justifyContent: "space-between", height: "100%", px: { xs: 2, md: 3 } }}>
@@ -113,23 +110,25 @@ const Header = () => {
               {sections.map(({ label, path }) => {
                 const active = isActive(path);
                 return (
-                  <Link key={label} href={path} style={{ textDecoration: "none" }}>
-                    <Box sx={{
-                      position: "relative", px: 1.6, py: 1,
-                      fontSize: "0.875rem", fontWeight: active ? 700 : 500,
-                      letterSpacing: "-0.005em", whiteSpace: "nowrap",
-                      color: active ? "primary.main" : "text.primary",
-                      transition: "color 0.18s ease",
-                      "&:hover": { color: "primary.main" },
-                      "&::after": {
-                        content: '""', position: "absolute", left: 12, right: 12, bottom: 0, height: 2, borderRadius: 2,
-                        bgcolor: "primary.main", transform: active ? "scaleX(1)" : "scaleX(0)", transition: "transform 0.18s ease",
-                      },
-                      "&:hover::after": { transform: "scaleX(1)" },
-                    }}>
-                      {label}
-                    </Box>
-                  </Link>
+                  <Box key={label} component={Link} href={path} aria-current={active ? "page" : undefined} sx={{
+                    position: "relative", px: { md: 1.1, lg: 1.6 }, py: 1, borderRadius: "8px", textDecoration: "none",
+                    fontSize: "0.875rem", fontWeight: active ? 700 : 600,
+                    letterSpacing: "-0.005em", whiteSpace: "nowrap",
+                    // Active page: red text with a thin red underline; others turn red on hover.
+                    color: active ? "primary.main" : navText,
+                    transition: "color 0.18s ease",
+                    "&::after": {
+                      content: '""', position: "absolute", left: { md: 9, lg: 13 }, right: { md: 9, lg: 13 }, bottom: 3,
+                      height: 2, borderRadius: 2, bgcolor: "primary.main",
+                      transform: active ? "scaleX(1)" : "scaleX(0)", opacity: active ? 1 : 0.55,
+                      transition: "transform 0.2s ease",
+                    },
+                    "&:hover": { color: "primary.main", "&::after": { transform: "scaleX(1)" } },
+                    "&:focus-visible": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: 2 },
+                    "@media (prefers-reduced-motion: reduce)": { transition: "none", "&::after": { transition: "none" } },
+                  }}>
+                    {label}
+                  </Box>
                 );
               })}
               </Box>
@@ -150,12 +149,12 @@ const Header = () => {
                       }}>
                       <Avatar
                         src={uploadUrl(user?.photo)}
-                        sx={{ width: 34, height: 34, bgcolor: "#B91C2C", fontSize: "0.82rem", fontWeight: 700 }}
+                        sx={{ width: 34, height: 34, bgcolor: "#C91D32", fontSize: "0.82rem", fontWeight: 700 }}
                       >
                         {!user?.photo && user?.fullName?.charAt(0)?.toUpperCase()}
                       </Avatar>
                       <Box sx={{ display: { md: "none", lg: "block" }, maxWidth: 140 }}>
-                        <Typography noWrap sx={{ fontWeight: 700, fontSize: "0.85rem", lineHeight: 1.2, color: isDark ? "#F5F5F5" : "#0F172A" }}>{user?.fullName}</Typography>
+                        <Typography noWrap sx={{ fontWeight: 700, fontSize: "0.85rem", lineHeight: 1.2, color: isDark ? "#F8FAFC" : "#172B4D" }}>{user?.fullName}</Typography>
                         <Typography sx={{ color: isDark ? "rgba(245,245,245,0.6)" : "#64748B", fontSize: "0.72rem", lineHeight: 1.2 }}>Donor</Typography>
                       </Box>
                       <KeyboardArrowDown sx={{ fontSize: 20, color: isDark ? "rgba(245,245,245,0.6)" : "#64748B" }} />
@@ -163,23 +162,23 @@ const Header = () => {
                     <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleUserMenuClose}
                       slotProps={{ paper: { sx: {
                         borderRadius: "14px", minWidth: 190, mt: 1.2,
-                        boxShadow: "0 12px 40px rgba(0,0,0,0.14)",
-                        border: `1px solid ${isDark ? "#1f1f1f" : "#e5e5e5"}`,
-                        bgcolor: isDark ? "#111111" : "#ffffff",
+                        boxShadow: "0 12px 32px rgba(16,24,40,0.12)",
+                        border: `1px solid ${isDark ? "#334155" : "#E2E8F0"}`,
+                        bgcolor: isDark ? "#17263D" : "#ffffff",
                       }}}}>
-                      <Box sx={{ px: 2.5, py: 1.5, borderBottom: `1px solid ${isDark ? "#1f1f1f" : "#f0f0f0"}` }}>
+                      <Box sx={{ px: 2.5, py: 1.5, borderBottom: `1px solid ${isDark ? "#334155" : "#E2E8F0"}` }}>
                         <Typography fontWeight={700} fontSize="0.88rem">{user?.fullName}</Typography>
                         <Typography variant="caption" color="text.secondary">{user?.email}</Typography>
                       </Box>
                       <MenuItem onClick={() => { router.push("/profile"); handleUserMenuClose(); }}
                         sx={{ fontSize: "0.875rem", py: 1.2 }}>
-                        <Person fontSize="small" sx={{ mr: 1.5, color: "#dc2626" }} /> My Profile
+                        <Person fontSize="small" sx={{ mr: 1.5, color: "#C91D32" }} /> My Profile
                       </MenuItem>
                       <MenuItem onClick={() => { router.push("/qr-card"); handleUserMenuClose(); }}
                         sx={{ fontSize: "0.875rem", py: 1.2 }}>
-                        <QrCode2 fontSize="small" sx={{ mr: 1.5, color: "#dc2626" }} /> My QR Card
+                        <QrCode2 fontSize="small" sx={{ mr: 1.5, color: "#C91D32" }} /> My QR Card
                       </MenuItem>
-                      <Divider sx={{ borderColor: isDark ? "#1f1f1f" : "#f0f0f0" }} />
+                      <Divider sx={{ borderColor: isDark ? "#334155" : "#E2E8F0" }} />
                       <MenuItem onClick={handleLogout} sx={{ color: "error.main", fontSize: "0.875rem", py: 1.2 }}>
                         <Logout fontSize="small" sx={{ mr: 1.5 }} /> Log Out
                       </MenuItem>
@@ -201,9 +200,9 @@ const Header = () => {
                 <Tooltip title={isDark ? "Light mode" : "Dark mode"}>
                   <IconButton onClick={toggleColorMode} size="small"
                     sx={{
-                      color: isDark ? "rgba(245,245,245,0.55)" : "#888888",
+                      color: isDark ? "#94A3B8" : "#64748B",
                       borderRadius: "8px", width: 34, height: 34,
-                      "&:hover": { bgcolor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)" },
+                      "&:hover": { color: "primary.main", bgcolor: isDark ? "rgba(255,255,255,0.08)" : "#FFF1F2" },
                     }}>
                     {isDark ? <Brightness7 sx={{ fontSize: 18 }} /> : <Brightness4 sx={{ fontSize: 18 }} />}
                   </IconButton>
@@ -220,7 +219,7 @@ const Header = () => {
                   <IconButton onClick={handleUserMenuOpen} sx={{ p: 0.4 }}>
                     <Avatar
                       src={uploadUrl(user?.photo)}
-                      sx={{ width: 30, height: 30, bgcolor: "#dc2626", fontSize: "0.78rem", fontWeight: 700 }}
+                      sx={{ width: 30, height: 30, bgcolor: "#C91D32", fontSize: "0.78rem", fontWeight: 700 }}
                     >
                       {!user?.photo && user?.fullName?.charAt(0)?.toUpperCase()}
                     </Avatar>
@@ -229,34 +228,34 @@ const Header = () => {
               )}
               <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleUserMenuClose}
                 slotProps={{ paper: { sx: { borderRadius: "14px", minWidth: 190, mt: 1.2,
-                  boxShadow: "0 12px 40px rgba(0,0,0,0.14)",
-                  bgcolor: isDark ? "#111111" : "#ffffff",
+                  boxShadow: "0 12px 32px rgba(16,24,40,0.12)",
+                  bgcolor: isDark ? "#17263D" : "#ffffff",
                 }}}}>
-                <Box sx={{ px: 2.5, py: 1.5, borderBottom: `1px solid ${isDark ? "#1f1f1f" : "#f0f0f0"}` }}>
+                <Box sx={{ px: 2.5, py: 1.5, borderBottom: `1px solid ${isDark ? "#334155" : "#E2E8F0"}` }}>
                   <Typography fontWeight={700} fontSize="0.88rem">{user?.fullName}</Typography>
                   <Typography variant="caption" color="text.secondary">{user?.email}</Typography>
                 </Box>
                 <MenuItem onClick={() => { router.push("/profile"); handleUserMenuClose(); setDrawerOpen(false); }}
                   sx={{ fontSize: "0.875rem", py: 1.2 }}>
-                  <Person fontSize="small" sx={{ mr: 1.5, color: "#dc2626" }} /> My Profile
+                  <Person fontSize="small" sx={{ mr: 1.5, color: "#C91D32" }} /> My Profile
                 </MenuItem>
                 <MenuItem onClick={() => { router.push("/qr-card"); handleUserMenuClose(); setDrawerOpen(false); }}
                   sx={{ fontSize: "0.875rem", py: 1.2 }}>
-                  <QrCode2 fontSize="small" sx={{ mr: 1.5, color: "#dc2626" }} /> My QR Card
+                  <QrCode2 fontSize="small" sx={{ mr: 1.5, color: "#C91D32" }} /> My QR Card
                 </MenuItem>
-                <Divider sx={{ borderColor: isDark ? "#1f1f1f" : "#f0f0f0" }} />
+                <Divider sx={{ borderColor: isDark ? "#334155" : "#E2E8F0" }} />
                 <MenuItem onClick={handleLogout} sx={{ color: "error.main", fontSize: "0.875rem", py: 1.2 }}>
                   <Logout fontSize="small" sx={{ mr: 1.5 }} /> Log Out
                 </MenuItem>
               </Menu>
               <Tooltip title={isDark ? "Light mode" : "Dark mode"}>
                 <IconButton onClick={toggleColorMode} size="small"
-                  sx={{ color: isDark ? "rgba(245,245,245,0.7)" : "#555555" }}>
+                  sx={{ color: isDark ? "#94A3B8" : "#64748B" }}>
                   {isDark ? <Brightness7 sx={{ fontSize: 18 }} /> : <Brightness4 sx={{ fontSize: 18 }} />}
                 </IconButton>
               </Tooltip>
               <IconButton onClick={() => setDrawerOpen(true)} aria-label="Open menu"
-                sx={{ color: isDark ? "rgba(245,245,245,0.85)" : "#333333" }}>
+                sx={{ color: navText }}>
                 <MenuIcon />
               </IconButton>
             </Box>
@@ -268,20 +267,20 @@ const Header = () => {
       <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}
         slotProps={{ paper: { sx: {
           width: 288,
-          backgroundColor: isDark ? "#0a0a0a" : "#ffffff",
-          borderLeft: `1px solid ${isDark ? "#1f1f1f" : "#f0f0f0"}`,
+          backgroundColor: isDark ? "#0B1220" : "#ffffff",
+          borderLeft: `1px solid ${isDark ? "#334155" : "#E2E8F0"}`,
         }}}}>
 
         {/* Drawer header */}
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 2.5, py: 2.5 }}>
           <BrandLogo href="/" caption={BRAND.tagline} onDark={false} onClick={() => setDrawerOpen(false)} />
           <IconButton onClick={() => setDrawerOpen(false)} size="small" aria-label="Close menu"
-            sx={{ color: isDark ? "rgba(245,245,245,0.6)" : "#666666" }}>
+            sx={{ color: isDark ? "#94A3B8" : "#64748B" }}>
             <CloseIcon fontSize="small" />
           </IconButton>
         </Box>
 
-        <Divider sx={{ borderColor: isDark ? "#1f1f1f" : "#f0f0f0" }} />
+        <Divider sx={{ borderColor: isDark ? "#334155" : "#E2E8F0" }} />
 
         <List sx={{ pt: 1.5, px: 1.5 }}>
           {sections.map(({ label, path }) => {
@@ -290,20 +289,20 @@ const Header = () => {
               <Link key={label} href={path} style={{ textDecoration: "none", color: "inherit" }}
                 onClick={() => setDrawerOpen(false)}>
                 <ListItem sx={{
-                  backgroundColor: active ? "rgba(220,38,38,0.08)" : "transparent",
+                  backgroundColor: active ? "rgba(201,29,50,0.08)" : "transparent",
                   borderRadius: "10px", mb: 0.5, py: 1, px: 1.5,
                   transition: "all 0.15s ease",
-                  "&:hover": { backgroundColor: active ? "rgba(220,38,38,0.08)" : isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)" },
+                  "&:hover": { backgroundColor: active ? "rgba(201,29,50,0.08)" : isDark ? "rgba(255,255,255,0.04)" : "#FFF1F2" },
                 }}>
                   <ListItemIcon sx={{ minWidth: 36 }}>{mobileIcons[label]}</ListItemIcon>
                   <ListItemText primary={label}
                     primaryTypographyProps={{
                       fontWeight: active ? 700 : 500,
                       fontSize: "0.9rem",
-                      color: active ? "#dc2626" : isDark ? "rgba(245,245,245,0.85)" : "#333333",
+                      color: active ? "#C91D32" : navText,
                     }} />
                   {active && (
-                    <Box sx={{ width: 5, height: 5, borderRadius: "50%", bgcolor: "#dc2626" }} />
+                    <Box sx={{ width: 5, height: 5, borderRadius: "50%", bgcolor: "#C91D32" }} />
                   )}
                 </ListItem>
               </Link>
@@ -311,18 +310,18 @@ const Header = () => {
           })}
         </List>
 
-        <Divider sx={{ mx: 2, my: 1.5, borderColor: isDark ? "#1f1f1f" : "#f0f0f0" }} />
+        <Divider sx={{ mx: 2, my: 1.5, borderColor: isDark ? "#334155" : "#E2E8F0" }} />
 
         <Box sx={{ px: 2, pb: 3 }}>
           {isAuth ? (
             <Box>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2.5,
-                p: 1.5, borderRadius: "10px", bgcolor: isDark ? "#151515" : "#fafafa",
-                border: `1px solid ${isDark ? "#1f1f1f" : "#e5e5e5"}`,
+                p: 1.5, borderRadius: "10px", bgcolor: isDark ? "#17263D" : "#F8FAFC",
+                border: `1px solid ${isDark ? "#334155" : "#E2E8F0"}`,
               }}>
                 <Avatar
                   src={uploadUrl(user?.photo)}
-                  sx={{ width: 36, height: 36, bgcolor: "#dc2626", fontSize: "0.85rem", fontWeight: 700 }}
+                  sx={{ width: 36, height: 36, bgcolor: "#C91D32", fontSize: "0.85rem", fontWeight: 700 }}
                 >
                   {!user?.photo && user?.fullName?.charAt(0)?.toUpperCase()}
                 </Avatar>

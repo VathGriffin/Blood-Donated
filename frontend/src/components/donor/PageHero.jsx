@@ -15,9 +15,9 @@ export default function DonorPageHero({ id, icon, title, subtitle, actionHref, a
     <Box component="section" aria-labelledby={id} sx={{
       position: 'relative', overflow: 'hidden', color: '#fff', borderRadius: '18px',
       background: (t) => (t.palette.mode === 'dark'
-        ? 'linear-gradient(100deg, #6E1019 0%, #8F1522 50%, #5C0F18 100%)'
-        : 'linear-gradient(100deg, #A3172A 0%, #B91C2C 40%, #C7283A 68%, #9B1726 100%)'),
-      boxShadow: (t) => (t.palette.mode === 'dark' ? 'none' : '0 14px 34px rgba(136,29,42,0.22)'),
+        ? 'linear-gradient(160deg, #0F2038 0%, #0B1220 100%)'
+        : 'linear-gradient(120deg, #102541 0%, #173B63 55%, #245481 100%)'),
+      boxShadow: (t) => (t.palette.mode === 'dark' ? 'none' : '0 14px 34px rgba(16,37,65,0.22)'),
     }}>
       <Box aria-hidden="true" sx={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
         <Box sx={{ position: 'absolute', right: -120, top: -170, width: 480, height: 480, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.14) 0%, transparent 62%)' }} />
@@ -64,8 +64,8 @@ export default function DonorPageHero({ id, icon, title, subtitle, actionHref, a
         {actionHref && (
         <Button component={Link} href={actionHref} variant="contained" disableElevation startIcon={<AddIcon />} sx={{
           flexShrink: 0, height: 50, px: 2.75, borderRadius: '12px', fontWeight: 700, fontSize: '0.95rem',
-          bgcolor: '#fff', color: 'primary.main', width: { xs: '100%', md: 'auto' },
-          '&:hover': { bgcolor: '#FDF2F3' }, '&.Mui-focusVisible': { outline: '2px solid #fff', outlineOffset: 2 },
+          background: '#fff', color: 'primary.main', boxShadow: 'none', width: { xs: '100%', md: 'auto' },
+          '&:hover': { background: '#FFF1F2', boxShadow: 'none' }, '&.Mui-focusVisible': { outline: '2px solid #fff', outlineOffset: 2 },
         }}>
           {actionLabel}
         </Button>

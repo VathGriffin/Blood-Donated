@@ -26,7 +26,7 @@ export function DateBadge({ date }) {
   return (
     <Box aria-hidden="true" sx={{
       width: 64, height: 80, flexShrink: 0, borderRadius: '12px', overflow: 'hidden', display: 'flex', flexDirection: 'column',
-      border: '1px solid', borderColor: (t) => (t.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : '#F3C1C7'),
+      border: '1px solid', borderColor: (t) => (t.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : '#F5C6CC'),
       bgcolor: (t) => t.custom.tones.primary.bg, color: 'primary.main', textAlign: 'center',
     }}>
       <Box sx={{ bgcolor: 'primary.main', color: '#fff', fontSize: '0.72rem', fontWeight: 800, py: 0.4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>

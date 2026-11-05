@@ -33,13 +33,10 @@ import { initialsOf } from "@/lib/format";
 import { BLOOD_TYPES } from "@/lib/inventory";
 import { GIVES_TO, RECEIVES_FROM } from "@/lib/blood-compat";
 import { formatDistanceToNow } from "date-fns";
+import { ELIGIBILITY_INTERVAL_DAYS, eligibilityOf, validDate } from "@/lib/eligibility";
 
 const ITEMS_PER_PAGE = 12;
 const VIEW_KEY = "bloodlife:donor-view";
-
-// Must match Backend/src/common/eligibility.js.
-const ELIGIBILITY_INTERVAL_DAYS = 56;
-const DAY_MS = 86400000;
 
 const SORT_OPTIONS = [
   { value: "recent", label: "Recently registered" },
@@ -54,17 +51,9 @@ const AVAILABILITY = [
   { value: "ready", label: "Ready now" },
 ];
 
-const validDate = (date) => !!date && !Number.isNaN(new Date(date).getTime());
 const relative = (date) => (validDate(date) ? formatDistanceToNow(new Date(date), { addSuffix: true }) : null);
 const shortDate = (date) => new Date(date).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
 
-
-// Same rule as the backend: eligible again 56 days after the last whole-blood donation.
-const eligibilityOf = (lastDonation) => {
-  if (!validDate(lastDonation)) return { eligible: true, nextDate: null };
-  const next = new Date(new Date(lastDonation).getTime() + ELIGIBILITY_INTERVAL_DAYS * DAY_MS);
-  return next.getTime() <= Date.now() ? { eligible: true, nextDate: null } : { eligible: false, nextDate: next };
-};
 
 const sortDonors = (list, sortBy) => {
   const sorted = [...list];
@@ -98,7 +87,7 @@ function HeroStat({ icon, value, label, isDark }) {
     <Box sx={{
       display: "flex", alignItems: "center", gap: 1.5, p: { xs: 1.5, sm: 1.75 }, borderRadius: "14px",
       bgcolor: isDark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.75)",
-      border: "1px solid", borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(185,28,44,0.12)",
+      border: "1px solid", borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(201,29,50,0.12)",
       backdropFilter: "blur(6px)",
     }}>
       <Box aria-hidden="true" sx={{
@@ -514,7 +503,7 @@ const DonorList = () => {
   const from = filtered.length ? (currentPage - 1) * ITEMS_PER_PAGE + 1 : 0;
   const to = Math.min(currentPage * ITEMS_PER_PAGE, filtered.length);
   const showList = view === "list" && wide;
-  const pageBg = isDark ? "#0f0f0f" : "#F8FAFC";
+  const pageBg = isDark ? "#0B1220" : "#F6F8FC";
 
   const typeButton = (t, label = t) => {
     const selected = selectedType === t;
@@ -636,8 +625,8 @@ const DonorList = () => {
       <Box component="section" aria-labelledby="donors-title" sx={{
         position: "relative", overflow: "hidden",
         background: isDark
-          ? "linear-gradient(100deg, #1a1212 0%, #221416 60%, #2a1518 100%)"
-          : "linear-gradient(100deg, #FFF5F6 0%, #FDEBEE 55%, #FADADF 100%)",
+          ? "linear-gradient(100deg, #0F2038 0%, #13294A 60%, #17263D 100%)"
+          : "linear-gradient(100deg, #FFFFFF 0%, #F6F8FC 55%, #EEF2F7 100%)",
       }}>
         <Box aria-hidden="true" component="svg" viewBox="0 0 1440 60" preserveAspectRatio="none"
           sx={{ position: "absolute", left: 0, right: 0, bottom: -1, width: "100%", height: 36, display: "block" }}>
@@ -651,8 +640,8 @@ const DonorList = () => {
         <Container maxWidth={false} sx={{ maxWidth: 1440, position: "relative", pt: { xs: 4, md: 5 }, pb: { xs: 6, md: 7 } }}>
           <Box sx={{
             display: "inline-flex", alignItems: "center", gap: 0.75, px: 1.5, py: 0.5, mb: 2, borderRadius: "999px",
-            bgcolor: isDark ? "rgba(185,28,44,0.18)" : "#fff", color: "primary.main", fontWeight: 700, fontSize: "0.8rem",
-            boxShadow: isDark ? "none" : "0 2px 10px rgba(185,28,44,0.10)",
+            bgcolor: isDark ? "rgba(201,29,50,0.18)" : "#fff", color: "primary.main", fontWeight: 700, fontSize: "0.8rem",
+            boxShadow: isDark ? "none" : "0 2px 10px rgba(201,29,50,0.10)",
           }}>
             <PeopleAltIcon sx={{ fontSize: 16 }} aria-hidden="true" /> Donor Directory
           </Box>

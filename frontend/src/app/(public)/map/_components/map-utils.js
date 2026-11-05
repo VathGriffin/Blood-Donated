@@ -9,16 +9,17 @@ export const HOSPITAL_REQUEST_TIMEOUT_MS = 15000; // just above the backend's ow
 const CACHE_TTL_MS = 10 * 60 * 1000;
 
 export const BLOOD_COLORS = {
-  'A+': '#e53935', 'A-': '#c62828', 'B+': '#8e24aa', 'B-': '#6a1b9a',
-  'AB+': '#1565c0', 'AB-': '#0d47a1', 'O+': '#2e7d32', 'O-': '#1b5e20',
+  // Every blood type uses the brand red, as elsewhere on the site.
+  'A+': '#C91D32', 'A-': '#C91D32', 'B+': '#C91D32', 'B-': '#C91D32',
+  'AB+': '#C91D32', 'AB-': '#C91D32', 'O+': '#C91D32', 'O-': '#C91D32',
 };
 export const BLOOD_TYPES = Object.keys(BLOOD_COLORS);
 
 // One colour per kind of place, shared by the map pins, the legend, the list and the detail panel.
 export const TYPE_META = {
-  Hospital:       { color: '#c62828', tint: '#ffebee', plural: 'Hospitals' },
-  Clinic:         { color: '#1976d2', tint: '#e3f2fd', plural: 'Clinics' },
-  'Blood Center': { color: '#2e7d32', tint: '#e8f5e9', plural: 'Blood Centers' },
+  Hospital:       { color: '#C91D32', tint: '#FFF1F2', plural: 'Hospitals' },
+  Clinic:         { color: '#2563EB', tint: '#DBEAFE', plural: 'Clinics' },
+  'Blood Center': { color: '#16A34A', tint: '#DCFCE7', plural: 'Blood Centers' },
 };
 export const TYPE_FILTERS = [['all', 'All'], ['Hospital', 'Hospitals'], ['Clinic', 'Clinics'], ['Blood Center', 'Blood Centers']];
 
@@ -73,7 +74,7 @@ export const rankPlaces = (list, center, limit, sort = 'nearest') => {
 // Donors only have a city, so everyone in a city shares one coordinate and their
 // markers stack into one unclickable pile. Spread them deterministically (~0.4-3 km)
 // around the city centre; distance is still measured to the real city centre.
-export const spreadPos = ([lat, lng], seed) => {
+const spreadPos = ([lat, lng], seed) => {
   let h = 0;
   for (const c of String(seed)) h = (h * 31 + c.charCodeAt(0)) >>> 0;
   const angle = ((h % 360) * Math.PI) / 180;

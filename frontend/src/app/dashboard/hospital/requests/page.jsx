@@ -167,7 +167,7 @@ export default function HospitalRequests() {
                   <TableRow key={r._id} hover selected={selected?._id === r._id} onClick={() => setSelectedId(r._id)} sx={{ cursor: 'pointer' }}>
                     <TableCell sx={{ fontWeight: 600 }}>{shortRequestId(r._id)}</TableCell>
                     <TableCell>{r.patientName}</TableCell>
-                    <TableCell sx={{ color: 'primary.main', fontWeight: 800 }}>{r.bloodType}</TableCell>
+                    <TableCell sx={{ color: 'error.main', fontWeight: 800 }}>{r.bloodType}</TableCell>
                     <TableCell>{r.unitsNeeded}</TableCell>
                     <TableCell><StatusBadge status={r.urgency} size="small" dot={false} /></TableCell>
                     <TableCell sx={{ whiteSpace: 'nowrap' }}>{r.requiredBy ? formatDateTime(r.requiredBy) : '—'}</TableCell>

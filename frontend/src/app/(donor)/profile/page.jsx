@@ -34,6 +34,7 @@ import RequestCard from './_components/RequestCard';
 import RequestDetailsDialog from '@/components/donor/RequestDetailsDialog';
 import CancelRequestDialog from '@/components/donor/CancelRequestDialog';
 import AppointmentCard, { DonationCard } from './_components/AppointmentCard';
+import HistoryEventCard from './_components/HistoryEventCard';
 import {
   APPT_FILTERS, APPT_STATUS, EmptyPanel, REQUEST_FILTERS, REQUEST_STATUS, StatCard, cardSx, formatDate, todayKey,
 } from '@/components/donor/ui';
@@ -262,10 +263,40 @@ export default function ProfilePage() {
   const donations = useMemo(() => appointments
     .filter((a) => a.status === 'CheckedIn')
     .sort((a, b) => new Date(b.checkedInAt || b.date) - new Date(a.checkedInAt || a.date)), [appointments]);
-  const filteredDonations = useMemo(() => {
+  // Full history, newest first: check-ins, plus what the donor record holds — the day they
+  // registered as a donor, donations staff recorded directly, and the last donation date they
+  // entered when registering. Check-ins are also copied onto the donor record, so record
+  // entries within a minute of a check-in are the same donation and are skipped.
+  const history = useMemo(() => {
+    const items = donations.map((a) => ({ kind: 'checkin', key: a._id, date: a.checkedInAt || a.date, appt: a }));
+    const donor = donorStatus?.found ? donorStatus : null;
+    if (donor) {
+      const time = (d) => new Date(d).getTime();
+      const checkins = donations.filter((a) => a.checkedInAt).map((a) => time(a.checkedInAt));
+      const isCheckin = (t) => checkins.some((c) => Math.abs(c - t) < 60_000);
+      const recorded = (donor.donationHistory || []).filter((h) => h.date && !isCheckin(time(h.date)));
+      recorded.forEach((h, i) => items.push({ kind: 'recorded', key: `rec-${h._id || i}`, date: h.date, entry: h }));
+      // The date entered when registering (older records only have lastDonation, which a
+      // check-in overwrites). Shown unless that day is already listed.
+      const reported = donor.reportedLastDonation || donor.lastDonation;
+      const listed = items.map((it) => new Date(it.date).toDateString());
+      if (reported && !isCheckin(time(reported)) && !listed.includes(new Date(reported).toDateString())) {
+        items.push({ kind: 'reported', key: 'reported', date: reported });
+      }
+      if (donor.createdAt) items.push({ kind: 'registered', key: 'registered', date: donor.createdAt, donor });
+    }
+    return items.sort((a, b) => new Date(b.date) - new Date(a.date));
+  }, [donations, donorStatus]);
+  const donationCount = history.filter((it) => it.kind !== 'registered').length;
+  const filteredHistory = useMemo(() => {
     const q = historyQ.trim().toLowerCase();
-    return q ? donations.filter((a) => [a.location, a.date, a.bloodType].some((v) => v?.toLowerCase().includes(q))) : donations;
-  }, [donations, historyQ]);
+    if (!q) return history;
+    const label = { checkin: 'donated', recorded: 'donated', reported: 'previous donation reported', registered: 'registered as a donor' };
+    return history.filter((it) => [
+      label[it.kind], formatDate(it.date), it.appt?.location, it.appt?.bloodType, it.entry?.location, it.entry?.notes,
+      it.donor?.bloodType, it.donor?.location,
+    ].some((v) => v?.toLowerCase().includes(q)));
+  }, [history, historyQ]);
 
   const filteredRequests = useMemo(() => {
     const q = reqQ.trim().toLowerCase();
@@ -393,20 +424,22 @@ export default function ProfilePage() {
   const setActiveFilter = isReq ? setReqFilter : setApptFilter;
   const query = isReq ? reqQuery : isHistory ? historyQuery : apptQuery;
   const setQuery = isReq ? setReqQuery : isHistory ? setHistoryQuery : setApptQuery;
-  const listStatus = isReq ? reqStatus : apptStatus;
-  const total = isReq ? requests.length : isHistory ? donations.length : appointments.length;
-  const shown = isReq ? filteredRequests.length : isHistory ? filteredDonations.length : filteredAppointments.length;
-  const noun = isReq ? 'request' : isHistory ? 'donation' : 'appointment';
+  // History also needs the donor record, so it keeps loading until that lookup has answered.
+  const listStatus = isReq ? reqStatus : isHistory && apptStatus === 'ready' && donorStatus === null ? 'loading' : apptStatus;
+  const total = isReq ? requests.length : isHistory ? history.length : appointments.length;
+  const shown = isReq ? filteredRequests.length : isHistory ? filteredHistory.length : filteredAppointments.length;
+  const [noun, nouns] = isReq ? ['request', 'requests'] : isHistory ? ['entry', 'entries'] : ['appointment', 'appointments'];
   const newHref = isReq ? '/requests' : '/appointments';
   const newLabel = isReq ? 'New Request' : 'Book Appointment';
 
   // The donor record's lastDonation is updated on check-in; fall back to the newest check-in.
   const lastDonation = donorStatus?.lastDonation || donations[0]?.checkedInAt || null;
+  const registered = !!donorStatus?.found;
 
   const tabDefs = [
     { value: 'requests', label: 'Blood Requests', count: requests.length, icon: <WaterDropIcon /> },
     { value: 'appointments', label: 'Appointments', count: appointments.length, icon: <EventAvailableIcon /> },
-    { value: 'history', label: 'Donation History', count: donations.length, icon: <BarChartIcon /> },
+    { value: 'history', label: 'Donation History', count: history.length, icon: <BarChartIcon /> },
   ];
 
   return (
@@ -429,7 +462,7 @@ export default function ProfilePage() {
           sub={apptStatus === 'ready' ? (upcoming[0] ? `Next: ${formatDate(upcoming[0].date, { day: 'numeric', month: 'short', year: 'numeric' })}` : 'None booked') : apptStatus === 'error' ? 'Couldn’t load' : undefined}
           onClick={() => openTab('appointments')} />
         <StatCard icon={<FavoriteBorderIcon />} label="Total Donations" loading={apptStatus === 'loading'}
-          value={apptStatus === 'error' ? '—' : donations.length}
+          value={apptStatus === 'error' ? '—' : donationCount}
           sub={lastDonation ? `Last donation: ${formatDistanceToNow(new Date(lastDonation), { addSuffix: true })}` : 'No donations recorded yet'}
           onClick={() => openTab('history')} />
       </Box>
@@ -453,7 +486,11 @@ export default function ProfilePage() {
             ))}
           </Tabs>
           <Button component={Link} href={newHref} variant="contained" startIcon={<AddIcon />}
-            sx={{ display: { xs: 'none', md: 'inline-flex' }, flexShrink: 0, height: 42, borderRadius: '10px', fontWeight: 700 }}>
+            sx={{
+              display: { xs: 'none', md: 'inline-flex' }, flexShrink: 0, height: 42, borderRadius: '10px', fontWeight: 700,
+              background: (t) => `linear-gradient(135deg, ${t.palette.primary.light} 0%, ${t.palette.primary.main} 100%)`,
+              boxShadow: (t) => `0 6px 16px ${alpha(t.palette.primary.main, 0.3)}`,
+            }}>
             {newLabel}
           </Button>
         </Box>
@@ -463,7 +500,7 @@ export default function ProfilePage() {
           <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center', mb: 2.5 }}>
             {isHistory ? (
               <Typography variant="body2" color="text.secondary" sx={{ flex: '1 1 260px' }}>
-                Donations checked in by staff at a BloodLife donation center.
+                Your donor registration and every donation on record, newest first.
               </Typography>
             ) : (
               <Box role="radiogroup" aria-label="Filter by status" sx={{ display: 'flex', gap: 1, overflowX: 'auto', flex: '1 1 auto', pb: 0.25, minWidth: 0 }}>
@@ -473,11 +510,15 @@ export default function ProfilePage() {
                   return (
                     <Chip key={s} role="radio" aria-checked={selected} clickable onClick={() => setActiveFilter(s)}
                       label={`${s === 'All' ? 'All' : statusMeta[s].label}${listStatus === 'ready' ? ` (${count})` : ''}`}
-                      color={selected ? 'primary' : 'default'} variant={selected ? 'filled' : 'outlined'}
+                      variant="outlined"
                       sx={{
-                        flexShrink: 0, height: 40, px: 0.75, borderRadius: '999px', fontWeight: 600, fontSize: '0.9rem',
-                        ...(!selected && { bgcolor: 'background.paper', borderColor: 'divider', color: 'text.primary', borderWidth: 1.5 }),
-                        ...(selected && { boxShadow: (t) => `0 4px 10px ${alpha(t.palette.primary.main, 0.25)}` }),
+                        flexShrink: 0, height: 38, px: 0.75, borderRadius: '999px', fontWeight: 600, fontSize: '0.86rem', borderWidth: 1.5,
+                        transition: 'background-color .15s ease, border-color .15s ease',
+                        ...(selected
+                          ? { bgcolor: (t) => t.custom.tones.primary.bg, borderColor: (t) => alpha(t.palette.primary.main, 0.35), color: 'primary.main', fontWeight: 700,
+                            '&:hover': { bgcolor: (t) => `${t.custom.tones.primary.bg} !important` } }
+                          : { bgcolor: 'background.paper', borderColor: 'divider', color: 'text.primary' }),
+                        '&.Mui-focusVisible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 },
                       }} />
                   );
                 })}
@@ -491,7 +532,7 @@ export default function ProfilePage() {
               <SearchIcon aria-hidden="true" sx={{ fontSize: 21, color: 'text.secondary' }} />
               <InputBase value={query} onChange={(e) => setQuery(e.target.value)} fullWidth sx={{ fontSize: '0.9rem' }}
                 placeholder={isReq ? 'Search patient or hospital...' : isHistory ? 'Search donations...' : 'Search center or date...'}
-                inputProps={{ 'aria-label': `Search ${noun}s`, type: 'search' }} />
+                inputProps={{ 'aria-label': `Search ${nouns}`, type: 'search' }} />
               {query && (
                 <IconButton size="small" aria-label="Clear search" onClick={() => setQuery('')}><CloseIcon fontSize="small" /></IconButton>
               )}
@@ -500,7 +541,7 @@ export default function ProfilePage() {
 
           {listStatus === 'ready' && total > 0 && (query || (!isHistory && activeFilter !== 'All')) && (
             <Typography variant="caption" color="text.secondary" aria-live="polite" sx={{ display: 'block', mb: 1.25 }}>
-              Showing {shown} of {total} {noun}{total !== 1 ? 's' : ''}
+              Showing {shown} of {total} {total !== 1 ? nouns : noun}
             </Typography>
           )}
 
@@ -509,13 +550,17 @@ export default function ProfilePage() {
             : total === 0 ? (
               <EmptyPanel
                 icon={isReq ? <BloodtypeOutlinedIcon /> : isHistory ? <WaterDropIcon /> : <EventAvailableOutlinedIcon />}
-                title={isReq ? 'No blood requests yet' : isHistory ? 'No donations recorded yet' : 'No appointments yet'}
+                title={isReq ? 'No blood requests yet' : isHistory ? 'No donation history yet' : 'No appointments yet'}
                 text={isReq ? 'Requests you submit for a patient will appear here, with their status.'
-                  : isHistory ? 'When staff check you in at a donation center, the donation appears here.'
+                  : isHistory ? (registered
+                    ? 'When staff check you in at a donation center, the donation appears here.'
+                    : 'Register as a donor with this account’s email and your registration will appear here, followed by each donation.')
                   : 'Book a donation slot at a center near you. It will appear here once booked.'}
-                action={<Button component={Link} href={newHref} variant="contained" startIcon={<AddIcon />}>
-                  {isReq ? 'Submit a Request' : 'Book an Appointment'}
-                </Button>} />
+                action={isHistory && !registered
+                  ? <Button component={Link} href="/donate" variant="contained" startIcon={<AddIcon />}>Register as a Donor</Button>
+                  : <Button component={Link} href={newHref} variant="contained" startIcon={<AddIcon />}>
+                    {isReq ? 'Submit a Request' : 'Book an Appointment'}
+                  </Button>} />
             ) : shown === 0 ? (
               <EmptyPanel icon={<SearchOffIcon />} title="Nothing matches"
                 text={isHistory ? 'Try another search term.' : 'Try another status or search term.'}
@@ -529,8 +574,9 @@ export default function ProfilePage() {
                       cancelling={cancelling && cancelTarget?._id === req._id} />
                   ))
                   : isHistory
-                    ? filteredDonations.map((a) => <DonationCard key={a._id} appt={a}
-                      hospitalImage={hospitalImages[a.hospital] || hospitalImages[a.location]} />)
+                    ? filteredHistory.map((it) => (it.kind === 'checkin'
+                      ? <DonationCard key={it.key} appt={it.appt} hospitalImage={hospitalImages[it.appt.hospital] || hospitalImages[it.appt.location]} />
+                      : <HistoryEventCard key={it.key} item={it} />))
                     : filteredAppointments.map((a) => <AppointmentCard key={a._id} appt={a} hospitalPhone={hospitalPhones[a.hospital]}
                       hospitalImage={hospitalImages[a.hospital] || hospitalImages[a.location]} />)}
               </Box>

@@ -15,7 +15,7 @@ One layout for every role. A route layout just wraps its pages:
 ## What's where
 - `DashboardShell` – guard + frame (sidebar, top bar, content). Renders nothing protected until the session is confirmed.
 - `DashboardSidebar` – dark-red rail on desktop, slide-in drawer below 900px.
-- `DashboardTopBar` – page title, `NotificationMenu`, theme toggle, `ProfileMenu`.
+- `DashboardTopBar` – page title, the role's notification bell (`components/notifications/*Notifications`), theme toggle, `ProfileMenu`.
 - `BrandLogo` – logo mark (`assets/logo-mark.png`) + name (`lib/brand.js`: `DASHBOARD_BRAND` for the dashboards, `BRAND` for the public site).
 - `hooks/useDashboardSession` – confirms the session with the server; `hooks/useDashboardNotifications` – live, role-specific alerts.
 - `lib/navigation.js` – **the menu for each role lives here.**
