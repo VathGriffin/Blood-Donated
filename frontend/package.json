@@ -29,9 +29,14 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint ."
   },
   "overrides": {
     "postcss": "^8.5.23"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "3.3.7",
+    "eslint": "9.39.5",
+    "eslint-config-next": "15.5.29"
   }
 }

@@ -1,16 +1,30 @@
 import { cookies } from 'next/headers';
 import { inter } from '@/lib/fonts';
 import Providers from '@/lib/Providers';
+import { SITE_URL } from '@/lib/site-url';
+
+const DESCRIPTION = 'Connecting blood donors, patients and hospitals across Cambodia — register as a donor, book an appointment, request blood and get answers from an AI assistant.';
 
 export const metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
     default: 'BloodLife AI — Blood Donation Platform',
     template: '%s | BloodLife AI',
   },
-  description: 'Development of an Intelligent Blood Donation Management Platform Integrated with an AI Chatbot for Donor and Hospital Support. Connecting donors, patients, and hospitals across Cambodia.',
+  description: DESCRIPTION,
+  applicationName: 'BloodLife AI',
+  openGraph: {
+    type: 'website',
+    siteName: 'BloodLife AI',
+    title: 'BloodLife AI — Blood Donation Platform',
+    description: DESCRIPTION,
+  },
+  twitter: { card: 'summary_large_image', title: 'BloodLife AI — Blood Donation Platform', description: DESCRIPTION },
   icons: { icon: '/favicon.ico' },
   keywords: ['blood donation', 'blood bank', 'donor management', 'AI chatbot', 'hospital support', 'Cambodia'],
 };
+
+export const viewport = { themeColor: '#dc2626' };
 
 export default async function RootLayout({ children }) {
   // Saved light/dark choice, so the first paint already uses the right theme.
