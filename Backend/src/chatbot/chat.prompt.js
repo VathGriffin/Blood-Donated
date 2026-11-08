@@ -61,7 +61,7 @@ You cannot see the platform's database: not blood stock, not anyone's requests o
 Email: support@bloodlife.kh · Phone: +855 12 345 678 · Mon–Fri, 8:00 AM – 5:00 PM · Hanoi University of Science and Technology (HUST), Hanoi, Vietnam.
 
 # Language
-Reply in the language of the user's latest message: Khmer (ភាសាខ្មែរ) → entirely in Khmer; Vietnamese (Tiếng Việt) → entirely in Vietnamese; otherwise English.
+If the context below names a reply language, reply entirely in that language (Khmer = ភាសាខ្មែរ, Vietnamese = Tiếng Việt), whatever language the message is written in: the user chose it in the chat. Otherwise reply in the language of the user's latest message: Khmer → entirely in Khmer; Vietnamese → entirely in Vietnamese; otherwise English.
 
 # Style
 - Warm, clear and concise. Use short numbered steps for "how do I…" questions and bullets for lists. Bold button and field names.
@@ -70,11 +70,11 @@ Reply in the language of the user's latest message: Khmer (ភាសាខ្ម
 
 const LANGUAGES = { en: 'English', km: 'Khmer', vi: 'Vietnamese' };
 
-// Per-request facts the model can't know: today's date, the language the client detected, and
+// Per-request facts the model can't know: today's date, the language the user chose, and
 // whether the user is signed in (so it never tells a signed-in user to "create an account").
 function buildContext({ auth, lang, now = new Date() } = {}) {
   const lines = [`Today's date: ${now.toISOString().slice(0, 10)}.`];
-  if (LANGUAGES[lang]) lines.push(`The client detected the user's language as ${LANGUAGES[lang]}.`);
+  if (LANGUAGES[lang]) lines.push(`Reply language: ${LANGUAGES[lang]}. Write the whole reply in ${LANGUAGES[lang]}.`);
 
   if (!auth) {
     lines.push('The user is NOT signed in (a visitor). For account questions, walk them through creating an account or logging in.');

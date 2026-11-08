@@ -1,4 +1,5 @@
 'use client';
+import { useI18n, useT } from '@/i18n/I18nProvider';
 import { memo } from 'react';
 import { Box, Typography, useTheme } from '@mui/material';
 import { ResponsiveContainer, BarChart, Bar, Cell, LabelList, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip, PieChart, Pie, Rectangle } from 'recharts';
@@ -10,14 +11,15 @@ import { STOCK } from '@/lib/inventory';
 // Hover card: blood type, exact units, the type's minimum and its stock level.
 function StockTooltip({ active, payload }) {
   const theme = useTheme();
+  const { t, rich } = useI18n();
   if (!active || !payload?.length) return null;
   const i = payload[0].payload;
   const level = STOCK[i.status];
   return (
     <Box sx={{ px: 1.5, py: 1.25, borderRadius: '12px', border: 1, borderColor: 'divider', bgcolor: 'background.paper', boxShadow: theme.custom.shadow.md, minWidth: 150 }}>
       <Typography sx={{ fontWeight: 800, fontSize: '0.95rem' }}>{i.bloodType}</Typography>
-      <Typography sx={{ fontSize: '0.85rem', mt: 0.25 }}><b>{i.units}</b> unit{i.units === 1 ? '' : 's'} in stock</Typography>
-      <Typography sx={{ fontSize: '0.78rem', color: 'text.secondary' }}>Minimum {i.minUnits ?? 10}</Typography>
+      <Typography sx={{ fontSize: '0.85rem', mt: 0.25 }}>{rich('shared.charts.inStock', { units: <b>{i.units}</b> }, { count: i.units })}</Typography>
+      <Typography sx={{ fontSize: '0.78rem', color: 'text.secondary' }}>{t('shared.charts.minimum', { min: i.minUnits ?? 10 })}</Typography>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 0.75 }}>
         <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: level.color }} />
         <Typography sx={{ fontSize: '0.78rem', fontWeight: 700, color: level.color }}>{level.label}</Typography>
@@ -29,6 +31,7 @@ function StockTooltip({ active, payload }) {
 /** Units per blood type, each bar coloured by stock level. `stock` = completeByType(...). */
 export const StockBarChart = memo(function StockBarChart({ stock }) {
   const theme = useTheme();
+  const t = useT();
   const tick = { fill: theme.palette.text.secondary, fontSize: 12 };
   const axisTitle = { fill: theme.palette.text.secondary, fontSize: 11, fontWeight: 600 };
   const emptyStroke = theme.palette.mode === 'dark' ? '#94A3B8' : '#9CA3AF';
@@ -55,7 +58,7 @@ export const StockBarChart = memo(function StockBarChart({ stock }) {
             tick={{ ...tick, fontWeight: 600, fill: theme.palette.text.primary }}
             axisLine={{ stroke: theme.palette.divider }}
             tickLine={false}
-            label={{ value: 'Blood type', position: 'insideBottom', offset: -10, style: axisTitle }}
+            label={{ value: t('shared.charts.bloodType'), position: 'insideBottom', offset: -10, style: axisTitle }}
           />
           <YAxis
             tick={tick}
@@ -63,7 +66,7 @@ export const StockBarChart = memo(function StockBarChart({ stock }) {
             tickLine={false}
             allowDecimals={false}
             width={44}
-            label={{ value: 'Units', angle: -90, position: 'insideLeft', offset: 10, style: { ...axisTitle, textAnchor: 'middle' } }}
+            label={{ value: t('shared.charts.units'), angle: -90, position: 'insideLeft', offset: 10, style: { ...axisTitle, textAnchor: 'middle' } }}
           />
           <ChartTooltip cursor={{ fill: theme.palette.action.hover, radius: 8 }} content={<StockTooltip />} />
           <Bar dataKey="units" radius={[8, 8, 0, 0]} maxBarSize={60} shape={barShape}>
@@ -87,6 +90,7 @@ export const StockBarChart = memo(function StockBarChart({ stock }) {
 
 /** Donut of units by stock level with the grand total in the middle. `slices` = [{ key, value, color }]. */
 export const StockDonut = memo(function StockDonut({ slices, totalUnits, size = 200 }) {
+  const t = useT();
   const ring = size / 200;
   return (
     <Box sx={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
@@ -99,7 +103,7 @@ export const StockDonut = memo(function StockDonut({ slices, totalUnits, size = 
       </ResponsiveContainer>
       <Box sx={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
         <Typography sx={{ fontSize: '1.75rem', fontWeight: 800, lineHeight: 1.1 }}>{totalUnits.toLocaleString()}</Typography>
-        <Typography variant="caption" color="text.secondary">Total Units</Typography>
+        <Typography variant="caption" color="text.secondary">{t('shared.charts.total')}</Typography>
       </Box>
     </Box>
   );

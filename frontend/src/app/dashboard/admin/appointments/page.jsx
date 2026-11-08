@@ -1,4 +1,5 @@
 'use client';
+import { useI18n } from '@/i18n/I18nProvider';
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Alert, Avatar, Box, Button, ButtonBase, Dialog, DialogActions, DialogContent, DialogTitle,
@@ -12,7 +13,9 @@ import {
   LocalHospital, AccessTime, Bloodtype, Email, Phone, Notes,
 } from "@mui/icons-material";
 import axios from "axios";
-import { format, parseISO, isValid } from "date-fns";
+import { parseISO, isValid } from "date-fns";
+import { currentIntlLocale, currentLang } from "@/i18n/config";
+import { translate } from "@/i18n/translate";
 import API_BASE, { uploadUrl } from "@/lib/config";
 import { apiErrorMessage } from "@/lib/api-error";
 import { initialsOf } from "@/lib/format";
@@ -25,28 +28,30 @@ const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
 // The four statuses the Appointment model allows. "CheckedIn" is the end of the flow:
 // checking in (PATCH /check-in, done by hospital staff) is what records the donation.
+// Labels follow the selected language (status.<value> / adm.appts.actions.<value>), read when rendered.
+const tr = (key) => translate(currentLang(), key);
+const status = (value, tone, icon) => ({ value, tone, icon, get label() { return tr(`status.${value}`); } });
 const STATUSES = [
-  { value: "Pending",   label: "Pending",    tone: "warning", icon: HourglassTop },
-  { value: "Confirmed", label: "Confirmed",  tone: "info",    icon: EventAvailable },
-  { value: "CheckedIn", label: "Checked In", tone: "purple",  icon: HowToReg },
-  { value: "Cancelled", label: "Cancelled",  tone: "error",   icon: EventBusy },
+  status("Pending", "warning", HourglassTop),
+  status("Confirmed", "info", EventAvailable),
+  status("CheckedIn", "purple", HowToReg),
+  status("Cancelled", "error", EventBusy),
 ];
 const STATUS = Object.fromEntries(STATUSES.map((s) => [s.value, s]));
 
 // Status changes the API accepts from this page (PUT only allows these; see appointment.routes.js).
-const STATUS_ACTIONS = [
-  { value: "Confirmed", label: "Confirm appointment", icon: CheckCircleOutline },
-  { value: "Pending",   label: "Mark as pending",     icon: Undo },
-  { value: "Cancelled", label: "Cancel appointment",  icon: EventBusy },
-];
+const action = (value, icon) => ({ value, icon, get label() { return tr(`adm.appts.statusActions.${value}`); } });
+const STATUS_ACTIONS = [action("Confirmed", CheckCircleOutline), action("Pending", Undo), action("Cancelled", EventBusy)];
 
 const EMPTY_FILTERS = { status: "", bloodType: "", hospital: "", from: "", to: "" };
 
 
-const formatDate = (d, pattern = "MMM d, yyyy") => {
+const DATE = { month: "short", day: "numeric", year: "numeric" };
+const formatDate = (d, opts = DATE) => {
   const parsed = d ? parseISO(d) : null;
-  return parsed && isValid(parsed) ? format(parsed, pattern) : d || "—";
+  return parsed && isValid(parsed) ? parsed.toLocaleDateString(currentIntlLocale(), opts) : d || "—";
 };
+const formatStamp = (d) => new Date(d).toLocaleString(currentIntlLocale(), { ...DATE, hour: "numeric", minute: "2-digit" });
 
 // Uploaded photos are served by the API as "/uploads/…"; full URLs pass through.
 
@@ -145,6 +150,7 @@ function DetailRow({ icon: Icon, label, children }) {
 }
 
 const ManageAppointments = () => {
+  const { t, rich } = useI18n();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { token } = useAuth();
@@ -172,7 +178,7 @@ const ManageAppointments = () => {
       const res = await axios.get(API, authHeader());
       setAppointments(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
-      setLoadError(apiErrorMessage(err, "Could not load appointments."));
+      setLoadError(err);
     } finally {
       setLoading(false);
     }
@@ -230,9 +236,9 @@ const ManageAppointments = () => {
       const res = await axios.put(`${API}/${appt._id}`, { status }, authHeader());
       setAppointments((prev) => prev.map((a) => (a._id === appt._id ? { ...a, ...res.data } : a)));
       setViewing((v) => (v?._id === appt._id ? { ...v, ...res.data } : v));
-      notify(`${appt.fullName}'s appointment is now ${STATUS[status].label.toLowerCase()}.`);
+      notify(t('adm.appts.nowStatus', { name: appt.fullName, status: STATUS[status].label }));
     } catch (err) {
-      notify(apiErrorMessage(err, "Could not update the status."), "error");
+      notify(apiErrorMessage(err, t('adm.appts.statusFailed')), "error");
     }
   };
 
@@ -243,10 +249,10 @@ const ManageAppointments = () => {
       await axios.delete(`${API}/${deleting._id}`, authHeader());
       setAppointments((prev) => prev.filter((a) => a._id !== deleting._id));
       if (viewing?._id === deleting._id) setViewing(null);
-      notify("Appointment deleted.");
+      notify(t('adm.appts.deleted'));
       setDeleting(null);
     } catch (err) {
-      notify(apiErrorMessage(err, "Could not delete the appointment."), "error");
+      notify(apiErrorMessage(err, t('adm.appts.deleteFailed')), "error");
     } finally {
       setBusy(false);
     }
@@ -255,10 +261,10 @@ const ManageAppointments = () => {
   // A render helper, not a component: a component defined in here would remount on every
   // render and leave the open menu anchored to a detached button.
   const actionButton = (appt) => (
-    <Tooltip title="Actions">
+    <Tooltip title={t('adm.appts.actions')}>
       <IconButton
         size="small"
-        aria-label={`Actions for ${appt.fullName}`}
+        aria-label={t('adm.appts.actionsFor', { name: appt.fullName })}
         aria-haspopup="menu"
         aria-expanded={menu.anchor && menu.appt?._id === appt._id ? "true" : undefined}
         onClick={(e) => openMenu(e, appt)}
@@ -274,7 +280,7 @@ const ManageAppointments = () => {
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
       <TextField
         size="small"
-        placeholder="Search donor name, email, blood type or hospital…"
+        placeholder={t('adm.appts.searchDonorNameEmail')}
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         sx={{ width: { xs: "100%", md: 440 } }}
@@ -286,7 +292,7 @@ const ManageAppointments = () => {
             ),
             endAdornment: search ? (
               <InputAdornment position="end">
-                <IconButton size="small" aria-label="Clear search" onClick={() => setSearch("")}><Close fontSize="small" /></IconButton>
+                <IconButton size="small" aria-label={t('adm.appts.clearSearch')} onClick={() => setSearch("")}><Close fontSize="small" /></IconButton>
               </InputAdornment>
             ) : null,
           },
@@ -294,40 +300,40 @@ const ManageAppointments = () => {
       />
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, alignItems: "center" }}>
         <FormControl size="small" sx={selectSx}>
-          <InputLabel id="f-status">Status</InputLabel>
-          <Select labelId="f-status" label="Status" value={filters.status} onChange={setFilter("status")}>
-            <MenuItem value="">All statuses</MenuItem>
+          <InputLabel id="f-status">{t('adm.appts.status')}</InputLabel>
+          <Select labelId="f-status" label={t('adm.appts.status')} value={filters.status} onChange={setFilter("status")}>
+            <MenuItem value="">{t('adm.appts.allStatuses')}</MenuItem>
             {STATUSES.map((s) => <MenuItem key={s.value} value={s.value}>{s.label}</MenuItem>)}
           </Select>
         </FormControl>
         <FormControl size="small" sx={selectSx}>
-          <InputLabel id="f-blood">Blood type</InputLabel>
-          <Select labelId="f-blood" label="Blood type" value={filters.bloodType} onChange={setFilter("bloodType")}>
-            <MenuItem value="">All types</MenuItem>
+          <InputLabel id="f-blood">{t('adm.appts.bloodType')}</InputLabel>
+          <Select labelId="f-blood" label={t('adm.appts.bloodType')} value={filters.bloodType} onChange={setFilter("bloodType")}>
+            <MenuItem value="">{t('adm.appts.allTypes')}</MenuItem>
             {BLOOD_TYPES.map((b) => <MenuItem key={b} value={b}>{b}</MenuItem>)}
           </Select>
         </FormControl>
         <FormControl size="small" sx={{ ...selectSx, minWidth: { xs: "100%", sm: 200 }, maxWidth: { sm: 260 } }}>
-          <InputLabel id="f-hospital">Hospital</InputLabel>
-          <Select labelId="f-hospital" label="Hospital" value={filters.hospital} onChange={setFilter("hospital")}>
-            <MenuItem value="">All hospitals</MenuItem>
+          <InputLabel id="f-hospital">{t('adm.appts.hospital')}</InputLabel>
+          <Select labelId="f-hospital" label={t('adm.appts.hospital')} value={filters.hospital} onChange={setFilter("hospital")}>
+            <MenuItem value="">{t('adm.appts.allHospitals')}</MenuItem>
             {hospitals.map((h) => <MenuItem key={h} value={h}>{h}</MenuItem>)}
           </Select>
         </FormControl>
         <TextField
-          size="small" type="date" label="From" value={filters.from} onChange={setFilter("from")}
+          size="small" type="date" label={t('adm.appts.from')} value={filters.from} onChange={setFilter("from")}
           sx={{ flex: { xs: "1 1 40%", sm: "0 0 160px" } }}
           slotProps={{ inputLabel: { shrink: true }, htmlInput: { max: filters.to || undefined } }}
         />
         <TextField
-          size="small" type="date" label="To" value={filters.to} onChange={setFilter("to")}
+          size="small" type="date" label={t('adm.appts.to')} value={filters.to} onChange={setFilter("to")}
           sx={{ flex: { xs: "1 1 40%", sm: "0 0 160px" } }}
           slotProps={{ inputLabel: { shrink: true }, htmlInput: { min: filters.from || undefined } }}
         />
         {filtersActive && (
           <Button size="small" color="inherit" startIcon={<FilterAltOff fontSize="small" />} onClick={clearFilters}
             sx={{ color: "text.secondary" }}>
-            Clear filters
+            {t('adm.appts.clearFilters')}
           </Button>
         )}
       </Box>
@@ -337,34 +343,34 @@ const ManageAppointments = () => {
   const emptyState = (
     <EmptyState
       icon={<CalendarMonth />}
-      title={appointments.length === 0 ? "No appointments yet" : "No appointments match"}
+      title={appointments.length === 0 ? t('adm.appts.noneYet') : t('adm.appts.noMatch')}
       description={
         appointments.length === 0
-          ? "Appointments booked by donors will appear here."
-          : "Try a different search term or clear the filters."
+          ? t('adm.appts.emptyText')
+          : t('adm.appts.tryDifferent')
       }
-      action={appointments.length > 0 && <Button variant="outlined" size="small" onClick={clearFilters}>Clear filters</Button>}
+      action={appointments.length > 0 && <Button variant="outlined" size="small" onClick={clearFilters}>{t('adm.appts.clearFilters')}</Button>}
     />
   );
 
   const errorState = (
     <Box sx={{ p: 3 }}>
-      <Alert severity="error" action={<Button color="inherit" size="small" onClick={fetchAppointments}>Retry</Button>}>
-        {loadError}
+      <Alert severity="error" action={<Button color="inherit" size="small" onClick={fetchAppointments}>{t('adm.appts.retry')}</Button>}>
+        {apiErrorMessage(loadError, t('adm.appts.loadFailed'))}
       </Alert>
     </Box>
   );
 
   const desktopTable = (
-    <Table aria-label="Appointments">
+    <Table aria-label={t('adm.appts.appointments')}>
       <TableHead>
         <TableRow>
-          <TableCell>Donor</TableCell>
-          <TableCell>Blood type</TableCell>
-          <TableCell>Date &amp; time</TableCell>
-          <TableCell>Hospital</TableCell>
-          <TableCell>Status</TableCell>
-          <TableCell align="right">Actions</TableCell>
+          <TableCell>{t('adm.appts.donor')}</TableCell>
+          <TableCell>{t('adm.appts.bloodType')}</TableCell>
+          <TableCell>{t('adm.appts.dateTime')}</TableCell>
+          <TableCell>{t('adm.appts.hospital')}</TableCell>
+          <TableCell>{t('adm.appts.status')}</TableCell>
+          <TableCell align="right">{t('adm.appts.actions')}</TableCell>
         </TableRow>
       </TableHead>
       <TableBody>
@@ -408,7 +414,7 @@ const ManageAppointments = () => {
   );
 
   const mobileList = (
-    <Box component="ul" aria-label="Appointments" sx={{ listStyle: "none", m: 0, p: 0 }}>
+    <Box component="ul" aria-label={t('adm.appts.appointments')} sx={{ listStyle: "none", m: 0, p: 0 }}>
       {loading
         ? Array.from({ length: 4 }).map((_, i) => (
             <Box component="li" key={i} sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
@@ -450,11 +456,11 @@ const ManageAppointments = () => {
   return (
     <Box>
       <PageHeader
-        title="Manage Appointments"
-        subtitle="Review donor bookings, confirm or cancel appointments, and track check-ins across every hospital."
+        title={t('adm.appts.manageAppointments')}
+        subtitle={t('adm.appts.reviewDonorBookingsConfirm')}
         actions={
           <Button variant="outlined" startIcon={<Refresh />} onClick={fetchAppointments} disabled={loading}>
-            Refresh
+            {t('adm.appts.refresh')}
           </Button>
         }
         sx={{ mb: 3 }}
@@ -470,7 +476,7 @@ const ManageAppointments = () => {
           gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", sm: "repeat(3, minmax(0, 1fr))", lg: "repeat(5, minmax(0, 1fr))" },
         }}
       >
-        <SummaryCard label="Total" value={counts.total} icon={EventNote} tone="primary" loading={loading}
+        <SummaryCard label={t('adm.appts.total')} value={counts.total} icon={EventNote} tone="primary" loading={loading}
           active={!filters.status} onClick={() => setFilters((f) => ({ ...f, status: "" }))} />
         {STATUSES.map((s) => (
           <SummaryCard key={s.value} label={s.label} value={counts[s.value]} icon={s.icon} tone={s.tone} loading={loading}
@@ -479,11 +485,11 @@ const ManageAppointments = () => {
       </Box>
 
       <TableCard
-        title="All appointments"
+        title={t('adm.appts.allAppointments')}
         subtitle={
-          loading ? "Loading…"
-            : filtersActive ? `${filtered.length} of ${appointments.length} appointments match`
-            : `${appointments.length} appointment${appointments.length !== 1 ? "s" : ""}, newest bookings first`
+          loading ? t('adm.appts.loading')
+            : filtersActive ? t('adm.appts.matchCount', { shown: filtered.length, total: appointments.length })
+            : t('adm.appts.totalCount', { count: appointments.length })
         }
         toolbar={toolbar}
         minWidth={820}
@@ -498,7 +504,7 @@ const ManageAppointments = () => {
             rowsPerPage={rowsPerPage}
             onRowsPerPageChange={(e) => setRowsPerPage(parseInt(e.target.value, 10))}
             rowsPerPageOptions={[10, 25, 50]}
-            labelRowsPerPage={isMobile ? "Rows" : "Rows per page"}
+            labelRowsPerPage={t(isMobile ? 'ui.pagination.rows' : 'ui.pagination.rowsPerPage')}
             sx={{ borderTop: 1, borderColor: "divider", "& .MuiTablePagination-toolbar": { px: { xs: 1, sm: 2 } } }}
           />
         )}
@@ -515,7 +521,7 @@ const ManageAppointments = () => {
       >
         <MenuItem onClick={() => { closeMenu(); setViewing(menuAppt); }}>
           <ListItemIcon><Visibility fontSize="small" /></ListItemIcon>
-          <ListItemText>View details</ListItemText>
+          <ListItemText>{t('adm.appts.viewDetails')}</ListItemText>
         </MenuItem>
         {menuAppt && menuAppt.status !== "CheckedIn" && <Divider />}
         {menuAppt && menuAppt.status !== "CheckedIn" &&
@@ -528,7 +534,7 @@ const ManageAppointments = () => {
         <Divider />
         <MenuItem onClick={() => { closeMenu(); setDeleting(menuAppt); }} sx={{ color: "error.main" }}>
           <ListItemIcon sx={{ color: "inherit" }}><DeleteOutline fontSize="small" /></ListItemIcon>
-          <ListItemText>Delete</ListItemText>
+          <ListItemText>{t('adm.appts.delete')}</ListItemText>
         </MenuItem>
       </Menu>
 
@@ -543,10 +549,10 @@ const ManageAppointments = () => {
               <Box sx={{ minWidth: 0 }}>
                 <Typography variant="h6" component="span" display="block" noWrap>{viewing.fullName}</Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Booked {viewing.createdAt ? format(new Date(viewing.createdAt), "MMM d, yyyy 'at' h:mm a") : "—"}
+                  {t('adm.appts.booked', { date: viewing.createdAt ? formatStamp(viewing.createdAt) : '—' })}
                 </Typography>
               </Box>
-              <IconButton aria-label="Close" onClick={() => setViewing(null)} sx={{ position: "absolute", right: 12, top: 12 }}>
+              <IconButton aria-label={t('adm.appts.close')} onClick={() => setViewing(null)} sx={{ position: "absolute", right: 12, top: 12 }}>
                 <Close />
               </IconButton>
             </DialogTitle>
@@ -556,21 +562,21 @@ const ManageAppointments = () => {
                 <BloodChip type={viewing.bloodType} />
               </Box>
               <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2.25 }}>
-                <DetailRow icon={Email} label="Email">{viewing.email}</DetailRow>
-                <DetailRow icon={Phone} label="Phone">{viewing.phone || "—"}</DetailRow>
-                <DetailRow icon={CalendarMonth} label="Date">{formatDate(viewing.date, "EEEE, MMM d, yyyy")}</DetailRow>
-                <DetailRow icon={AccessTime} label="Time">{viewing.time}</DetailRow>
-                <DetailRow icon={LocalHospital} label="Hospital">{viewing.location}</DetailRow>
-                <DetailRow icon={Bloodtype} label="Blood type">{viewing.bloodType}</DetailRow>
+                <DetailRow icon={Email} label={t('adm.appts.email')}>{viewing.email}</DetailRow>
+                <DetailRow icon={Phone} label={t('adm.appts.phone')}>{viewing.phone || "—"}</DetailRow>
+                <DetailRow icon={CalendarMonth} label={t('adm.appts.date')}>{formatDate(viewing.date, { weekday: "long", ...DATE })}</DetailRow>
+                <DetailRow icon={AccessTime} label={t('adm.appts.time')}>{viewing.time}</DetailRow>
+                <DetailRow icon={LocalHospital} label={t('adm.appts.hospital')}>{viewing.location}</DetailRow>
+                <DetailRow icon={Bloodtype} label={t('adm.appts.bloodType')}>{viewing.bloodType}</DetailRow>
                 {viewing.status === "CheckedIn" && viewing.checkedInAt && (
-                  <DetailRow icon={HowToReg} label="Checked in">
-                    {format(new Date(viewing.checkedInAt), "MMM d, yyyy 'at' h:mm a")}
+                  <DetailRow icon={HowToReg} label={t('adm.appts.checkedIn')}>
+                    {formatStamp(viewing.checkedInAt)}
                   </DetailRow>
                 )}
               </Box>
               {viewing.notes && (
                 <Box sx={{ mt: 2.25 }}>
-                  <DetailRow icon={Notes} label="Donor notes">
+                  <DetailRow icon={Notes} label={t('adm.appts.donorNotes')}>
                     <Box component="span" sx={{ fontWeight: 500, whiteSpace: "pre-wrap" }}>{viewing.notes}</Box>
                   </DetailRow>
                 </Box>
@@ -578,12 +584,12 @@ const ManageAppointments = () => {
             </DialogContent>
             <DialogActions sx={{ px: 3, py: 2, flexWrap: "wrap", gap: 1 }}>
               <Button color="error" startIcon={<DeleteOutline />} onClick={() => setDeleting(viewing)} sx={{ mr: "auto" }}>
-                Delete
+                {t('adm.appts.delete')}
               </Button>
               {viewing.status !== "CheckedIn" && viewing.status !== "Confirmed" && (
-                <Button variant="contained" onClick={() => changeStatus(viewing, "Confirmed")}>Confirm</Button>
+                <Button variant="contained" onClick={() => changeStatus(viewing, "Confirmed")}>{t('adm.appts.confirm')}</Button>
               )}
-              <Button variant="outlined" onClick={() => setViewing(null)}>Close</Button>
+              <Button variant="outlined" onClick={() => setViewing(null)}>{t('adm.appts.close')}</Button>
             </DialogActions>
           </>
         )}
@@ -592,21 +598,20 @@ const ManageAppointments = () => {
       {/* Delete confirmation */}
       <Dialog open={Boolean(deleting)} onClose={() => !busy && setDeleting(null)} maxWidth="xs" fullWidth
         aria-labelledby="appt-delete-title" aria-describedby="appt-delete-desc">
-        <DialogTitle id="appt-delete-title">Delete this appointment?</DialogTitle>
+        <DialogTitle id="appt-delete-title">{t('adm.appts.deleteThisAppointment')}</DialogTitle>
         <DialogContent>
           <Typography id="appt-delete-desc" variant="body2" color="text.secondary">
             {deleting && (
               <>
-                <strong>{deleting.fullName}</strong>&apos;s appointment on {formatDate(deleting.date)} at {deleting.time} will be
-                permanently removed. This cannot be undone.
+                {rich('adm.appts.deleteText', { name: <strong>{deleting.fullName}</strong> }, { date: formatDate(deleting.date), time: deleting.time })}
               </>
             )}
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5 }}>
-          <Button variant="outlined" onClick={() => setDeleting(null)} disabled={busy} autoFocus>Keep it</Button>
+          <Button variant="outlined" onClick={() => setDeleting(null)} disabled={busy} autoFocus>{t('adm.appts.keepIt')}</Button>
           <Button variant="contained" color="error" onClick={confirmDelete} disabled={busy}>
-            {busy ? "Deleting…" : "Delete"}
+            {busy ? t('adm.appts.deleting') : t('adm.appts.delete')}
           </Button>
         </DialogActions>
       </Dialog>

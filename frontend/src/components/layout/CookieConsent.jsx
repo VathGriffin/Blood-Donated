@@ -3,11 +3,13 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Box, Button, Typography, useTheme, Slide } from "@mui/material";
 import CookieIcon from "@mui/icons-material/Cookie";
+import { useT } from "@/i18n/I18nProvider";
 
 export default function CookieConsent() {
   const theme  = useTheme();
   const isDark = theme.palette.mode === "dark";
   const [visible, setVisible] = useState(false);
+  const t = useT();
 
   useEffect(() => {
     const consent = localStorage.getItem("cookie_consent");
@@ -53,12 +55,12 @@ export default function CookieConsent() {
           </Box>
           <Box>
             <Typography fontWeight={700} fontSize="0.9rem" sx={{ color: isDark ? "#F8FAFC" : "#172B4D", mb: 0.5 }}>
-              We use cookies
+              {t("layout.cookie.title")}
             </Typography>
             <Typography variant="caption" color="text.secondary" lineHeight={1.7}>
-              We use essential cookies for authentication and security. No tracking or advertising cookies.{" "}
+              {t("layout.cookie.body")}{" "}
               <Link href="/privacy" style={{ color: "#C91D32", fontWeight: 600, textDecoration: "none" }}>
-                Privacy Policy
+                {t("layout.cookie.privacy")}
               </Link>
             </Typography>
           </Box>
@@ -71,7 +73,7 @@ export default function CookieConsent() {
               textTransform: "none", fontSize: "0.82rem",
               "&:hover": { bgcolor: "#A91529" },
             }}>
-            Accept
+            {t("layout.cookie.accept")}
           </Button>
           <Button fullWidth variant="outlined" size="small" onClick={decline}
             sx={{
@@ -81,7 +83,7 @@ export default function CookieConsent() {
               textTransform: "none", fontSize: "0.82rem",
               "&:hover": { borderColor: "#C91D32", color: "#C91D32" },
             }}>
-            Decline
+            {t("layout.cookie.decline")}
           </Button>
         </Box>
       </Box>

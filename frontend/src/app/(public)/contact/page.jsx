@@ -22,6 +22,7 @@ import axios from "axios";
 import API_BASE from "@/lib/config";
 import { script } from '@/lib/fonts';
 import { CONTACT } from '@/lib/contact';
+import { useI18n } from '@/i18n/I18nProvider';
 
 const HERO_IMG =
   "https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&w=1920&q=80";
@@ -31,28 +32,33 @@ const CONTACT_PHONE_DISPLAY = CONTACT.phoneDisplay;
 const CONTACT_PHONE_HREF = CONTACT.phoneHref;
 const CONTACT_ADDRESS = CONTACT.address;
 
-const heroFeatures = [
-  { icon: <ChatBubbleOutlineIcon />, title: "Quick Response", subtitle: "We usually reply within 24 hours" },
-  { icon: <ShieldIcon />, title: "Trusted Support", subtitle: "Your privacy is our priority" },
-  { icon: <FavoriteIcon />, title: "Stronger Together", subtitle: "Building a healthier Cambodia" },
+// Lists built with the translate function, so their text follows the selected language.
+// Email, phone and address are contact data, shown as stored.
+const heroFeatures = (t) => [
+  { icon: <ChatBubbleOutlineIcon />, title: t("contact.features.quick.title"), subtitle: t("contact.features.quick.subtitle") },
+  { icon: <ShieldIcon />, title: t("contact.features.trusted.title"), subtitle: t("contact.features.trusted.subtitle") },
+  { icon: <FavoriteIcon />, title: t("contact.features.together.title"), subtitle: t("contact.features.together.subtitle") },
 ];
 
-const topInfoCards = [
-  { icon: <EmailIcon />, title: "Email Us", value: CONTACT_EMAIL, caption: "We'll get back to you soon", href: `mailto:${CONTACT_EMAIL}` },
-  { icon: <PhoneIcon />, title: "Call Us", value: CONTACT_PHONE_DISPLAY, caption: CONTACT.hours, href: CONTACT_PHONE_HREF },
-  { icon: <LocationOnIcon />, title: "Visit Us", value: "Phnom Penh, Cambodia", caption: "Our main office" },
-  { icon: <GroupsIcon />, title: "General Inquiries", value: "We're happy to help", caption: "Any questions or suggestions" },
+const topInfoCards = (t) => [
+  { icon: <EmailIcon />, title: t("contact.cards.email.title"), value: CONTACT_EMAIL, caption: t("contact.cards.email.caption"), href: `mailto:${CONTACT_EMAIL}` },
+  { icon: <PhoneIcon />, title: t("contact.cards.call.title"), value: CONTACT_PHONE_DISPLAY, caption: t("contact.hours"), href: CONTACT_PHONE_HREF },
+  { icon: <LocationOnIcon />, title: t("contact.cards.visit.title"), value: t("contact.cards.visit.value"), caption: t("contact.cards.visit.caption") },
+  { icon: <GroupsIcon />, title: t("contact.cards.general.title"), value: t("contact.cards.general.value"), caption: t("contact.cards.general.caption") },
 ];
 
-const findUsDetails = [
-  { icon: <LocationOnIcon sx={{ fontSize: 18 }} />, label: "Address", value: CONTACT_ADDRESS },
-  { icon: <PhoneIcon sx={{ fontSize: 18 }} />, label: "Phone", value: CONTACT_PHONE_DISPLAY, href: CONTACT_PHONE_HREF },
-  { icon: <EmailIcon sx={{ fontSize: 18 }} />, label: "Email", value: CONTACT_EMAIL, href: `mailto:${CONTACT_EMAIL}` },
-  { icon: <AccessTimeIcon sx={{ fontSize: 18 }} />, label: "Working Hours", value: CONTACT.hours },
+const findUsDetails = (t) => [
+  { key: "address", icon: <LocationOnIcon sx={{ fontSize: 18 }} />, label: t("contact.location.address"), value: CONTACT_ADDRESS, wide: true },
+  { key: "phone", icon: <PhoneIcon sx={{ fontSize: 18 }} />, label: t("contact.location.phone"), value: CONTACT_PHONE_DISPLAY, href: CONTACT_PHONE_HREF },
+  { key: "email", icon: <EmailIcon sx={{ fontSize: 18 }} />, label: t("contact.location.email"), value: CONTACT_EMAIL, href: `mailto:${CONTACT_EMAIL}` },
+  { key: "hours", icon: <AccessTimeIcon sx={{ fontSize: 18 }} />, label: t("contact.location.hours"), value: t("contact.hours") },
 ];
 
-const subjectOptions = [
-  "General Inquiry", "Donation Question", "Hospital Partnership", "Technical Support", "Feedback / Suggestion", "Other",
+// The subject is sent to the team in English (it is stored with the message); only the menu
+// labels are translated.
+const SUBJECTS = [
+  ["general", "General Inquiry"], ["donation", "Donation Question"], ["partnership", "Hospital Partnership"],
+  ["technical", "Technical Support"], ["feedback", "Feedback / Suggestion"], ["other", "Other"],
 ];
 
 const cardSx = (isDark) => ({
@@ -73,6 +79,7 @@ const iconBoxSx = {
 
 const Contact = () => {
   const theme = useTheme();
+  const { t, rich } = useI18n();
   const isDark = theme.palette.mode === "dark";
   const [form, setForm] = useState({ fullName: "", email: "", subject: "", phone: "", message: "" });
   const [loading, setLoading] = useState(false);
@@ -89,7 +96,7 @@ const Contact = () => {
     setError("");
     setSuccess(false);
     if (!form.fullName.trim() || !form.email.trim() || !form.subject || !form.message.trim()) {
-      setError("Please fill in your name, email, subject, and message.");
+      setError(t("contact.form.required"));
       return;
     }
     setLoading(true);
@@ -108,8 +115,9 @@ const Contact = () => {
       });
       setSuccess(true);
       setForm({ fullName: "", email: "", subject: "", phone: "", message: "" });
-    } catch (err) {
-      setError(err.response?.data?.error || "Failed to send your message. Please try again.");
+    } catch {
+      // The server's messages are English; show ours in the visitor's language.
+      setError(t("contact.form.failed"));
     } finally {
       setLoading(false);
     }
@@ -137,7 +145,7 @@ const Contact = () => {
           <Box sx={{ maxWidth: 640 }}>
             <Chip
               icon={<ChatIcon sx={{ color: "#A91529 !important", fontSize: "18px !important" }} />}
-              label="We're Here to Help"
+              label={t("contact.chip")}
               sx={{
                 backgroundColor: isDark ? "rgba(201,29,50,0.18)" : "#FFF1F2",
                 color: "primary.main", fontWeight: 700, mb: 3, fontSize: "0.82rem",
@@ -148,24 +156,23 @@ const Contact = () => {
               fontSize: { xs: "2.4rem", md: "3.2rem" },
               color: isDark ? "#fff" : "#172B4D",
             }}>
-              Contact <Box component="span" sx={{ color: "primary.main" }}>Us</Box>
+              {rich("contact.title", { accent: <Box component="span" sx={{ color: "primary.main" }}>{t("contact.titleAccent")}</Box> })}
             </Typography>
             <Typography sx={{
               fontWeight: 700, mb: 2, fontSize: { xs: "1.15rem", md: "1.3rem" },
               color: isDark ? "#fff" : "#172B4D",
             }}>
-              Have a question or need help?
+              {t("contact.question")}
             </Typography>
             <Typography sx={{
               fontSize: "1.05rem", lineHeight: 1.7, mb: 5,
               color: isDark ? "rgba(255,255,255,0.75)" : "#64748B",
             }}>
-              Whether you&apos;re a donor, patient, or hospital partner — our team is
-              always ready to assist you.
+              {t("contact.lead")}
             </Typography>
 
             <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(3, auto)" }, gap: { xs: 2.5, sm: 4 } }}>
-              {heroFeatures.map((f) => (
+              {heroFeatures(t).map((f) => (
                 <Box key={f.title} sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
                   <Box sx={{ color: "primary.main", mt: 0.2, "& svg": { fontSize: 24 } }}>{f.icon}</Box>
                   <Box>
@@ -192,7 +199,7 @@ const Contact = () => {
             textShadow: "0 2px 4px rgba(0,0,0,0.5), 0 6px 18px rgba(0,0,0,0.35)",
             display: { xs: "none", sm: "block" },
           }}>
-            Together<br />We Save Lives ♡
+            {t("contact.heroQuote.line1")}<br />{t("contact.heroQuote.line2")}
           </Typography>
         </Container>
       </Box>
@@ -201,7 +208,7 @@ const Contact = () => {
       <Container maxWidth="lg" sx={{ mt: { xs: -3, md: -4 }, position: "relative", zIndex: 3 }}>
         {/* minmax(0, 1fr): columns may shrink below their no-wrap text, so the strip never forces sideways scroll. */}
         <Box sx={{ display: "grid", gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", lg: "repeat(4, minmax(0, 1fr))" }, gap: 2.5 }}>
-          {topInfoCards.map((card) => (
+          {topInfoCards(t).map((card) => (
             <Paper key={card.title} elevation={0} sx={{ ...cardSx(isDark), p: 3, display: "flex", alignItems: "center", gap: 2, minWidth: 0 }}>
               <Box sx={{
                 width: 48, height: 48, borderRadius: "50%", flexShrink: 0,
@@ -242,50 +249,50 @@ const Contact = () => {
               <Box sx={iconBoxSx}><SendIcon sx={{ fontSize: 20 }} /></Box>
               <Box>
                 <Typography variant="overline" color="primary" fontWeight={700} letterSpacing="0.12em" sx={{ lineHeight: 1 }}>
-                  Send Us a Message
+                  {t("contact.form.eyebrow")}
                 </Typography>
                 <Typography variant="h5" fontWeight={800} sx={{ lineHeight: 1.2 }}>
-                  Contact Form
+                  {t("contact.form.title")}
                 </Typography>
               </Box>
             </Box>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 3.5, mt: 1.5, lineHeight: 1.7 }}>
-              Fill out the form below and we&apos;ll get back to you as soon as possible.
+              {t("contact.form.lead")}
             </Typography>
 
             <Box component="form" onSubmit={handleSubmit} noValidate autoComplete="off">
               <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: { xs: 2, sm: 2.5 } }}>
                 <TextField
-                  fullWidth label="Full Name" name="fullName" value={form.fullName}
-                  onChange={handleChange} required placeholder="Enter your full name"
+                  fullWidth label={t("contact.form.fullName")} name="fullName" value={form.fullName}
+                  onChange={handleChange} required placeholder={t("contact.form.fullNamePlaceholder")}
                   sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px" } }}
                 />
                 <TextField
-                  fullWidth label="Email Address" name="email" type="email" value={form.email}
-                  onChange={handleChange} required placeholder="Enter your email"
+                  fullWidth label={t("contact.form.email")} name="email" type="email" value={form.email}
+                  onChange={handleChange} required placeholder={t("contact.form.emailPlaceholder")}
                   sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px" } }}
                 />
                 <FormControl fullWidth required>
-                  <InputLabel id="contact-subject-label">Subject</InputLabel>
+                  <InputLabel id="contact-subject-label">{t("contact.form.subject")}</InputLabel>
                   <Select
                     labelId="contact-subject-label" name="subject" value={form.subject}
-                    onChange={handleChange} label="Subject"
+                    onChange={handleChange} label={t("contact.form.subject")}
                     sx={{ borderRadius: "10px" }}
                   >
-                    {subjectOptions.map((s) => (
-                      <MenuItem key={s} value={s}>{s}</MenuItem>
+                    {SUBJECTS.map(([key, value]) => (
+                      <MenuItem key={key} value={value}>{t(`contact.form.subjects.${key}`)}</MenuItem>
                     ))}
                   </Select>
                 </FormControl>
                 <TextField
-                  fullWidth label="Phone Number" name="phone" type="tel" value={form.phone}
-                  onChange={handleChange} placeholder="Enter your phone number"
+                  fullWidth label={t("contact.form.phone")} name="phone" type="tel" value={form.phone}
+                  onChange={handleChange} placeholder={t("contact.form.phonePlaceholder")}
                   sx={{ "& .MuiOutlinedInput-root": { borderRadius: "10px" } }}
                 />
                 <TextField
-                  fullWidth label="Message" name="message" value={form.message}
+                  fullWidth label={t("contact.form.message")} name="message" value={form.message}
                   onChange={handleChange} required multiline minRows={6}
-                  placeholder="Type your message here..."
+                  placeholder={t("contact.form.messagePlaceholder")}
                   sx={{ gridColumn: "1 / -1", "& .MuiOutlinedInput-root": { borderRadius: "10px" } }}
                 />
               </Box>
@@ -297,7 +304,7 @@ const Contact = () => {
               )}
               {success && (
                 <Alert severity="success" sx={{ mt: 3, borderRadius: "10px" }} onClose={() => setSuccess(false)}>
-                  Your message has been sent — we&apos;ll get back to you soon.
+                  {t("contact.form.sent")}
                 </Alert>
               )}
 
@@ -315,7 +322,7 @@ const Contact = () => {
                     transition: "background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease",
                   }}
                 >
-                  {loading ? "Sending…" : "Send Message"}
+                  {t(loading ? "contact.form.sending" : "contact.form.send")}
                 </Button>
               </Box>
             </Box>
@@ -327,15 +334,15 @@ const Contact = () => {
               <Box sx={iconBoxSx}><RoomIcon sx={{ fontSize: 20 }} /></Box>
               <Box>
                 <Typography variant="overline" color="primary" fontWeight={700} letterSpacing="0.12em" sx={{ lineHeight: 1 }}>
-                  Our Location
+                  {t("contact.location.eyebrow")}
                 </Typography>
                 <Typography variant="h5" fontWeight={800} sx={{ lineHeight: 1.2 }}>
-                  Find Us
+                  {t("contact.location.title")}
                 </Typography>
               </Box>
             </Box>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 3, mt: 1.5, lineHeight: 1.7 }}>
-              Visit our office or get in touch through the details below.
+              {t("contact.location.lead")}
             </Typography>
 
             {/* Stylized map preview */}
@@ -368,7 +375,7 @@ const Contact = () => {
                 <LocationOnIcon color="primary" sx={{ fontSize: 22 }} />
                 <Box>
                   <Typography sx={{ fontSize: "0.8rem", fontWeight: 700, lineHeight: 1.2, color: "text.primary" }}>Blood Donated</Typography>
-                  <Typography variant="caption" color="text.secondary">Phnom Penh, Cambodia</Typography>
+                  <Typography variant="caption" color="text.secondary">{t("contact.location.city")}</Typography>
                 </Box>
               </Box>
 
@@ -376,7 +383,7 @@ const Contact = () => {
                 position: "absolute", bottom: 18, left: 22, fontWeight: 800, fontSize: "1.15rem",
                 color: isDark ? "rgba(255,255,255,0.5)" : "rgba(16,37,65,0.35)",
               }}>
-                Phnom Penh
+                {t("contact.location.cityShort")}
               </Typography>
 
               {/* zoom controls */}
@@ -394,8 +401,8 @@ const Contact = () => {
             </Box>
 
             <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, rowGap: 2.5, columnGap: 2, pt: 2.5, borderTop: "1px solid", borderColor: "divider" }}>
-              {findUsDetails.map((d) => (
-                <Box key={d.label} sx={{ display: "flex", alignItems: "flex-start", gap: 1.2, minWidth: 0, ...(d.label === "Address" && { gridColumn: "1 / -1" }) }}>
+              {findUsDetails(t).map((d) => (
+                <Box key={d.key} sx={{ display: "flex", alignItems: "flex-start", gap: 1.2, minWidth: 0, ...(d.wide && { gridColumn: "1 / -1" }) }}>
                   <Box sx={{ color: "primary.main", mt: 0.2 }}>{d.icon}</Box>
                   <Box sx={{ minWidth: 0 }}>
                     <Typography variant="caption" color="text.secondary" fontWeight={700}

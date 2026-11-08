@@ -1,38 +1,41 @@
 'use client';
+import { useI18n } from '@/i18n/I18nProvider';
 import { Box, Typography, Button, useTheme } from '@mui/material';
 import FactCheckOutlinedIcon from '@mui/icons-material/FactCheckOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import Panel from './Panel';
-import { C, formatLongDate } from './booking';
+import { C, formatLongDate, formatSlot } from './booking';
 
 // Step 4: everything that will be sent, grouped, with a way back to change each group.
 export default function ReviewStep({ center, form, onEditSelection, onEditDetails }) {
   const isDark = useTheme().palette.mode === 'dark';
+  const { t } = useI18n();
+  const r = (k) => t(`booking.review.${k}`);
   const place = [center?.address, center?.city].filter(Boolean).join(', ');
   const groups = [
     {
-      title: 'Appointment', onEdit: onEditSelection, editLabel: 'Change center, date or time',
+      title: r('appointment'), onEdit: onEditSelection, editLabel: r('editSelection'),
       rows: [
-        ['Donation center', center?.name],
-        ['Address', place],
-        ['Date', form.date && formatLongDate(form.date)],
-        ['Time', form.time],
+        [r('center'), center?.name],
+        [r('address'), place],
+        [r('date'), form.date && formatLongDate(form.date)],
+        [r('time'), form.time && formatSlot(form.time)],
       ],
     },
     {
-      title: 'Donor', onEdit: onEditDetails, editLabel: 'Change your information',
+      title: r('donor'), onEdit: onEditDetails, editLabel: r('editDetails'),
       rows: [
-        ['Full name', form.fullName.trim()],
-        ['Email', form.email.trim()],
-        ['Phone', form.phone.trim()],
-        ['Blood type', form.bloodType],
-        ['Notes', form.notes.trim()],
+        [r('fullName'), form.fullName.trim()],
+        [r('email'), form.email.trim()],
+        [r('phone'), form.phone.trim()],
+        [r('bloodType'), form.bloodType],
+        [r('notes'), form.notes.trim()],
       ],
     },
   ];
 
   return (
-    <Panel icon={<FactCheckOutlinedIcon />} title="Review & Confirm" subtitle="Please check everything before you book">
+    <Panel icon={<FactCheckOutlinedIcon />} title={r('title')} subtitle={r('subtitle')}>
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {groups.map((g) => (
           <Box key={g.title} sx={{ borderRadius: '12px', border: `1px solid ${isDark ? '#334155' : C.border}`, overflow: 'hidden' }}>
@@ -40,7 +43,7 @@ export default function ReviewStep({ center, form, onEditSelection, onEditDetail
               <Typography component="h3" sx={{ fontWeight: 700, fontSize: '0.9rem' }}>{g.title}</Typography>
               <Button size="small" onClick={g.onEdit} aria-label={g.editLabel} startIcon={<EditOutlinedIcon sx={{ fontSize: 15 }} />}
                 sx={{ textTransform: 'none', fontWeight: 700, color: C.primary, minWidth: 0 }}>
-                Edit
+                {r('edit')}
               </Button>
             </Box>
             <Box component="dl" sx={{ m: 0, px: 2, py: 0.5, display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '160px 1fr' } }}>

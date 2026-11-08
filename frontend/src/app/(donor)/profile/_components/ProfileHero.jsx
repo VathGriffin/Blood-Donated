@@ -1,4 +1,5 @@
 'use client';
+import { useT } from '@/i18n/I18nProvider';
 import Link from 'next/link';
 import { Avatar, Box, Button, CircularProgress, Typography } from '@mui/material';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
@@ -62,6 +63,7 @@ const btnBase = {
  * `donor` is the matching donor record (location / blood type) when one exists.
  */
 export default function ProfileHero({ user, photoSrc, initials, donor, photoLoading, onPhotoClick, onEdit }) {
+  const t = useT();
   const bloodType = donor?.found ? donor.bloodType : '';
 
   return (
@@ -100,7 +102,7 @@ export default function ProfileHero({ user, photoSrc, initials, donor, photoLoad
             {!photoSrc && initials}
           </Avatar>
           <Box component="button" type="button" onClick={onPhotoClick} disabled={photoLoading}
-            aria-label={photoLoading ? 'Uploading photo' : 'Change profile photo'}
+            aria-label={photoLoading ? t('donor.hero.uploading') : t('donor.hero.changePhoto')}
             sx={{
               position: 'absolute', right: { xs: -2, sm: 2 }, bottom: { xs: -2, sm: 4 },
               width: 36, height: 36, borderRadius: '50%', p: 0,
@@ -120,10 +122,10 @@ export default function ProfileHero({ user, photoSrc, initials, donor, photoLoad
               px: 1.5, py: 0.5, borderRadius: '999px', bgcolor: 'rgba(255,255,255,0.14)',
               border: '1px solid rgba(255,255,255,0.2)', fontSize: '0.78rem', fontWeight: 700,
             }}>
-              Donor Account
+              {t('donor.hero.account')}
             </Box>
             {bloodType && (
-              <Box component="span" aria-label={`Blood type ${bloodType}`} sx={{ px: 1.25, py: 0.5, borderRadius: '999px', bgcolor: '#fff', color: 'primary.main', fontSize: '0.8rem', fontWeight: 800 }}>
+              <Box component="span" aria-label={t('donor.hero.bloodType', { type: bloodType })} sx={{ px: 1.25, py: 0.5, borderRadius: '999px', bgcolor: '#fff', color: 'primary.main', fontSize: '0.8rem', fontWeight: 800 }}>
                 {bloodType}
               </Box>
             )}
@@ -131,7 +133,7 @@ export default function ProfileHero({ user, photoSrc, initials, donor, photoLoad
           <Typography id="profile-name" component="h1" sx={{
             fontWeight: 800, fontSize: { xs: '1.6rem', sm: '2.1rem' }, lineHeight: 1.15, letterSpacing: '-0.02em', overflowWrap: 'anywhere',
           }}>
-            {user?.fullName || 'Your profile'}
+            {user?.fullName || t('donor.hero.yourProfile')}
           </Typography>
           <Box sx={{ mt: 1, display: 'flex', flexDirection: { xs: 'column', md: 'row' }, flexWrap: 'wrap', columnGap: 3, rowGap: 0.6 }}>
             {user?.email && <InfoLine icon={<EmailIcon />}>{user.email}</InfoLine>}
@@ -147,12 +149,12 @@ export default function ProfileHero({ user, photoSrc, initials, donor, photoLoad
               ...btnBase, color: '#fff', borderColor: 'rgba(255,255,255,0.75)', borderWidth: 1.5, bgcolor: 'transparent',
               '&:hover': { borderColor: '#fff', borderWidth: 1.5, bgcolor: 'rgba(255,255,255,0.1)' },
             }}>
-              Edit Profile
+              {t('donor.hero.edit')}
             </Button>
             <Button component={Link} href="/qr-card" variant="contained" disableElevation startIcon={<QrCode2Icon />} sx={{
               ...btnBase, background: '#fff', color: 'primary.main', boxShadow: 'none', '&:hover': { background: '#FFF1F2', boxShadow: 'none' },
             }}>
-              My QR Card
+              {t('donor.hero.qr')}
             </Button>
             <Button component={Link} href="/requests" variant="contained" disableElevation startIcon={<AddIcon />} sx={{
               ...btnBase, gridColumn: { xs: '1 / -1', sm: 'auto' },
@@ -160,7 +162,7 @@ export default function ProfileHero({ user, photoSrc, initials, donor, photoLoad
               boxShadow: '0 6px 16px rgba(201,29,50,0.35)',
               '&:hover': { background: 'linear-gradient(135deg, #C91D32 0%, #A91529 100%)' },
             }}>
-              New Request
+              {t('donor.hero.newRequest')}
             </Button>
           </Box>
         </Box>

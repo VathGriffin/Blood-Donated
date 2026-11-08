@@ -93,7 +93,9 @@ export function useDashboardSession(requiredRole) {
         name: donorAuth.user?.fullName || account?.fullName || 'Donor',
         email: donorAuth.user?.email || account?.email || '',
         photo: donorAuth.user?.photo || account?.photo || null,
-        subtitle: 'Donor',
+        // `subtitle` is data (a hospital's name); `subtitleKey` a role name translated where shown.
+        subtitle: null,
+        subtitleKey: 'common.roles.donor',
       }
     : {
         // Name from the live context (settings edits update it); hospital from the server.
@@ -101,7 +103,8 @@ export function useDashboardSession(requiredRole) {
         email: staffAuth.staff?.email || account?.email || '',
         // The live context wins so a just-uploaded (or removed) photo shows immediately.
         photo: staffAuth.staff?.photo !== undefined ? staffAuth.staff.photo : (account?.photo || null),
-        subtitle: requiredRole === ROLES.ADMIN ? 'System Administrator' : account?.hospitalName || 'Hospital staff',
+        subtitle: requiredRole === ROLES.ADMIN ? null : account?.hospitalName || null,
+        subtitleKey: requiredRole === ROLES.ADMIN ? 'common.roles.admin' : 'common.roles.hospital',
       };
 
   return { status, role, actualRole, account, profile, token, redirectTo, logout, retry };

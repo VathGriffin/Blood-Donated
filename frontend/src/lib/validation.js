@@ -1,5 +1,8 @@
 // Input rules shared by forms across the app.
 
+import { currentLang } from '@/i18n/config';
+import { translate } from '@/i18n/translate';
+
 export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // Image uploads: must match the multer setup in Backend/src/common/upload.js.
@@ -8,8 +11,9 @@ export const PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'
 
 // Why `file` can't be uploaded as a photo, or null when it can.
 export function photoFileError(file) {
-  if (!PHOTO_TYPES.includes(file.type)) return 'Please choose a JPG, PNG, WebP or GIF image.';
-  if (file.size > MAX_PHOTO_SIZE) return `Image is too large — max ${MAX_PHOTO_SIZE / (1024 * 1024)} MB.`;
+  // Same texts as the hospital profile page (hosp.profile.*), in the selected language.
+  if (!PHOTO_TYPES.includes(file.type)) return translate(currentLang(), 'hosp.profile.photoType');
+  if (file.size > MAX_PHOTO_SIZE) return translate(currentLang(), 'hosp.profile.photoSize', { max: MAX_PHOTO_SIZE / (1024 * 1024) });
   return null;
 }
 

@@ -1,4 +1,6 @@
 'use client';
+import { currentIntlLocale } from '@/i18n/config';
+import { useT } from '@/i18n/I18nProvider';
 import { useState } from 'react';
 import axios from 'axios';
 import {
@@ -15,9 +17,9 @@ import { apiErrorMessage } from '@/lib/api-error';
 const fmtDay = (iso) => {
   const [y, m, d] = String(iso).split('-').map(Number);
   const t = new Date(y, m - 1, d);
-  return Number.isNaN(t.getTime()) ? iso : t.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+  return Number.isNaN(t.getTime()) ? iso : t.toLocaleDateString(currentIntlLocale(), { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
 };
-const fmtStamp = (v) => (v ? new Date(v).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '');
+const fmtStamp = (v) => (v ? new Date(v).toLocaleString(currentIntlLocale(), { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '');
 
 /** Every pending reschedule request in `appointments`, oldest first (first come, first served). */
 const pendingRescheduleRequests = (appointments = []) => appointments
@@ -44,6 +46,7 @@ function When({ label, date, time, highlight }) {
  * notified either way through their notification feed. `onUpdated` receives the saved appointment.
  */
 export default function RescheduleRequestsPanel({ appointments, token, onUpdated, showHospital = false }) {
+  const t = useT();
   const items = pendingRescheduleRequests(appointments);
   const [deciding, setDeciding] = useState(null); // { appt, request, decision }
   const [note, setNote] = useState('');
@@ -66,11 +69,11 @@ export default function RescheduleRequestsPanel({ appointments, token, onUpdated
       );
       onUpdated(data);
       setDone(decision === 'approve'
-        ? `Approved. ${appt.fullName}'s appointment is now on ${fmtDay(request.toDate)}, ${request.toTime}.`
-        : `Declined. ${appt.fullName}'s appointment stays on ${fmtDay(request.fromDate)}, ${request.fromTime}.`);
+        ? t('shared.resched.approvedDone', { name: appt.fullName, when: `${fmtDay(request.toDate)}, ${request.toTime}` })
+        : t('shared.resched.declinedDone', { name: appt.fullName, when: `${fmtDay(request.fromDate)}, ${request.fromTime}` }));
       setDeciding(null);
     } catch (err) {
-      setError(apiErrorMessage(err, 'Could not save the decision. Please try again.'));
+      setError(apiErrorMessage(err, t('shared.resched.saveFailed')));
     } finally {
       setSaving(false);
     }
@@ -90,10 +93,10 @@ export default function RescheduleRequestsPanel({ appointments, token, onUpdated
         </Box>
         <Box sx={{ flex: 1 }}>
           <Typography id="reschedule-requests-title" component="h2" sx={{ fontWeight: 700, fontSize: '1.05rem' }}>
-            Reschedule requests {items.length > 0 && `(${items.length})`}
+            {t('shared.resched.title')} {items.length > 0 && `(${items.length})`}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {items.length ? 'Donors asking to move a confirmed appointment. Their current slot is kept until you approve.' : 'No requests waiting.'}
+            {items.length ? t('shared.resched.lead') : t('shared.resched.none')}
           </Typography>
         </Box>
       </Box>
@@ -113,21 +116,21 @@ export default function RescheduleRequestsPanel({ appointments, token, onUpdated
                 {appt.bloodType}{showHospital && appt.location ? ` · ${appt.location}` : ''} · {appt.phone}
               </Typography>
               <Typography variant="body2" sx={{ mt: 0.75, overflowWrap: 'anywhere' }}>“{request.reason}”</Typography>
-              <Typography variant="caption" color="text.secondary">Requested {fmtStamp(request.requestedAt)}</Typography>
+              <Typography variant="caption" color="text.secondary">{t('shared.resched.requestedAt', { date: fmtStamp(request.requestedAt) })}</Typography>
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <When label="Current" date={request.fromDate} time={request.fromTime} />
-              <ArrowForwardIcon aria-label="to" sx={{ color: 'text.secondary', flexShrink: 0 }} />
-              <When label="Requested" date={request.toDate} time={request.toTime} highlight />
+              <When label={t('shared.resched.current')} date={request.fromDate} time={request.fromTime} />
+              <ArrowForwardIcon aria-label={t('shared.resched.to')} sx={{ color: 'text.secondary', flexShrink: 0 }} />
+              <When label={t('shared.resched.requested')} date={request.toDate} time={request.toTime} highlight />
             </Box>
             <Box sx={{ display: 'flex', gap: 1, justifyContent: { md: 'flex-end' } }}>
               <Button variant="outlined" color="inherit" startIcon={<CloseIcon />} onClick={() => open({ appt, request }, 'reject')}
                 sx={{ flex: { xs: 1, md: 'none' } }}>
-                Reject
+                {t('shared.resched.reject')}
               </Button>
               <Button variant="contained" color="success" startIcon={<CheckIcon />} onClick={() => open({ appt, request }, 'approve')}
                 sx={{ flex: { xs: 1, md: 'none' } }}>
-                Approve
+                {t('shared.resched.approve')}
               </Button>
             </Box>
           </Box>
@@ -136,23 +139,23 @@ export default function RescheduleRequestsPanel({ appointments, token, onUpdated
 
       {deciding && (
         <Dialog open onClose={saving ? undefined : () => setDeciding(null)} maxWidth="xs" fullWidth aria-labelledby="decide-title">
-          <DialogTitle id="decide-title">{deciding.decision === 'approve' ? 'Approve the new date?' : 'Reject this request?'}</DialogTitle>
+          <DialogTitle id="decide-title">{deciding.decision === 'approve' ? t('shared.resched.approveTitle') : t('shared.resched.rejectTitle')}</DialogTitle>
           <DialogContent>
             <Typography variant="body2" color="text.secondary">
               {deciding.decision === 'approve'
-                ? `${deciding.appt.fullName}'s appointment will move from ${fmtDay(deciding.request.fromDate)}, ${deciding.request.fromTime} to ${fmtDay(deciding.request.toDate)}, ${deciding.request.toTime}. Availability is checked again before saving.`
-                : `${deciding.appt.fullName}'s appointment stays on ${fmtDay(deciding.request.fromDate)}, ${deciding.request.fromTime}.`}
+                ? t('shared.resched.approveText', { name: deciding.appt.fullName, from: `${fmtDay(deciding.request.fromDate)}, ${deciding.request.fromTime}`, to: `${fmtDay(deciding.request.toDate)}, ${deciding.request.toTime}` })
+                : t('shared.resched.rejectText', { name: deciding.appt.fullName, when: `${fmtDay(deciding.request.fromDate)}, ${deciding.request.fromTime}` })}
             </Typography>
             <TextField sx={{ mt: 2 }} fullWidth multiline minRows={2}
-              label={deciding.decision === 'approve' ? 'Note to the donor (optional)' : 'Reason for the donor (recommended)'}
+              label={deciding.decision === 'approve' ? t('shared.resched.noteLabel') : t('shared.resched.reasonLabel')}
               value={note} onChange={(e) => setNote(e.target.value.slice(0, 500))} helperText={`${note.length}/500`} />
             {error && <Alert severity="error" sx={{ mt: 1 }}>{error}</Alert>}
           </DialogContent>
           <DialogActions>
-            <Button color="inherit" onClick={() => setDeciding(null)} disabled={saving}>Back</Button>
+            <Button color="inherit" onClick={() => setDeciding(null)} disabled={saving}>{t('shared.resched.back')}</Button>
             <Button variant="contained" color={deciding.decision === 'approve' ? 'success' : 'error'} onClick={submit} disabled={saving}
               startIcon={saving ? <CircularProgress size={16} color="inherit" /> : null}>
-              {deciding.decision === 'approve' ? 'Approve' : 'Reject'}
+              {deciding.decision === 'approve' ? t('shared.resched.approve') : t('shared.resched.reject')}
             </Button>
           </DialogActions>
         </Dialog>

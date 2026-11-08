@@ -1,4 +1,5 @@
 'use client';
+import { useT } from '@/i18n/I18nProvider';
 import { Box, CircularProgress } from '@mui/material';
 
 /**
@@ -7,8 +8,9 @@ import { Box, CircularProgress } from '@mui/material';
  * quick navigations don't flicker.
  */
 export default function RouteLoading({ minHeight = '60vh' }) {
+  const t = useT();
   return (
-    <Box role="status" aria-label="Loading page" sx={{ minHeight, position: 'relative' }}>
+    <Box role="status" aria-label={t('common.loadingPage')} sx={{ minHeight, position: 'relative' }}>
       <Box
         sx={{
           position: 'fixed', top: 0, left: 0, right: 0, height: 3, zIndex: (t) => t.zIndex.modal + 1,

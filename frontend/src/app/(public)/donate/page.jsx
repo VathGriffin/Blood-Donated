@@ -29,6 +29,7 @@ import { NeedHelp } from "../appointments/_components/SidePanels";
 import { BLOOD_TYPES, C } from "../appointments/_components/booking";
 import { localToday } from "@/lib/format";
 import { useUserAuth } from "@/store/UserAuthContext";
+import { useI18n } from "@/i18n/I18nProvider";
 
 // A donor's arm on the chair, giving blood.
 const HERO_IMG =
@@ -36,37 +37,21 @@ const HERO_IMG =
 
 const MAX_PHOTO_SIZE = 10 * 1024 * 1024; // must match Backend/src/donor/donor.routes.js multer limit
 
+// Texts are in i18n/messages/donate.js; these keys pick them.
 const HERO_POINTS = [
-  { icon: <VerifiedUserIcon />, title: "Safe & Secure", text: "Certified medical staff" },
-  { icon: <AccessTimeIcon />, title: "Quick Process", text: "About 30–45 minutes" },
-  { icon: <PeopleIcon />, title: "Real Impact", text: "Help save up to 3 lives" },
+  { icon: <VerifiedUserIcon />, key: "safe" },
+  { icon: <AccessTimeIcon />, key: "quick" },
+  { icon: <PeopleIcon />, key: "impact" },
 ];
 
-// Who can receive from each type — shown under the picker once a type is chosen.
-const COMPAT = {
-  "O-": "Universal donor — can give to every blood type.",
-  "O+": "Can give to O+, A+, B+ and AB+ — the most common type.",
-  "A-": "Can give to A-, A+, AB- and AB+.",
-  "A+": "Can give to A+ and AB+.",
-  "B-": "Can give to B-, B+, AB- and AB+.",
-  "B+": "Can give to B+ and AB+.",
-  "AB-": "Can give to AB- and AB+.",
-  "AB+": "Universal plasma donor — red cells can go to AB+.",
-};
+const ELIGIBILITY = ["age", "weight", "recent", "healthy"];
 
-const ELIGIBILITY = [
-  "I am between 18 and 60 years old",
-  "I weigh at least 45 kg",
-  "I have not donated blood in the past 3 months",
-  "I do not have any active infection or illness",
-];
+const PROCESS_STEPS = ["register", "contact", "screening", "donate"];
 
-const PROCESS_STEPS = [
-  { title: "Register Online", text: "Fill in this form — about 2 minutes" },
-  { title: "We Contact You", text: "Our team confirms your details" },
-  { title: "Health Screening", text: "A quick and simple check" },
-  { title: "Donate & Save Lives", text: "Your gift can help up to 3 people" },
-];
+// Same rule as the donor model on the server (Backend/src/donor/donor.model.js), checked here
+// first so the visitor gets the message in their own language.
+const PHONE_RE = /^0\d{9,10}$/;
+const PHOTO_MB = MAX_PHOTO_SIZE / (1024 * 1024);
 
 const fieldSx = { "& .MuiOutlinedInput-root": { borderRadius: "10px" } };
 
@@ -74,6 +59,7 @@ const DonateBlood = () => {
   const isDark = useTheme().palette.mode === "dark";
   const border = isDark ? "#334155" : C.border;
   const softTile = isDark ? "rgba(201,29,50,0.16)" : C.soft;
+  const { t } = useI18n();
 
   const [bloodType, setBloodType] = useState("");
   const [formData, setFormData] = useState({
@@ -112,12 +98,12 @@ const DonateBlood = () => {
     const file = e.target.files[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      setPhotoError("Only image files are allowed.");
+      setPhotoError(t("donate.errors.photoType"));
       e.target.value = "";
       return;
     }
     if (file.size > MAX_PHOTO_SIZE) {
-      setPhotoError(`Image is too large — max ${MAX_PHOTO_SIZE / (1024 * 1024)} MB.`);
+      setPhotoError(t("donate.errors.photoSize", { mb: PHOTO_MB }));
       e.target.value = "";
       return;
     }
@@ -142,12 +128,13 @@ const DonateBlood = () => {
   };
 
   const validate = () => {
-    if (!bloodType) return "Please select your blood type.";
-    if (!formData.fullName.trim()) return "Full name is required.";
-    if (!/\S+@\S+\.\S+/.test(formData.email.trim())) return "A valid email address is required.";
-    if (!formData.phone.trim()) return "Phone number is required.";
-    if (!formData.location.trim()) return "Location / city is required.";
-    if (!eligibilityAck) return "Please confirm that you meet the donation eligibility criteria.";
+    if (!bloodType) return t("donate.errors.bloodType");
+    if (!formData.fullName.trim()) return t("donate.errors.fullName");
+    if (!/\S+@\S+\.\S+/.test(formData.email.trim())) return t("donate.errors.email");
+    if (!formData.phone.trim()) return t("donate.errors.phone");
+    if (!PHONE_RE.test(formData.phone.replace(/[\s-]/g, ""))) return t("donate.errors.phoneFormat");
+    if (!formData.location.trim()) return t("donate.errors.location");
+    if (!eligibilityAck) return t("donate.errors.eligibility");
     return "";
   };
 
@@ -161,11 +148,11 @@ const DonateBlood = () => {
       const response = await fetch(`${API_BASE}/api/donors`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, bloodType }),
+        body: JSON.stringify({ ...formData, phone: formData.phone.replace(/[\s-]/g, ""), bloodType }),
       });
       if (!response.ok) {
-        const data = await response.json();
-        setError("Registration failed: " + (data.message || "Unknown error"));
+        // The server's own messages are English; show ours in the visitor's language.
+        setError(t(response.status === 409 ? "donate.errors.duplicate" : "donate.errors.failed"));
         return;
       }
       const savedDonor = await response.json();
@@ -180,7 +167,7 @@ const DonateBlood = () => {
       }
       router.push("/donate/thank-you");
     } catch {
-      setError("Server error. Please try again later.");
+      setError(t("donate.errors.server"));
     } finally {
       setLoading(false);
     }
@@ -203,7 +190,7 @@ const DonateBlood = () => {
     <Box component="span" sx={{
       ml: 1, px: 1, py: 0.25, borderRadius: "999px", fontSize: "0.72rem", fontWeight: 700,
       color: C.primary, bgcolor: softTile, verticalAlign: "middle",
-    }}>Step {n}</Box>
+    }}>{t("donate.step", { n })}</Box>
   );
 
   return (
@@ -231,21 +218,21 @@ const DonateBlood = () => {
               bgcolor: isDark ? "rgba(201,29,50,0.18)" : "#fff", color: C.primary, fontWeight: 700, fontSize: "0.8rem",
               boxShadow: isDark ? "none" : "0 2px 10px rgba(201,29,50,0.10)",
             }}>
-              <FavoriteIcon sx={{ fontSize: 16 }} aria-hidden="true" /> Donor Registration
+              <FavoriteIcon sx={{ fontSize: 16 }} aria-hidden="true" /> {t("donate.badge")}
             </Box>
             <Typography component="h1" sx={{
               fontWeight: 800, fontSize: { xs: "2rem", sm: "2.5rem", md: "3rem" }, letterSpacing: "-0.03em", lineHeight: 1.08,
             }}>
-              Become a Blood Donor,<br />
-              <Box component="span" sx={{ color: C.primary }}>Save Lives</Box>
+              {t("donate.title")}<br />
+              <Box component="span" sx={{ color: C.primary }}>{t("donate.titleAccent")}</Box>
             </Typography>
             <Typography sx={{ color: "text.secondary", mt: 1.5, fontSize: { xs: "1rem", md: "1.1rem" }, maxWidth: 560, lineHeight: 1.65 }}>
-              Join our community of donors. Register once and hospitals near you can reach you when your blood type is needed.
+              {t("donate.lead")}
             </Typography>
 
             <Box component="ul" sx={{ listStyle: "none", p: 0, m: 0, mt: 3, display: "flex", flexWrap: "wrap", gap: { xs: 1.5, sm: 2, md: 0 } }}>
-              {HERO_POINTS.map(({ icon, title, text }, i) => (
-                <Box component="li" key={title} sx={{
+              {HERO_POINTS.map(({ icon, key }, i) => (
+                <Box component="li" key={key} sx={{
                   display: "flex", alignItems: "center", gap: 1.25, pr: { md: 4 }, mr: { md: 4 },
                   borderRight: { md: i < HERO_POINTS.length - 1 ? `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(201,29,50,0.14)"}` : "none" },
                 }}>
@@ -256,8 +243,8 @@ const DonateBlood = () => {
                     {icon}
                   </Box>
                   <Box>
-                    <Typography sx={{ fontWeight: 700, fontSize: "0.9rem", lineHeight: 1.25 }}>{title}</Typography>
-                    <Typography sx={{ color: "text.secondary", fontSize: "0.8rem" }}>{text}</Typography>
+                    <Typography sx={{ fontWeight: 700, fontSize: "0.9rem", lineHeight: 1.25 }}>{t(`donate.points.${key}.title`)}</Typography>
+                    <Typography sx={{ color: "text.secondary", fontSize: "0.8rem" }}>{t(`donate.points.${key}.text`)}</Typography>
                   </Box>
                 </Box>
               ))}
@@ -282,8 +269,8 @@ const DonateBlood = () => {
                 <WaterDropIcon sx={{ fontSize: 22 }} />
               </Box>
               <Box>
-                <Typography sx={{ fontWeight: 800, fontSize: "1.1rem", lineHeight: 1.1 }}>1 donation</Typography>
-                <Typography sx={{ color: "text.secondary", fontSize: "0.8rem" }}>can save up to 3 lives</Typography>
+                <Typography sx={{ fontWeight: 800, fontSize: "1.1rem", lineHeight: 1.1 }}>{t("donate.photoCard.title")}</Typography>
+                <Typography sx={{ color: "text.secondary", fontSize: "0.8rem" }}>{t("donate.photoCard.text")}</Typography>
               </Box>
             </Box>
           </Box>
@@ -301,8 +288,8 @@ const DonateBlood = () => {
             sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
 
             {/* 1. Blood type */}
-            <Panel icon={<BloodtypeIcon />} title={<>Your Blood Type{stepBadge(1)}</>} subtitle="All blood types are needed — pick yours">
-              <Box role="radiogroup" aria-label="Blood type" sx={{
+            <Panel icon={<BloodtypeIcon />} title={<>{t("donate.bloodType.title")}{stepBadge(1)}</>} subtitle={t("donate.bloodType.subtitle")}>
+              <Box role="radiogroup" aria-label={t("donate.bloodType.label")} sx={{
                 display: "grid", gridTemplateColumns: { xs: "repeat(4, 1fr)", md: "repeat(8, 1fr)" }, gap: 1.25,
               }}>
                 {BLOOD_TYPES.map((bt) => {
@@ -330,60 +317,60 @@ const DonateBlood = () => {
               </Box>
               <Typography aria-live="polite" sx={{ mt: 1.75, fontSize: "0.86rem", color: bloodType ? "text.primary" : "text.secondary", display: "flex", alignItems: "center", gap: 0.75 }}>
                 {bloodType
-                  ? <><CheckCircleIcon sx={{ fontSize: 18, color: C.ok }} aria-hidden="true" /><span><b>{bloodType}:</b> {COMPAT[bloodType]}</span></>
-                  : "Not sure? Your blood type is confirmed during the health screening — pick your best guess."}
+                  ? <><CheckCircleIcon sx={{ fontSize: 18, color: C.ok }} aria-hidden="true" /><span><b>{bloodType}:</b> {t(`donate.bloodType.compat.${bloodType}`)}</span></>
+                  : t("donate.bloodType.unsure")}
               </Typography>
             </Panel>
 
             {/* 2. Personal details */}
-            <Panel icon={<PersonOutlineIcon />} title={<>Your Details{stepBadge(2)}</>} subtitle="So our team can contact you to confirm">
+            <Panel icon={<PersonOutlineIcon />} title={<>{t("donate.details.title")}{stepBadge(2)}</>} subtitle={t("donate.details.subtitle")}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2.5, p: 1.5, borderRadius: "12px", border: `1px dashed ${isDark ? "#334155" : "#CBD5E1"}` }}>
                 <Avatar src={photoPreview || undefined} sx={{ width: 56, height: 56, bgcolor: softTile, color: C.primary }}>
                   <AddAPhotoIcon sx={{ fontSize: 24 }} />
                 </Avatar>
                 <input ref={photoInputRef} type="file" accept="image/*" hidden onChange={handlePhotoChange} />
                 <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Typography sx={{ fontWeight: 600, fontSize: "0.92rem" }}>Profile photo <Box component="span" sx={{ color: "text.secondary", fontWeight: 400 }}>(optional)</Box></Typography>
+                  <Typography sx={{ fontWeight: 600, fontSize: "0.92rem" }}>{t("donate.details.photo")} <Box component="span" sx={{ color: "text.secondary", fontWeight: 400 }}>{t("donate.details.optional")}</Box></Typography>
                   <Typography sx={{ color: photoError ? "error.main" : "text.secondary", fontSize: "0.8rem" }}>
-                    {photoError || `JPG or PNG, up to ${MAX_PHOTO_SIZE / (1024 * 1024)} MB`}
+                    {photoError || t("donate.details.photoHint", { mb: PHOTO_MB })}
                   </Typography>
                 </Box>
                 {photoPreview ? (
                   <Button size="small" color="error" startIcon={<DeleteOutlineIcon />} onClick={handleRemovePhoto} sx={{ textTransform: "none", fontWeight: 600 }}>
-                    Remove
+                    {t("donate.details.remove")}
                   </Button>
                 ) : (
                   <Button size="small" variant="outlined" onClick={() => photoInputRef.current?.click()}
                     sx={{ textTransform: "none", fontWeight: 600, color: C.primary, borderColor: border, borderRadius: "8px", "&:hover": { borderColor: C.primary, bgcolor: C.softer } }}>
-                    Upload
+                    {t("donate.details.upload")}
                   </Button>
                 )}
               </Box>
 
               <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
-                <TextField fullWidth label="Full Name" name="fullName" value={formData.fullName}
-                  onChange={handleChange} required placeholder="e.g. Sok Dara" autoComplete="name"
+                <TextField fullWidth label={t("donate.details.fullName")} name="fullName" value={formData.fullName}
+                  onChange={handleChange} required placeholder={t("donate.details.fullNamePlaceholder")} autoComplete="name"
                   sx={{ ...fieldSx, gridColumn: "1 / -1" }} />
-                <TextField fullWidth label="Email Address" name="email" value={formData.email}
+                <TextField fullWidth label={t("donate.details.email")} name="email" value={formData.email}
                   onChange={handleChange} type="email" required placeholder="you@example.com" autoComplete="email" sx={fieldSx}
                   slotProps={{ input: { readOnly: isAuth } }}
-                  helperText={isAuth ? "Your account’s email — this registration will show in your profile" : undefined} />
-                <TextField fullWidth label="Phone Number" name="phone" value={formData.phone}
+                  helperText={isAuth ? t("donate.details.emailLinked") : undefined} />
+                <TextField fullWidth label={t("donate.details.phone")} name="phone" value={formData.phone}
                   onChange={handleChange} type="tel" required placeholder="012 345 678" autoComplete="tel" sx={fieldSx} />
-                <TextField fullWidth label="Location / City" name="location" value={formData.location}
-                  onChange={handleChange} required placeholder="e.g. Phnom Penh"
+                <TextField fullWidth label={t("donate.details.location")} name="location" value={formData.location}
+                  onChange={handleChange} required placeholder={t("donate.details.locationPlaceholder")}
                   sx={{ ...fieldSx, gridColumn: "1 / -1" }} />
               </Box>
             </Panel>
 
             {/* 3. Donation history */}
-            <Panel icon={<HistoryIcon />} title={<>Donation History{stepBadge(3)}</>} subtitle="Optional — helps us know when you can donate next">
+            <Panel icon={<HistoryIcon />} title={<>{t("donate.history.title")}{stepBadge(3)}</>} subtitle={t("donate.history.subtitle")}>
               <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
-                <TextField fullWidth label="Last Donation Date" name="lastDonation" type="date"
+                <TextField fullWidth label={t("donate.history.lastDonation")} name="lastDonation" type="date"
                   value={formData.lastDonation} onChange={handleChange}
                   InputLabelProps={{ shrink: true }}
                   inputProps={{ max: localToday() }}
-                  helperText="Leave blank if this is your first donation" sx={fieldSx} />
+                  helperText={t("donate.history.lastDonationHint")} sx={fieldSx} />
                 <Box sx={{
                   display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1.5,
                   px: 2, py: 1, borderRadius: "10px", alignSelf: "start", minHeight: 56,
@@ -391,27 +378,27 @@ const DonateBlood = () => {
                   bgcolor: formData.available ? (isDark ? "rgba(21,128,61,0.12)" : "#F0FDF4") : "transparent",
                 }}>
                   <Box>
-                    <Typography sx={{ fontWeight: 600, fontSize: "0.92rem" }}>Available to donate</Typography>
-                    <Typography sx={{ color: "text.secondary", fontSize: "0.8rem" }}>I&apos;m ready when contacted</Typography>
+                    <Typography sx={{ fontWeight: 600, fontSize: "0.92rem" }}>{t("donate.history.available")}</Typography>
+                    <Typography sx={{ color: "text.secondary", fontSize: "0.8rem" }}>{t("donate.history.availableHint")}</Typography>
                   </Box>
                   <Switch checked={formData.available} onChange={handleChange} name="available" color="success"
-                    inputProps={{ "aria-label": "Available to donate" }} />
+                    inputProps={{ "aria-label": t("donate.history.available") }} />
                 </Box>
-                <TextField fullWidth label="Additional Notes (Optional)" name="notes" value={formData.notes}
+                <TextField fullWidth label={t("donate.history.notes")} name="notes" value={formData.notes}
                   onChange={handleChange} multiline minRows={3}
-                  placeholder="Medical conditions, preferred contact time, etc."
+                  placeholder={t("donate.history.notesPlaceholder")}
                   sx={{ ...fieldSx, gridColumn: "1 / -1" }} />
               </Box>
             </Panel>
 
             {/* 4. Eligibility + submit */}
-            <Panel icon={<FactCheckOutlinedIcon />} title={<>Eligibility{stepBadge(4)}</>} subtitle="Please confirm you meet the basic requirements">
+            <Panel icon={<FactCheckOutlinedIcon />} title={<>{t("donate.eligibility.title")}{stepBadge(4)}</>} subtitle={t("donate.eligibility.subtitle")}>
               <Box component="ul" sx={{
                 listStyle: "none", m: 0, p: 0, display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 1.25,
               }}>
-                {ELIGIBILITY.map((text) => (
-                  <Box component="li" key={text} sx={{ display: "flex", alignItems: "flex-start", gap: 1, fontSize: "0.9rem", lineHeight: 1.45 }}>
-                    <CheckCircleIcon aria-hidden="true" sx={{ color: C.primary, fontSize: 19, flexShrink: 0, mt: "1px" }} />{text}
+                {ELIGIBILITY.map((key) => (
+                  <Box component="li" key={key} sx={{ display: "flex", alignItems: "flex-start", gap: 1, fontSize: "0.9rem", lineHeight: 1.45 }}>
+                    <CheckCircleIcon aria-hidden="true" sx={{ color: C.primary, fontSize: 19, flexShrink: 0, mt: "1px" }} />{t(`donate.eligibility.${key}`)}
                   </Box>
                 ))}
               </Box>
@@ -419,7 +406,7 @@ const DonateBlood = () => {
               <FormControlLabel
                 control={<Checkbox checked={eligibilityAck} onChange={(e) => { setEligibilityAck(e.target.checked); setError(""); }}
                   sx={{ color: C.primary, "&.Mui-checked": { color: C.primary } }} />}
-                label={<Typography sx={{ fontWeight: 600, fontSize: "0.92rem" }}>I confirm I meet all of these criteria</Typography>}
+                label={<Typography sx={{ fontWeight: 600, fontSize: "0.92rem" }}>{t("donate.eligibility.confirm")}</Typography>}
                 sx={{
                   mt: 2, mx: 0, width: "100%", pr: 2, py: 0.5, borderRadius: "10px",
                   border: `1px solid ${eligibilityAck ? C.primary : border}`,
@@ -436,7 +423,7 @@ const DonateBlood = () => {
 
               <Box sx={{ mt: 2.5, pt: 2.5, borderTop: `1px solid ${border}`, display: "flex", flexDirection: { xs: "column", sm: "row" }, alignItems: { sm: "center" }, gap: 2 }}>
                 <Box sx={{ flex: 1 }}>
-                  <Typography sx={{ fontWeight: 700, fontSize: "0.9rem" }}>{done} of {required.length} required steps complete</Typography>
+                  <Typography sx={{ fontWeight: 700, fontSize: "0.9rem" }}>{t("donate.progress", { done, total: required.length })}</Typography>
                   <Box sx={{ mt: 0.75, height: 6, borderRadius: 3, bgcolor: isDark ? "#334155" : "#F1F5F9", overflow: "hidden", maxWidth: 260 }}>
                     <Box sx={{ height: "100%", width: `${(done / required.length) * 100}%`, bgcolor: C.primary, transition: "width 0.3s ease" }} />
                   </Box>
@@ -448,12 +435,12 @@ const DonateBlood = () => {
                     bgcolor: C.primary, boxShadow: `0 8px 20px ${C.ring}`,
                     "&:hover": { bgcolor: C.dark, boxShadow: `0 10px 26px ${C.ring}` },
                   }}>
-                  {loading ? "Submitting…" : "Register as Donor"}
+                  {t(loading ? "donate.submitting" : "donate.submit")}
                 </Button>
               </Box>
               <Typography sx={{ mt: 1.5, color: "text.secondary", fontSize: "0.78rem", display: "flex", alignItems: "center", gap: 0.5, justifyContent: { sm: "flex-end" } }}>
                 <LockOutlinedIcon sx={{ fontSize: 14 }} aria-hidden="true" />
-                Your information is kept confidential and only shared with hospitals.
+                {t("donate.privacy")}
               </Typography>
             </Panel>
           </Box>
@@ -471,7 +458,7 @@ const DonateBlood = () => {
               <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2, position: "relative" }}>
                 <BadgeOutlinedIcon sx={{ fontSize: 20 }} aria-hidden="true" />
                 <Typography component="h2" id="donor-card-title" sx={{ fontWeight: 700, fontSize: "0.85rem", letterSpacing: "0.08em", textTransform: "uppercase", opacity: 0.9 }}>
-                  Your Donor Card
+                  {t("donate.card.title")}
                 </Typography>
               </Box>
               <Box sx={{ display: "flex", alignItems: "center", gap: 2, position: "relative" }}>
@@ -480,10 +467,10 @@ const DonateBlood = () => {
                 </Avatar>
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                   <Typography sx={{ fontWeight: 800, fontSize: "1.15rem", lineHeight: 1.25, overflowWrap: "anywhere", opacity: formData.fullName.trim() ? 1 : 0.6 }}>
-                    {formData.fullName.trim() || "Your Name"}
+                    {formData.fullName.trim() || t("donate.card.name")}
                   </Typography>
                   <Typography sx={{ fontSize: "0.84rem", opacity: 0.85, display: "flex", alignItems: "center", gap: 0.4 }}>
-                    <PlaceOutlinedIcon sx={{ fontSize: 15 }} aria-hidden="true" />{formData.location.trim() || "Your city"}
+                    <PlaceOutlinedIcon sx={{ fontSize: 15 }} aria-hidden="true" />{formData.location.trim() || t("donate.card.city")}
                   </Typography>
                 </Box>
                 <Box sx={{
@@ -495,7 +482,7 @@ const DonateBlood = () => {
               </Box>
               <Box sx={{ mt: 2, pt: 1.5, borderTop: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", gap: 1, position: "relative", fontSize: "0.84rem" }}>
                 <Box component="span" sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: formData.available ? "#4ADE80" : "rgba(255,255,255,0.5)" }} />
-                {formData.available ? "Available to donate" : "Not available right now"}
+                {t(formData.available ? "donate.card.available" : "donate.card.unavailable")}
               </Box>
             </Box>
 
@@ -505,11 +492,11 @@ const DonateBlood = () => {
                 <Box aria-hidden="true" sx={{ width: 36, height: 36, borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", color: C.primary, bgcolor: softTile, "& svg": { fontSize: 20 } }}>
                   <FormatListNumberedIcon />
                 </Box>
-                <Typography component="h2" id="next-steps-title" sx={{ fontWeight: 800, fontSize: "1.1rem" }}>What Happens Next?</Typography>
+                <Typography component="h2" id="next-steps-title" sx={{ fontWeight: 800, fontSize: "1.1rem" }}>{t("donate.next.title")}</Typography>
               </Box>
               <Box component="ol" sx={{ listStyle: "none", m: 0, p: 0 }}>
                 {PROCESS_STEPS.map((step, i) => (
-                  <Box component="li" key={step.title} sx={{ display: "flex", gap: 1.75 }}>
+                  <Box component="li" key={step} sx={{ display: "flex", gap: 1.75 }}>
                     <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                       <Box sx={{
                         width: 28, height: 28, borderRadius: "50%", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
@@ -519,8 +506,8 @@ const DonateBlood = () => {
                       {i < PROCESS_STEPS.length - 1 && <Box sx={{ width: 2, flexGrow: 1, minHeight: 18, bgcolor: border, my: 0.5 }} />}
                     </Box>
                     <Box sx={{ pb: i < PROCESS_STEPS.length - 1 ? 2 : 0 }}>
-                      <Typography sx={{ fontWeight: 700, fontSize: "0.92rem", lineHeight: 1.3 }}>{step.title}</Typography>
-                      <Typography sx={{ color: "text.secondary", fontSize: "0.82rem" }}>{step.text}</Typography>
+                      <Typography sx={{ fontWeight: 700, fontSize: "0.92rem", lineHeight: 1.3 }}>{t(`donate.next.${step}.title`)}</Typography>
+                      <Typography sx={{ color: "text.secondary", fontSize: "0.82rem" }}>{t(`donate.next.${step}.text`)}</Typography>
                     </Box>
                   </Box>
                 ))}

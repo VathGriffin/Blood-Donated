@@ -14,32 +14,35 @@ import {
 import API_BASE from "@/lib/config";
 import { getHospitals } from "@/lib/public-directory";
 import { useUserAuth } from "@/store/UserAuthContext";
+import { useI18n } from "@/i18n/I18nProvider";
+import { translate } from "@/i18n/translate";
 
 const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
-// Real pages on this site. Matched on their keywords; nothing here is generated content.
+// Real pages on this site. Matched on their keywords and their title in the current language;
+// titles and descriptions are in i18n/messages/search.js (search.pages.<page>).
 const PAGES = [
-  { id: "p-map", title: "Find a Hospital", sub: "Donation centers near you on the map", href: "/map", icon: "hospital",
+  { id: "p-map", page: "map", href: "/map", icon: "hospital",
     keys: ["hospital", "center", "centre", "map", "near", "nearby", "location", "clinic"] },
-  { id: "p-donors", title: "Find Blood Donors", sub: "Browse registered donors by blood type", href: "/donors", icon: "donor",
+  { id: "p-donors", page: "donors", href: "/donors", icon: "donor",
     keys: ["donor", "donors", "blood type", "find donor"] },
-  { id: "p-book", title: "Book an Appointment", sub: "Pick a center, date and time to donate", href: "/appointments", icon: "appointment",
+  { id: "p-book", page: "book", href: "/appointments", icon: "appointment",
     keys: ["appointment", "book", "booking", "schedule", "slot", "date"] },
-  { id: "p-compat", title: "Blood Type Compatibility", sub: "Who can give to whom", href: "/#compatibility", icon: "blood",
+  { id: "p-compat", page: "compat", href: "/#compatibility", icon: "blood",
     keys: ["compatibility", "compatible", "blood type", "blood group", "universal", "receive", "give"] },
-  { id: "p-donate", title: "Donate Blood", sub: "How donating works and who can donate", href: "/donate", icon: "donate",
+  { id: "p-donate", page: "donate", href: "/donate", icon: "donate",
     keys: ["donate", "donation", "give blood", "eligibility", "eligible", "register donor"] },
-  { id: "p-request", title: "Request Blood", sub: "Ask for blood for a patient", href: "/requests", icon: "donate",
+  { id: "p-request", page: "request", href: "/requests", icon: "donate",
     keys: ["request", "need blood", "patient", "emergency", "urgent"] },
-  { id: "p-assistant", title: "AI Assistant", sub: "Ask questions about blood donation", href: "/assistant", icon: "assistant",
+  { id: "p-assistant", page: "assistant", href: "/assistant", icon: "assistant",
     keys: ["assistant", "ai", "chat", "question", "help", "faq"] },
-  { id: "p-about", title: "About BloodLife", sub: "Our mission and how the platform works", href: "/about", icon: "info",
+  { id: "p-about", page: "about", href: "/about", icon: "info",
     keys: ["about", "mission", "who we are"] },
-  { id: "p-contact", title: "Contact Us", sub: "Get in touch with the team", href: "/contact", icon: "contact",
+  { id: "p-contact", page: "contact", href: "/contact", icon: "contact",
     keys: ["contact", "email", "phone", "support"] },
-  { id: "p-privacy", title: "Privacy Policy", sub: "How your data is handled", href: "/privacy", icon: "info",
+  { id: "p-privacy", page: "privacy", href: "/privacy", icon: "info",
     keys: ["privacy", "data", "policy"] },
-  { id: "p-terms", title: "Terms of Service", sub: "Rules for using the platform", href: "/terms", icon: "info",
+  { id: "p-terms", page: "terms", href: "/terms", icon: "info",
     keys: ["terms", "conditions", "service"] },
 ];
 
@@ -76,19 +79,22 @@ const fetchPublic = async (key, path, signal) => {
   return cache[key];
 };
 
-const formatDate = (value) => {
+const formatDate = (value, intl) => {
   const d = new Date(`${value}T00:00:00`);
-  return Number.isNaN(d.getTime()) ? value : d.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+  return Number.isNaN(d.getTime()) ? value : d.toLocaleDateString(intl, { day: "numeric", month: "short", year: "numeric" });
 };
 
 // `variant="field"` renders a wide search box (dashboard top bar) instead of the icon button.
-const SiteSearch = ({ size = 34, variant = "icon", placeholder = "Search hospital, donor, or any information..." }) => {
+const SiteSearch = ({ size = 34, variant = "icon", placeholder }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
   const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
   const router = useRouter();
   const { isAuth, token } = useUserAuth();
   const listId = useId();
+  const { t, lang, intl } = useI18n();
+  // A page result in the current language.
+  const pageItem = useCallback((p) => ({ ...p, key: p.id, title: t(`search.pages.${p.page}.title`), sub: t(`search.pages.${p.page}.sub`) }), [t]);
 
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -155,10 +161,7 @@ const SiteSearch = ({ size = 34, variant = "icon", placeholder = "Search hospita
 
   const groups = useMemo(() => {
     if (!trimmed) {
-      return [{ label: "Popular searches", items: POPULAR.map((id) => {
-        const p = PAGES.find((x) => x.id === id);
-        return { ...p, key: p.id };
-      }) }];
+      return [{ label: t("search.groups.popular"), items: POPULAR.map((id) => pageItem(PAGES.find((x) => x.id === id))) }];
     }
     const { bloodType, text } = parseQuery(trimmed);
     const lower = trimmed.toLowerCase();
@@ -171,11 +174,11 @@ const SiteSearch = ({ size = 34, variant = "icon", placeholder = "Search hospita
         .slice(0, 5)
         .map((h) => ({
           key: `h-${h._id}`, icon: "hospital", title: h.name,
-          sub: [h.address, h.city].filter(Boolean).join(", ") || "Registered donation center",
-          meta: "Book here",
+          sub: [h.address, h.city].filter(Boolean).join(", ") || t("search.hospitalFallback"),
+          meta: t("search.bookHere"),
           href: `/appointments?hospital=${encodeURIComponent(h._id)}`,
         }));
-      out.push({ label: "Hospitals", source: hospitals.status, items });
+      out.push({ label: t("search.groups.hospitals"), source: hospitals.status, items });
     }
 
     // Donors: shown only as counts per blood type and location, never as individuals.
@@ -200,13 +203,13 @@ const SiteSearch = ({ size = 34, variant = "icon", placeholder = "Search hospita
           if (g.loc) params.set("q", g.loc);
           return {
             key: `d-${g.type}-${g.loc}`, icon: "donor",
-            title: `${g.type} donors${g.loc ? ` in ${g.loc}` : ""}`,
-            sub: `${g.total} registered · ${g.available} available now`,
+            title: g.loc ? t("search.donorGroupIn", { type: g.type, place: g.loc }) : t("search.donorGroup", { type: g.type }),
+            sub: t("search.donorCounts", { total: g.total, available: g.available }),
             badge: g.type,
             href: `/donors?${params}`,
           };
         });
-      out.push({ label: "Donors", source: donors.status, items });
+      out.push({ label: t("search.groups.donors"), source: donors.status, items });
     }
 
     // The signed-in donor's own appointments.
@@ -217,29 +220,32 @@ const SiteSearch = ({ size = 34, variant = "icon", placeholder = "Search hospita
         .slice(0, 4)
         .map((a) => ({
           key: `a-${a._id}`, icon: "appointment",
-          title: `${a.location || "Donation appointment"}`,
-          sub: `${formatDate(a.date)} · ${a.time}`,
+          title: a.location || t("search.appointmentFallback"),
+          sub: `${formatDate(a.date, intl)} · ${a.time}`,
           meta: a.status || "Pending",
           href: "/my-appointments",
         }));
-      out.push({ label: "My appointments", source: appointments.status, items });
+      out.push({ label: t("search.groups.appointments"), source: appointments.status, items });
     } else if (!isAuth && wantsAppointments) {
-      out.push({ label: "My appointments", items: [{
-        key: "login-appointments", icon: "lock", title: "Log in to see your appointments",
-        sub: "Your bookings are private to your account", href: "/login",
+      out.push({ label: t("search.groups.appointments"), items: [{
+        key: "login-appointments", icon: "lock", title: t("search.loginAppointments"),
+        sub: t("search.loginAppointmentsSub"), href: "/login",
       }] });
     }
 
     // Site pages and donation information.
+    // A page matches its English or its translated title, or one of its English keywords.
     const pages = PAGES
-      .filter((p) => includes(p.title, lower) || p.keys.some((k) => keywordMatch(k, lower))
+      .filter((p) => includes(translate("en", `search.pages.${p.page}.title`), lower)
+        || includes(t(`search.pages.${p.page}.title`), lower)
+        || p.keys.some((k) => keywordMatch(k, lower))
         || (bloodType && p.keys.includes("blood type")))
       .slice(0, 5)
-      .map((p) => ({ ...p, key: p.id }));
-    out.push({ label: "Pages & information", items: pages });
+      .map(pageItem);
+    out.push({ label: t("search.groups.pages"), items: pages });
 
     return out.filter((g) => g.items.length || g.source === "loading" || g.source === "error");
-  }, [trimmed, hospitals, donors, appointments, isAuth]);
+  }, [trimmed, hospitals, donors, appointments, isAuth, t, intl, pageItem]);
 
   const flat = useMemo(() => groups.flatMap((g) => g.items), [groups]);
   const pending = query !== debounced;
@@ -287,7 +293,7 @@ const SiteSearch = ({ size = 34, variant = "icon", placeholder = "Search hospita
   return (
     <>
       {variant === "field" ? (
-        <Box component="button" type="button" onClick={() => setOpen(true)} aria-haspopup="dialog" aria-label="Open search"
+        <Box component="button" type="button" onClick={() => setOpen(true)} aria-haspopup="dialog" aria-label={t("search.open")}
           sx={{
             display: "flex", alignItems: "center", gap: 1.25, width: "100%", maxWidth: 520, height: 46, px: 2,
             border: "1px solid", borderColor: "divider", borderRadius: "12px", bgcolor: "background.paper",
@@ -297,14 +303,14 @@ const SiteSearch = ({ size = 34, variant = "icon", placeholder = "Search hospita
             "&:focus-visible": { outline: "none", borderColor: "primary.main", boxShadow: `0 0 0 3px ${theme.palette.mode === "dark" ? "rgba(214,64,79,0.25)" : "rgba(201,29,50,0.14)"}` },
           }}>
           <SearchIcon aria-hidden="true" sx={{ fontSize: 22 }} />
-          <Box component="span" sx={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{placeholder}</Box>
+          <Box component="span" sx={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{placeholder || t("search.placeholder")}</Box>
           <Box component="kbd" sx={{ display: { xs: "none", lg: "inline-block" }, fontFamily: "inherit", fontSize: "0.7rem", fontWeight: 600, px: 0.75, py: 0.2, border: "1px solid", borderColor: "divider", borderRadius: "6px" }}>
             Ctrl K
           </Box>
         </Box>
       ) : (
-      <Tooltip title="Search (Ctrl+K)">
-        <IconButton onClick={() => setOpen(true)} aria-label="Open search" aria-haspopup="dialog"
+      <Tooltip title={t("search.tooltip")}>
+        <IconButton onClick={() => setOpen(true)} aria-label={t("search.open")} aria-haspopup="dialog"
           sx={{
             color: isDark ? "#94A3B8" : "#64748B",
             borderRadius: "8px", width: size, height: size,
@@ -329,7 +335,7 @@ const SiteSearch = ({ size = 34, variant = "icon", placeholder = "Search hospita
           } },
         }}>
         <Typography id={`${listId}-title`} sx={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>
-          Search BloodLife
+          {t("search.title")}
         </Typography>
 
         {/* Input */}
@@ -338,18 +344,18 @@ const SiteSearch = ({ size = 34, variant = "icon", placeholder = "Search hospita
           <InputBase
             inputRef={inputRef} autoFocus fullWidth value={query}
             onChange={(e) => setQuery(e.target.value)} onKeyDown={onKeyDown}
-            placeholder="Search hospitals, donors, appointments..."
+            placeholder={t("search.inputPlaceholder")}
             inputProps={{
-              "aria-label": "Search hospitals, donors, appointments",
+              "aria-label": t("search.inputPlaceholder"), lang,
               role: "combobox", "aria-expanded": true, "aria-controls": listId, "aria-autocomplete": "list",
               "aria-activedescendant": flat[active] ? `${listId}-${active}` : undefined,
               enterKeyHint: "search", autoComplete: "off", spellCheck: false,
             }}
             sx={{ fontSize: "1rem", color: "text.primary", "& input::placeholder": { color: muted, opacity: 1 } }}
           />
-          {(pending || anyLoading) && trimmed && <CircularProgress size={18} thickness={5} aria-label="Searching" />}
+          {(pending || anyLoading) && trimmed && <CircularProgress size={18} thickness={5} aria-label={t("search.searching")} />}
           {query && (
-            <IconButton size="small" aria-label="Clear search" onClick={() => { setQuery(""); inputRef.current?.focus(); }}>
+            <IconButton size="small" aria-label={t("search.clear")} onClick={() => { setQuery(""); inputRef.current?.focus(); }}>
               <CloseIcon fontSize="small" />
             </IconButton>
           )}
@@ -362,13 +368,13 @@ const SiteSearch = ({ size = 34, variant = "icon", placeholder = "Search hospita
             }}>
             Esc
           </Box>
-          <IconButton onClick={close} aria-label="Close search" sx={{ display: { xs: "inline-flex", sm: "none" } }}>
+          <IconButton onClick={close} aria-label={t("search.close")} sx={{ display: { xs: "inline-flex", sm: "none" } }}>
             <CloseIcon />
           </IconButton>
         </Box>
 
         {/* Results */}
-        <Box ref={listRef} id={listId} role="listbox" aria-label="Search results"
+        <Box ref={listRef} id={listId} role="listbox" aria-label={t("search.results")}
           sx={{ flex: 1, overflowY: "auto", px: 1.25, py: 1 }}>
           {anyError && (
             <Box role="alert" sx={{
@@ -376,9 +382,9 @@ const SiteSearch = ({ size = 34, variant = "icon", placeholder = "Search hospita
               bgcolor: isDark ? "rgba(201,29,50,0.12)" : "#FFF1F2", color: isDark ? "#FCA5A5" : "#A91529",
             }}>
               <ErrorOutline fontSize="small" />
-              <Typography sx={{ flex: 1, fontSize: "0.85rem" }}>Some results couldn&apos;t be loaded.</Typography>
+              <Typography sx={{ flex: 1, fontSize: "0.85rem" }}>{t("search.loadError")}</Typography>
               <Button size="small" color="error" onClick={() => setAttempt((n) => n + 1)}>
-                Retry
+                {t("common.retry")}
               </Button>
             </Box>
           )}
@@ -391,7 +397,7 @@ const SiteSearch = ({ size = 34, variant = "icon", placeholder = "Search hospita
               {g.source === "loading" && !g.items.length && (
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, px: 1.25, py: 1.25, color: muted }}>
                   <CircularProgress size={16} thickness={5} color="inherit" />
-                  <Typography sx={{ fontSize: "0.85rem" }}>Loading {g.label.toLowerCase()}…</Typography>
+                  <Typography sx={{ fontSize: "0.85rem" }}>{t("search.loadingGroup", { group: g.label.toLocaleLowerCase(intl) })}</Typography>
                 </Box>
               )}
               {g.items.map((item) => {
@@ -439,9 +445,9 @@ const SiteSearch = ({ size = 34, variant = "icon", placeholder = "Search hospita
                 bgcolor: isDark ? "rgba(201,29,50,0.14)" : "#FEE2E2", color: "primary.main" }}>
                 <SearchOff />
               </Box>
-              <Typography sx={{ fontWeight: 700, fontSize: "0.95rem" }}>No results for “{trimmed}”</Typography>
+              <Typography sx={{ fontWeight: 700, fontSize: "0.95rem" }}>{t("search.noResults", { query: trimmed })}</Typography>
               <Typography sx={{ mt: 0.5, fontSize: "0.83rem", color: muted }}>
-                Try a hospital name, a city, or a blood type such as O+ or AB-.
+                {t("search.noResultsHint")}
               </Typography>
             </Box>
           )}
@@ -452,13 +458,13 @@ const SiteSearch = ({ size = 34, variant = "icon", placeholder = "Search hospita
           display: { xs: "none", sm: "flex" }, alignItems: "center", gap: 2, px: 2.25, py: 1.1,
           borderTop: `1px solid ${border}`, bgcolor: isDark ? "#0B1220" : "#F8FAFC", color: muted, fontSize: "0.72rem",
         }}>
-          <span><b>↑↓</b> to navigate</span>
-          <span><b>Enter</b> to open</span>
-          <span><b>Esc</b> to close</span>
+          <span><b>↑↓</b> {t("search.hintNavigate")}</span>
+          <span><b>Enter</b> {t("search.hintOpen")}</span>
+          <span><b>Esc</b> {t("search.hintClose")}</span>
           <Box sx={{ flex: 1 }} />
           {BLOOD_TYPES.includes(parseQuery(trimmed).bloodType) && (
             <Typography sx={{ fontSize: "0.72rem", color: "primary.main", fontWeight: 600 }}>
-              Blood type {parseQuery(trimmed).bloodType}
+              {t("search.bloodType", { type: parseQuery(trimmed).bloodType })}
             </Typography>
           )}
         </Box>

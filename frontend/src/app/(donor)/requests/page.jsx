@@ -1,4 +1,5 @@
 'use client';
+import { useT } from '@/i18n/I18nProvider';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -27,6 +28,7 @@ const LOGIN_AGAIN = `/login?next=${encodeURIComponent('/requests')}`;
 export default function RequestBloodPage() {
   const router = useRouter();
   const { token, user, logout } = useUserAuth();
+  const t = useT();
   const authHeader = useMemo(() => ({ headers: { Authorization: `Bearer ${token}` } }), [token]);
 
   // ── Session expiry: keep the draft, sign out, come back here after logging in ──
@@ -98,7 +100,7 @@ export default function RequestBloodPage() {
     const firstInvalid = Object.keys(allErrors)[0];
     if (firstInvalid) {
       setShowErrors(true);
-      setResult({ severity: 'error', message: `Please fix ${Object.keys(allErrors).length === 1 ? 'the highlighted field' : `the ${Object.keys(allErrors).length} highlighted fields`} before submitting.` });
+      setResult({ severity: 'error', text: Object.keys(allErrors).length === 1 ? ['donor.rpage.fixOne'] : ['donor.rpage.fixMany', { count: Object.keys(allErrors).length }] });
       const el = document.getElementById(`field-${firstInvalid}`);
       el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       const target = ['textarea', 'input:not([aria-hidden=true]):not([type=hidden])', '[role=combobox]', 'button'].map((s) => el?.querySelector(s)).find(Boolean);
@@ -117,7 +119,7 @@ export default function RequestBloodPage() {
       setRequests((list) => [data, ...list.filter((r) => r._id !== data._id)]);
       setResult({
         severity: 'success', request: data,
-        message: `Your request has been sent to ${data.hospitalName}. The hospital will review it and contact you.`,
+        text: ['donor.rpage.sent', { hospital: data.hospitalName }],
       });
       loadRequests(true);
     } catch (err) {
@@ -128,7 +130,7 @@ export default function RequestBloodPage() {
         setResult({ severity: 'warning', message: apiErrorMessage(err), request: existing });
         loadRequests(true);
       } else {
-        setResult({ severity: 'error', message: apiErrorMessage(err, 'Your request could not be submitted. Please try again.') });
+        setResult({ severity: 'error', message: apiErrorMessage(err, t('donor.rpage.failed')) });
       }
     } finally {
       inFlight.current = false;
@@ -148,9 +150,9 @@ export default function RequestBloodPage() {
     <Alert severity={result.severity} role={result.severity === 'success' ? 'status' : 'alert'}
       onClose={() => setResult(null)} sx={{ mb: 2.5, borderRadius: '10px', alignItems: 'center' }}
       action={result.request ? (
-        <Button color="inherit" size="small" onClick={() => setDetail(result.request)} sx={{ fontWeight: 700, whiteSpace: 'nowrap' }}>View request</Button>
+        <Button color="inherit" size="small" onClick={() => setDetail(result.request)} sx={{ fontWeight: 700, whiteSpace: 'nowrap' }}>{t('donor.rpage.viewRequest')}</Button>
       ) : undefined}>
-      {result.message}
+      {result.text ? t(...result.text) : result.message}
     </Alert>
   );
 
@@ -165,15 +167,15 @@ export default function RequestBloodPage() {
       gridTemplateRows: { xl: 'auto auto auto 1fr' },
     }}>
       <Box sx={{ gridArea: 'title', alignSelf: 'center' }}>
-        <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} aria-label="Breadcrumb" sx={{ fontSize: '0.86rem', mb: 1 }}>
-          <Box component={Link} href="/profile" sx={{ color: 'text.secondary', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}>Dashboard</Box>
-          <Box component={Link} href="/my-requests" sx={{ color: 'text.secondary', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}>Blood Requests</Box>
-          <Typography aria-current="page" sx={{ fontSize: 'inherit', color: 'text.primary', fontWeight: 600 }}>New Request</Typography>
+        <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} aria-label={t('donor.rpage.breadcrumb')} sx={{ fontSize: '0.86rem', mb: 1 }}>
+          <Box component={Link} href="/profile" sx={{ color: 'text.secondary', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}>{t('donor.rpage.dashboard')}</Box>
+          <Box component={Link} href="/my-requests" sx={{ color: 'text.secondary', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}>{t('donor.rpage.requests')}</Box>
+          <Typography aria-current="page" sx={{ fontSize: 'inherit', color: 'text.primary', fontWeight: 600 }}>{t('donor.rpage.new')}</Typography>
         </Breadcrumbs>
         <Typography component="h1" sx={{ fontWeight: 800, fontSize: { xs: '1.8rem', md: '2.1rem' }, letterSpacing: '-0.025em', lineHeight: 1.15 }}>
-          Request Blood
+          {t('donor.rpage.title')}
         </Typography>
-        <Typography sx={{ color: 'text.secondary', mt: 0.5, fontSize: '1rem' }}>Submit a blood request to a hospital in need.</Typography>
+        <Typography sx={{ color: 'text.secondary', mt: 0.5, fontSize: '1rem' }}>{t('donor.rpage.lead')}</Typography>
       </Box>
 
       <Box sx={{ gridArea: 'banner' }}><LifeBanner /></Box>
@@ -201,7 +203,7 @@ export default function RequestBloodPage() {
       <CancelRequestDialog request={cancelTarget} token={token} onClose={() => setCancelTarget(null)}
         onCancelled={(data) => {
           replace(data); setCancelTarget(null);
-          setToast({ severity: 'success', message: 'Your blood request has been cancelled.' });
+          setToast({ severity: 'success', message: t('donor.rpage.cancelled') });
           loadRequests(true);
         }}
         onChanged={(message) => { setCancelTarget(null); setToast({ severity: 'warning', message }); loadRequests(true); }}

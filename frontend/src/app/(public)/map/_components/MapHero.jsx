@@ -1,4 +1,5 @@
 'use client';
+import { useI18n } from '@/i18n/I18nProvider';
 import Link from 'next/link';
 import { Box, Typography, useTheme } from '@mui/material';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
@@ -12,7 +13,7 @@ import { PROVINCES } from '@/lib/places';
 
 const PAGE_WIDTH = { maxWidth: 1600, mx: 'auto', px: { xs: 2, md: 4 } };
 
-const formatCount = (value) => (typeof value === 'number' ? value.toLocaleString() : '—');
+const formatCount = (value, intl) => (typeof value === 'number' ? value.toLocaleString(intl) : '—');
 
 function StatCard({ icon, color, tint, value, label, onClick }) {
   const isDark = useTheme().palette.mode === 'dark';
@@ -48,6 +49,7 @@ const HERO_PHOTO = 'https://images.unsplash.com/photo-1586773860418-d37222d8fce3
 // The numbers are all real: the platform's own public totals (/api/stats/public) and the fixed
 // province list. Nothing is padded; a figure that hasn't loaded shows "—".
 export default function MapHero({ stats, onShowHospitals, onShowDonors }) {
+  const { t, intl } = useI18n();
   return (
     <>
       <Box sx={{ position: 'relative', overflow: 'hidden', color: '#fff', pt: { xs: 3, md: 4 }, pb: { xs: 11, md: 12 }, bgcolor: '#102541' }}>
@@ -63,10 +65,10 @@ export default function MapHero({ stats, onShowHospitals, onShowDonors }) {
             </Box>
             <Box sx={{ minWidth: 0 }}>
               <Typography component="h1" sx={{ fontWeight: 800, fontSize: { xs: '1.55rem', md: '2.3rem' }, letterSpacing: '-0.02em', lineHeight: 1.15 }}>
-                Find a Hospital or Clinic
+                {t('map.hero.title')}
               </Typography>
               <Typography sx={{ color: 'rgba(255,255,255,0.85)', fontSize: { xs: '0.9rem', md: '1rem' }, mt: 0.5 }}>
-                Locate nearby hospitals and available donors — every second counts.
+                {t('map.hero.lead')}
               </Typography>
             </Box>
           </Box>
@@ -77,11 +79,11 @@ export default function MapHero({ stats, onShowHospitals, onShowDonors }) {
               bgcolor: 'rgba(255,255,255,0.92)', boxShadow: '0 8px 24px rgba(0,0,0,0.2)', transition: 'transform .18s ease', '&:hover': { transform: 'translateY(-2px)' },
             }}>
               <WaterDropIcon sx={{ color: '#C91D32' }} />
-              <Typography sx={{ fontWeight: 800, lineHeight: 1.2, fontSize: '0.98rem' }}>Together<br />We Save Lives</Typography>
+              <Typography sx={{ fontWeight: 800, lineHeight: 1.2, fontSize: '0.98rem' }}>{t('map.hero.together.line1')}<br />{t('map.hero.together.line2')}</Typography>
               <ChevronRightIcon sx={{ ml: 1, color: '#C91D32' }} />
             </Box>
             <Typography aria-hidden="true" sx={{ fontFamily: script.style.fontFamily, fontWeight: 700, fontSize: '2.3rem', lineHeight: 0.95, transform: 'rotate(-5deg)', display: { xs: 'none', lg: 'flex' }, alignItems: 'center', gap: 1 }}>
-              <span>Give Blood<br />Give Hope</span>
+              <span>{t('map.hero.script.line1')}<br />{t('map.hero.script.line2')}</span>
               <FavoriteBorderIcon sx={{ fontSize: 44 }} />
             </Typography>
           </Box>
@@ -89,10 +91,10 @@ export default function MapHero({ stats, onShowHospitals, onShowDonors }) {
       </Box>
 
       <Box sx={{ ...PAGE_WIDTH, mt: { xs: -8, md: -9 }, position: 'relative', zIndex: 2, display: 'grid', gap: { xs: 1.25, md: 2 }, gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', lg: 'repeat(4, minmax(0, 1fr))' } }}>
-        <StatCard icon={<LocalHospitalIcon />} color="#C91D32" tint="#FFF1F2" value={formatCount(stats?.hospitals)} label="Partner Hospitals" onClick={onShowHospitals} />
-        <StatCard icon={<GroupsIcon />} color="#C91D32" tint="#FFF1F2" value={formatCount(stats?.availableDonors)} label="Active Donors" onClick={onShowDonors} />
-        <StatCard icon={<WaterDropIcon />} color="#C91D32" tint="#FFF1F2" value={formatCount(stats?.units)} label="Units Available" />
-        <StatCard icon={<VerifiedUserIcon />} color="#16A34A" tint="#DCFCE7" value={PROVINCES.length} label="Provinces Covered" />
+        <StatCard icon={<LocalHospitalIcon />} color="#C91D32" tint="#FFF1F2" value={formatCount(stats?.hospitals, intl)} label={t('map.hero.stats.hospitals')} onClick={onShowHospitals} />
+        <StatCard icon={<GroupsIcon />} color="#C91D32" tint="#FFF1F2" value={formatCount(stats?.availableDonors, intl)} label={t('map.hero.stats.donors')} onClick={onShowDonors} />
+        <StatCard icon={<WaterDropIcon />} color="#C91D32" tint="#FFF1F2" value={formatCount(stats?.units, intl)} label={t('map.hero.stats.units')} />
+        <StatCard icon={<VerifiedUserIcon />} color="#16A34A" tint="#DCFCE7" value={formatCount(PROVINCES.length, intl)} label={t('map.hero.stats.provinces')} />
       </Box>
     </>
   );

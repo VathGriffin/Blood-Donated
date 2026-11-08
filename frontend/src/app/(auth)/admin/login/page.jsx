@@ -14,6 +14,8 @@ import { useAuth } from '@/store/AuthContext';
 import API_BASE from '@/lib/config';
 import { apiErrorMessage } from '@/lib/api-error';
 import { EMAIL_RE } from '@/lib/validation';
+import LanguageSwitcher from '@/components/layout/LanguageSwitcher';
+import { useI18n } from '@/i18n/I18nProvider';
 import BrandLogo from '@/components/dashboard/BrandLogo';
 import { BRAND } from '@/lib/brand';
 import { AuthField, PrimaryButton, RED } from '@/components/auth/authUi';
@@ -22,11 +24,12 @@ const SIDE_IMG =
   'https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&w=1200&q=80';
 
 
+// Text: auth.admin.capabilities.<key>.{title,text}
 const capabilities = [
-  { icon: <BarChart />, title: 'Monitor donations & inventory', text: 'Real-time data and analytics' },
-  { icon: <ManageAccounts />, title: 'Manage donors and requests', text: 'Complete oversight and control' },
-  { icon: <Inventory2 />, title: 'Control blood stock levels', text: 'Track and prevent shortages' },
-  { icon: <GppGood />, title: 'Secure data management', text: 'Role-based access and audit logs' },
+  { icon: <BarChart />, key: 'monitor' },
+  { icon: <ManageAccounts />, key: 'manage' },
+  { icon: <Inventory2 />, key: 'stock' },
+  { icon: <GppGood />, key: 'secure' },
 ];
 
 const fadeUp = keyframes`
@@ -45,6 +48,7 @@ const noMotion = { '@media (prefers-reduced-motion: reduce)': { transition: 'non
 const AdminLogin = () => {
   const router = useRouter();
   const { login, isAdmin } = useAuth();
+  const { t, rich } = useI18n();
   const isDark = useTheme().palette.mode === 'dark';
   const [form, setForm] = useState({ email: '', password: '' });
   const [remember, setRemember] = useState(true);
@@ -59,8 +63,8 @@ const AdminLogin = () => {
   if (isAdmin) return null;
 
   const email = form.email.trim();
-  const emailProblem = !email ? 'Email is required' : !EMAIL_RE.test(email) ? 'Enter a valid email address' : '';
-  const passwordProblem = !form.password ? 'Password is required' : '';
+  const emailProblem = !email ? t('auth.admin.emailRequired') : !EMAIL_RE.test(email) ? t('auth.admin.emailInvalid') : '';
+  const passwordProblem = !form.password ? t('auth.admin.passwordRequired') : '';
   const emailError = touched && emailProblem;
   const passwordError = touched && passwordProblem;
 
@@ -78,13 +82,13 @@ const AdminLogin = () => {
     try {
       const { data } = await axios.post(`${API_BASE}/api/staff/login`, { ...form, email });
       if (data.staff.role !== 'admin') {
-        setError('This account is not an admin account. Hospital staff should use the hospital login.');
+        setError(t('auth.admin.notAdmin'));
         return;
       }
       login(data.token, data.staff, { remember });
       router.push('/dashboard/admin', { replace: true });
     } catch (err) {
-      setError(apiErrorMessage(err, 'Login failed. Try again.'));
+      setError(apiErrorMessage(err, t('auth.admin.failed')));
     } finally {
       setLoading(false);
     }
@@ -130,7 +134,7 @@ const AdminLogin = () => {
         }} />
 
         <Box sx={{ position: 'relative', zIndex: 1, ...enter(0) }}>
-          <BrandLogo href="/" caption="ADMIN PORTAL" />
+          <BrandLogo href="/" caption={t('auth.admin.portal').toLocaleUpperCase()} />
         </Box>
 
         <Box sx={{ position: 'relative', zIndex: 1, maxWidth: 520 }}>
@@ -141,24 +145,23 @@ const AdminLogin = () => {
           }}>
             <Shield sx={{ fontSize: 16, color: '#F5C6CC' }} />
             <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.06em' }}>
-              SECURE ADMIN ACCESS
+              {t('auth.admin.secure')}
             </Typography>
           </Box>
 
           <Typography component="h2" sx={{
             fontWeight: 800, fontSize: { md: '2.5rem', lg: '3.1rem' }, lineHeight: 1.12, letterSpacing: '-0.02em', ...enter(0.14),
           }}>
-            Manage Every<br />
-            <Box component="span" sx={{ color: '#E63946' }}>Drop</Box> That Matters
+            {rich('auth.admin.heroTitle', { accent: <Box component="span" sx={{ color: '#E63946' }}>{t('auth.admin.heroAccent')}</Box> })}
           </Typography>
           <Box sx={{ width: 46, height: 3, borderRadius: 2, bgcolor: '#E63946', mt: 2.25, mb: 2.5, ...enter(0.18) }} />
           <Typography sx={{ fontSize: '1.05rem', color: 'rgba(255,255,255,0.82)', lineHeight: 1.6, mb: 4, ...enter(0.22) }}>
-            Full control of the blood donation network — donors, requests, inventory, and lives saved.
+            {t('auth.admin.heroLead')}
           </Typography>
 
           <Box component="ul" sx={{ listStyle: 'none', m: 0, p: 0, display: 'flex', flexDirection: 'column', gap: 2.25 }}>
             {capabilities.map((c, i) => (
-              <Box component="li" key={c.title} sx={{
+              <Box component="li" key={c.key} sx={{
                 display: 'flex', alignItems: 'center', gap: 2.25, ...enter(0.3 + i * 0.07),
                 '&:hover .cap-icon': { transform: 'translateY(-2px) scale(1.06)', boxShadow: '0 8px 22px rgba(255,60,60,0.45)' },
               }}>
@@ -175,8 +178,8 @@ const AdminLogin = () => {
                   {c.icon}
                 </Box>
                 <Box>
-                  <Typography sx={{ fontWeight: 600, fontSize: '1.02rem', lineHeight: 1.3 }}>{c.title}</Typography>
-                  <Typography sx={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.68)' }}>{c.text}</Typography>
+                  <Typography sx={{ fontWeight: 600, fontSize: '1.02rem', lineHeight: 1.3 }}>{t(`auth.admin.capabilities.${c.key}.title`)}</Typography>
+                  <Typography sx={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.68)' }}>{t(`auth.admin.capabilities.${c.key}.text`)}</Typography>
                 </Box>
               </Box>
             ))}
@@ -186,7 +189,7 @@ const AdminLogin = () => {
         <Box sx={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: 2, ...enter(0.6) }}>
           <Box sx={{ width: 46, height: 2, borderRadius: 2, bgcolor: '#E63946' }} />
           <Typography sx={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.75)' }}>
-            {BRAND.name} • Admin Portal
+            {BRAND.name} • {t('auth.admin.portal')}
           </Typography>
         </Box>
       </Box>
@@ -200,6 +203,9 @@ const AdminLogin = () => {
           ? 'radial-gradient(circle at 85% 10%, rgba(201,29,50,0.14), transparent 45%), #0B1220'
           : 'linear-gradient(160deg, #FFF1F2 0%, #FFFFFF 55%, #FFF1F2 100%)',
       }}>
+        <Box sx={{ position: 'absolute', top: { xs: 12, sm: 20 }, right: { xs: 12, sm: 20 }, zIndex: 2 }}>
+          <LanguageSwitcher labelDisplay={{ xs: 'none', sm: 'inline' }} />
+        </Box>
         {/* Soft background circles */}
         <Box aria-hidden sx={{
           position: 'absolute', top: -120, right: -100, width: 380, height: 380, borderRadius: '50%',
@@ -212,7 +218,7 @@ const AdminLogin = () => {
 
         {/* Mobile brand mark */}
         <Box sx={{ display: { xs: 'flex', md: 'none' }, justifyContent: 'center', mb: 3, position: 'relative', ...enter(0) }}>
-          <BrandLogo href="/" caption="Admin Portal" onDark={false} />
+          <BrandLogo href="/" caption={t('auth.admin.portal')} onDark={false} />
         </Box>
 
         <Box sx={{
@@ -243,10 +249,10 @@ const AdminLogin = () => {
             </Box>
             <Box sx={{ position: 'relative', minWidth: 0 }}>
               <Typography component="h1" sx={{ fontWeight: 800, fontSize: { xs: '1.5rem', sm: '1.95rem' }, color: '#fff', lineHeight: 1.15, letterSpacing: '-0.02em' }}>
-                Admin Sign In
+                {t('auth.admin.title')}
               </Typography>
               <Typography sx={{ fontSize: { xs: '0.88rem', sm: '1rem' }, color: 'rgba(255,255,255,0.85)', mt: 0.5 }}>
-                Access the management dashboard
+                {t('auth.admin.subtitle')}
               </Typography>
             </Box>
           </Box>
@@ -272,33 +278,33 @@ const AdminLogin = () => {
               }}
             >
               <AuthField
-                label="Email Address *"
+                label={t('auth.admin.email')}
                 name="email"
                 type="email"
                 autoComplete="username"
-                placeholder="Enter your admin email"
+                placeholder={t('auth.admin.emailPlaceholder')}
                 icon={<Email fontSize="small" />}
                 value={form.email}
                 onChange={handleChange}
                 required
                 error={!!emailError}
                 helperText={emailError || undefined}
-                inputProps={{ 'aria-label': 'Email address', 'aria-required': true }}
+                inputProps={{ 'aria-label': t('auth.admin.emailLabel'), 'aria-required': true }}
               />
 
               <AuthField
-                label="Password *"
+                label={t('auth.admin.password')}
                 name="password"
                 type="password"
                 autoComplete="current-password"
-                placeholder="Enter your password"
+                placeholder={t('auth.admin.passwordPlaceholder')}
                 icon={<Lock fontSize="small" />}
                 value={form.password}
                 onChange={handleChange}
                 required
                 error={!!passwordError}
                 helperText={passwordError || undefined}
-                inputProps={{ 'aria-label': 'Password', 'aria-required': true }}
+                inputProps={{ 'aria-label': t('auth.admin.passwordLabel'), 'aria-required': true }}
               />
 
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, flexWrap: 'wrap', mt: -0.5 }}>
@@ -311,14 +317,14 @@ const AdminLogin = () => {
                       sx={{ color: isDark ? '#64748B' : '#CBD5E1', '&.Mui-checked': { color: RED } }}
                     />
                   }
-                  label="Remember me"
+                  label={t('auth.admin.remember')}
                   slotProps={{ typography: { sx: { fontSize: '0.92rem' } } }}
                 />
                 <Box component={Link} href="/forgot-password" sx={{
                   color: RED, fontWeight: 600, fontSize: '0.9rem', textUnderlineOffset: 3,
                   '&:hover': { color: '#A91529' }, '&:focus-visible': { outline: `2px solid ${RED}`, outlineOffset: 2, borderRadius: 1 },
                 }}>
-                  Forgot password?
+                  {t('auth.admin.forgot')}
                 </Box>
               </Box>
 
@@ -344,7 +350,7 @@ const AdminLogin = () => {
                   },
                 }}
               >
-                {loading ? <CircularProgress size={24} color="inherit" aria-label="Signing in" /> : 'Sign In to Admin'}
+                {loading ? <CircularProgress size={24} color="inherit" aria-label={t('auth.admin.signingIn')} /> : t('auth.admin.submit')}
               </PrimaryButton>
             </Box>
 
@@ -352,7 +358,7 @@ const AdminLogin = () => {
               <Box sx={{ flex: 1, height: '1px', bgcolor: 'divider' }} />
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, color: 'text.secondary' }}>
                 <Shield sx={{ fontSize: 17, opacity: 0.7 }} />
-                <Typography sx={{ fontSize: '0.82rem' }}>Authorized personnel only · {BRAND.name}</Typography>
+                <Typography sx={{ fontSize: '0.82rem' }}>{t('auth.admin.authorized', { brand: BRAND.name })}</Typography>
               </Box>
               <Box sx={{ flex: 1, height: '1px', bgcolor: 'divider' }} />
             </Box>

@@ -26,11 +26,12 @@ import ShieldOutlinedIcon from "@mui/icons-material/ShieldOutlined";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import { useUserAuth } from "@/store/UserAuthContext";
-import { detectLanguage, QUICK_ACTIONS } from "@/lib/chatbot-kb";
+import { QUICK_ACTIONS } from "@/lib/chatbot-kb";
 import { askAssistant } from "@/lib/chat-client";
 import API_BASE from "@/lib/config";
 import ChatMessage, { replyLinks } from "./ChatMessage";
 import { CHAT_TEXT, LANGS } from "./chat-i18n";
+import useChatLanguage from "./useChatLanguage";
 
 // BloodLife palette (same values as lib/design-tokens.js).
 const C = {
@@ -136,7 +137,9 @@ export default function ChatBot() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [unread, setUnread] = useState(0);
-  const [lang, setLang] = useState("en");
+  // The chat has its own language (EN / KH / VN buttons below), separate from the website
+  // language: changing one never changes the other.
+  const [lang, setLang] = useChatLanguage();
   const [welcomeTime, setWelcomeTime] = useState(null);
   const [browserOnline, setBrowserOnline] = useState(() => (typeof navigator === "undefined" ? true : navigator.onLine !== false));
   const [apiUp, setApiUp] = useState(null); // null = still checking
@@ -218,22 +221,18 @@ export default function ChatBot() {
 
   // `earlier` is the conversation before `content`, the message being asked.
   const ask = useCallback(async (earlier, content) => {
-    const asked = detectLanguage(content);
-    setLang(asked);
     setLoading(true);
     const conversation = conversationRef.current;
     try {
       // Only role + content go to the API; time/offline are display-only.
       const reply = await askAssistant({
-        history: earlier.map(({ role, content: c }) => ({ role, content: c })), content, lang: asked, token,
+        history: earlier.map(({ role, content: c }) => ({ role, content: c })), content, lang, token,
       });
       if (conversation !== conversationRef.current) return; // chat was cleared meanwhile
       // With no AI key set up, the built-in guide is the normal mode, so only a real failure is
       // flagged offline (status, "Offline guide" tag, warning strip with Retry).
       const offline = reply.offline && !reply.unconfigured;
       setApiUp(offline ? false : true);
-      // The guide may recognise accent-free Vietnamese typed as "English" — follow its answer language.
-      if (reply.lang && reply.lang !== asked) setLang(reply.lang);
       setMessages((prev) => [...prev, {
         role: "assistant", content: reply.content, offline, suggestions: reply.suggestions || [], time: Date.now(),
       }]);
@@ -244,7 +243,7 @@ export default function ChatBot() {
         sendingRef.current = false;
       }
     }
-  }, [token]);
+  }, [token, lang]);
 
   const sendMessage = (text) => {
     const content = (text ?? input).trim();

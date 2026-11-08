@@ -16,3 +16,25 @@ export function getHospitals() {
   cached = { at: Date.now(), promise };
   return promise;
 }
+
+// The public donor list (GET /api/donors, no login, so public fields only). Kept for a minute so
+// moving between the public /donors page and the dashboard's /donor-directory, or coming back to
+// either, shows the list straight away instead of loading it again.
+const DONORS_TTL_MS = 60 * 1000;
+let donorsCache = null; // { at, promise, data }
+
+const freshDonors = () => donorsCache && Date.now() - donorsCache.at < DONORS_TTL_MS;
+
+/** The cached donor list if it is still fresh, otherwise null (for a first render without a spinner). */
+export const peekPublicDonors = () => (freshDonors() ? donorsCache.data : null);
+
+/** `fresh: true` skips the cache (the "Try again" button). */
+export function getPublicDonors({ fresh = false } = {}) {
+  if (!fresh && freshDonors()) return donorsCache.promise;
+  const entry = { at: Date.now(), data: null, promise: null };
+  entry.promise = axios.get(`${API_BASE}/api/donors`)
+    .then((res) => { entry.data = Array.isArray(res.data) ? res.data : []; return entry.data; })
+    .catch((err) => { if (donorsCache === entry) donorsCache = null; throw err; });
+  donorsCache = entry;
+  return entry.promise;
+}

@@ -1,10 +1,13 @@
-import { render, screen, fireEvent, act, waitFor, within } from '@testing-library/react';
+import { render, screen, fireEvent, act, waitFor, within, cleanup } from '@testing-library/react';
 import { ThemeProvider } from '@mui/material/styles';
 import { buildTheme } from '@/lib/theme';
+import { I18nProvider, useI18n } from '@/i18n/I18nProvider';
+import { LANG_KEY, LOCALES } from '@/i18n/config';
 import { askAssistant } from '@/lib/chat-client';
 import { QUICK_ACTIONS } from '@/lib/chatbot-kb';
 import ChatBot from './ChatBot';
 import { CHAT_TEXT } from './chat-i18n';
+import { CHAT_LANG_KEY } from './useChatLanguage';
 
 jest.mock('@/store/UserAuthContext', () => ({ useUserAuth: () => ({ token: 'donor-token' }) }));
 jest.mock('@/lib/chat-client', () => ({ askAssistant: jest.fn() }));
@@ -19,17 +22,38 @@ const deferred = () => {
   return { promise, resolve };
 };
 
-const renderChat = () => render(<ThemeProvider theme={buildTheme('light')}><ChatBot /></ThemeProvider>);
+// Stands in for the website's own language picker (the navbar one).
+function SiteLanguage() {
+  const { lang, setLang } = useI18n();
+  return (
+    <div>
+      <span data-testid="site-lang">{lang}</span>
+      {LOCALES.map((l) => <button key={l.code} type="button" onClick={() => setLang(l.code)}>{`site-${l.code}`}</button>)}
+    </div>
+  );
+}
 
-async function openChat() {
-  renderChat();
-  fireEvent.click(screen.getByRole('button', { name: EN.openAssistant }));
+// `lang` is the website language; the chat starts in `chat` (saved earlier) or its own default.
+const renderChat = (lang = 'en', { site = false } = {}) => render(
+  <ThemeProvider theme={buildTheme('light')}>
+    <I18nProvider initialLang={lang}>{site && <SiteLanguage />}<ChatBot /></I18nProvider>
+  </ThemeProvider>,
+);
+
+async function openChat(lang = 'en', { site = false, chat } = {}) {
+  if (chat) localStorage.setItem(CHAT_LANG_KEY, chat);
+  renderChat(lang, { site });
+  const chatLang = chat || localStorage.getItem(CHAT_LANG_KEY) || 'en';
+  fireEvent.click(await screen.findByRole('button', { name: CHAT_TEXT[chatLang].openAssistant }));
   return screen.findByRole('dialog');
 }
 
 const composer = (name = EN.placeholder) => screen.getByRole('textbox', { name });
 
 beforeEach(() => {
+  // The language choice is remembered between renders, as on the real site; start each test fresh.
+  localStorage.clear();
+  document.cookie = 'bloodlife-lang=; path=/; max-age=0';
   window.__setViewportWidth(1280);
   global.fetch = jest.fn().mockResolvedValue({ ok: true }); // /health
   askAssistant.mockReset();
@@ -95,14 +119,94 @@ describe('ChatBot', () => {
       expect(composer(EN.placeholder)).toBeTruthy();
     });
 
-    it('follows the language the user writes in', async () => {
-      askAssistant.mockResolvedValue({ content: 'ចម្លើយ', offline: false });
+    it('keeps its own language when the question is written in another one', async () => {
+      askAssistant.mockResolvedValue({ content: 'answer', offline: false });
       await openChat();
       fireEvent.change(composer(), { target: { value: 'សួស្ដី' } });
       fireEvent.keyDown(composer(), { key: 'Enter' });
-      expect(await screen.findByText('ចម្លើយ')).toBeTruthy();
+      expect(await screen.findByText('answer')).toBeTruthy();
+      expect(composer(EN.placeholder)).toBeTruthy();
+      expect(askAssistant).toHaveBeenCalledWith(expect.objectContaining({ content: 'សួស្ដី', lang: 'en' }));
+    });
+  });
+
+  // The website language (I18nProvider, 'bloodlife-lang') and the chat language
+  // ('bloodlife_chat_language') are separate: changing one never changes the other.
+  describe('website and chat languages are independent', () => {
+    const siteLang = () => screen.getByTestId('site-lang').textContent;
+    const pickChat = (panel, name) => fireEvent.click(within(panel).getByRole('button', { name }));
+    const askHello = async (placeholder) => {
+      askAssistant.mockResolvedValue({ content: 'ok', offline: false });
+      fireEvent.change(composer(placeholder), { target: { value: 'hello' } });
+      fireEvent.keyDown(composer(placeholder), { key: 'Enter' });
+      await screen.findByText('ok');
+    };
+
+    it('A: website English, chat KH: the site stays English and the chat uses Khmer', async () => {
+      const panel = await openChat('en', { site: true });
+      pickChat(panel, 'ខ្មែរ');
+      expect(siteLang()).toBe('en');
+      expect(document.documentElement.lang).not.toBe('km');
+      expect(localStorage.getItem(LANG_KEY)).not.toBe('km');
+      expect(localStorage.getItem(CHAT_LANG_KEY)).toBe('km');
+      expect(within(panel).getByRole('heading', { name: KM.title })).toBeTruthy();
+      await askHello(KM.placeholder);
+      expect(askAssistant).toHaveBeenCalledWith(expect.objectContaining({ content: 'hello', lang: 'km' }));
+      expect(siteLang()).toBe('en');
+    });
+
+    it('B: website Khmer, chat EN: the site stays Khmer and the chat uses English', async () => {
+      const panel = await openChat('km', { site: true, chat: 'en' });
+      expect(siteLang()).toBe('km');
+      expect(within(panel).getByRole('heading', { name: EN.title })).toBeTruthy();
+      expect(within(panel).getByRole('button', { name: 'English' }).getAttribute('aria-pressed')).toBe('true');
+      await askHello(EN.placeholder);
+      expect(askAssistant).toHaveBeenCalledWith(expect.objectContaining({ content: 'hello', lang: 'en' }));
+      expect(siteLang()).toBe('km');
+    });
+
+    it('C: website Vietnamese, chat KH: the site stays Vietnamese and the chat uses Khmer', async () => {
+      const panel = await openChat('vi', { site: true });
+      pickChat(panel, 'ខ្មែរ');
+      expect(siteLang()).toBe('vi');
       expect(composer(KM.placeholder)).toBeTruthy();
-      expect(askAssistant).toHaveBeenCalledWith(expect.objectContaining({ content: 'សួស្ដី', lang: 'km' }));
+      await askHello(KM.placeholder);
+      expect(askAssistant).toHaveBeenCalledWith(expect.objectContaining({ lang: 'km' }));
+      expect(siteLang()).toBe('vi');
+    });
+
+    it('D: each keeps its own choice after several chat changes and a refresh', async () => {
+      const panel = await openChat('en', { site: true });
+      fireEvent.click(screen.getByRole('button', { name: 'site-vi' }));
+      await waitFor(() => expect(siteLang()).toBe('vi'));
+      pickChat(panel, 'ខ្មែរ');
+      pickChat(panel, 'Tiếng Việt');
+      pickChat(panel, 'English');
+      pickChat(panel, 'ខ្មែរ');
+      expect(siteLang()).toBe('vi');
+
+      // Refresh: everything unmounts and mounts again from what was saved.
+      cleanup();
+      const again = await openChat('vi', { site: true });
+      expect(siteLang()).toBe('vi');
+      expect(within(again).getByRole('heading', { name: KM.title })).toBeTruthy();
+      expect(within(again).getByRole('button', { name: 'ខ្មែរ' }).getAttribute('aria-pressed')).toBe('true');
+    });
+
+    it('E: changing the website language does not change the chat language', async () => {
+      const panel = await openChat('en', { site: true, chat: 'vi' });
+      for (const code of ['km', 'en', 'vi', 'km']) {
+        fireEvent.click(screen.getByRole('button', { name: `site-${code}` }));
+        await waitFor(() => expect(siteLang()).toBe(code));
+        expect(within(panel).getByRole('heading', { name: CHAT_TEXT.vi.title })).toBeTruthy();
+      }
+      expect(localStorage.getItem(CHAT_LANG_KEY)).toBe('vi');
+    });
+
+    it('starts in English when nothing is saved, whatever the website language', async () => {
+      const panel = await openChat('km', { site: true });
+      expect(within(panel).getByRole('heading', { name: EN.title })).toBeTruthy();
+      expect(siteLang()).toBe('km');
     });
   });
 

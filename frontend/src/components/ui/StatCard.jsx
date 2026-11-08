@@ -3,6 +3,7 @@ import { memo } from 'react';
 import Link from 'next/link';
 import { Box, Paper, Skeleton, Typography, alpha, useTheme } from '@mui/material';
 import { Sparkline, TrendChip } from './Trend';
+import { useT } from '@/i18n/I18nProvider';
 
 /**
  * KPI tile: tinted icon tile, small label, big number and an optional hint line.
@@ -12,22 +13,24 @@ import { Sparkline, TrendChip } from './Trend';
  *
  * Pass `trend` to add a footer and sparkline: one metric from /api/stats/trends
  * ({ current, previous, change, series }), `undefined` while loading, or `null` when
- * unavailable. `noun` words the footer ("3 new vs 2 prior"). Omit `trend` for no footer.
+ * unavailable. `trendKey` picks the footer wording (ui.trend.<key>: new | joined | last30,
+ * e.g. "3 new vs 2 prior"). Omit `trend` for no footer.
  *
  * `decorated` is the richer KPI style (hospital dashboard): a stronger soft gradient, a faint
  * wave in the corner, 20px corners, a larger number and a lift on hover.
  */
-function StatCard({ label, value, icon, hint, tone = 'primary', color, href, loading = false, noun = 'new', decorated = false, sx, ...rest }) {
+function StatCard({ label, value, icon, hint, tone = 'primary', color, href, loading = false, trendKey = 'new', decorated = false, sx, ...rest }) {
   const hasTrend = 'trend' in rest;
   const { trend } = rest;
   const theme = useTheme();
+  const t = useT();
   const accent = color || theme.custom.tones[tone].dot;
   return (
     <Paper
       variant="outlined"
       {...(href ? { component: Link, href } : {})}
       sx={[
-        (t) => ({
+        (theme) => ({
           p: { xs: 2, md: 2.5 },
           display: 'flex',
           alignItems: 'flex-start',
@@ -35,18 +38,18 @@ function StatCard({ label, value, icon, hint, tone = 'primary', color, href, loa
           minWidth: 0,
           textDecoration: 'none',
           color: 'text.primary',
-          borderRadius: decorated ? '20px' : `${t.custom.radius.card}px`,
-          boxShadow: t.custom.shadow.sm,
+          borderRadius: decorated ? '20px' : `${theme.custom.radius.card}px`,
+          boxShadow: theme.custom.shadow.sm,
           background: decorated
-            ? `linear-gradient(135deg, ${alpha(accent, t.palette.mode === 'dark' ? 0.18 : 0.10)} 0%, ${t.palette.background.paper} 72%)`
-            : `linear-gradient(135deg, ${alpha(accent, t.palette.mode === 'dark' ? 0.14 : 0.07)} 0%, ${t.palette.background.paper} 60%)`,
+            ? `linear-gradient(135deg, ${alpha(accent, theme.palette.mode === 'dark' ? 0.18 : 0.10)} 0%, ${theme.palette.background.paper} 72%)`
+            : `linear-gradient(135deg, ${alpha(accent, theme.palette.mode === 'dark' ? 0.14 : 0.07)} 0%, ${theme.palette.background.paper} 60%)`,
           transition: 'border-color .2s ease, box-shadow .2s ease, transform .2s ease',
           ...(decorated && {
             position: 'relative', overflow: 'hidden', p: { xs: 2.25, md: 3 }, borderColor: alpha(accent, 0.16),
             // Faint wave in the bottom-right corner — decoration only.
             '&::after': {
               content: '""', position: 'absolute', right: 0, bottom: 0, width: '62%', height: '70%', pointerEvents: 'none',
-              opacity: t.palette.mode === 'dark' ? 0.5 : 1,
+              opacity: theme.palette.mode === 'dark' ? 0.5 : 1,
               backgroundRepeat: 'no-repeat', backgroundPosition: 'right bottom', backgroundSize: '100% 100%',
               backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(
                 `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 120' preserveAspectRatio='none'><path d='M0 90 C 70 40, 140 120, 210 70 S 300 30, 300 30 L300 120 L0 120 Z' fill='${alpha(accent, 0.07)}'/><path d='M40 110 C 110 70, 170 125, 240 90 S 300 70, 300 70 L300 120 L40 120 Z' fill='${alpha(accent, 0.06)}'/></svg>`,
@@ -55,7 +58,7 @@ function StatCard({ label, value, icon, hint, tone = 'primary', color, href, loa
             '& > *': { position: 'relative', zIndex: 1 },
           }),
           ...(href && {
-            '&:hover': { borderColor: accent, boxShadow: t.custom.shadow.md, transform: decorated ? 'translateY(-3px)' : 'translateY(-1px)' },
+            '&:hover': { borderColor: accent, boxShadow: theme.custom.shadow.md, transform: decorated ? 'translateY(-3px)' : 'translateY(-1px)' },
           }),
           '@media (prefers-reduced-motion: reduce)': { transition: 'none', '&:hover': { transform: 'none' } },
         }),
@@ -64,10 +67,10 @@ function StatCard({ label, value, icon, hint, tone = 'primary', color, href, loa
     >
       {icon && (
         <Box
-          sx={(t) => ({
+          sx={(theme) => ({
             width: decorated ? 56 : 50, height: decorated ? 56 : 50, borderRadius: decorated ? '16px' : '14px', flexShrink: 0,
             display: 'flex', alignItems: 'center', justifyContent: 'center', '& svg': { fontSize: 26 },
-            ...(color ? { bgcolor: alpha(color, 0.14), color } : { bgcolor: t.custom.tones[tone].bg, color: t.custom.tones[tone].fg }),
+            ...(color ? { bgcolor: alpha(color, 0.14), color } : { bgcolor: theme.custom.tones[tone].bg, color: theme.custom.tones[tone].fg }),
           })}
         >
           {icon}
@@ -91,11 +94,11 @@ function StatCard({ label, value, icon, hint, tone = 'primary', color, href, loa
               <>
                 <TrendChip change={trend.change} />
                 <Typography variant="caption" color="text.secondary" noWrap>
-                  {trend.current} {noun} vs {trend.previous} prior
+                  {t(`ui.trend.${trendKey}`, { current: trend.current, previous: trend.previous })}
                 </Typography>
               </>
             ) : (
-              <Typography variant="caption" color="text.disabled">Trend unavailable</Typography>
+              <Typography variant="caption" color="text.disabled">{t('ui.trend.unavailable')}</Typography>
             )}
           </Box>
         )}

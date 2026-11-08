@@ -4,6 +4,8 @@
 |---|---|---|---|
 | `Inter-latin.woff2` | [Inter](https://github.com/rsms/inter) (variable, 100–900, latin) | body text — `--font-inter` | SIL OFL 1.1 — `OFL-Inter.txt` |
 | `Caveat-latin.woff2` | [Caveat](https://github.com/googlefonts/caveat) (variable, 400–700, latin) | handwritten slogans | SIL OFL 1.1 — `OFL-Caveat.txt` |
+| `Inter-vietnamese.woff2` | Inter (variable, 100–900, vietnamese subset) | Vietnamese letters (ạ, ế, ữ…) in Inter — `--font-inter-vi` | SIL OFL 1.1 — `OFL-Inter.txt` |
+| `NotoSansKhmer-khmer.woff2` | [Noto Sans Khmer](https://github.com/notofonts/khmer) (variable, 100–900, khmer subset) | Khmer text — `--font-khmer` | SIL OFL 1.1 — `OFL-NotoSansKhmer.txt` |
 
 They are loaded in `src/lib/fonts.js` with `next/font/local`. Import `inter` / `script` from there — do not use
 `next/font/google` in this project.
@@ -24,4 +26,7 @@ The latin subset was taken from Google's CSS API (the block marked `/* latin */`
       "https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&display=swap"
 
 Download the `src: url(...woff2)` inside the `/* latin */` block and save it here. The latin subset has no Khmer
-or Vietnamese glyphs; those fall back to the system font, exactly as before.
+or Vietnamese glyphs, so those come from two more files taken the same way: the `/* vietnamese */` block of
+`family=Inter:wght@100..900` and the `/* khmer */` block of `family=Noto+Sans+Khmer:wght@100..900`. The font
+stack (`--font-inter`, then `--font-inter-vi`, then `--font-khmer`) lets the browser pick each letter from the
+first file that has it.

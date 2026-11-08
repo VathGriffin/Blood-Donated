@@ -8,17 +8,18 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import { formatDistanceToNow } from 'date-fns';
 import API_BASE from '@/lib/config';
 import { BLOOD_TYPES } from '@/lib/inventory';
 import { GIVES_TO, RECEIVES_FROM } from '@/lib/blood-compat';
+import { useI18n } from '@/i18n/I18nProvider';
 
-// Stock status from GET /api/inventory/network (same thresholds as the dashboards).
+// Stock status from GET /api/inventory/network (same thresholds as the dashboards). Labels are
+// home.supply.status.<status>.
 const STATUS = {
-  adequate: { label: 'Good supply', tone: 'success' },
-  low: { label: 'Running low', tone: 'warning' },
-  critical: { label: 'Critical', tone: 'error' },
-  empty: { label: 'Out of stock', tone: 'error' },
+  adequate: { tone: 'success' },
+  low: { tone: 'warning' },
+  critical: { tone: 'error' },
+  empty: { tone: 'error' },
 };
 const NEEDS_DONORS = new Set(['low', 'critical', 'empty']);
 
@@ -26,10 +27,12 @@ const NEEDS_DONORS = new Set(['low', 'critical', 'empty']);
 const fillOf = (row) => (row ? Math.max(0.04, Math.min(1, row.units / Math.max(1, row.minUnits * 3))) : 0);
 
 function TypeTile({ type, row, selected, loading, onSelect }) {
+  const { t } = useI18n();
   const status = row ? STATUS[row.status] : null;
+  const statusLabel = row ? t(`home.supply.status.${row.status}`) : '';
   return (
     <Box component="button" type="button" role="radio" aria-checked={selected} onClick={onSelect}
-      aria-label={`${type}${status ? `, ${status.label}, ${row.units} units` : ''}`}
+      aria-label={status ? t('home.supply.tileLabel', { type, status: statusLabel, count: row.units }) : type}
       sx={{
         all: 'unset', boxSizing: 'border-box', cursor: 'pointer', p: { xs: 1.5, sm: 1.75 }, borderRadius: '14px',
         display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: { xs: 92, sm: 104 },
@@ -56,11 +59,11 @@ function TypeTile({ type, row, selected, loading, onSelect }) {
             <Box sx={{ height: '100%', width: `${fillOf(row) * 100}%`, borderRadius: 3, bgcolor: (t) => t.custom.tones[status.tone].dot }} />
           </Box>
           <Typography component="span" sx={{ display: 'block', mt: 0.75, fontSize: '0.74rem', fontWeight: 700, color: (t) => t.custom.tones[status.tone].fg }}>
-            {status.label}
+            {statusLabel}
           </Typography>
         </>
       ) : (
-        <Typography component="span" sx={{ display: 'block', mt: 1.25, fontSize: '0.74rem', color: 'text.secondary' }}>Stock unavailable</Typography>
+        <Typography component="span" sx={{ display: 'block', mt: 1.25, fontSize: '0.74rem', color: 'text.secondary' }}>{t('home.supply.unavailable')}</Typography>
       )}
     </Box>
   );
@@ -87,6 +90,7 @@ function TypeList({ label, types, tone }) {
  * red-cell compatibility for the selected type. Kept at #compatibility for the site search link.
  */
 export default function BloodSupplySection() {
+  const { t, rich, formatNumber, formatRelative } = useI18n();
   const [rows, setRows] = useState(null);
   const [state, setState] = useState('loading'); // 'loading' | 'ready' | 'error'
   const [selected, setSelected] = useState(null);
@@ -133,27 +137,27 @@ export default function BloodSupplySection() {
                 '@media (prefers-reduced-motion: no-preference)': { animation: 'supplyPulse 1.6s ease-in-out infinite' },
                 '@keyframes supplyPulse': { '0%,100%': { opacity: 1 }, '50%': { opacity: 0.35 } },
               }} />
-              LIVE BLOOD SUPPLY
+              {t('home.supply.live')}
             </Box>
             <Typography id="supply-title" component="h2" sx={{ fontSize: { xs: '1.7rem', md: '2.2rem' }, fontWeight: 800, letterSpacing: '-0.025em', lineHeight: 1.15 }}>
-              Which blood types are needed now?
+              {t('home.supply.title')}
             </Typography>
             <Typography sx={{ mt: 1, color: 'text.secondary', lineHeight: 1.65 }}>
               {state === 'ready' && lowTypes.length
-                ? <>Stock of <Box component="strong" sx={{ color: 'primary.main' }}>{lowTypes.join(', ')}</Box> is running low across our partner hospitals. Pick a type to see who it can help.</>
-                : 'Current stock across our partner hospitals. Pick a type to see who it can help.'}
+                ? rich('home.supply.lowLead', { types: <Box component="strong" sx={{ color: 'primary.main' }}>{lowTypes.join(', ')}</Box> })
+                : t('home.supply.lead')}
             </Typography>
           </Box>
           {updated && (
             <Typography sx={{ fontSize: '0.8rem', color: 'text.secondary', whiteSpace: 'nowrap' }}>
-              Updated {formatDistanceToNow(new Date(updated), { addSuffix: true })}
+              {t('home.supply.updated', { time: formatRelative(updated) })}
             </Typography>
           )}
         </Box>
 
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 1.35fr) minmax(0, 1fr)' }, gap: { xs: 2.5, md: 3 }, alignItems: 'stretch' }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 1.25, sm: 1.5 } }}>
-            <Box role="radiogroup" aria-label="Blood type" sx={{
+            <Box role="radiogroup" aria-label={t('home.supply.bloodType')} sx={{
               flex: 1, display: 'grid', gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(4, 1fr)' }, gridAutoRows: '1fr', gap: { xs: 1.25, sm: 1.5 },
             }}>
               {BLOOD_TYPES.map((t) => (
@@ -165,7 +169,7 @@ export default function BloodSupplySection() {
                 display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: { xs: 1.25, sm: 2.5 }, px: 2, py: 1.5, borderRadius: '14px',
                 bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider',
               }}>
-                {[['success', 'Good supply', ['adequate']], ['warning', 'Running low', ['low']], ['error', 'Critical / out', ['critical', 'empty']]].map(([tone, label, keys]) => (
+                {[['success', t('home.supply.status.adequate'), ['adequate']], ['warning', t('home.supply.status.low'), ['low']], ['error', t('home.supply.criticalOut'), ['critical', 'empty']]].map(([tone, label, keys]) => (
                   <Box key={label} sx={{ display: 'flex', alignItems: 'center', gap: 0.75, fontSize: '0.82rem' }}>
                     <Box component="span" aria-hidden="true" sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: (t) => t.custom.tones[tone].dot }} />
                     <Box component="span" sx={{ fontWeight: 800 }}>{Object.values(rows).filter((r) => keys.includes(r.status)).length}</Box>
@@ -173,7 +177,7 @@ export default function BloodSupplySection() {
                   </Box>
                 ))}
                 <Typography sx={{ ml: { sm: 'auto' }, fontSize: '0.82rem', color: 'text.secondary' }}>
-                  <Box component="strong" sx={{ color: 'text.primary' }}>{Object.values(rows).reduce((n, r) => n + r.units, 0).toLocaleString()}</Box> units in stock
+                  {rich('home.supply.totalInStock', { total: <Box component="strong" sx={{ color: 'text.primary' }}>{formatNumber(Object.values(rows).reduce((n, r) => n + r.units, 0))}</Box> })}
                 </Typography>
               </Box>
             )}
@@ -192,35 +196,35 @@ export default function BloodSupplySection() {
                 <Typography component="span" sx={{ fontWeight: 900, fontSize: '1.45rem', position: 'relative' }}>{active}</Typography>
               </Box>
               <Box sx={{ minWidth: 0 }}>
-                <Typography component="h3" sx={{ fontWeight: 800, fontSize: '1.15rem' }}>Blood type {active}</Typography>
+                <Typography component="h3" sx={{ fontWeight: 800, fontSize: '1.15rem' }}>{t('home.supply.bloodTypeOf', { type: active })}</Typography>
                 {status ? (
                   <Typography sx={{ fontSize: '0.88rem', color: (t) => t.custom.tones[status.tone].fg, fontWeight: 700 }}>
-                    {status.label} · {row.units.toLocaleString()} unit{row.units !== 1 ? 's' : ''} in stock
+                    {t(`home.supply.status.${row.status}`)} · {t('home.supply.unitsInStock', { count: row.units })}
                   </Typography>
                 ) : (
                   <Typography sx={{ fontSize: '0.88rem', color: 'text.secondary' }}>
-                    {state === 'loading' ? 'Checking stock…' : 'Live stock is unavailable right now.'}
+                    {t(state === 'loading' ? 'home.supply.checking' : 'home.supply.liveUnavailable')}
                   </Typography>
                 )}
               </Box>
             </Box>
 
-            <TypeList label={`${active} donors can give red cells to`} types={GIVES_TO[active]} tone="success" />
-            <TypeList label={`${active} patients can receive red cells from`} types={RECEIVES_FROM[active]} tone="info" />
+            <TypeList label={t('home.supply.givesTo', { type: active })} types={GIVES_TO[active]} tone="success" />
+            <TypeList label={t('home.supply.receivesFrom', { type: active })} types={RECEIVES_FROM[active]} tone="info" />
 
             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 'auto' }}>
               <Button component={Link} href="/appointments" variant={needs ? 'contained' : 'outlined'} startIcon={<CalendarMonthIcon />}
                 sx={{ fontWeight: 700, flex: { xs: '1 1 100%', sm: '1 1 auto' }, ...(needs ? {} : { borderWidth: 1.5, '&:hover': { borderWidth: 1.5 } }) }}>
-                {needs ? `Donate ${active} — book now` : 'Book a donation'}
+                {needs ? t('home.supply.donateNow', { type: active }) : t('home.supply.bookDonation')}
               </Button>
               <Button component={Link} href={`/donors?type=${encodeURIComponent(active)}`} color="inherit" startIcon={<PeopleAltOutlinedIcon />} endIcon={<ArrowForwardIcon />}
                 sx={{ fontWeight: 700, color: 'text.secondary', flex: { xs: '1 1 100%', sm: '0 1 auto' } }}>
-                {active} donors
+                {t('home.supply.typeDonors', { type: active })}
               </Button>
             </Box>
             <Typography sx={{ display: 'flex', gap: 0.75, fontSize: '0.74rem', color: 'text.secondary', lineHeight: 1.5 }}>
               <InfoOutlinedIcon aria-hidden="true" sx={{ fontSize: 15, mt: '1px' }} />
-              A general guide to red-cell compatibility. Hospitals always confirm compatibility with their own tests before a transfusion.
+              {t('home.supply.guide')}
             </Typography>
           </Box>
         </Box>

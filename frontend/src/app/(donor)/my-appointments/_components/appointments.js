@@ -1,4 +1,8 @@
 import { todayKey } from '@/components/donor/ui';
+import { currentIntlLocale, currentLang } from '@/i18n/config';
+import { translate } from '@/i18n/translate';
+
+const tr = (key, vars) => translate(currentLang(), `donor.myappt.${key}`, vars);
 
 // Grouping used by the tabs and summary cards. Only the statuses the API stores
 // (Pending / Confirmed / CheckedIn / Cancelled) plus the appointment date decide it:
@@ -22,9 +26,9 @@ export const daysUntil = (iso) => {
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const days = Math.round((target - today) / 86400000);
   if (Number.isNaN(days)) return null;
-  if (days === 0) return 'Today';
-  if (days === 1) return 'Tomorrow';
-  return days > 0 ? `In ${days} days` : null;
+  if (days === 0) return tr('today');
+  if (days === 1) return tr('tomorrow');
+  return days > 0 ? tr('inDays', { count: days }) : null;
 };
 
 // Upcoming first (soonest on top), then everything else newest first.
@@ -55,21 +59,26 @@ export const slotRange = (slot) => {
 };
 
 /** "Sat, 25 Oct 2025" */
-export const shortDay = (iso) => {
+const localDay = (iso, opts) => {
   if (!iso) return '';
   const [y, m, d] = iso.split('-').map(Number);
   const date = new Date(y, m - 1, d);
   if (Number.isNaN(date.getTime())) return iso;
-  return date.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+  return date.toLocaleDateString(currentIntlLocale(), opts);
 };
+const DAY = { day: 'numeric', month: 'short', year: 'numeric' };
+/** "25 Oct 2025" in the selected language. */
+export const dayLabel = (iso) => localDay(iso, DAY);
+/** "Sat, 25 Oct 2025" in the selected language. */
+export const shortDay = (iso) => localDay(iso, { weekday: 'short', ...DAY });
 /** "25 Oct 2025, 09:00 – 09:30" */
-export const whenLabel = (date, time) => `${shortDay(date).replace(/^\w+, /, '')}, ${slotRange(time)}`;
+export const whenLabel = (date, time) => `${localDay(date, DAY)}, ${slotRange(time)}`;
 
 export const fmtStamp = (v) => {
   if (!v) return '';
   const d = new Date(v);
   return Number.isNaN(d.getTime()) ? ''
-    : `${d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}, ${d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
+    : `${d.toLocaleDateString(currentIntlLocale(), DAY)}, ${d.toLocaleTimeString(currentIntlLocale(), { hour: '2-digit', minute: '2-digit' })}`;
 };
 
 // Only hospital decisions count as reschedules; "system" entries are the donor's own direct edits.
@@ -109,9 +118,9 @@ export function downloadIcs(a, place = '') {
     'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//BloodLife AI//Appointments//EN', 'BEGIN:VEVENT',
     `UID:${a._id}@bloodlife`, `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')}`,
     `DTSTART:${icsStamp(a.date, start)}`, `DTEND:${icsStamp(a.date, start + SLOT_MINUTES)}`,
-    `SUMMARY:${icsText(`Blood donation at ${a.location}`)}`,
+    `SUMMARY:${icsText(tr('icsSummary', { place: a.location }))}`,
     `LOCATION:${icsText([a.location, place].filter(Boolean).join(', '))}`,
-    `DESCRIPTION:${icsText('Bring your ID card and BloodLife QR card.')}`,
+    `DESCRIPTION:${icsText(tr('icsDescription'))}`,
     'END:VEVENT', 'END:VCALENDAR',
   ].join('\r\n');
   const url = URL.createObjectURL(new Blob([body], { type: 'text/calendar;charset=utf-8' }));

@@ -1,4 +1,6 @@
 'use client';
+import { apiErrorMessage } from '@/lib/api-error';
+import { useT } from '@/i18n/I18nProvider';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton,
@@ -22,8 +24,12 @@ import { formatDate } from '@/lib/format';
 
 const PROGRESS_COLOR = { adequate: 'success', low: 'warning', critical: 'error', empty: 'error' };
 
+// Marks a failed list load; the alert shows it in the current language.
+const LOAD_FAILED = 'load-failed';
+
 export default function HospitalInventory() {
   const { staff, token } = useAuth();
+  const t = useT();
   const [items, setItems] = useState(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(null);
@@ -38,7 +44,7 @@ export default function HospitalInventory() {
     if (!staff?.hospitalId) return;
     axios.get(`${API_BASE}/api/inventory?hospital=${staff.hospitalId}`)
       .then((res) => setItems(res.data))
-      .catch(() => setError('Failed to load inventory.'));
+      .catch(() => setError(LOAD_FAILED));
   }, [staff]);
 
   useEffect(() => { load(); }, [load]);
@@ -57,7 +63,7 @@ export default function HospitalInventory() {
       applyRow(data);
       return true;
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update inventory.');
+      setError(apiErrorMessage(err, t('hosp.inv.updateFailed')));
       return false;
     } finally {
       setBusy(null);
@@ -72,7 +78,7 @@ export default function HospitalInventory() {
       applyRow(data);
       return true;
     } catch (err) {
-      setError(err.response?.data?.message || err.response?.data?.errors?.[0]?.msg || 'Failed to update inventory.');
+      setError(apiErrorMessage(err, t('hosp.inv.updateFailed')));
       return false;
     } finally {
       setBusy(null);
@@ -99,18 +105,18 @@ export default function HospitalInventory() {
   return (
     <Box>
       <PageHeader
-        title="Blood Inventory"
-        subtitle="Manage blood units and stock for your hospital"
-        actions={<Button variant="contained" startIcon={<AddIcon />} onClick={() => setDialog({ mode: 'add', bloodType: 'O+', units: '' })}>Add Blood Units</Button>}
+        title={t('hosp.inv.bloodInventory')}
+        subtitle={t('hosp.inv.manageBloodUnitsAnd')}
+        actions={<Button variant="contained" startIcon={<AddIcon />} onClick={() => setDialog({ mode: 'add', bloodType: 'O+', units: '' })}>{t('hosp.inv.addBloodUnits')}</Button>}
       />
-      {error && <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError('')}>{error}</Alert>}
+      {error && <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError('')}>{error === LOAD_FAILED ? t('hosp.inv.loadFailed') : error}</Alert>}
 
       <ResponsiveGrid min={200}>
-        <StatCard label="Total Units" value={totals.totalUnits} loading={loading} icon={<WaterDropIcon />} tone="primary" hint={`${items?.length || 0} of ${BLOOD_TYPES.length} types tracked`} />
-        <StatCard label="Adequate" value={totals.adequate.types} loading={loading} icon={<CheckCircleOutlineIcon />} tone="success" hint={`${totals.adequate.units} units`} />
-        <StatCard label="Low" value={totals.low.types} loading={loading} icon={<WarningAmberIcon />} tone="warning" hint={`${totals.low.units} units`} />
-        <StatCard label="Critical / Empty" value={totals.critical.types + totals.empty.types} loading={loading} icon={<ErrorOutlineIcon />} tone="error"
-          hint={`${totals.critical.units} units`} />
+        <StatCard label={t('hosp.inv.totalUnits')} value={totals.totalUnits} loading={loading} icon={<WaterDropIcon />} tone="primary" hint={t('hosp.inv.tracked', { count: items?.length || 0, total: BLOOD_TYPES.length })} />
+        <StatCard label={t('hosp.inv.adequate')} value={totals.adequate.types} loading={loading} icon={<CheckCircleOutlineIcon />} tone="success" hint={t('hosp.inv.units', { count: totals.adequate.units })} />
+        <StatCard label={t('hosp.inv.low')} value={totals.low.types} loading={loading} icon={<WarningAmberIcon />} tone="warning" hint={t('hosp.inv.units', { count: totals.low.units })} />
+        <StatCard label={t('hosp.inv.criticalEmpty')} value={totals.critical.types + totals.empty.types} loading={loading} icon={<ErrorOutlineIcon />} tone="error"
+          hint={t('hosp.inv.units', { count: totals.critical.units })} />
       </ResponsiveGrid>
 
       <TableCard
@@ -119,12 +125,12 @@ export default function HospitalInventory() {
         toolbar={
           <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
             <TextField
-              size="small" placeholder="Search blood type (e.g. O+)" value={query} onChange={(e) => setQuery(e.target.value)}
+              size="small" placeholder={t('hosp.inv.searchBloodTypeE')} value={query} onChange={(e) => setQuery(e.target.value)}
               slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment> } }}
               sx={{ flex: '1 1 220px', maxWidth: 320 }}
             />
-            <TextField select size="small" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} sx={{ minWidth: 170 }} aria-label="Filter by status">
-              <MenuItem value="all">All Statuses</MenuItem>
+            <TextField select size="small" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} sx={{ minWidth: 170 }} aria-label={t('hosp.inv.filterByStatus')}>
+              <MenuItem value="all">{t('hosp.inv.allStatuses')}</MenuItem>
               {Object.entries(STOCK).map(([k, v]) => <MenuItem key={k} value={k}>{v.label}</MenuItem>)}
             </TextField>
           </Box>
@@ -133,17 +139,17 @@ export default function HospitalInventory() {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Blood Type</TableCell>
-              <TableCell>Units in Stock</TableCell>
-              <TableCell>Minimum</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Last Updated</TableCell>
-              <TableCell align="right">Actions</TableCell>
+              <TableCell>{t('hosp.inv.bloodType')}</TableCell>
+              <TableCell>{t('hosp.inv.unitsInStock')}</TableCell>
+              <TableCell>{t('hosp.inv.minimum')}</TableCell>
+              <TableCell>{t('hosp.inv.status')}</TableCell>
+              <TableCell>{t('hosp.inv.lastUpdated')}</TableCell>
+              <TableCell align="right">{t('hosp.inv.actions')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {visible.length === 0 && (
-              <TableRow><TableCell colSpan={6}><EmptyState icon={<WaterDropIcon />} title="No matching blood types" description="Try a different search or status filter." /></TableCell></TableRow>
+              <TableRow><TableCell colSpan={6}><EmptyState icon={<WaterDropIcon />} title={t('hosp.inv.noMatchingBloodTypes')} description={t('hosp.inv.tryADifferentSearch')} /></TableCell></TableRow>
             )}
             {visible.map((r) => (
               <TableRow key={r.bloodType} hover>
@@ -155,29 +161,29 @@ export default function HospitalInventory() {
                     value={Math.min(100, (r.units / ((r.minUnits || 10) * 2)) * 100)}
                     color={PROGRESS_COLOR[r.status]}
                     sx={{ mt: 0.5, height: 6, maxWidth: 140 }}
-                    aria-label={`${r.bloodType} stock level`}
+                    aria-label={t('hosp.inv.levelAria', { type: r.bloodType })}
                   />
                 </TableCell>
                 <TableCell>{r.minUnits ?? 10}</TableCell>
                 <TableCell><StatusBadge status={r.status} label={STOCK[r.status].label} /></TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>{r.missing ? <Typography variant="body2" color="text.disabled">Not tracked yet</Typography> : formatDate(r.lastUpdated)}</TableCell>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}>{r.missing ? <Typography variant="body2" color="text.disabled">{t('hosp.inv.notTrackedYet')}</Typography> : formatDate(r.lastUpdated)}</TableCell>
                 <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
-                  <Tooltip title="Remove 1 unit">
+                  <Tooltip title={t('hosp.inv.remove1Unit')}>
                     <span>
-                      <IconButton size="small" disabled={busy === r.bloodType || r.units === 0} onClick={() => adjust(r.bloodType, -1)} aria-label={`Remove one ${r.bloodType} unit`}>
+                      <IconButton size="small" disabled={busy === r.bloodType || r.units === 0} onClick={() => adjust(r.bloodType, -1)} aria-label={t('hosp.inv.removeAria', { type: r.bloodType })}>
                         <RemoveIcon fontSize="small" />
                       </IconButton>
                     </span>
                   </Tooltip>
-                  <Tooltip title="Add 1 unit">
+                  <Tooltip title={t('hosp.inv.add1Unit')}>
                     <span>
-                      <IconButton size="small" disabled={busy === r.bloodType} onClick={() => adjust(r.bloodType, 1)} aria-label={`Add one ${r.bloodType} unit`}>
+                      <IconButton size="small" disabled={busy === r.bloodType} onClick={() => adjust(r.bloodType, 1)} aria-label={t('hosp.inv.addAria', { type: r.bloodType })}>
                         <AddIcon fontSize="small" />
                       </IconButton>
                     </span>
                   </Tooltip>
-                  <Tooltip title="Set exact quantity">
-                    <IconButton size="small" onClick={() => setDialog({ mode: 'set', bloodType: r.bloodType, units: String(r.units) })} aria-label={`Set ${r.bloodType} quantity`}>
+                  <Tooltip title={t('hosp.inv.setExactQuantity')}>
+                    <IconButton size="small" onClick={() => setDialog({ mode: 'set', bloodType: r.bloodType, units: String(r.units) })} aria-label={t('hosp.inv.setAria', { type: r.bloodType })}>
                       <EditOutlinedIcon fontSize="small" />
                     </IconButton>
                   </Tooltip>
@@ -191,30 +197,30 @@ export default function HospitalInventory() {
       <Dialog open={Boolean(dialog)} onClose={() => !saving && setDialog(null)} fullWidth maxWidth="xs">
         {dialog && (
           <>
-            <DialogTitle>{dialog.mode === 'add' ? 'Add Blood Units' : 'Set Stock Quantity'}</DialogTitle>
+            <DialogTitle>{dialog.mode === 'add' ? t('hosp.inv.addBloodUnits') : t('hosp.inv.setStock')}</DialogTitle>
             <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: '8px !important' }}>
               <ToggleButtonGroup
                 exclusive size="small" value={dialog.mode} fullWidth
                 onChange={(_, v) => v && setDialog({ ...dialog, mode: v })}
               >
-                <ToggleButton value="add">Add units</ToggleButton>
-                <ToggleButton value="set">Set total</ToggleButton>
+                <ToggleButton value="add">{t('hosp.inv.addUnits')}</ToggleButton>
+                <ToggleButton value="set">{t('hosp.inv.setTotal')}</ToggleButton>
               </ToggleButtonGroup>
-              <TextField select label="Blood type" value={dialog.bloodType} onChange={(e) => setDialog({ ...dialog, bloodType: e.target.value })}>
-                {BLOOD_TYPES.map((t) => <MenuItem key={t} value={t}>{t}</MenuItem>)}
+              <TextField select label={t('hosp.inv.bloodType2')} value={dialog.bloodType} onChange={(e) => setDialog({ ...dialog, bloodType: e.target.value })}>
+                {BLOOD_TYPES.map((bt) => <MenuItem key={bt} value={bt}>{bt}</MenuItem>)}
               </TextField>
               <TextField
-                label={dialog.mode === 'add' ? 'Units to add' : 'Total units in stock'}
+                label={dialog.mode === 'add' ? t('hosp.inv.unitsToAdd') : t('hosp.inv.totalInStock')}
                 type="number" value={dialog.units} autoFocus
                 onChange={(e) => setDialog({ ...dialog, units: e.target.value })}
                 slotProps={{ htmlInput: { min: dialog.mode === 'add' ? 1 : 0, step: 1 } }}
-                helperText={dialog.mode === 'add' ? 'Added to the current stock.' : 'Replaces the current stock.'}
+                helperText={dialog.mode === 'add' ? t('hosp.inv.addedHint') : t('hosp.inv.replacesHint')}
                 onKeyDown={(e) => { if (e.key === 'Enter' && dialogValid) submitDialog(); }}
               />
             </DialogContent>
             <DialogActions>
-              <Button onClick={() => setDialog(null)} disabled={saving} color="inherit">Cancel</Button>
-              <Button variant="contained" onClick={submitDialog} disabled={saving || !dialogValid}>{saving ? 'Saving…' : 'Save'}</Button>
+              <Button onClick={() => setDialog(null)} disabled={saving} color="inherit">{t('hosp.inv.cancel')}</Button>
+              <Button variant="contained" onClick={submitDialog} disabled={saving || !dialogValid}>{saving ? t('hosp.inv.saving') : t('hosp.inv.save')}</Button>
             </DialogActions>
           </>
         )}

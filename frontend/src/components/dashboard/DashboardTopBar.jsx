@@ -13,6 +13,8 @@ import ProfileMenu from './ProfileMenu';
 import { ColorModeContext } from '@/lib/ThemeContext';
 import { ROLES, ROLE_CONFIG, findActive } from '@/lib/navigation';
 import SiteSearch from '@/components/layout/SiteSearch';
+import LanguageSwitcher from '@/components/layout/LanguageSwitcher';
+import { useT } from '@/i18n/I18nProvider';
 
 /**
  * Minimal sticky bar: utilities on the right (hospital, notifications, theme, account).
@@ -26,6 +28,7 @@ export default function DashboardTopBar({ role, profile, hospitalName, onMenuCli
   const pathname = usePathname();
   const active = findActive(role, pathname);
   const cfg = ROLE_CONFIG[role];
+  const t = useT();
 
   return (
     <AppBar
@@ -41,12 +44,12 @@ export default function DashboardTopBar({ role, profile, hospitalName, onMenuCli
       }}
     >
       <Toolbar sx={{ minHeight: `${theme.custom.layout.headerHeight}px !important`, px: { xs: 1.5, md: 3 }, gap: 1 }}>
-        <IconButton edge="start" onClick={onMenuClick} aria-label="Open navigation menu" sx={{ display: { lg: 'none' }, color: 'text.primary' }}>
+        <IconButton edge="start" onClick={onMenuClick} aria-label={t('common.openNavigation')} sx={{ display: { lg: 'none' }, color: 'text.primary' }}>
           <MenuIcon />
         </IconButton>
 
         <Typography component="p" noWrap sx={{ display: { lg: 'none' }, fontSize: '1rem', fontWeight: 700, letterSpacing: '-0.01em', flexGrow: 1, minWidth: 0 }}>
-          {active?.item.label || cfg.label}
+          {t(active?.item.labelKey || cfg.labelKey)}
         </Typography>
         {/* Donors get the site-wide search (hospitals, donor counts, their own appointments). */}
         <Box sx={{ flexGrow: 1, display: { xs: 'none', lg: 'block' }, minWidth: 0 }}>
@@ -78,8 +81,10 @@ export default function DashboardTopBar({ role, profile, hospitalName, onMenuCli
         {role === ROLES.DONOR && <DonorNotifications size={40} />}
         {role === ROLES.HOSPITAL_STAFF && <HospitalNotifications />}
 
-        <Tooltip title={mode === 'dark' ? 'Light mode' : 'Dark mode'}>
-          <IconButton onClick={toggleColorMode} aria-label="Toggle colour mode" sx={{ color: 'text.secondary' }}>
+        <LanguageSwitcher />
+
+        <Tooltip title={t(mode === 'dark' ? 'common.lightMode' : 'common.darkMode')}>
+          <IconButton onClick={toggleColorMode} aria-label={t('common.toggleColorMode')} sx={{ color: 'text.secondary' }}>
             {mode === 'dark' ? <LightModeOutlinedIcon /> : <DarkModeOutlinedIcon />}
           </IconButton>
         </Tooltip>

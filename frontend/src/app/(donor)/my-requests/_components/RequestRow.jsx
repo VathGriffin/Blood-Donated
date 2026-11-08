@@ -1,4 +1,6 @@
 'use client';
+import { statusLabel } from '@/components/ui/StatusBadge';
+import { useT } from '@/i18n/I18nProvider';
 import Link from 'next/link';
 import { Box, Button, Paper, Typography } from '@mui/material';
 import LocalHospitalOutlinedIcon from '@mui/icons-material/LocalHospitalOutlined';
@@ -27,13 +29,11 @@ const STATUS_ICON = {
 };
 
 // The line under the status badge — only dates the API actually records.
-const statusNote = (r) => {
+const statusNote = (t, r) => {
   const s = statusOf(r);
-  if (s === 'Pending') return 'Awaiting review by the hospital team';
-  if (s === 'Fulfilled') return formatDate(r.fulfilledAt) ? `Fulfilled on ${formatDate(r.fulfilledAt)}` : 'Blood delivered';
-  if (s === 'Cancelled') return formatDate(r.cancelledAt) ? `Cancelled on ${formatDate(r.cancelledAt)}` : 'Cancelled by you';
-  if (s === 'Approved') return 'The hospital is arranging the blood';
-  if (s === 'Rejected') return 'Not approved by the hospital team';
+  if (s === 'Fulfilled' && formatDate(r.fulfilledAt)) return t('donor.mreq.note.fulfilledOn', { date: formatDate(r.fulfilledAt) });
+  if (s === 'Cancelled' && formatDate(r.cancelledAt)) return t('donor.mreq.note.cancelledOn', { date: formatDate(r.cancelledAt) });
+  if (['Pending', 'Fulfilled', 'Cancelled', 'Approved', 'Rejected'].includes(s)) return t(`donor.mreq.note.${s}`);
   return null;
 };
 
@@ -43,6 +43,7 @@ const statusNote = (r) => {
  * (PATCH /api/requests/:id/cancel re-checks ownership and status). Editing is staff-only.
  */
 export default function RequestRow({ req, hospital, onView, onCancel, cancelling = false }) {
+  const t = useT();
   const status = statusOf(req);
   const meta = REQUEST_STATUS[status] || REQUEST_STATUS.Pending;
   const units = req.unitsNeeded || 1;
@@ -51,44 +52,44 @@ export default function RequestRow({ req, hospital, onView, onCancel, cancelling
 
   const viewBtn = (
     <Button variant="outlined" startIcon={<VisibilityOutlinedIcon />} onClick={() => onView(req)} sx={actionBtnSx}
-      aria-label={`View details of the request for ${req.patientName}`}>
-      View Details
+      aria-label={t('donor.mreq.viewAria', { patient: req.patientName })}>
+      {t('donor.mreq.viewDetails')}
     </Button>
   );
   let second = null;
   if (status === 'Pending') {
     second = (
       <Button variant="outlined" startIcon={<DoNotDisturbOnOutlinedIcon />} onClick={() => onCancel(req)} disabled={cancelling}
-        sx={dangerBtnSx} aria-label={`Cancel the request for ${req.patientName}`}>
-        {cancelling ? 'Cancelling…' : 'Cancel Request'}
+        sx={dangerBtnSx} aria-label={t('donor.mreq.cancelAria', { patient: req.patientName })}>
+        {cancelling ? t('donor.mreq.cancelling') : t('donor.mreq.cancel')}
       </Button>
     );
   } else if (status === 'Approved') {
     second = tel ? (
       <Button component="a" href={tel} variant="outlined" startIcon={<HeadsetMicOutlinedIcon />} sx={dangerBtnSx}
-        aria-label={`Call ${hospital.name}`}>
-        Contact Hospital
+        aria-label={t('donor.mreq.callAria', { hospital: hospital.name })}>
+        {t('donor.mreq.contactHospital')}
       </Button>
     ) : (
       <Button component={Link} href="/notification" variant="outlined" startIcon={<ChatBubbleOutlineIcon />} sx={dangerBtnSx}>
-        Send Message
+        {t('donor.mreq.sendMessage')}
       </Button>
     );
   }
 
   const menuItems = [
-    { label: 'View details', icon: <VisibilityOutlinedIcon />, onClick: () => onView(req) },
-    tel && { label: 'Contact hospital', icon: <HeadsetMicOutlinedIcon />, href: tel, external: true },
-    { label: 'Message BloodLife team', icon: <ChatBubbleOutlineIcon />, href: '/notification' },
-    { label: 'New blood request', icon: <AddIcon />, href: '/requests' },
+    { label: t('donor.req.viewDetails'), icon: <VisibilityOutlinedIcon />, onClick: () => onView(req) },
+    tel && { label: t('donor.req.contactHospitalMenu'), icon: <HeadsetMicOutlinedIcon />, href: tel, external: true },
+    { label: t('donor.req.messageTeam'), icon: <ChatBubbleOutlineIcon />, href: '/notification' },
+    { label: t('donor.mreq.newRequestMenu'), icon: <AddIcon />, href: '/requests' },
     status === 'Pending' && {
-      label: cancelling ? 'Cancelling…' : 'Cancel request', icon: <DoNotDisturbOnOutlinedIcon />,
+      label: cancelling ? t('donor.req.cancelling') : t('donor.req.cancelMenu'), icon: <DoNotDisturbOnOutlinedIcon />,
       onClick: () => onCancel(req), danger: true, disabled: cancelling,
     },
   ].filter(Boolean);
 
   return (
-    <Paper component="article" elevation={0} aria-label={`Blood request for ${req.patientName}, ${meta.label}`} sx={{
+    <Paper component="article" elevation={0} aria-label={t('donor.req.aria', { patient: req.patientName, status: meta.label })} sx={{
       p: { xs: 1.75, sm: 2.25 }, borderRadius: '16px', border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper',
       boxShadow: (t) => t.custom.shadow.xs, transition: 'box-shadow .15s', '&:hover': { boxShadow: (t) => t.custom.shadow.sm },
       display: 'grid', columnGap: { xs: 1.75, sm: 2.5 }, rowGap: 1.75,
@@ -109,24 +110,24 @@ export default function RequestRow({ req, hospital, onView, onCancel, cancelling
           {city && <MetaLine icon={<PlaceOutlinedIcon />}>{city}</MetaLine>}
         </Box>
         <Box sx={{ mt: 0.75, display: 'flex', flexWrap: 'wrap', alignItems: 'center', columnGap: 3, rowGap: 0.6 }}>
-          {formatDate(req.createdAt) && <MetaLine icon={<EventOutlinedIcon />}>Requested {formatDate(req.createdAt)}</MetaLine>}
-          <MetaLine icon={<Inventory2OutlinedIcon />}>{units} unit{units !== 1 ? 's' : ''}</MetaLine>
+          {formatDate(req.createdAt) && <MetaLine icon={<EventOutlinedIcon />}>{t('donor.req.requested', { date: formatDate(req.createdAt) })}</MetaLine>}
+          <MetaLine icon={<Inventory2OutlinedIcon />}>{t('donor.req.units', { count: units })}</MetaLine>
           {req.urgency && (
-            <Pill tone={URGENCY_TONE[req.urgency] || 'neutral'} icon={<SignalCellularAltIcon />}>{req.urgency}</Pill>
+            <Pill tone={URGENCY_TONE[req.urgency] || 'neutral'} icon={<SignalCellularAltIcon />}>{statusLabel(t, req.urgency)}</Pill>
           )}
         </Box>
-        <Typography sx={{ mt: 1.25, fontSize: '0.88rem', fontWeight: 700 }}>Reason</Typography>
+        <Typography sx={{ mt: 1.25, fontSize: '0.88rem', fontWeight: 700 }}>{t('donor.mreq.reason')}</Typography>
         <Typography variant="body2" sx={{
           color: req.reason?.trim() ? 'text.secondary' : 'text.disabled', fontStyle: req.reason?.trim() ? 'normal' : 'italic',
           overflowWrap: 'anywhere', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
         }}>
-          {req.reason?.trim() || 'No additional details provided.'}
+          {req.reason?.trim() || t('donor.req.noDetails')}
         </Typography>
       </Box>
 
       <Box sx={{ gridArea: 'status', display: 'flex', flexDirection: { xs: 'row', lg: 'column' }, alignItems: { xs: 'center', lg: 'flex-start' }, gap: 0.75, flexWrap: 'wrap', minWidth: { lg: 200 } }}>
         <Pill tone={meta.tone} icon={STATUS_ICON[status]} sx={{ fontSize: '0.82rem', py: 0.5, px: 1.25 }}>{meta.label}</Pill>
-        {statusNote(req) && <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.82rem' }}>{statusNote(req)}</Typography>}
+        {statusNote(t, req) && <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.82rem' }}>{statusNote(t, req)}</Typography>}
       </Box>
 
       <Box sx={{ gridArea: 'actions', display: 'flex', gap: 1.25, flexWrap: 'wrap', justifyContent: { lg: 'flex-end' }, alignSelf: 'end', '& > *': { flex: { xs: '1 1 auto', lg: '0 0 auto' } } }}>
@@ -135,7 +136,7 @@ export default function RequestRow({ req, hospital, onView, onCancel, cancelling
       </Box>
 
       <Box sx={{ gridArea: 'menu', alignSelf: 'start' }}>
-        <CardMenu id={req._id} label={`the request for ${req.patientName}`} items={menuItems} />
+        <CardMenu id={req._id} label={t('donor.req.menuLabel', { patient: req.patientName })} items={menuItems} />
       </Box>
     </Paper>
   );

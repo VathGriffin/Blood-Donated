@@ -27,3 +27,9 @@ window.__setViewportWidth = (px) => {
   viewportWidth = px;
   listeners.forEach((cb) => cb());
 };
+
+// Browsers download each language's texts (i18n/load-catalog.js); tests have them all up front.
+const { LOCALES } = require('@/i18n/config');
+const { catalogFor } = require('@/i18n/catalog');
+const { addCatalog } = require('@/i18n/translate');
+LOCALES.forEach(({ code }) => addCatalog(code, catalogFor(code)));

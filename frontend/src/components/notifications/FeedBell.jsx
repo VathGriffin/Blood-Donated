@@ -1,4 +1,5 @@
 'use client';
+import { feedText } from '@/lib/feed-text';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import axios from 'axios';
@@ -16,6 +17,7 @@ import DoNotDisturbOnOutlinedIcon from '@mui/icons-material/DoNotDisturbOnOutlin
 import PersonAddAlt1OutlinedIcon from '@mui/icons-material/PersonAddAlt1Outlined';
 import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
 import API_BASE from '@/lib/config';
+import { useI18n } from '@/i18n/I18nProvider';
 
 const POLL_MS = 60 * 1000;
 const RED = '#C91D32';
@@ -38,13 +40,13 @@ const TONES = {
   neutral: { fg: '#475569', bg: '#F1F5F9', darkBg: 'rgba(255,255,255,0.08)', darkFg: '#B5B5B5' },
 };
 
-const timeAgo = (at) => {
+const timeAgo = (at, t, intl) => {
   const s = Math.max(0, (Date.now() - new Date(at).getTime()) / 1000);
-  if (s < 60) return 'Just now';
-  if (s < 3600) return `${Math.floor(s / 60)} min ago`;
-  if (s < 86400) return `${Math.floor(s / 3600)} h ago`;
-  if (s < 7 * 86400) return `${Math.floor(s / 86400)} d ago`;
-  return new Date(at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  if (s < 60) return t('layout.bell.justNow');
+  if (s < 3600) return t('layout.bell.minutesAgo', { count: Math.floor(s / 60) });
+  if (s < 86400) return t('layout.bell.hoursAgo', { count: Math.floor(s / 3600) });
+  if (s < 7 * 86400) return t('layout.bell.daysAgo', { count: Math.floor(s / 86400) });
+  return new Date(at).toLocaleDateString(intl, { month: 'short', day: 'numeric' });
 };
 
 /**
@@ -56,6 +58,7 @@ const timeAgo = (at) => {
 export default function FeedBell({ token, feedUrl, seenUrl, links = [], emptyText, size = 38 }) {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const { t, intl } = useI18n();
   // Accents follow the area's main colour (red for admins and donors, blue for hospital
   // staff); the count badge stays red because it's an alert.
   const accent = theme.palette.primary.main;
@@ -107,9 +110,9 @@ export default function FeedBell({ token, feedUrl, seenUrl, links = [], emptyTex
 
   return (
     <>
-      <Tooltip title="Notifications">
+      <Tooltip title={t('layout.bell.title')}>
         <IconButton onClick={open} aria-haspopup="dialog" aria-expanded={Boolean(anchor)}
-          aria-label={unread ? `Notifications, ${unread} unread` : 'Notifications'}
+          aria-label={unread ? t('layout.bell.unread', { count: unread }) : t('layout.bell.title')}
           sx={{ color: isDark ? 'rgba(245,245,245,0.7)' : '#475569', width: size, height: size }}>
           <Badge badgeContent={unread} max={9} overlap="circular"
             sx={{ '& .MuiBadge-badge': { bgcolor: RED, color: '#fff', fontWeight: 700, fontSize: '0.65rem', minWidth: 17, height: 17, px: 0.5, border: `2px solid ${isDark ? '#0B1220' : '#fff'}` } }}>
@@ -120,21 +123,21 @@ export default function FeedBell({ token, feedUrl, seenUrl, links = [], emptyTex
 
       <Popover open={Boolean(anchor)} anchorEl={anchor} onClose={close}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-        slotProps={{ paper: { role: 'dialog', 'aria-label': 'Notifications', sx: {
+        slotProps={{ paper: { role: 'dialog', 'aria-label': t('layout.bell.title'), sx: {
           mt: 1.25, width: 380, maxWidth: 'calc(100vw - 24px)', borderRadius: '16px', overflow: 'hidden',
           border: `1px solid ${border}`, boxShadow: '0 20px 50px rgba(15,23,42,0.16)', bgcolor: isDark ? '#17263D' : '#fff',
         } } }}>
         <Box sx={{ px: 2.25, py: 1.75, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${border}` }}>
-          <Typography sx={{ fontWeight: 800, fontSize: '1rem' }}>Notifications</Typography>
+          <Typography sx={{ fontWeight: 800, fontSize: '1rem' }}>{t('layout.bell.title')}</Typography>
           {items.some((i) => i.unread) && (
             <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: accent, bgcolor: alpha(accent, isDark ? 0.2 : 0.1), px: 1, py: 0.25, borderRadius: 999 }}>
-              {items.filter((i) => i.unread).length} new
+              {t('layout.bell.new', { count: items.filter((i) => i.unread).length })}
             </Typography>
           )}
         </Box>
 
         {!data && !error && (
-          <Box sx={{ p: 2 }} role="status" aria-label="Loading notifications">
+          <Box sx={{ p: 2 }} role="status" aria-label={t('layout.bell.loading')}>
             {[0, 1, 2].map((i) => (
               <Box key={i} sx={{ display: 'flex', gap: 1.5, mb: 1.5 }}>
                 <Skeleton variant="circular" width={36} height={36} />
@@ -147,15 +150,15 @@ export default function FeedBell({ token, feedUrl, seenUrl, links = [], emptyTex
         {!data && error && (
           <Box sx={{ py: 4, px: 3, textAlign: 'center' }} role="alert">
             <ErrorOutlineIcon sx={{ fontSize: 32, color: 'text.disabled', mb: 1 }} />
-            <Typography sx={{ fontWeight: 700, fontSize: '0.92rem' }}>Couldn’t load notifications</Typography>
-            <Button size="small" onClick={load} sx={{ mt: 1, textTransform: 'none', fontWeight: 700, color: accent }}>Try again</Button>
+            <Typography sx={{ fontWeight: 700, fontSize: '0.92rem' }}>{t('layout.bell.error')}</Typography>
+            <Button size="small" onClick={load} sx={{ mt: 1, textTransform: 'none', fontWeight: 700, color: accent }}>{t('common.tryAgain')}</Button>
           </Box>
         )}
 
         {data && items.length === 0 && (
           <Box sx={{ py: 5, px: 3, textAlign: 'center' }}>
             <DoneAllIcon sx={{ fontSize: 32, color: '#16A34A', mb: 1 }} />
-            <Typography sx={{ fontWeight: 700, fontSize: '0.95rem' }}>You’re all caught up</Typography>
+            <Typography sx={{ fontWeight: 700, fontSize: '0.95rem' }}>{t('layout.bell.caughtUp')}</Typography>
             <Typography sx={{ color: 'text.secondary', fontSize: '0.84rem', mt: 0.5 }}>
               {emptyText}
             </Typography>
@@ -178,12 +181,12 @@ export default function FeedBell({ token, feedUrl, seenUrl, links = [], emptyTex
                   </Box>
                   <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
-                      <Typography sx={{ flex: 1, fontWeight: item.unread ? 800 : 600, fontSize: '0.88rem', lineHeight: 1.3 }}>{item.title}</Typography>
-                      <Typography component="time" dateTime={item.at} sx={{ color: 'text.secondary', fontSize: '0.72rem', flexShrink: 0 }}>{timeAgo(item.at)}</Typography>
+                      <Typography sx={{ flex: 1, fontWeight: item.unread ? 800 : 600, fontSize: '0.88rem', lineHeight: 1.3 }}>{feedText(t, item.i18n?.title, item.title)}</Typography>
+                      <Typography component="time" dateTime={item.at} sx={{ color: 'text.secondary', fontSize: '0.72rem', flexShrink: 0 }}>{timeAgo(item.at, t, intl)}</Typography>
                     </Box>
-                    <Typography sx={{ color: 'text.secondary', fontSize: '0.8rem', mt: 0.25, lineHeight: 1.4, overflowWrap: 'anywhere' }}>{item.body}</Typography>
+                    <Typography sx={{ color: 'text.secondary', fontSize: '0.8rem', mt: 0.25, lineHeight: 1.4, overflowWrap: 'anywhere' }}>{feedText(t, item.i18n?.body, item.body)}</Typography>
                   </Box>
-                  {item.unread && <Box component="span" aria-label="unread" sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: accent, mt: 0.75, flexShrink: 0 }} />}
+                  {item.unread && <Box component="span" aria-label={t('layout.bell.unreadDot')} sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: accent, mt: 0.75, flexShrink: 0 }} />}
                 </ListItemButton>
               );
             })}
@@ -195,7 +198,7 @@ export default function FeedBell({ token, feedUrl, seenUrl, links = [], emptyTex
             {links.map((l, i) => (
               <Button key={l.href} component={Link} href={l.href} onClick={close} fullWidth
                 sx={{ py: 1.25, borderRadius: 0, textTransform: 'none', fontWeight: 700, color: i === 0 ? accent : 'text.secondary', borderLeft: i ? `1px solid ${border}` : 0 }}>
-                {l.label}
+                {l.labelKey ? t(l.labelKey) : l.label}
               </Button>
             ))}
           </Box>

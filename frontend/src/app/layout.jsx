@@ -1,42 +1,68 @@
-import { cookies } from 'next/headers';
-import { inter } from '@/lib/fonts';
-import Providers from '@/lib/Providers';
-import { SITE_URL } from '@/lib/site-url';
+import { cookies } from "next/headers";
+import { preload } from "react-dom";
+import { inter, interVietnamese, khmer } from "@/lib/fonts";
+import { LANG_KEY, normalizeLang } from "@/i18n/config";
+import Providers from "@/lib/Providers";
+import { SITE_URL } from "@/lib/site-url";
+import { catalogUrl } from "@/i18n/load-catalog";
 
-const DESCRIPTION = 'Connecting blood donors, patients and hospitals across Cambodia — register as a donor, book an appointment, request blood and get answers from an AI assistant.';
+const DESCRIPTION =
+  "Connecting blood donors, patients and hospitals across Cambodia — register as a donor, book an appointment, request blood and get answers from an AI assistant.";
 
 export const metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: 'BloodLife AI — Blood Donation Platform',
-    template: '%s | BloodLife AI',
+    default: "BloodLife AI — Blood Donation Platform",
+    template: "%s | BloodLife AI",
   },
   description: DESCRIPTION,
-  applicationName: 'BloodLife AI',
+  applicationName: "BloodLife AI",
   openGraph: {
-    type: 'website',
-    siteName: 'BloodLife AI',
-    title: 'BloodLife AI — Blood Donation Platform',
+    type: "website",
+    siteName: "BloodLife AI",
+    title: "BloodLife AI — Blood Donation Platform",
     description: DESCRIPTION,
   },
-  twitter: { card: 'summary_large_image', title: 'BloodLife AI — Blood Donation Platform', description: DESCRIPTION },
-  icons: { icon: '/favicon.ico' },
-  keywords: ['blood donation', 'blood bank', 'donor management', 'AI chatbot', 'hospital support', 'Cambodia'],
+  twitter: {
+    card: "summary_large_image",
+    title: "BloodLife AI — Blood Donation Platform",
+    description: DESCRIPTION,
+  },
+  icons: { icon: "/favicon.ico" },
+  keywords: [
+    "blood donation",
+    "blood bank",
+    "donor management",
+    "AI chatbot",
+    "hospital support",
+    "Cambodia",
+  ],
 };
 
-export const viewport = { themeColor: '#C91D32' };
+export const viewport = { themeColor: "#C91D32" };
 
 export default async function RootLayout({ children }) {
   // Saved light/dark choice, so the first paint already uses the right theme.
-  const mode = (await cookies()).get('mui-theme')?.value;
-  const initialMode = mode === 'dark' || mode === 'light' ? mode : undefined;
+  const jar = await cookies();
+  const mode = jar.get("mui-theme")?.value;
+  const initialMode = mode === "dark" || mode === "light" ? mode : undefined;
+  // Saved interface language (English on a first visit or for an invalid value).
+  const lang = normalizeLang(jar.get(LANG_KEY)?.value);
+  // Start downloading this language's texts with the page itself, not after the scripts run.
+  preload(catalogUrl(lang), { as: "fetch", crossOrigin: "anonymous" });
 
   return (
     // data-scroll-behavior tells Next.js the smooth scrolling (theme.js) is intentional, so it
     // switches it off during route changes instead of animating the jump to the new page's top.
-    <html lang="en" className={inter.variable} style={{ colorScheme: initialMode || 'light' }} data-scroll-behavior="smooth">
+    <html
+      lang={lang}
+      data-lang-ssr={lang}
+      className={`${inter.variable} ${interVietnamese.variable} ${khmer.variable}`}
+      style={{ colorScheme: initialMode || "light" }}
+      data-scroll-behavior="smooth"
+    >
       <body className={inter.className}>
-        <Providers initialMode={initialMode}>
+        <Providers initialMode={initialMode} initialLang={lang}>
           {children}
         </Providers>
       </body>

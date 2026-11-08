@@ -1,4 +1,6 @@
 'use client';
+import { statusLabel } from '@/components/ui/StatusBadge';
+import { useT } from '@/i18n/I18nProvider';
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -71,6 +73,7 @@ const selectSx = { height: 44, borderRadius: '10px', bgcolor: 'background.paper'
 export default function MyRequestsPage() {
   const router = useRouter();
   const { isAuth, user, token, logout } = useUserAuth();
+  const t = useT();
 
   const [requests, setRequests] = useState([]);
   const [status, setStatus] = useState('loading'); // 'loading' | 'ready' | 'error'
@@ -178,7 +181,7 @@ export default function MyRequestsPage() {
   const onCancelled = (data) => {
     setRequests((list) => list.map((r) => (r._id === data._id ? data : r)));
     setCancelTarget(null);
-    setToast({ severity: 'success', message: 'Your blood request has been cancelled.' });
+    setToast({ severity: 'success', message: t('donor.mreq.cancelled') });
     load(true);
   };
   const onCancelConflict = (message) => {
@@ -188,19 +191,19 @@ export default function MyRequestsPage() {
   };
 
   const stats = [
-    { key: 'All', label: 'Total Requests', sub: 'All blood requests', icon: <DescriptionOutlinedIcon />, tone: 'primary' },
-    { key: 'Pending', label: 'Pending Requests', sub: 'Awaiting approval', icon: <AccessTimeIcon />, tone: 'warning' },
-    { key: 'Approved', label: 'Approved Requests', sub: 'Being arranged', icon: <CheckCircleOutlineIcon />, tone: 'success' },
-    { key: 'Fulfilled', label: 'Fulfilled Requests', sub: 'Blood delivered', icon: <Inventory2OutlinedIcon />, tone: 'info' },
-    { key: 'Rejected', label: 'Rejected Requests', sub: 'Not approved', icon: <HighlightOffIcon />, tone: 'error' },
-    { key: 'Cancelled', label: 'Cancelled Requests', sub: 'Withdrawn by you', icon: <DoNotDisturbOnOutlinedIcon />, tone: 'neutral' },
+    { key: 'All', label: t('donor.mreq.stats.All.label'), sub: t('donor.mreq.stats.All.sub'), icon: <DescriptionOutlinedIcon />, tone: 'primary' },
+    { key: 'Pending', label: t('donor.mreq.stats.Pending.label'), sub: t('donor.mreq.stats.Pending.sub'), icon: <AccessTimeIcon />, tone: 'warning' },
+    { key: 'Approved', label: t('donor.mreq.stats.Approved.label'), sub: t('donor.mreq.stats.Approved.sub'), icon: <CheckCircleOutlineIcon />, tone: 'success' },
+    { key: 'Fulfilled', label: t('donor.mreq.stats.Fulfilled.label'), sub: t('donor.mreq.stats.Fulfilled.sub'), icon: <Inventory2OutlinedIcon />, tone: 'info' },
+    { key: 'Rejected', label: t('donor.mreq.stats.Rejected.label'), sub: t('donor.mreq.stats.Rejected.sub'), icon: <HighlightOffIcon />, tone: 'error' },
+    { key: 'Cancelled', label: t('donor.mreq.stats.Cancelled.label'), sub: t('donor.mreq.stats.Cancelled.sub'), icon: <DoNotDisturbOnOutlinedIcon />, tone: 'neutral' },
   ];
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 2, md: 2.5 }, pb: 4, minWidth: 0 }}>
-      <DonorPageHero id="requests-title" icon={<DescriptionIcon />} title="Blood Requests"
-        subtitle="View and track the blood requests you have submitted, and follow each one until it is fulfilled."
-        actionHref="/requests" actionLabel="New Request" />
+      <DonorPageHero id="requests-title" icon={<DescriptionIcon />} title={t('donor.mreq.title')}
+        subtitle={t('donor.mreq.subtitle')}
+        actionHref="/requests" actionLabel={t('donor.mreq.newRequest')} />
 
       {/* Summary — counts over all of the donor's requests */}
       <Box sx={{ display: 'grid', gap: { xs: 1.25, md: 1.5 }, gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(3, 1fr)', xl: 'repeat(6, 1fr)' } }}>
@@ -212,7 +215,7 @@ export default function MyRequestsPage() {
       </Box>
 
       <Paper elevation={0} sx={{ ...cardSx, overflow: 'hidden' }}>
-        <Tabs value={tab} onChange={(_, v) => changeTab(v)} aria-label="Filter by status" variant="scrollable" scrollButtons={false}
+        <Tabs value={tab} onChange={(_, v) => changeTab(v)} aria-label={t('donor.mreq.filterStatus')} variant="scrollable" scrollButtons={false}
           sx={{
             px: { xs: 0.5, sm: 1.5 }, borderBottom: '1px solid', borderColor: 'divider',
             '& .MuiTab-root': { minHeight: 60, fontWeight: 700, fontSize: { xs: '0.86rem', sm: '0.96rem' }, color: 'text.secondary', px: { xs: 1.25, sm: 2 } },
@@ -222,12 +225,12 @@ export default function MyRequestsPage() {
           }}>
           {STATUS_TABS.map((s) => (
             <Tab key={s} value={s} icon={TAB_ICON[s]} iconPosition="start" id={`req-tab-${s}`} aria-controls="req-panel"
-              label={`${s}${ready ? ` (${tabCounts[s] || 0})` : ''}`} />
+              label={`${statusLabel(t, s)}${ready ? ` (${tabCounts[s] || 0})` : ''}`} />
           ))}
         </Tabs>
 
         {/* Filters */}
-        <Box role="search" aria-label="Filter requests" sx={{
+        <Box role="search" aria-label={t('donor.mreq.filter')} sx={{
           p: { xs: 1.5, sm: 2 }, display: 'grid', gap: 1.5, alignItems: 'end',
           gridTemplateColumns: { xs: '1fr 1fr', md: 'repeat(4, 1fr)', lg: 'minmax(220px, 1.6fr) repeat(4, minmax(130px, 1fr)) auto' },
         }}>
@@ -238,40 +241,40 @@ export default function MyRequestsPage() {
             '&:focus-within': { borderColor: 'primary.main', boxShadow: (t) => `0 0 0 3px ${alpha(t.palette.primary.main, 0.14)}` },
           }}>
             <SearchIcon aria-hidden="true" sx={{ fontSize: 21, color: 'text.secondary' }} />
-            <InputBase value={query} onChange={(e) => setQuery(e.target.value)} fullWidth placeholder="Search patient name, hospital..."
-              inputProps={{ 'aria-label': 'Search by patient name or hospital', type: 'search' }} sx={{ fontSize: '0.9rem' }} />
-            {query && <IconButton size="small" aria-label="Clear search" onClick={() => setQuery('')}><CloseIcon fontSize="small" /></IconButton>}
+            <InputBase value={query} onChange={(e) => setQuery(e.target.value)} fullWidth placeholder={t('donor.mreq.search')}
+              inputProps={{ 'aria-label': t('donor.mreq.searchAria'), type: 'search' }} sx={{ fontSize: '0.9rem' }} />
+            {query && <IconButton size="small" aria-label={t('donor.mreq.clear')} onClick={() => setQuery('')}><CloseIcon fontSize="small" /></IconButton>}
           </Box>
           <FormControl size="small">
-            <InputLabel id="f-blood">Blood Type</InputLabel>
-            <Select labelId="f-blood" label="Blood Type" value={bloodType} onChange={(e) => setBloodType(e.target.value)} sx={selectSx}>
-              <MenuItem value="All">All types</MenuItem>
-              {BLOOD_TYPES.map((t) => <MenuItem key={t} value={t}>{t}</MenuItem>)}
+            <InputLabel id="f-blood">{t('donor.mreq.bloodType')}</InputLabel>
+            <Select labelId="f-blood" label={t('donor.mreq.bloodType')} value={bloodType} onChange={(e) => setBloodType(e.target.value)} sx={selectSx}>
+              <MenuItem value="All">{t('donor.mreq.allTypes')}</MenuItem>
+              {BLOOD_TYPES.map((bt) => <MenuItem key={bt} value={bt}>{bt}</MenuItem>)}
             </Select>
           </FormControl>
           <FormControl size="small">
-            <InputLabel id="f-urgency">Urgency</InputLabel>
-            <Select labelId="f-urgency" label="Urgency" value={urgency} onChange={(e) => setUrgency(e.target.value)} sx={selectSx}>
-              <MenuItem value="All">All levels</MenuItem>
-              {URGENCIES.map((u) => <MenuItem key={u} value={u}>{u}</MenuItem>)}
+            <InputLabel id="f-urgency">{t('donor.mreq.urgency')}</InputLabel>
+            <Select labelId="f-urgency" label={t('donor.mreq.urgency')} value={urgency} onChange={(e) => setUrgency(e.target.value)} sx={selectSx}>
+              <MenuItem value="All">{t('donor.mreq.allLevels')}</MenuItem>
+              {URGENCIES.map((u) => <MenuItem key={u} value={u}>{statusLabel(t, u)}</MenuItem>)}
             </Select>
           </FormControl>
           <FormControl size="small">
-            <InputLabel id="f-status">Status</InputLabel>
-            <Select labelId="f-status" label="Status" value={tab} onChange={(e) => changeTab(e.target.value)} sx={selectSx}>
-              {STATUS_TABS.map((s) => <MenuItem key={s} value={s}>{s === 'All' ? 'All statuses' : s}</MenuItem>)}
+            <InputLabel id="f-status">{t('donor.mreq.status')}</InputLabel>
+            <Select labelId="f-status" label={t('donor.mreq.status')} value={tab} onChange={(e) => changeTab(e.target.value)} sx={selectSx}>
+              {STATUS_TABS.map((s) => <MenuItem key={s} value={s}>{s === 'All' ? t('donor.mreq.allStatuses') : statusLabel(t, s)}</MenuItem>)}
             </Select>
           </FormControl>
           <FormControl size="small">
-            <InputLabel id="f-range">Submitted</InputLabel>
-            <Select labelId="f-range" label="Submitted" value={range} onChange={(e) => setRange(e.target.value)} sx={selectSx}
+            <InputLabel id="f-range">{t('donor.mreq.submitted')}</InputLabel>
+            <Select labelId="f-range" label={t('donor.mreq.submitted')} value={range} onChange={(e) => setRange(e.target.value)} sx={selectSx}
               startAdornment={<CalendarMonthOutlinedIcon aria-hidden="true" sx={{ fontSize: 19, color: 'text.secondary', mr: 0.75 }} />}>
-              {RANGES.map((r) => <MenuItem key={r.value} value={r.value}>{r.label}</MenuItem>)}
+              {RANGES.map((r) => <MenuItem key={r.value} value={r.value}>{t(`donor.mreq.ranges.${r.value}`)}</MenuItem>)}
             </Select>
           </FormControl>
           <Button onClick={clearFilters} disabled={!filtersActive} color="inherit" startIcon={<FilterAltOffOutlinedIcon />}
             sx={{ height: 44, color: 'text.secondary', gridColumn: { xs: '1 / -1', md: 'auto' }, justifySelf: { md: 'start', lg: 'auto' } }}>
-            Clear filters
+            {t('donor.mreq.clearFilters')}
           </Button>
         </Box>
 
@@ -279,24 +282,24 @@ export default function MyRequestsPage() {
           sx={{ px: { xs: 1.5, sm: 2 }, pb: { xs: 1.5, sm: 2 }, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
           {ready && requests.length > 0 && (
             <Box aria-live="polite" sx={{ color: 'text.secondary', fontSize: '0.84rem' }}>
-              Showing {shown.length} of {requests.length} request{requests.length !== 1 ? 's' : ''}
+              {t('donor.mreq.showing', { shown: shown.length, count: requests.length })}
             </Box>
           )}
           {status === 'loading' ? (
             <>{[0, 1, 2].map((i) => <RowSkeleton key={i} />)}</>
           ) : status === 'error' ? (
             <Alert severity="error" variant="outlined" icon={<ErrorOutlineIcon />} sx={{ borderRadius: '12px', alignItems: 'center' }}
-              action={<Button color="error" size="small" onClick={() => load()}>Try again</Button>}>
-              We couldn&apos;t load your blood requests. Check your connection and try again.
+              action={<Button color="error" size="small" onClick={() => load()}>{t('donor.mreq.retry')}</Button>}>
+              {t('donor.mreq.loadFailed')}
             </Alert>
           ) : requests.length === 0 ? (
-            <EmptyPanel icon={<DescriptionOutlinedIcon />} title="No blood requests yet"
-              text="When a patient needs blood, submit a request and the hospital team will review it. Your requests will appear here."
-              action={<Button component={Link} href="/requests" variant="contained" startIcon={<AddIcon />}>New Request</Button>} />
+            <EmptyPanel icon={<DescriptionOutlinedIcon />} title={t('donor.mreq.emptyTitle')}
+              text={t('donor.mreq.emptyText')}
+              action={<Button component={Link} href="/requests" variant="contained" startIcon={<AddIcon />}>{t('donor.mreq.newRequest')}</Button>} />
           ) : shown.length === 0 ? (
-            <EmptyPanel icon={<SearchOffIcon />} title="No requests match these filters"
-              text="Try another status, blood type or date range — or clear the filters."
-              action={<Button variant="outlined" startIcon={<FilterAltOffOutlinedIcon />} onClick={clearFilters}>Clear filters</Button>} />
+            <EmptyPanel icon={<SearchOffIcon />} title={t('donor.mreq.noMatch')}
+              text={t('donor.mreq.noMatchText')}
+              action={<Button variant="outlined" startIcon={<FilterAltOffOutlinedIcon />} onClick={clearFilters}>{t('donor.mreq.clearFilters')}</Button>} />
           ) : (
             shown.map((r) => (
               <RequestRow key={r._id} req={r} hospital={hospitalFor(r, directory)} onView={setDetail} onCancel={setCancelTarget}

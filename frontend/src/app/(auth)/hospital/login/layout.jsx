@@ -1,4 +1,5 @@
-export const metadata = { title: 'Hospital Staff Sign In' };
+import { pageTitle } from '@/i18n/server';
+export const generateMetadata = pageTitle('hospitalStaffSignIn');
 
 export default function AuthHospitalLoginLayout({ children }) {
   return children;

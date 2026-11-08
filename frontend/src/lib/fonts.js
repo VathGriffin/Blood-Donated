@@ -26,3 +26,35 @@ export const script = localFont({
   adjustFontFallback: false,
   fallback: ['Segoe Script', 'Brush Script MT', 'Lucida Handwriting', 'cursive'],
 });
+
+// Inter's Vietnamese letters (ạ, ế, ữ…), which the latin file above lacks. Same family look; only
+// those letters are in this file. No fallback font of its own, so every other letter falls
+// through to Inter (see `fontFamily` in lib/design-tokens.js).
+// `unicode-range` (the ranges Google publishes for these subsets) is what makes the browser
+// download the file only when such letters are on screen: without it every visitor would fetch
+// it, and the text would visibly re-draw when it arrived. Not preloaded for the same reason.
+export const interVietnamese = localFont({
+  src: '../fonts/Inter-vietnamese.woff2',
+  weight: '100 900',
+  style: 'normal',
+  display: 'swap',
+  preload: false,
+  adjustFontFallback: false,
+  fallback: [],
+  variable: '--font-inter-vi',
+  declarations: [{ prop: 'unicode-range', value: 'U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB' }],
+});
+
+// Khmer text (Noto Sans Khmer, variable, khmer subset). Like interVietnamese: Khmer letters only,
+// downloaded only when Khmer text is on screen.
+export const khmer = localFont({
+  src: '../fonts/NotoSansKhmer-khmer.woff2',
+  weight: '100 900',
+  style: 'normal',
+  display: 'swap',
+  preload: false,
+  adjustFontFallback: false,
+  fallback: [],
+  variable: '--font-khmer',
+  declarations: [{ prop: 'unicode-range', value: 'U+1780-17FF, U+19E0-19FF, U+200C-200D, U+25CC' }],
+});

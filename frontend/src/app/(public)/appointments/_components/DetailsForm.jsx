@@ -1,4 +1,5 @@
 'use client';
+import { useI18n } from '@/i18n/I18nProvider';
 import { Box, MenuItem } from '@mui/material';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import MailOutlineIcon from '@mui/icons-material/MailOutline';
@@ -13,23 +14,24 @@ import { BLOOD_TYPES } from './booking';
 // shows up in their profile (bookings are matched to profiles by exact email).
 export default function DetailsForm({ form, onChange, emailLocked }) {
   const set = (name) => (e) => onChange(name, e.target.value);
+  const { t } = useI18n();
   return (
-    <Panel icon={<BadgeOutlinedIcon />} title="Your Information" subtitle="We'll use these details to confirm your appointment">
+    <Panel icon={<BadgeOutlinedIcon />} title={t('booking.details.title')} subtitle={t('booking.details.subtitle')}>
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2.25, columnGap: 2.75 }}>
-        <AuthField label="Full Name" name="fullName" placeholder="Enter your full name" autoComplete="name"
+        <AuthField label={t('booking.details.fullName')} name="fullName" placeholder={t('booking.details.fullNamePlaceholder')} autoComplete="name"
           icon={<PersonOutlineIcon fontSize="small" />} value={form.fullName} onChange={set('fullName')} required />
-        <AuthField label="Phone Number" name="phone" type="tel" placeholder="Enter your phone number" autoComplete="tel"
+        <AuthField label={t('booking.details.phone')} name="phone" type="tel" placeholder={t('booking.details.phonePlaceholder')} autoComplete="tel"
           icon={<PhoneOutlinedIcon fontSize="small" />} value={form.phone} onChange={set('phone')} required />
-        <AuthField label="Email Address" name="email" type="email" placeholder="Enter your email" autoComplete="email"
+        <AuthField label={t('booking.details.email')} name="email" type="email" placeholder={t('booking.details.emailPlaceholder')} autoComplete="email"
           icon={<MailOutlineIcon fontSize="small" />} value={form.email} onChange={set('email')} required disabled={emailLocked}
-          helperText={emailLocked ? 'Using your account email so this appointment shows in your profile.' : undefined} />
-        <AuthField select label="Blood Type" name="bloodType" value={form.bloodType} onChange={set('bloodType')} required
+          helperText={emailLocked ? t('booking.details.emailLocked') : undefined} />
+        <AuthField select label={t('booking.details.bloodType')} name="bloodType" value={form.bloodType} onChange={set('bloodType')} required
           icon={<WaterDropOutlinedIcon fontSize="small" />}
-          selectProps={{ displayEmpty: true, renderValue: (v) => v || <Box component="span" sx={{ color: 'text.disabled' }}>Select your blood type</Box> }}>
+          selectProps={{ displayEmpty: true, renderValue: (v) => v || <Box component="span" sx={{ color: 'text.disabled' }}>{t('booking.details.bloodTypePlaceholder')}</Box> }}>
           {BLOOD_TYPES.map((bt) => <MenuItem key={bt} value={bt}>{bt}</MenuItem>)}
         </AuthField>
         <Box sx={{ gridColumn: { sm: '1 / -1' } }}>
-          <AuthField label="Additional Notes (optional)" name="notes" multiline rows={3} placeholder="Anything the donation center should know?"
+          <AuthField label={t('booking.details.notes')} name="notes" multiline rows={3} placeholder={t('booking.details.notesPlaceholder')}
             value={form.notes} onChange={set('notes')} sx={{ '& .MuiOutlinedInput-root': { alignItems: 'flex-start' } }} />
         </Box>
       </Box>

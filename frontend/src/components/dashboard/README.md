@@ -10,7 +10,7 @@ One layout for every role. A route layout just wraps its pages:
 |---|---|---|
 | `/dashboard/admin/*` | `app/dashboard/admin/layout.jsx` | `ADMIN` |
 | `/dashboard/hospital/*` | `app/dashboard/hospital/layout.jsx` | `HOSPITAL_STAFF` |
-| `/profile`, `/qr-card`, `/notification` | `app/(donor)/layout.jsx` | `DONOR` |
+| `/profile`, `/qr-card`, `/notification`, `/ai-chat` | `app/(donor)/layout.jsx` | `DONOR` |
 
 ## What's where
 - `DashboardShell` – guard + frame (sidebar, top bar, content). Renders nothing protected until the session is confirmed.

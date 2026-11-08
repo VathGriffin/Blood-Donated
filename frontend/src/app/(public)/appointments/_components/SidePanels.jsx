@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { Box, Typography, Button, useTheme } from '@mui/material';
+import { useI18n } from '@/i18n/I18nProvider';
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import AccessTimeFilledIcon from '@mui/icons-material/AccessTimeFilled';
@@ -13,7 +14,7 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import HeadsetMicOutlinedIcon from '@mui/icons-material/HeadsetMicOutlined';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import HospitalPhoto from './HospitalPhoto';
-import { C, formatLongDate, openAssistant } from './booking';
+import { C, formatLongDate, formatSlot, openAssistant } from './booking';
 
 const cardSx = (isDark) => ({
   bgcolor: 'background.paper', borderRadius: '16px', p: { xs: 2, sm: 2.5 },
@@ -42,16 +43,17 @@ function Row({ icon, primary, secondary, placeholder }) {
 // "Your Appointment": updates live as choices are made.
 export function AppointmentSummary({ center, date, time, name, role, bloodType, onChange }) {
   const isDark = useTheme().palette.mode === 'dark';
+  const { t } = useI18n();
   const mapHref = center?.city ? `/map?city=${encodeURIComponent(center.city)}` : '/map';
   return (
     <Box component="section" aria-labelledby="appt-summary-title" sx={cardSx(isDark)}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 2 }}>
         <Box aria-hidden="true" sx={{ ...tile(isDark, 36), borderRadius: '10px' }}><EventNoteIcon /></Box>
-        <Typography component="h2" id="appt-summary-title" sx={{ flex: 1, fontWeight: 800, fontSize: '1.15rem', letterSpacing: '-0.01em' }}>Your Appointment</Typography>
+        <Typography component="h2" id="appt-summary-title" sx={{ flex: 1, fontWeight: 800, fontSize: '1.15rem', letterSpacing: '-0.01em' }}>{t('booking.summary.title')}</Typography>
         {onChange && (
           <Button size="small" variant="outlined" onClick={onChange}
             sx={{ textTransform: 'none', fontWeight: 600, color: C.primary, borderColor: isDark ? '#334155' : C.border, borderRadius: '8px', px: 1.5, minWidth: 0, '&:hover': { borderColor: C.primary, bgcolor: C.softer } }}>
-            Change
+            {t('booking.summary.change')}
           </Button>
         )}
       </Box>
@@ -65,41 +67,37 @@ export function AppointmentSummary({ center, date, time, name, role, bloodType, 
             <Box aria-hidden="true" sx={{ width: 96, height: 56, flexShrink: 0, borderRadius: '8px', bgcolor: isDark ? '#334155' : '#F1F5F9', border: `1px dashed ${isDark ? '#334155' : '#CBD5E1'}` }} />
           )}
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography sx={{ fontWeight: 700, fontSize: '0.95rem', lineHeight: 1.3, color: center ? 'text.primary' : 'text.disabled' }}>{center ? center.name : 'No center selected'}</Typography>
+            <Typography sx={{ fontWeight: 700, fontSize: '0.95rem', lineHeight: 1.3, color: center ? 'text.primary' : 'text.disabled' }}>{center ? center.name : t('booking.summary.noCenter')}</Typography>
             {center && (
               <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', columnGap: 1, mt: 0.25 }}>
                 {center.city && <Typography component="span" sx={{ color: 'text.secondary', fontSize: '0.82rem' }}>{center.city}</Typography>}
                 {center.city && <Box component="span" aria-hidden="true" sx={{ width: 3, height: 3, borderRadius: '50%', bgcolor: 'text.disabled' }} />}
-                <Box component={Link} href={mapHref} aria-label={`View ${center.name} on the map`} sx={{
+                <Box component={Link} href={mapHref} aria-label={t('booking.summary.viewOnMapLabel', { name: center.name })} sx={{
                   display: 'inline-flex', alignItems: 'center', gap: 0.25, color: C.primary, fontWeight: 600, fontSize: '0.8rem', textDecoration: 'none', borderRadius: '4px',
                   '&:hover': { textDecoration: 'underline' }, '&:focus-visible': { outline: `2px solid ${C.primary}`, outlineOffset: 2 },
                 }}>
-                  <PlaceIcon sx={{ fontSize: 14 }} aria-hidden="true" />View on Map
+                  <PlaceIcon sx={{ fontSize: 14 }} aria-hidden="true" />{t('booking.summary.viewOnMap')}
                 </Box>
               </Box>
             )}
           </Box>
         </Box>
-        <Row icon={<CalendarMonthIcon />} primary={date ? formatLongDate(date) : 'No date selected'} placeholder={!date} />
-        <Row icon={<AccessTimeFilledIcon />} primary={time || 'No time selected'} placeholder={!time} />
-        <Row icon={<PersonIcon />} primary={name || 'Your name'} secondary={name ? role : undefined} placeholder={!name} />
-        <Row icon={<WaterDropIcon />} primary="Blood Type" secondary={bloodType || 'Added in Your Information'} placeholder={!bloodType} />
+        <Row icon={<CalendarMonthIcon />} primary={date ? formatLongDate(date) : t('booking.summary.noDate')} placeholder={!date} />
+        <Row icon={<AccessTimeFilledIcon />} primary={time ? formatSlot(time) : t('booking.summary.noTime')} placeholder={!time} />
+        <Row icon={<PersonIcon />} primary={name || t('booking.summary.yourName')} secondary={name ? role : undefined} placeholder={!name} />
+        <Row icon={<WaterDropIcon />} primary={t('booking.summary.bloodType')} secondary={bloodType || t('booking.summary.bloodTypeLater')} placeholder={!bloodType} />
       </Box>
     </Box>
   );
 }
 
 // Same rules the Donate page asks donors to confirm.
-const REQUIREMENTS = [
-  'Be between 18 and 60 years old',
-  'Weigh at least 45 kg',
-  'Be in good health, with no active infection',
-  'Not have donated blood in the past 3 months',
-  'Bring a valid photo ID',
-];
+// booking.checklist.<key> in i18n/messages/booking.js
+const REQUIREMENTS = ['age', 'weight', 'health', 'recent', 'id'];
 
 export function DonateChecklist() {
   const isDark = useTheme().palette.mode === 'dark';
+  const { t } = useI18n();
   return (
     <Box component="section" aria-labelledby="before-donate-title" sx={{
       position: 'relative', overflow: 'hidden', borderRadius: '16px', p: { xs: 2, sm: 2.5 },
@@ -109,14 +107,14 @@ export function DonateChecklist() {
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2, position: 'relative' }}>
         <Box aria-hidden="true" sx={{ ...tile(isDark, 44), bgcolor: isDark ? 'rgba(201,29,50,0.2)' : '#FFFFFF' }}><FavoriteIcon /></Box>
         <Box>
-          <Typography component="h2" id="before-donate-title" sx={{ fontWeight: 800, fontSize: '1.1rem', color: C.primary, lineHeight: 1.25 }}>Before You Donate</Typography>
-          <Typography sx={{ color: 'text.secondary', fontSize: '0.82rem' }}>Make sure you meet the basic requirements</Typography>
+          <Typography component="h2" id="before-donate-title" sx={{ fontWeight: 800, fontSize: '1.1rem', color: C.primary, lineHeight: 1.25 }}>{t('booking.checklist.title')}</Typography>
+          <Typography sx={{ color: 'text.secondary', fontSize: '0.82rem' }}>{t('booking.checklist.subtitle')}</Typography>
         </Box>
       </Box>
       <Box component="ul" sx={{ listStyle: 'none', m: 0, p: 0, pr: { sm: 9 }, display: 'flex', flexDirection: 'column', gap: 1.1, position: 'relative' }}>
-        {REQUIREMENTS.map((text) => (
-          <Box component="li" key={text} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.1, fontSize: '0.88rem', lineHeight: 1.45 }}>
-            <CheckCircleIcon aria-hidden="true" sx={{ color: C.primary, fontSize: 19, flexShrink: 0, mt: '1px' }} />{text}
+        {REQUIREMENTS.map((key) => (
+          <Box component="li" key={key} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.1, fontSize: '0.88rem', lineHeight: 1.45 }}>
+            <CheckCircleIcon aria-hidden="true" sx={{ color: C.primary, fontSize: 19, flexShrink: 0, mt: '1px' }} />{t(`booking.checklist.${key}`)}
           </Box>
         ))}
       </Box>
@@ -125,7 +123,7 @@ export function DonateChecklist() {
           display: 'inline-flex', alignItems: 'center', gap: 0.5, color: C.primary, fontWeight: 700, fontSize: '0.86rem', textDecoration: 'none', borderRadius: '6px',
           '&:hover': { textDecoration: 'underline' }, '&:focus-visible': { outline: `2px solid ${C.primary}`, outlineOffset: 2 },
         }}>
-          Learn more about eligibility <ArrowForwardIcon sx={{ fontSize: 16 }} aria-hidden="true" />
+          {t('booking.checklist.more')} <ArrowForwardIcon sx={{ fontSize: 16 }} aria-hidden="true" />
         </Box>
       </Box>
     </Box>
@@ -153,15 +151,17 @@ function BloodBagArt() {
 // One-line help card that opens the floating BloodLife AI assistant; the contact page is the human fallback.
 export function NeedHelp() {
   const isDark = useTheme().palette.mode === 'dark';
+  const { t, rich } = useI18n();
   return (
     <Box component="section" aria-labelledby="need-help-title" sx={{ ...cardSx(isDark), display: 'flex', alignItems: 'center', gap: 1.75, py: 2 }}>
       <Box aria-hidden="true" sx={tile(isDark, 48)}><HeadsetMicOutlinedIcon /></Box>
       <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography component="h2" id="need-help-title" sx={{ fontWeight: 700, fontSize: '1rem' }}>Need Help?</Typography>
+        <Typography component="h2" id="need-help-title" sx={{ fontWeight: 700, fontSize: '1rem' }}>{t('donate.help.title')}</Typography>
         <Typography sx={{ color: 'text.secondary', fontSize: '0.84rem' }}>
-          <Box component="button" type="button" onClick={openAssistant} sx={linkBtn}>Ask BloodLife AI</Box>
-          {' or '}
-          <Box component={Link} href="/contact" sx={linkBtn}>contact our team</Box>
+          {rich('donate.help.text', {
+            assistant: <Box component="button" type="button" onClick={openAssistant} sx={linkBtn}>{t('donate.help.assistant')}</Box>,
+            contact: <Box component={Link} href="/contact" sx={linkBtn}>{t('donate.help.contact')}</Box>,
+          })}
         </Typography>
       </Box>
       <ChevronRightIcon aria-hidden="true" sx={{ color: 'text.disabled' }} />

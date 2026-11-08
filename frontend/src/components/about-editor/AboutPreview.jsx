@@ -1,4 +1,5 @@
 'use client';
+import { useI18n } from '@/i18n/I18nProvider';
 import { memo } from 'react';
 import { Avatar, Box, Typography, useTheme } from '@mui/material';
 import {
@@ -24,6 +25,7 @@ const mid = (sx) => ({ '@container about-preview (min-width: 480px)': sx });
  * `stats` the live public counts (or null while loading).
  */
 function AboutPreview({ sections, images, stats }) {
+  const { t, rich } = useI18n();
   const isDark = useTheme().palette.mode === 'dark';
   const { hero, purpose, team, cta } = sections;
   const heading = isDark ? '#fff' : '#172B4D';
@@ -45,11 +47,11 @@ function AboutPreview({ sections, images, stats }) {
         <Favorite sx={{ color: RED, fontSize: 16 }} />
         <Typography sx={{ fontWeight: 800, fontSize: 12, color: heading, mr: 'auto' }}>BloodLife AI</Typography>
         <Box sx={{ display: 'none', gap: 1.75, ...mid({ display: 'flex' }) }}>
-          {['Home', 'About', 'Donate', 'Find a Hospital', 'Contact'].map((l) => (
-            <Typography key={l} sx={{ fontSize: 10, fontWeight: l === 'About' ? 700 : 500, color: l === 'About' ? RED : 'text.secondary' }}>{l}</Typography>
+          {['home', 'about', 'donate', 'findHospital', 'contact'].map((l) => (
+            <Typography key={l} sx={{ fontSize: 10, fontWeight: l === 'about' ? 700 : 500, color: l === 'about' ? RED : 'text.secondary' }}>{t(`nav.${l}`)}</Typography>
           ))}
         </Box>
-        <Box sx={{ bgcolor: RED, color: '#fff', fontSize: 9.5, fontWeight: 700, px: 1.25, py: 0.4, borderRadius: '6px' }}>Login</Box>
+        <Box sx={{ bgcolor: RED, color: '#fff', fontSize: 9.5, fontWeight: 700, px: 1.25, py: 0.4, borderRadius: '6px' }}>{t('adm.aboutPrev.login')}</Box>
       </Box>
 
       {/* Hero */}
@@ -67,10 +69,10 @@ function AboutPreview({ sections, images, stats }) {
           <RichText value={hero.intro} sx={{ fontSize: 10.5, lineHeight: 1.6, color: 'text.secondary', mb: 0.75 }} />
           <Box sx={{ display: 'flex', gap: 1, mt: 1.25, flexWrap: 'wrap' }}>
             <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, bgcolor: RED, color: '#fff', fontSize: 10, fontWeight: 700, px: 1.5, py: 0.6, borderRadius: '8px' }}>
-              Become a Donor <ArrowForward sx={{ fontSize: 12 }} />
+              {t('about.becomeDonor')} <ArrowForward sx={{ fontSize: 12 }} />
             </Box>
             <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, border: `1px solid ${RED}`, color: RED, fontSize: 10, fontWeight: 700, px: 1.5, py: 0.6, borderRadius: '8px' }}>
-              <Groups sx={{ fontSize: 12 }} /> Meet the Team
+              <Groups sx={{ fontSize: 12 }} /> {t('about.meetTeam')}
             </Box>
           </Box>
         </Box>
@@ -130,7 +132,7 @@ function AboutPreview({ sections, images, stats }) {
       {/* Team */}
       <Box sx={{ bgcolor: isDark ? '#0B1220' : '#fff', px: 2.25, py: 2.5, ...wide({ px: 3 }) }}>
         <Typography sx={{ textAlign: 'center', fontWeight: 800, fontSize: 15, color: heading, mb: 1.5 }}>
-          The Builders <Box component="span" sx={{ color: RED }}>Behind It</Box>
+          {rich('about.builder.title', { accent: <Box component="span" sx={{ color: RED }}>{t('about.builder.titleAccent')}</Box> })}
         </Typography>
         <Box sx={{
           ...tile, display: 'grid', gap: 1.5, alignItems: 'center', p: 1.75, textAlign: 'center',
@@ -151,7 +153,7 @@ function AboutPreview({ sections, images, stats }) {
           </Box>
           <Box sx={{ minWidth: 0 }}>
             <Typography sx={{ fontWeight: 800, fontSize: 15, color: heading }}>{team.name}</Typography>
-            <Typography sx={{ fontWeight: 600, fontSize: 10.5, color: RED }}>Individual Graduation Project</Typography>
+            <Typography sx={{ fontWeight: 600, fontSize: 10.5, color: RED }}>{t('adm.aboutPrev.individualGraduationProject')}</Typography>
             <Typography sx={{ fontSize: 10, color: 'text.secondary', mb: 0.5 }}>{team.position}</Typography>
             <RichText value={team.bio} sx={{ fontSize: 9.5, lineHeight: 1.55, color: 'text.secondary', '& ul, & ol': { textAlign: 'left' } }} />
           </Box>

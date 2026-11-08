@@ -1,4 +1,6 @@
 'use client';
+import { apiErrorMessage } from '@/lib/api-error';
+import { useI18n } from '@/i18n/I18nProvider';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -52,16 +54,16 @@ const minutesOf = (time = '') => {
   const h = meridiem ? (Number(m[1]) % 12) + (meridiem === 'PM' ? 12 : 0) : Number(m[1]);
   return h * 60 + Number(m[2]);
 };
-const dayLabel = (iso, today) => {
-  if (iso === today) return 'Today';
+const dayLabel = (t, iso, today) => {
+  if (iso === today) return t('hosp.home.today');
   const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
-  if (iso === localIso(tomorrow)) return 'Tomorrow';
+  if (iso === localIso(tomorrow)) return t('hosp.home.tomorrow');
   return formatDate(`${iso}T00:00:00`);
 };
 
-const greeting = () => {
+const greeting = (t) => {
   const h = new Date().getHours();
-  return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+  return t(`hosp.home.greeting.${h < 12 ? 'morning' : h < 18 ? 'afternoon' : 'evening'}`);
 };
 
 // Patient avatars get a stable colour from their name (same palette as the admin dashboard).
@@ -98,6 +100,7 @@ const splitRow = (main = 2, side = 1) => ({
 });
 
 export default function HospitalOverview() {
+  const { t, rich } = useI18n();
   const { staff, token } = useAuth();
   const hospital = staff?.hospitalId;
   const auth = useMemo(() => ({ headers: { Authorization: `Bearer ${token}` } }), [token]);
@@ -120,7 +123,8 @@ export default function HospitalOverview() {
     refreshing$.current = false;
   }, []);
 
-  const load = useCallback(async (key, url, setter, message, withAuth = true) => {
+  // A failed load keeps the error itself; its text is built at render, in the current language.
+  const load = useCallback(async (key, url, setter, withAuth = true) => {
     inflight.current[key]?.abort();
     const c = new AbortController();
     inflight.current[key] = c;
@@ -129,13 +133,13 @@ export default function HospitalOverview() {
       setter(keepIfSame(Array.isArray(data) ? data : []));
       setErrors((e) => (e[key] ? { ...e, [key]: null } : e));
     } catch (err) {
-      if (!axios.isCancel(err)) setErrors((e) => ({ ...e, [key]: err.response?.data?.error || message }));
+      if (!axios.isCancel(err)) setErrors((e) => ({ ...e, [key]: err }));
     }
   }, [auth]);
 
-  const loadRequests = useCallback(() => load('requests', `${API_BASE}/api/requests?hospital=${hospital}`, setRequests, 'Could not load blood requests.'), [load, hospital]);
-  const loadInventory = useCallback(() => load('inventory', `${API_BASE}/api/inventory?hospital=${hospital}`, setInventory, 'Could not load blood inventory.', false), [load, hospital]);
-  const loadAppointments = useCallback(() => load('appointments', `${API_BASE}/api/appointments?hospital=${hospital}`, setAppointments, 'Could not load appointments.'), [load, hospital]);
+  const loadRequests = useCallback(() => load('requests', `${API_BASE}/api/requests?hospital=${hospital}`, setRequests), [load, hospital]);
+  const loadInventory = useCallback(() => load('inventory', `${API_BASE}/api/inventory?hospital=${hospital}`, setInventory, false), [load, hospital]);
+  const loadAppointments = useCallback(() => load('appointments', `${API_BASE}/api/appointments?hospital=${hospital}`, setAppointments), [load, hospital]);
 
   const refresh = useCallback(async ({ silent = false } = {}) => {
     if (!hospital || refreshing$.current) return;
@@ -188,6 +192,7 @@ export default function HospitalOverview() {
     };
   }, [appointments, today]);
 
+  const errText = (key) => errors[key] && apiErrorMessage(errors[key], t(`hosp.home.loadFailed.${key}`));
   const statusLegend = ['adequate', 'low', 'critical', 'empty'];
   const ranges = useMemo(() => stockRanges(stock), [stock]);
 
@@ -196,28 +201,28 @@ export default function HospitalOverview() {
       <Box className="header-glow" aria-hidden="true" sx={headerGlow} />
       <PageHeader
         icon={<LocalHospitalRoundedIcon />}
-        title="Hospital Dashboard"
-        subtitle={`${greeting()}${staff?.fullName ? `, ${staff.fullName.split(' ')[0]}` : ''}. Here's what's happening at your hospital today.`}
+        title={t('hosp.home.hospitalDashboard')}
+        subtitle={staff?.fullName ? t('hosp.home.subtitleName', { greeting: greeting(t), name: staff.fullName.split(' ')[0] }) : t('hosp.home.subtitle', { greeting: greeting(t) })}
         sx={{ mb: { xs: 2.5, md: 3 } }}
         actions={
           <>
-            <Tooltip title="Refresh data">
+            <Tooltip title={t('hosp.home.refreshData')}>
               <span>
-                <IconButton onClick={() => refresh()} disabled={refreshing || !hospital} aria-label="Refresh data"
+                <IconButton onClick={() => refresh()} disabled={refreshing || !hospital} aria-label={t('hosp.home.refreshData')}
                   sx={{ border: 1, borderColor: 'divider', borderRadius: '10px', bgcolor: 'background.paper' }}>
                   {refreshing ? <CircularProgress size={18} /> : <RefreshIcon fontSize="small" />}
                 </IconButton>
               </span>
             </Tooltip>
             <Button component={Link} href={LINKS.scan} variant="contained" startIcon={<QrCodeScannerIcon />} sx={checkInSx}>
-              Check in donor
+              {t('hosp.home.checkInDonor')}
             </Button>
           </>
         }
       />
 
       {!hospital && staff && (
-        <Alert severity="warning" sx={{ mb: 2.5 }}>Your account isn&apos;t linked to a hospital yet. Ask an administrator to assign one.</Alert>
+        <Alert severity="warning" sx={{ mb: 2.5 }}>{t('hosp.home.notLinked')}</Alert>
       )}
 
       {req.critical > 0 && (
@@ -225,37 +230,37 @@ export default function HospitalOverview() {
           severity="error"
           variant="outlined"
           sx={{ mb: 2.5, bgcolor: 'background.paper', alignItems: 'center' }}
-          action={<Button component={Link} href={LINKS.requests} color="error" size="small" variant="contained">Review now</Button>}
+          action={<Button component={Link} href={LINKS.requests} color="error" size="small" variant="contained">{t('hosp.home.reviewNow')}</Button>}
         >
-          <strong>{req.critical} critical request{req.critical === 1 ? '' : 's'}</strong> waiting for review.
+          {rich('hosp.home.criticalWaiting', { count: <strong>{t('hosp.home.criticalCount', { count: req.critical })}</strong> })}
         </Alert>
       )}
 
       {/* ── Stat cards ── */}
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0,1fr)', sm: 'repeat(2, minmax(0,1fr))' }, gap: { xs: 2, md: 2.5 } }}>
         <StatCard
-          label="Pending Requests" value={req.pending} loading={requests === null && !errors.requests}
+          label={t('hosp.home.pendingRequests')} value={req.pending} loading={requests === null && !errors.requests}
           icon={<DescriptionRoundedIcon />} color="#F59E0B" href={LINKS.requests} decorated
           hint={req.critical > 0
-            ? <Box component="span" sx={{ color: 'error.main', fontWeight: 700 }}>{req.critical} critical · {req.approved} approved</Box>
-            : `${req.approved} approved, awaiting fulfilment`}
+            ? <Box component="span" sx={{ color: 'error.main', fontWeight: 700 }}>{t('hosp.home.criticalApproved', { critical: req.critical, approved: req.approved })}</Box>
+            : t('hosp.home.approvedAwaiting', { count: req.approved })}
         />
         <StatCard
-          label="Blood Units in Stock" value={totals.totalUnits.toLocaleString()} loading={inventory === null && !errors.inventory}
+          label={t('hosp.home.bloodUnitsInStock')} value={totals.totalUnits.toLocaleString()} loading={inventory === null && !errors.inventory}
           icon={<WaterDropIcon />} color="#C91D32" href={LINKS.inventory} decorated
           hint={attentionTypes > 0
-            ? <Box component="span" sx={{ color: 'warning.main', fontWeight: 700 }}>{attentionTypes} type{attentionTypes === 1 ? '' : 's'} low or out</Box>
-            : 'All 8 types adequately stocked'}
+            ? <Box component="span" sx={{ color: 'warning.main', fontWeight: 700 }}>{t('hosp.home.typesLow', { count: attentionTypes })}</Box>
+            : t('hosp.home.allStocked')}
         />
         <StatCard
-          label="Upcoming Appointments" value={appt.upcoming.length} loading={appointments === null && !errors.appointments}
+          label={t('hosp.home.upcomingAppointments')} value={appt.upcoming.length} loading={appointments === null && !errors.appointments}
           icon={<CalendarMonthRoundedIcon />} color="#2563EB" href={LINKS.appointments} decorated
-          hint={`${appt.today} today · ${appt.awaitingConfirm} to confirm`}
+          hint={t('hosp.home.todayConfirm', { today: appt.today, confirm: appt.awaitingConfirm })}
         />
         <StatCard
-          label="Requests Fulfilled" value={req.fulfilled} loading={requests === null && !errors.requests}
+          label={t('hosp.home.requestsFulfilled')} value={req.fulfilled} loading={requests === null && !errors.requests}
           icon={<TaskAltRoundedIcon />} color="#16A34A" href={LINKS.requests} decorated
-          hint={req.total ? `${Math.round((req.fulfilled / req.total) * 100)}% of ${req.total} requests` : 'No requests yet'}
+          hint={req.total ? t('hosp.home.percentOf', { pct: Math.round((req.fulfilled / req.total) * 100), count: req.total }) : t('hosp.home.noRequestsYet')}
         />
       </Box>
 
@@ -264,20 +269,20 @@ export default function HospitalOverview() {
         <SectionCard
           padded={false}
           icon={<WaterDropIcon />}
-          title="Blood Inventory by Type"
-          subtitle="Units in stock, coloured by stock level"
+          title={t('hosp.home.bloodInventoryByType')}
+          subtitle={t('hosp.home.unitsInStockColoured')}
           sx={panelSx}
-          action={<Button component={Link} href={LINKS.inventory} size="small" sx={{ fontWeight: 700 }}>Manage</Button>}
+          action={<Button component={Link} href={LINKS.inventory} size="small" sx={{ fontWeight: 700 }}>{t('hosp.home.manage')}</Button>}
         >
-          {errors.inventory && inventory === null && <CardError message={errors.inventory} onRetry={loadInventory} />}
+          {errors.inventory && inventory === null && <CardError message={errText('inventory')} onRetry={loadInventory} />}
           <Box sx={{ px: { xs: 1, md: 2.5 }, pb: 2.5 }}>
             {inventory === null ? (errors.inventory ? null : <Skeleton variant="rounded" height={300} />) : noStock ? (
               <Box sx={{ minHeight: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <EmptyState
                   icon={<WaterDropIcon />}
-                  title="No inventory recorded yet"
-                  description="Enter your hospital's stock levels to see the chart and low-stock alerts."
-                  action={<Button component={Link} href={LINKS.inventory} variant="outlined" size="small">Update inventory</Button>}
+                  title={t('hosp.home.noInventoryRecordedYet')}
+                  description={t('hosp.home.enterYourHospitalS')}
+                  action={<Button component={Link} href={LINKS.inventory} variant="outlined" size="small">{t('hosp.home.updateInventory')}</Button>}
                 />
               </Box>
             ) : (
@@ -301,19 +306,19 @@ export default function HospitalOverview() {
         <SectionCard
           padded={false}
           icon={<EventAvailableRoundedIcon />}
-          title="Upcoming Appointments"
+          title={t('hosp.home.upcomingAppointments')}
           sx={panelSx}
-          subtitle={appt.checkedInToday ? `${appt.checkedInToday} donor${appt.checkedInToday === 1 ? '' : 's'} checked in today` : 'Next donors booked at your hospital'}
-          action={<Button component={Link} href={LINKS.appointments} size="small" sx={{ fontWeight: 700 }}>View All</Button>}
+          subtitle={appt.checkedInToday ? t('hosp.home.checkedInToday', { count: appt.checkedInToday }) : t('hosp.home.nextDonors')}
+          action={<Button component={Link} href={LINKS.appointments} size="small" sx={{ fontWeight: 700 }}>{t('hosp.home.viewAll')}</Button>}
         >
           {errors.appointments && appointments === null ? (
-            <CardError message={errors.appointments} onRetry={loadAppointments} />
+            <CardError message={errText('appointments')} onRetry={loadAppointments} />
           ) : appointments === null ? (
             <Box sx={{ px: 3, pb: 3, display: 'flex', flexDirection: 'column', gap: 1.25 }}>
               {[0, 1, 2, 3].map((i) => <Skeleton key={i} variant="rounded" height={48} />)}
             </Box>
           ) : appt.upcoming.length === 0 ? (
-            <EmptyState icon={<CalendarMonthRoundedIcon />} title="No upcoming appointments" description="New bookings for your hospital will show up here." />
+            <EmptyState icon={<CalendarMonthRoundedIcon />} title={t('hosp.home.noUpcomingAppointments')} description={t('hosp.home.newBookingsForYour')} />
           ) : (
             <Box component="ul" sx={{ listStyle: 'none', m: 0, px: { xs: 2, md: 2.5 }, pb: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
               {appt.upcoming.slice(0, 5).map((a) => {
@@ -328,13 +333,13 @@ export default function HospitalOverview() {
                   >
                     <Box sx={{ textAlign: 'center', minWidth: 64, flexShrink: 0 }}>
                       <Typography variant="caption" sx={{ display: 'block', fontWeight: 700, color: isToday ? 'primary.main' : 'text.secondary', lineHeight: 1.2 }}>
-                        {dayLabel(a.date, today)}
+                        {dayLabel(t, a.date, today)}
                       </Typography>
                       <Typography variant="body2" sx={{ fontWeight: 700, whiteSpace: 'nowrap' }}>{a.time}</Typography>
                     </Box>
                     <Box sx={{ minWidth: 0, flexGrow: 1 }}>
                       <Typography variant="body2" noWrap sx={{ fontWeight: 600 }}>{a.fullName}</Typography>
-                      <StatusBadge status={a.status} label={a.status === 'Pending' ? 'To confirm' : undefined} size="small" dot={false} />
+                      <StatusBadge status={a.status} label={a.status === 'Pending' ? t('hosp.home.toConfirm') : undefined} size="small" dot={false} />
                     </Box>
                     <BloodPill type={a.bloodType} />
                   </Box>
@@ -355,18 +360,18 @@ export default function HospitalOverview() {
         <SectionCard
           padded={false}
           icon={<DescriptionRoundedIcon />}
-          title="Recent Blood Requests"
+          title={t('hosp.home.recentBloodRequests')}
           sx={panelSx}
-          action={<Button component={Link} href={LINKS.requests} size="small" sx={{ fontWeight: 700 }}>View All</Button>}
+          action={<Button component={Link} href={LINKS.requests} size="small" sx={{ fontWeight: 700 }}>{t('hosp.home.viewAll')}</Button>}
         >
           {errors.requests && requests === null ? (
-            <CardError message={errors.requests} onRetry={loadRequests} />
+            <CardError message={errText('requests')} onRetry={loadRequests} />
           ) : (
             <TableContainer sx={compactTableContainerSx}>
               <Table size="small" sx={{ minWidth: 620, '& td': { borderBottom: 'none', py: 1.25 } }}>
                 <TableHead>
                   <TableRow>
-                    {['Patient', 'Blood Type', 'Units', 'Urgency', 'Status', 'Date', ''].map((h, i) => (
+                    {[t('hosp.home.cols.patient'), t('hosp.home.cols.bloodType'), t('hosp.home.cols.units'), t('hosp.home.cols.urgency'), t('hosp.home.cols.status'), t('hosp.home.cols.date'), ''].map((h, i) => (
                       <TableCell key={i} sx={compactHeadCell}>{h}</TableCell>
                     ))}
                   </TableRow>
@@ -376,7 +381,7 @@ export default function HospitalOverview() {
                     <TableRow key={i}><TableCell colSpan={7}><Skeleton variant="text" /></TableCell></TableRow>
                   ))}
                   {requests && req.recent.length === 0 && (
-                    <TableRow><TableCell colSpan={7}><EmptyState icon={<DescriptionRoundedIcon />} title="No requests yet" description="Requests assigned to your hospital will appear here." /></TableCell></TableRow>
+                    <TableRow><TableCell colSpan={7}><EmptyState icon={<DescriptionRoundedIcon />} title={t('hosp.home.noRequestsYet')} description={t('hosp.home.requestsAssignedToYour')} /></TableCell></TableRow>
                   )}
                   {req.recent.map((r) => (
                     <TableRow key={r._id} hover>
@@ -393,7 +398,7 @@ export default function HospitalOverview() {
                       <TableCell><StatusBadge status={r.urgency} size="small" dot={false} /></TableCell>
                       <TableCell><StatusBadge status={r.status} size="small" dot={false} /></TableCell>
                       <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDate(r.createdAt)}</TableCell>
-                      <TableCell align="right"><RowMenu label="Open requests" href={LINKS.requests} /></TableCell>
+                      <TableCell align="right"><RowMenu label={t('hosp.home.openRequests')} href={LINKS.requests} /></TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -406,7 +411,7 @@ export default function HospitalOverview() {
           sx={panelSx}
           items={inventory}
           href={LINKS.inventory}
-          error={errors.inventory && 'Stock alerts could not be loaded.'}
+          error={errors.inventory && t('hosp.home.alertsFailed')}
           onRetry={loadInventory}
         />
       </Box>

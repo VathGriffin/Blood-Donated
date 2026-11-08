@@ -1,4 +1,5 @@
-export const metadata = { title: 'Scan Donor QR' };
+import { pageTitle } from '@/i18n/server';
+export const generateMetadata = pageTitle('scanDonorQr');
 
 export default function DashboardHospitalScanLayout({ children }) {
   return children;

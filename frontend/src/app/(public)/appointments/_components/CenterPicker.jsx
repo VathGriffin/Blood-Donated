@@ -1,4 +1,5 @@
 'use client';
+import { useI18n } from '@/i18n/I18nProvider';
 import { useMemo, useRef, useState } from 'react';
 import { Box, Typography, Button, Skeleton, InputBase, Alert, CircularProgress, useTheme } from '@mui/material';
 import ApartmentIcon from '@mui/icons-material/Apartment';
@@ -16,12 +17,13 @@ import { C, radioKeyDown } from './booking';
 
 const INITIAL_VISIBLE = 4;
 
-const formatKm = (km) => `${km < 10 ? km.toFixed(1) : Math.round(km)} km`;
+const formatKm = (km, intl) => `${km.toLocaleString(intl, { maximumFractionDigits: km < 10 ? 1 : 0 })} km`;
 
 // `source` says where the list came from: 'api' (registered hospitals), 'empty' (none registered
 // yet, so the standard list is shown) or 'error' (the request failed; standard list + retry).
 export default function CenterPicker({ centers, loading, source, onRetry, selectedKey, onSelect, distances, onLocate, locating, note }) {
   const isDark = useTheme().palette.mode === 'dark';
+  const { t, intl } = useI18n();
   const [query, setQuery] = useState('');
   const [showAll, setShowAll] = useState(false);
   const refs = useRef([]);
@@ -41,7 +43,7 @@ export default function CenterPicker({ centers, loading, source, onRetry, select
   const border = isDark ? '#334155' : C.border;
 
   return (
-    <Panel icon={<ApartmentIcon />} title="Select Donation Center" subtitle="Choose a hospital or blood donation center near you">
+    <Panel icon={<ApartmentIcon />} title={t('booking.center.title')} subtitle={t('booking.center.subtitle')}>
       {/* Search + location */}
       <Box sx={{ display: 'flex', gap: 1.25, flexWrap: 'wrap', mb: 2 }}>
         <Box sx={{
@@ -51,11 +53,11 @@ export default function CenterPicker({ centers, loading, source, onRetry, select
           '&:focus-within': { borderColor: C.primary, boxShadow: `0 0 0 3px ${C.ring}` },
         }}>
           <SearchIcon sx={{ fontSize: 20, color: 'text.secondary' }} aria-hidden="true" />
-          <InputBase value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search by hospital name or location…"
-            inputProps={{ 'aria-label': 'Search donation centers', type: 'search' }} disabled={loading}
+          <InputBase value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('booking.center.search')}
+            inputProps={{ 'aria-label': t('booking.center.searchLabel'), type: 'search' }} disabled={loading}
             sx={{ flex: 1, fontSize: '0.9rem', '& input::-webkit-search-cancel-button': { display: 'none' } }} />
           {query && (
-            <Box component="button" type="button" onClick={() => setQuery('')} aria-label="Clear search"
+            <Box component="button" type="button" onClick={() => setQuery('')} aria-label={t('booking.center.clear')}
               sx={{ display: 'flex', border: 0, bgcolor: 'transparent', p: 0.25, cursor: 'pointer', color: 'text.secondary', borderRadius: '6px', '&:focus-visible': { outline: `2px solid ${C.primary}` } }}>
               <CloseIcon sx={{ fontSize: 18 }} />
             </Box>
@@ -69,7 +71,7 @@ export default function CenterPicker({ centers, loading, source, onRetry, select
             '&:hover': { borderColor: C.primary, bgcolor: isDark ? 'rgba(201,29,50,0.1)' : C.softer },
             '&:focus-visible': { boxShadow: `0 0 0 3px ${C.ring}` },
           }}>
-          {locating ? 'Locating…' : 'Use My Location'}
+          {t(locating ? 'booking.center.locating' : 'booking.center.locate')}
         </Button>
       </Box>
 
@@ -77,18 +79,18 @@ export default function CenterPicker({ centers, loading, source, onRetry, select
 
       {!loading && source === 'error' && (
         <Alert severity="warning" sx={{ mb: 2, borderRadius: '12px', alignItems: 'center' }}
-          action={<Button color="inherit" size="small" onClick={onRetry} sx={{ textTransform: 'none', fontWeight: 700 }}>Retry</Button>}>
-          We couldn’t load the registered centers, so the standard list is shown.
+          action={<Button color="inherit" size="small" onClick={onRetry} sx={{ textTransform: 'none', fontWeight: 700 }}>{t('common.retry')}</Button>}>
+          {t('booking.center.loadError')}
         </Alert>
       )}
       {!loading && source === 'empty' && (
         <Typography sx={{ color: 'text.secondary', fontSize: '0.8rem', mb: 1.5 }}>
-          No hospitals have registered on BloodLife AI yet, so the standard list of centers is shown.
+          {t('booking.center.noneRegistered')}
         </Typography>
       )}
 
       {loading && (
-        <Box role="status" aria-label="Loading donation centers" sx={grid}>
+        <Box role="status" aria-label={t('booking.center.loading')} sx={grid}>
           {[0, 1, 2, 3].map((i) => (
             <Box key={i} sx={{ p: 1, borderRadius: '14px', border: `1px solid ${border}` }}>
               <Skeleton variant="rounded" height={130} sx={{ borderRadius: '10px', mb: 1.25 }} />
@@ -101,16 +103,16 @@ export default function CenterPicker({ centers, loading, source, onRetry, select
       {!loading && !filtered.length && (
         <Box sx={{ textAlign: 'center', py: 4, px: 2, borderRadius: '14px', border: `1px dashed ${border}` }}>
           <SearchOffIcon sx={{ fontSize: 36, color: 'text.disabled' }} aria-hidden="true" />
-          <Typography sx={{ fontWeight: 700, mt: 1 }}>{query ? 'No centers match your search' : 'No donation centers available'}</Typography>
+          <Typography sx={{ fontWeight: 700, mt: 1 }}>{t(query ? 'booking.center.noMatch' : 'booking.center.noneAvailable')}</Typography>
           <Typography sx={{ color: 'text.secondary', fontSize: '0.85rem', mt: 0.5 }}>
-            {query ? 'Try a different name, address or city.' : 'Please check back later.'}
+            {t(query ? 'booking.center.noMatchHint' : 'booking.center.checkBack')}
           </Typography>
-          {query && <Button size="small" onClick={() => setQuery('')} sx={{ mt: 1.5, textTransform: 'none', fontWeight: 700, color: C.primary }}>Clear search</Button>}
+          {query && <Button size="small" onClick={() => setQuery('')} sx={{ mt: 1.5, textTransform: 'none', fontWeight: 700, color: C.primary }}>{t('booking.center.clear')}</Button>}
         </Box>
       )}
 
       {!loading && !!filtered.length && (
-        <Box role="radiogroup" aria-label="Donation center" sx={grid}>
+        <Box role="radiogroup" aria-label={t('booking.center.label')} sx={grid}>
           {visible.map((center, i) => {
             const selected = center.key === selectedKey;
             const km = distances[center.key];
@@ -151,7 +153,7 @@ export default function CenterPicker({ centers, loading, source, onRetry, select
                   )}
                   {typeof km === 'number' && (
                     <Typography sx={{ color: 'text.secondary', fontSize: '0.78rem', mt: 0.4, display: 'flex', gap: 0.5, alignItems: 'center' }}>
-                      <NearMeOutlinedIcon sx={{ fontSize: 14, flexShrink: 0 }} aria-hidden="true" />{formatKm(km)} away
+                      <NearMeOutlinedIcon sx={{ fontSize: 14, flexShrink: 0 }} aria-hidden="true" />{t('booking.center.away', { distance: formatKm(km, intl) })}
                     </Typography>
                   )}
                 </Box>
@@ -164,7 +166,7 @@ export default function CenterPicker({ centers, loading, source, onRetry, select
                       fontSize: { xs: '0.68rem', sm: '0.74rem' }, whiteSpace: 'nowrap', fontWeight: 600,
                       color: isDark ? '#86EFAC' : C.ok, bgcolor: isDark ? 'rgba(22,163,74,0.14)' : '#F0FDF4',
                     }}>
-                      <EventAvailableOutlinedIcon sx={{ fontSize: 15 }} aria-hidden="true" />Accepting bookings
+                      <EventAvailableOutlinedIcon sx={{ fontSize: 15 }} aria-hidden="true" />{t('booking.center.accepting')}
                     </Box>
                   </Box>
                 )}
@@ -177,7 +179,7 @@ export default function CenterPicker({ centers, loading, source, onRetry, select
       {!loading && !query.trim() && filtered.length > INITIAL_VISIBLE && (
         <Button size="small" onClick={() => setShowAll((v) => !v)} aria-expanded={expanded}
           sx={{ mt: 1.5, textTransform: 'none', fontWeight: 700, color: C.primary }}>
-          {expanded ? 'Show fewer centers' : `Show all ${filtered.length} centers`}
+          {expanded ? t('booking.center.showFewer') : t('booking.center.showAll', { count: filtered.length })}
         </Button>
       )}
     </Panel>

@@ -54,9 +54,24 @@ const pick = (saved, fallback) => (typeof saved === 'string' && saved.trim() ? s
 const mergeFields = (saved, defaults) =>
   Object.fromEntries(Object.entries(defaults).map(([k, v]) => [k, pick(saved?.[k], v)]));
 
-// Saved sections (possibly partial) → complete sections, defaults filling every gap.
-export function mergeSections(saved = {}) {
+// The built-in sections in the interface language (i18n/messages/about.js, `about.defaults`).
+// DEFAULT_SECTIONS above stays English: the admin editor compares against it (overridesOnly).
+const LIST_KEYS = { values: ['trusted', 'connecting', 'saving'], pillars: ['mission', 'vision', 'impact'], stats: ['donors', 'donations', 'hospitals', 'fulfilled'] };
+export function localizedDefaults(t) {
+  const fields = (path, obj) => Object.fromEntries(Object.keys(obj).map((k) => [k, t(`about.defaults.${path}.${k}`)]));
   return Object.fromEntries(Object.entries(DEFAULT_SECTIONS).map(([name, def]) => [
+    name,
+    Array.isArray(def)
+      ? def.map((item, i) => fields(`${name}.${LIST_KEYS[name][i]}`, item))
+      // The creator's name is a proper name, the same in every language.
+      : name === 'team' ? { ...fields('team', { position: 1, bio: 1 }), name: def.name } : fields(name, def),
+  ]));
+}
+
+// Saved sections (possibly partial) → complete sections, `defaults` filling every gap. A field
+// the admin customised is shown as written, in whatever language they wrote it.
+export function mergeSections(saved = {}, defaults = DEFAULT_SECTIONS) {
+  return Object.fromEntries(Object.entries(defaults).map(([name, def]) => [
     name,
     Array.isArray(def)
       ? def.map((item, i) => mergeFields(saved?.[name]?.[i], item))

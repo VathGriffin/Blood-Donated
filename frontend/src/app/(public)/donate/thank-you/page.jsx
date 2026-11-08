@@ -7,15 +7,14 @@ import VolunteerActivismIcon from "@mui/icons-material/VolunteerActivism";
 import GroupIcon from "@mui/icons-material/Group";
 import HistoryIcon from "@mui/icons-material/History";
 import { useUserAuth } from "@/store/UserAuthContext";
+import { useT } from "@/i18n/I18nProvider";
 
-const steps = [
-  "Our team will review your registration within 24 hours.",
-  "You'll receive a confirmation call or email soon.",
-  "Stay available and ready to donate when contacted.",
-];
+// donate.thanks.steps.<key> in i18n/messages/donate.js
+const steps = ["review", "confirm", "ready"];
 
 const ThankYou = () => {
   const { isAuth } = useUserAuth();
+  const t = useT();
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
   const [visible, setVisible] = useState(false);
@@ -79,13 +78,13 @@ const ThankYou = () => {
               <CheckCircleIcon sx={{ fontSize: 56, color: "white" }} />
             </Box>
             <Typography variant="h4" fontWeight={800} color="white" gutterBottom>
-              Congratulations!
+              {t("donate.thanks.title")}
             </Typography>
             <Typography
               variant="body1"
               sx={{ color: "rgba(255,255,255,0.85)", maxWidth: 360, mx: "auto", lineHeight: 1.6 }}
             >
-              You&apos;ve successfully registered as a blood donor. Welcome to our life-saving community!
+              {t("donate.thanks.lead")}
             </Typography>
           </Box>
 
@@ -98,13 +97,13 @@ const ThankYou = () => {
               gutterBottom
               sx={{ mb: 2 }}
             >
-              What happens next?
+              {t("donate.thanks.nextTitle")}
             </Typography>
 
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mb: 4 }}>
               {steps.map((step, i) => (
                 <Box
-                  key={i}
+                  key={step}
                   sx={{
                     display: "flex",
                     alignItems: "flex-start",
@@ -133,7 +132,7 @@ const ThankYou = () => {
                     {i + 1}
                   </Box>
                   <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.7, pt: 0.4 }}>
-                    {step}
+                    {t(`donate.thanks.steps.${step}`)}
                   </Typography>
                 </Box>
               ))}
@@ -156,7 +155,7 @@ const ThankYou = () => {
                   "&:hover": { boxShadow: "0 6px 20px rgba(201,29,50,0.5)" },
                 }}
               >
-                View Donors
+                {t("donate.thanks.viewDonors")}
               </Button>
               <Button
                 variant="outlined"
@@ -167,14 +166,14 @@ const ThankYou = () => {
                 startIcon={<VolunteerActivismIcon />}
                 sx={{ flex: 1, fontWeight: 700, borderRadius: 3, py: 1.3 }}
               >
-                Register Another
+                {t("donate.thanks.another")}
               </Button>
             </Box>
 
             {isAuth && (
               <Button fullWidth variant="text" color="primary" component={Link} href="/profile?tab=history"
                 startIcon={<HistoryIcon />} sx={{ mt: 2, fontWeight: 700 }}>
-                View it in My Profile → Donation History
+                {t("donate.thanks.inProfile")}
               </Button>
             )}
             <Button
@@ -183,7 +182,7 @@ const ThankYou = () => {
               href="/"
               sx={{ mt: 2, color: "text.secondary", fontWeight: 500 }}
             >
-              Back to Home
+              {t("donate.thanks.home")}
             </Button>
           </Box>
         </Paper>

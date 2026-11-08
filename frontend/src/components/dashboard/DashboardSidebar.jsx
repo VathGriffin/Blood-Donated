@@ -9,11 +9,13 @@ import {
 } from '@mui/material';
 import BrandLogo from './BrandLogo';
 import { uploadUrl } from '@/lib/config';
-import { BRAND, DASHBOARD_BRAND } from '@/lib/brand';
+import { DASHBOARD_BRAND } from '@/lib/brand';
 import { ROLES, ROLE_CONFIG, isItemActive } from '@/lib/navigation';
+import { useT } from '@/i18n/I18nProvider';
 
 function UserCard({ profile }) {
   const sb = useTheme().custom.sidebar;
+  const t = useT();
   const photo = uploadUrl(profile.photo);
   return (
     <Box sx={{ px: 2, py: 2, borderTop: `1px solid ${sb.border}`, display: 'flex', alignItems: 'center', gap: 1.5, flexShrink: 0 }}>
@@ -28,7 +30,7 @@ function UserCard({ profile }) {
         <Typography noWrap sx={{ color: '#fff', fontWeight: 700, fontSize: '0.85rem', lineHeight: 1.3 }}>{profile.name}</Typography>
         <Typography noWrap sx={{ color: sb.text, fontSize: '0.72rem', lineHeight: 1.3, display: 'flex', alignItems: 'center', gap: 0.6 }}>
           <Box component="span" aria-hidden="true" sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: '#22C55E', flexShrink: 0 }} />
-          {profile.subtitle}
+          {profile.subtitle || t(profile.subtitleKey)}
         </Typography>
       </Box>
     </Box>
@@ -39,6 +41,7 @@ function SidebarContent({ role, profile, badges = {}, onNavigate }) {
   const pathname = usePathname();
   const sb = useTheme().custom.sidebar;
   const cfg = ROLE_CONFIG[role];
+  const t = useT();
 
   return (
     <Box sx={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column', background: sb.bgGradient, color: sb.text, '& > *': { position: 'relative' } }}>
@@ -50,12 +53,12 @@ function SidebarContent({ role, profile, badges = {}, onNavigate }) {
       <Box sx={{ px: 2.5, height: 76, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
         {/* Donors see the public "Save Lives Together" tagline; staff keep the management one. */}
         <BrandLogo href={cfg.homePath} name={DASHBOARD_BRAND.name}
-          caption={role === ROLES.DONOR ? BRAND.tagline : DASHBOARD_BRAND.tagline} wrapCaption onClick={onNavigate} />
+          caption={t(role === ROLES.DONOR ? 'common.brandTagline' : 'common.dashboardTagline')} wrapCaption onClick={onNavigate} />
       </Box>
 
       <Box
         component="nav"
-        aria-label={`${cfg.label} navigation`}
+        aria-label={t('nav.navigation', { panel: t(cfg.labelKey) })}
         sx={{ flex: 1, overflowY: 'auto', px: 1.5, py: 1, '&::-webkit-scrollbar': { display: 'none' } }}
       >
         {cfg.sections.map((section, idx) => (
@@ -98,11 +101,11 @@ function SidebarContent({ role, profile, badges = {}, onNavigate }) {
                       <Icon sx={{ fontSize: 20 }} />
                     </ListItemIcon>
                     <ListItemText
-                      primary={item.label}
+                      primary={t(item.labelKey)}
                       slotProps={{ primary: { sx: { fontSize: '0.875rem', fontWeight: active ? 700 : 500, letterSpacing: '-0.005em' } } }}
                     />
                     {item.badge && badges[item.href] > 0 && (
-                      <Box component="span" aria-label={`${badges[item.href]} new`} sx={{
+                      <Box component="span" aria-label={t('layout.shell.newBadge', { count: badges[item.href] })} sx={{
                         minWidth: 20, height: 20, px: 0.6, borderRadius: '999px', display: 'grid', placeItems: 'center',
                         bgcolor: '#fff', color: sb.badgeColor || 'primary.main', fontSize: '0.7rem', fontWeight: 800,
                       }}>
@@ -126,7 +129,7 @@ function SidebarContent({ role, profile, badges = {}, onNavigate }) {
             sx={{ py: 1, px: 1.75, color: sb.text, '&:hover': { bgcolor: sb.itemHover, color: sb.textActive }, '&.Mui-focusVisible': { outlineColor: '#FFFFFF' } }}
           >
             <ListItemIcon sx={{ minWidth: 38, color: 'inherit' }}><ArrowBackIcon sx={{ fontSize: 20 }} /></ListItemIcon>
-            <ListItemText primary="Back to Website" slotProps={{ primary: { sx: { fontSize: '0.85rem', fontWeight: 500 } } }} />
+            <ListItemText primary={t('nav.backToWebsite')} slotProps={{ primary: { sx: { fontSize: '0.85rem', fontWeight: 500 } } }} />
           </ListItemButton>
         </Box>
       )}

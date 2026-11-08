@@ -237,10 +237,10 @@ describe('the prompt matches the real site', () => {
     expect(buildContext()).toMatch(/NOT signed in/);
   });
 
-  test('passes the language the client detected on to the model', async () => {
+  test('tells the model to reply in the language chosen in the chat, whatever the message is written in', async () => {
     mockGenerate.mockResolvedValue(textReply('ok'));
-    await ask({ message: 'សួស្តី', lang: 'km' });
-    expect(sentToGemini().config.systemInstruction).toMatch(/language as Khmer/);
-    expect(buildContext({ lang: 'xx' })).not.toMatch(/language as/);
+    await ask({ message: 'hello', lang: 'km' });
+    expect(sentToGemini().config.systemInstruction).toMatch(/Reply language: Khmer\. Write the whole reply in Khmer\./);
+    expect(buildContext({ lang: 'xx' })).not.toMatch(/Reply language/);
   });
 });

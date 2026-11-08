@@ -4,23 +4,25 @@ import { Box, Typography, IconButton, useTheme, Grid } from "@mui/material";
 import { Facebook, Telegram, Favorite, Email, Phone, LocationOn, AccessTime } from "@mui/icons-material";
 import BrandLogo from "@/components/dashboard/BrandLogo";
 import { BRAND } from "@/lib/brand";
+import { useI18n } from "@/i18n/I18nProvider";
 import { CONTACT } from "@/lib/contact";
 import { navy } from "@/lib/design-tokens";
 
+// `key`: the link's name in i18n/messages/nav.js.
 const quickLinks = [
-  { label: "Home",            path: "/" },
-  { label: "Donate Blood",    path: "/donate" },
-  { label: "Request Blood",   path: "/requests" },
-  { label: "Find a Hospital", path: "/map" },
-  { label: "Find Donors",     path: "/donors" },
-  { label: "About Us",        path: "/about" },
-  { label: "Contact",         path: "/contact" },
+  { key: "home",         path: "/" },
+  { key: "donateBlood",  path: "/donate" },
+  { key: "requestBlood", path: "/requests" },
+  { key: "findHospital", path: "/map" },
+  { key: "findDonors",   path: "/donors" },
+  { key: "aboutUs",      path: "/about" },
+  { key: "contact",      path: "/contact" },
 ];
 
 const legalLinks = [
-  { label: "Privacy Policy",   path: "/privacy" },
-  { label: "Terms of Service", path: "/terms" },
-  { label: "Cookie Policy",    path: "/privacy#collect" },
+  { key: "privacyPolicy",  path: "/privacy" },
+  { key: "termsOfService", path: "/terms" },
+  { key: "cookiePolicy",   path: "/privacy#collect" },
 ];
 
 const bloodTypes = ["A+", "A−", "B+", "B−", "AB+", "AB−", "O+", "O−"];
@@ -59,6 +61,7 @@ function ContactRow({ icon, children }) {
 function Footer() {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
+  const { t, rich } = useI18n();
 
   return (
     <Box component="footer" sx={{
@@ -71,11 +74,10 @@ function Footer() {
           {/* Brand */}
           <Grid size={{ xs: 12, sm: 6, md: 4 }}>
             <Box sx={{ mb: 2.25 }}>
-              <BrandLogo href="/" caption={BRAND.tagline} onDark />
+              <BrandLogo href="/" caption={t("common.brandTagline")} onDark />
             </Box>
             <Typography sx={{ color: TEXT, fontSize: "0.9rem", lineHeight: 1.8, mb: 2.5, maxWidth: 380 }}>
-              A voluntary blood donation platform connecting compassionate donors with patients in need,
-              so no life is lost for lack of blood.
+              {t("layout.footer.about")}
             </Typography>
             <Box sx={{ display: "flex", gap: 1.25 }}>
               {socials.map((s) => (
@@ -93,11 +95,11 @@ function Footer() {
 
           {/* Quick links */}
           <Grid size={{ xs: 6, sm: 6, md: 2.25 }}>
-            <Typography component="h2" sx={headingSx}>Quick Links</Typography>
+            <Typography component="h2" sx={headingSx}>{t("layout.footer.quickLinks")}</Typography>
             <Box component="ul" sx={{ listStyle: "none", p: 0, m: 0, display: "grid", gap: 1.1 }}>
               {quickLinks.map((link) => (
                 <li key={link.path}>
-                  <Box component={Link} href={link.path} sx={linkSx}>{link.label}</Box>
+                  <Box component={Link} href={link.path} sx={linkSx}>{t(`nav.${link.key}`)}</Box>
                 </li>
               ))}
             </Box>
@@ -105,7 +107,7 @@ function Footer() {
 
           {/* Blood types */}
           <Grid size={{ xs: 6, sm: 6, md: 2.25 }}>
-            <Typography component="h2" sx={headingSx}>Blood Types</Typography>
+            <Typography component="h2" sx={headingSx}>{t("layout.footer.bloodTypes")}</Typography>
             <Box sx={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 44px))", gap: 1 }}>
               {bloodTypes.map((bt) => (
                 <Box key={bt} sx={{
@@ -117,13 +119,13 @@ function Footer() {
               ))}
             </Box>
             <Box component={Link} href="/donate" sx={{ ...linkSx, display: "inline-block", mt: 2, fontSize: "0.85rem", fontWeight: 600, color: ACCENT, "&:hover": { color: "#FFFFFF" } }}>
-              Am I eligible? →
+              {t("layout.footer.eligible")}
             </Box>
           </Grid>
 
           {/* Contact */}
           <Grid size={{ xs: 12, sm: 6, md: 3.5 }}>
-            <Typography component="h2" sx={headingSx}>Contact Us</Typography>
+            <Typography component="h2" sx={headingSx}>{t("layout.footer.contactUs")}</Typography>
             <Box sx={{ display: "grid", gap: 1.5 }}>
               <ContactRow icon={<Email />}>
                 <Box component="a" href={`mailto:${CONTACT.email}`} sx={linkSx}>{CONTACT.email}</Box>
@@ -132,7 +134,7 @@ function Footer() {
                 <Box component="a" href={CONTACT.phoneHref} sx={linkSx}>{CONTACT.phoneDisplay}</Box>
               </ContactRow>
               <ContactRow icon={<LocationOn />}>{CONTACT.address}</ContactRow>
-              <ContactRow icon={<AccessTime />}>{CONTACT.hours}</ContactRow>
+              <ContactRow icon={<AccessTime />}>{t("layout.footer.hours")}</ContactRow>
             </Box>
           </Grid>
         </Grid>
@@ -140,15 +142,15 @@ function Footer() {
         <Box sx={{ borderTop: `1px solid ${RULE}`, mt: { xs: 5, md: 6 }, pt: 3,
           display: "flex", flexDirection: { xs: "column", md: "row" }, alignItems: "center", justifyContent: "space-between", gap: 1.5 }}>
           <Typography sx={{ color: MUTED, fontSize: "0.8rem", textAlign: "center" }} suppressHydrationWarning>
-            © {new Date().getFullYear()} {BRAND.name}. All rights reserved.
+            {t("layout.footer.rights", { year: new Date().getFullYear(), brand: BRAND.name })}
           </Typography>
-          <Box component="nav" aria-label="Legal" sx={{ display: "flex", gap: { xs: 2, sm: 3 }, flexWrap: "wrap", justifyContent: "center" }}>
+          <Box component="nav" aria-label={t("layout.footer.legal")} sx={{ display: "flex", gap: { xs: 2, sm: 3 }, flexWrap: "wrap", justifyContent: "center" }}>
             {legalLinks.map((l) => (
-              <Box key={l.path} component={Link} href={l.path} sx={{ ...linkSx, color: MUTED, fontSize: "0.8rem" }}>{l.label}</Box>
+              <Box key={l.path} component={Link} href={l.path} sx={{ ...linkSx, color: MUTED, fontSize: "0.8rem" }}>{t(`nav.${l.key}`)}</Box>
             ))}
           </Box>
           <Typography sx={{ color: MUTED, fontSize: "0.8rem", display: "flex", alignItems: "center", gap: 0.5, textAlign: "center" }}>
-            Made with <Favorite sx={{ fontSize: 14, color: ACCENT }} /> by Data Science Students — HUST
+            {rich("layout.footer.madeBy", { heart: <Favorite aria-hidden="true" sx={{ fontSize: 14, color: ACCENT }} /> })}
           </Typography>
         </Box>
       </Box>

@@ -1,4 +1,5 @@
 'use client';
+import { useI18n } from '@/i18n/I18nProvider';
 import { Box, Typography } from '@mui/material';
 import { script } from '@/lib/fonts';
 import { WaterDrop, Groups, Favorite } from '@mui/icons-material';
@@ -43,16 +44,17 @@ export function HeartArt({ size = 300 }) {
 // Artwork for the login page (large screens only): the slogan and heart on the left,
 // faint drops on the right so the card doesn't float in empty space.
 export function LoginArt() {
+  const { t } = useI18n();
   return (
     <>
       <Box sx={{ display: { xs: 'none', lg: 'block' }, position: 'absolute', top: 0, bottom: 0, left: 0, width: 360, pointerEvents: 'none', zIndex: 1 }}>
         <Box sx={{ position: 'absolute', top: '24%', left: 56 }}>
           <Typography sx={{ fontFamily: script.style.fontFamily, fontSize: '3.6rem', lineHeight: 0.95, fontWeight: 700, color: 'text.primary' }}>
-            Give<br />Blood<br />Give Hope
+            {t('auth.art.slogan.line1')}<br />{t('auth.art.slogan.line2')}<br />{t('auth.art.slogan.line3')}
           </Typography>
           <Box sx={{ width: 34, height: 3, bgcolor: RED, my: 2.5, borderRadius: 2 }} />
           <Typography sx={{ color: 'text.secondary', fontSize: '1.05rem', lineHeight: 1.5, maxWidth: 200 }}>
-            A small act can make a big difference.
+            {t('auth.art.smallAct')}
           </Typography>
         </Box>
         {/* short screens: the heart would run into the slogan, so it's dropped there */}
@@ -60,7 +62,7 @@ export function LoginArt() {
           <HeartArt size={270} />
         </Box>
         <Typography sx={{ position: 'absolute', bottom: 40, left: 56, maxWidth: 250, color: 'text.secondary', fontSize: '0.8rem', lineHeight: 1.5 }}>
-          One donation can help save up to three lives.
+          {t('auth.art.oneDonation')}
         </Typography>
       </Box>
 
@@ -73,14 +75,16 @@ export function LoginArt() {
   );
 }
 
+// auth.art.points.<key> in i18n/messages/auth.js
 const POINTS = [
-  { icon: <WaterDrop />, text: 'Save Lives' },
-  { icon: <Groups />, text: 'Build Communities' },
-  { icon: <Favorite />, text: 'Create a Healthier Tomorrow' },
+  { icon: <WaterDrop />, key: 'save' },
+  { icon: <Groups />, key: 'build' },
+  { icon: <Favorite />, key: 'healthier' },
 ];
 
 // Red side panel for the register page (large screens only).
 export function RegisterPanel({ width = 300 }) {
+  const { t } = useI18n();
   return (
     <Box sx={{
       display: { xs: 'none', lg: 'flex' }, position: 'absolute', top: 0, right: 0, bottom: 0, width, zIndex: 1,
@@ -94,20 +98,20 @@ export function RegisterPanel({ width = 300 }) {
       <Box sx={{ position: 'absolute', bottom: 120, right: 20, opacity: 0.07 }}><DropHeart size={230} color="#fff" heart="transparent" /></Box>
 
       <Box sx={{ position: 'relative' }}>
-        <Typography sx={{ fontWeight: 800, fontSize: '1.55rem', lineHeight: 1.25 }}>Be a Donor<br />Be a Hero</Typography>
+        <Typography sx={{ fontWeight: 800, fontSize: '1.55rem', lineHeight: 1.25 }}>{t('auth.art.hero.line1')}<br />{t('auth.art.hero.line2')}</Typography>
         <Box sx={{ width: 30, height: 2, bgcolor: 'rgba(255,255,255,0.7)', mt: 2 }} />
       </Box>
 
       <Box sx={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 3.5 }}>
         {POINTS.map((p) => (
-          <Box key={p.text} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box key={p.key} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Box sx={{ display: 'flex', '& svg': { fontSize: 30 } }}>{p.icon}</Box>
-            <Typography sx={{ fontSize: '0.88rem', lineHeight: 1.35, maxWidth: 120 }}>{p.text}</Typography>
+            <Typography sx={{ fontSize: '0.88rem', lineHeight: 1.35, maxWidth: 120 }}>{t(`auth.art.points.${p.key}`)}</Typography>
           </Box>
         ))}
       </Box>
 
-      <Typography sx={{ position: 'relative', fontSize: '1.15rem', lineHeight: 1.4, maxWidth: 170 }}>Every donation counts.</Typography>
+      <Typography sx={{ position: 'relative', fontSize: '1.15rem', lineHeight: 1.4, maxWidth: 170 }}>{t('auth.art.everyDonation')}</Typography>
     </Box>
   );
 }

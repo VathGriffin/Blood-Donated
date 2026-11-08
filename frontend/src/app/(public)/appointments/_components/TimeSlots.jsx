@@ -1,4 +1,5 @@
 'use client';
+import { useI18n } from '@/i18n/I18nProvider';
 import { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import API_BASE from '@/lib/config';
@@ -8,7 +9,7 @@ import EventBusyOutlinedIcon from '@mui/icons-material/EventBusyOutlined';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import CheckIcon from '@mui/icons-material/Check';
 import Panel from './Panel';
-import { C, TIME_SLOTS, parseIso, radioKeyDown, slotStartMinutes } from './booking';
+import { C, TIME_SLOTS, formatSlot, parseIso, radioKeyDown, slotStartMinutes } from './booking';
 
 const COLUMNS = 3;
 
@@ -16,6 +17,7 @@ const COLUMNS = 3;
 // again on booking, so a failed availability lookup just leaves every slot open.
 export default function TimeSlots({ date, value, onChange, hospitalId }) {
   const isDark = useTheme().palette.mode === 'dark';
+  const { t } = useI18n();
   const refs = useRef([]);
   const [full, setFull] = useState(() => new Set());
 
@@ -45,26 +47,26 @@ export default function TimeSlots({ date, value, onChange, hospitalId }) {
   const tabbable = selectedIdx >= 0 ? selectedIdx : open[0]?.i;
 
   return (
-    <Panel icon={<AccessTimeIcon />} title="Select Time" subtitle={date ? 'Pick an available time slot' : 'Pick a date first'}
+    <Panel icon={<AccessTimeIcon />} title={t('booking.time.title')} subtitle={t(date ? 'booking.time.subtitle' : 'booking.time.pickDateFirst')}
       sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       {date && !open.length ? (
         <Box role="status" sx={{ textAlign: 'center', py: 4, px: 2, borderRadius: '14px', border: `1px dashed ${isDark ? '#334155' : C.border}` }}>
           <EventBusyOutlinedIcon sx={{ fontSize: 34, color: 'text.disabled' }} aria-hidden="true" />
-          <Typography sx={{ fontWeight: 700, mt: 1 }}>{isToday ? 'No more slots today' : 'This day is fully booked'}</Typography>
+          <Typography sx={{ fontWeight: 700, mt: 1 }}>{t(isToday ? 'booking.time.noneToday' : 'booking.time.fullDay')}</Typography>
           <Typography sx={{ color: 'text.secondary', fontSize: '0.85rem', mt: 0.5 }}>
-            {isToday ? 'Every slot left today is taken or has already started.' : 'Every slot at this center is taken.'} Please choose another date.
+            {t(isToday ? 'booking.time.noneTodayText' : 'booking.time.fullDayText')}
           </Typography>
         </Box>
       ) : (
-        <Box role="radiogroup" aria-label="Time slot" sx={{ display: 'grid', gridTemplateColumns: `repeat(${COLUMNS}, 1fr)`, gap: 1 }}>
+        <Box role="radiogroup" aria-label={t('booking.time.label')} sx={{ display: 'grid', gridTemplateColumns: `repeat(${COLUMNS}, 1fr)`, gap: 1 }}>
           {slots.map((s) => {
             const selected = value === s.slot;
-            const sub = !date ? 'Pick a date' : s.passed ? 'Started' : s.full ? 'Full' : 'Available';
+            const sub = t(!date ? 'booking.time.pickDate' : s.passed ? 'booking.time.started' : s.full ? 'booking.time.full' : 'booking.time.available');
             return (
               <Box key={s.slot} ref={(el) => { refs.current[s.i] = el; }}
                 component="button" type="button" role="radio" aria-checked={selected} disabled={s.disabled}
                 tabIndex={s.i === tabbable ? 0 : -1}
-                aria-label={`${s.slot}${s.passed ? ', already started' : s.full ? ', fully booked' : ''}`}
+                aria-label={s.passed ? t('booking.time.startedLabel', { slot: formatSlot(s.slot) }) : s.full ? t('booking.time.fullLabel', { slot: formatSlot(s.slot) }) : formatSlot(s.slot)}
                 onClick={() => onChange(s.slot)}
                 onKeyDown={(e) => radioKeyDown(e, s.i, slots, (n) => onChange(slots[n].slot), COLUMNS)}
                 sx={{
@@ -86,7 +88,7 @@ export default function TimeSlots({ date, value, onChange, hospitalId }) {
                   </Box>
                 )}
                 <Box component="span" sx={{ fontSize: '0.86rem', fontWeight: selected ? 700 : 600, fontVariantNumeric: 'tabular-nums', color: selected ? C.primary : 'inherit', textDecoration: s.passed ? 'line-through' : 'none' }}>
-                  {s.slot}
+                  {formatSlot(s.slot)}
                 </Box>
                 <Box component="span" aria-hidden="true" sx={{ fontSize: '0.7rem', color: selected ? C.primary : 'text.secondary', opacity: s.disabled ? 0.7 : 1 }}>
                   {sub}
@@ -99,7 +101,7 @@ export default function TimeSlots({ date, value, onChange, hospitalId }) {
 
       <Typography sx={{ display: 'flex', gap: 0.75, alignItems: 'flex-start', color: 'text.secondary', fontSize: '0.76rem', mt: 'auto', pt: 2 }}>
         <InfoOutlinedIcon sx={{ fontSize: 15, mt: '1px', flexShrink: 0 }} aria-hidden="true" />
-        {date ? 'The donation center reviews each booking and confirms your slot.' : 'Time slots unlock once you choose a date.'}
+        {t(date ? 'booking.time.reviewNote' : 'booking.time.unlockNote')}
       </Typography>
     </Panel>
   );

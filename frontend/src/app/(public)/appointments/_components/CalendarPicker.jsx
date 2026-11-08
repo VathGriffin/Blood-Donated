@@ -1,4 +1,5 @@
 'use client';
+import { useI18n } from '@/i18n/I18nProvider';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Box, Typography, IconButton, useTheme } from '@mui/material';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
@@ -7,7 +8,9 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import Panel from './Panel';
 import { C, toIso, parseIso } from './booking';
 
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+// Short weekday names (Sunday first) in the interface language, from booking.calendar.weekdays:
+// Intl's short names differ between the server and some browsers, which breaks hydration.
+const weekdays = (t) => t('booking.calendar.weekdays').split(',');
 const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
 const isoOf = (d) => toIso(d.getFullYear(), d.getMonth(), d.getDate());
 
@@ -15,6 +18,7 @@ const isoOf = (d) => toIso(d.getFullYear(), d.getMonth(), d.getDate());
 // PageUp/PageDown by month, Enter or Space picks — focus follows into the next month when needed.
 export default function CalendarPicker({ value, onChange }) {
   const isDark = useTheme().palette.mode === 'dark';
+  const { t, intl } = useI18n();
   const today = useMemo(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }, []);
   const [view, setView] = useState(() => { const d = value ? parseIso(value) : today; return { year: d.getFullYear(), month: d.getMonth() }; });
   const [focusDate, setFocusDate] = useState(() => (value ? parseIso(value) : today));
@@ -37,7 +41,7 @@ export default function CalendarPicker({ value, onChange }) {
 
   const atCurrentMonth = view.year === today.getFullYear() && view.month === today.getMonth();
   const shift = (delta) => setView(({ year, month }) => { const d = new Date(year, month + delta, 1); return { year: d.getFullYear(), month: d.getMonth() }; });
-  const title = new Date(view.year, view.month, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const title = new Date(view.year, view.month, 1).toLocaleDateString(intl, { month: 'long', year: 'numeric' });
 
   // The one tabbable day in the grid: the focused day if it's visible and open, else the first open day.
   const focusIso = isoOf(focusDate);
@@ -63,18 +67,18 @@ export default function CalendarPicker({ value, onChange }) {
   const arrow = { border: '1px solid', borderColor: isDark ? '#334155' : C.border, borderRadius: '10px', width: 36, height: 36, '&:focus-visible': { boxShadow: `0 0 0 3px ${C.ring}` } };
 
   return (
-    <Panel icon={<CalendarMonthIcon />} title="Select Date" subtitle="Choose a date for your donation" sx={{ height: '100%' }}>
+    <Panel icon={<CalendarMonthIcon />} title={t('booking.calendar.title')} subtitle={t('booking.calendar.subtitle')} sx={{ height: '100%' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
-        <IconButton onClick={() => shift(-1)} disabled={atCurrentMonth} aria-label="Previous month" sx={arrow}><ChevronLeftIcon fontSize="small" /></IconButton>
+        <IconButton onClick={() => shift(-1)} disabled={atCurrentMonth} aria-label={t('booking.calendar.previous')} sx={arrow}><ChevronLeftIcon fontSize="small" /></IconButton>
         <Typography sx={{ fontWeight: 700 }} aria-live="polite">{title}</Typography>
-        <IconButton onClick={() => shift(1)} aria-label="Next month" sx={arrow}><ChevronRightIcon fontSize="small" /></IconButton>
+        <IconButton onClick={() => shift(1)} aria-label={t('booking.calendar.next')} sx={arrow}><ChevronRightIcon fontSize="small" /></IconButton>
       </Box>
 
       <Box aria-hidden="true" sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', mb: 0.5 }}>
-        {WEEKDAYS.map((d) => <Typography key={d} sx={{ textAlign: 'center', color: 'text.secondary', fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', py: 0.75 }}>{d}</Typography>)}
+        {weekdays(t).map((d) => <Typography key={d} sx={{ textAlign: 'center', color: 'text.secondary', fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', py: 0.75 }}>{d}</Typography>)}
       </Box>
 
-      <Box ref={gridRef} role="group" aria-label={`Dates in ${title}`} sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', rowGap: 0.5 }}>
+      <Box ref={gridRef} role="group" aria-label={t('booking.calendar.datesIn', { month: title })} sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', rowGap: 0.5 }}>
         {cells.map((date) => {
           const iso = isoOf(date);
           const past = date < today;
@@ -84,7 +88,7 @@ export default function CalendarPicker({ value, onChange }) {
           return (
             <Box key={iso} component="button" type="button" data-iso={iso} disabled={past} aria-pressed={selected}
               tabIndex={iso === tabIso ? 0 : -1}
-              aria-label={`${date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}${isToday ? ', today' : ''}${past ? ', unavailable' : ''}`}
+              aria-label={[date.toLocaleDateString(intl, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }), isToday && t('booking.calendar.today'), past && t('booking.calendar.unavailable')].filter(Boolean).join(', ')}
               onClick={() => { onChange(iso); setFocusDate(date); if (!inMonth) setView({ year: date.getFullYear(), month: date.getMonth() }); }}
               onKeyDown={(e) => onKeyDown(e, date)}
               sx={{
@@ -109,10 +113,10 @@ export default function CalendarPicker({ value, onChange }) {
         })}
       </Box>
 
-      <Box component="ul" aria-label="Calendar legend" sx={{ listStyle: 'none', p: 0, m: 0, mt: 2, display: 'flex', flexWrap: 'wrap', justifyContent: 'center', columnGap: 2.5, rowGap: 1, fontSize: '0.75rem', color: 'text.secondary' }}>
-        <Legend swatch={{ width: 8, height: 8, borderRadius: '50%', bgcolor: C.ok }}>Available</Legend>
-        <Legend swatch={{ width: 8, height: 8, borderRadius: '50%', border: `1.5px solid ${C.primary}` }}>Today</Legend>
-        <Legend swatch={{ width: 8, height: 8, borderRadius: '50%', bgcolor: isDark ? '#475569' : '#CBD5E1' }}>Unavailable</Legend>
+      <Box component="ul" aria-label={t('booking.calendar.legend')} sx={{ listStyle: 'none', p: 0, m: 0, mt: 2, display: 'flex', flexWrap: 'wrap', justifyContent: 'center', columnGap: 2.5, rowGap: 1, fontSize: '0.75rem', color: 'text.secondary' }}>
+        <Legend swatch={{ width: 8, height: 8, borderRadius: '50%', bgcolor: C.ok }}>{t('booking.calendar.legendAvailable')}</Legend>
+        <Legend swatch={{ width: 8, height: 8, borderRadius: '50%', border: `1.5px solid ${C.primary}` }}>{t('booking.calendar.legendToday')}</Legend>
+        <Legend swatch={{ width: 8, height: 8, borderRadius: '50%', bgcolor: isDark ? '#475569' : '#CBD5E1' }}>{t('booking.calendar.legendUnavailable')}</Legend>
       </Box>
     </Panel>
   );

@@ -1,4 +1,6 @@
 'use client';
+import { currentIntlLocale } from '@/i18n/config';
+import { useT } from '@/i18n/I18nProvider';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
@@ -18,16 +20,8 @@ import { apiErrorMessage } from '@/lib/api-error';
 import { initialsOf, localToday, telHref } from '@/lib/format';
 import { PageHeader, StatCard, StatusBadge, TableCard, EmptyState, ResponsiveGrid } from '@/components/ui';
 
-const TABS = [
-  { key: 'upcoming', label: 'Upcoming' },
-  { key: 'today', label: 'Today' },
-  { key: 'Pending', label: 'To confirm' },
-  { key: 'Confirmed', label: 'Confirmed' },
-  { key: 'CheckedIn', label: 'Donated' },
-  { key: 'Cancelled', label: 'Cancelled' },
-  { key: 'all', label: 'All' },
-];
-const STATUS_LABEL = { Pending: 'Pending', Confirmed: 'Confirmed', CheckedIn: 'Donated', Cancelled: 'Cancelled' };
+// Labels: hosp.appts.tabs.<key> and hosp.appts.statusLabel.<status>
+const TABS = ['upcoming', 'today', 'Pending', 'Confirmed', 'CheckedIn', 'Cancelled', 'all'].map((key) => ({ key }));
 const OPEN = ['Pending', 'Confirmed'];
 
 const tomorrowIso = () => {
@@ -38,7 +32,7 @@ const tomorrowIso = () => {
 // Appointment dates are plain "YYYY-MM-DD": read them as local days.
 const fmtDay = (iso) => {
   const d = new Date(`${iso}T00:00:00`);
-  return Number.isNaN(d.getTime()) ? iso || '—' : d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+  return Number.isNaN(d.getTime()) ? iso || '—' : d.toLocaleDateString(currentIntlLocale(), { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
 };
 
 const BloodChip = ({ type }) => (
@@ -53,12 +47,13 @@ const BloodChip = ({ type }) => (
 
 export default function HospitalAppointments() {
   const { staff, token } = useAuth();
+  const t = useT();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isPhone = useMediaQuery(theme.breakpoints.down('sm'));
 
   const [appts, setAppts] = useState(null);
-  const [loadError, setLoadError] = useState('');
+  const [loadError, setLoadError] = useState(null); // the failed request; its text is built at render
   const [actionError, setActionError] = useState('');
   const [busyId, setBusyId] = useState(null);
   const [toast, setToast] = useState('');
@@ -75,7 +70,7 @@ export default function HospitalAppointments() {
     setLoadError('');
     axios.get(`${API_BASE}/api/appointments?hospital=${staff.hospitalId}`, { headers })
       .then((res) => setAppts(Array.isArray(res.data) ? res.data : []))
-      .catch((err) => setLoadError(apiErrorMessage(err, 'Failed to load appointments.')));
+      .catch((err) => setLoadError(err));
   }, [staff?.hospitalId, headers]);
 
   useEffect(() => { load(); }, [load]);
@@ -94,7 +89,7 @@ export default function HospitalAppointments() {
     return status === key;
   }, [isUpcoming, today]);
 
-  const counts = useMemo(() => Object.fromEntries(TABS.map((t) => [t.key, list.filter((a) => matchesTab(a, t.key)).length])), [list, matchesTab]);
+  const counts = useMemo(() => Object.fromEntries(TABS.map((d) => [d.key, list.filter((a) => matchesTab(a, d.key)).length])), [list, matchesTab]);
   const stats = useMemo(() => ({
     today: list.filter((a) => a.date === today && a.status !== 'Cancelled').length,
     pending: list.filter((a) => (a.status || 'Pending') === 'Pending' && a.date >= today).length,
@@ -131,24 +126,24 @@ export default function HospitalAppointments() {
       replace(data);
       setToast(success);
     } catch (err) {
-      setActionError(apiErrorMessage(err, 'That didn’t work. Please try again.'));
+      setActionError(apiErrorMessage(err, t('hosp.appts.actionFailed')));
       load();
     } finally {
       setBusyId(null);
       setConfirmAction(null);
     }
   };
-  const confirmAppt = (a) => run(a, () => axios.put(`${API_BASE}/api/appointments/${a._id}`, { status: 'Confirmed' }, { headers }), `${a.fullName}’s appointment confirmed.`);
-  const checkIn = (a) => run(a, () => axios.patch(`${API_BASE}/api/appointments/${a._id}/check-in`, {}, { headers }), `${a.fullName} checked in — donation recorded.`);
-  const cancel = (a) => run(a, () => axios.put(`${API_BASE}/api/appointments/${a._id}`, { status: 'Cancelled' }, { headers }), `${a.fullName}’s appointment cancelled.`);
+  const confirmAppt = (a) => run(a, () => axios.put(`${API_BASE}/api/appointments/${a._id}`, { status: 'Confirmed' }, { headers }), t('hosp.appts.toastConfirmed', { name: a.fullName }));
+  const checkIn = (a) => run(a, () => axios.patch(`${API_BASE}/api/appointments/${a._id}/check-in`, {}, { headers }), t('hosp.appts.toastCheckedIn', { name: a.fullName }));
+  const cancel = (a) => run(a, () => axios.put(`${API_BASE}/api/appointments/${a._id}`, { status: 'Cancelled' }, { headers }), t('hosp.appts.toastCancelled', { name: a.fullName }));
 
-  const dayTag = (date) => (date === today ? 'Today' : date === tomorrow ? 'Tomorrow' : null);
+  const dayTag = (date) => (date === today ? t('hosp.appts.today') : date === tomorrow ? t('hosp.appts.tomorrow') : null);
 
   const statusCell = (a) => (
     <Box display="flex" gap={0.75} flexWrap="wrap">
-      <StatusBadge status={a.status || 'Pending'} label={STATUS_LABEL[a.status || 'Pending']} size="small" />
+      <StatusBadge status={a.status || 'Pending'} label={t(`hosp.appts.statusLabel.${a.status || 'Pending'}`)} size="small" />
       {a.rescheduleRequests?.some((r) => r.status === 'Pending') && (
-        <StatusBadge status="change" label="Change requested" tone="warning" size="small" dot={false} />
+        <StatusBadge status="change" label={t('hosp.appts.changeRequested')} tone="warning" size="small" dot={false} />
       )}
     </Box>
   );
@@ -156,19 +151,19 @@ export default function HospitalAppointments() {
   const actions = (a) => {
     const status = a.status || 'Pending';
     const busy = busyId === a._id;
-    if (busy) return <CircularProgress size={20} aria-label="Updating" />;
+    if (busy) return <CircularProgress size={20} aria-label={t('hosp.appts.updating')} />;
     if (!OPEN.includes(status)) return null;
     return (
       <Box display="flex" gap={1} justifyContent="flex-end" flexWrap="wrap">
         {status === 'Pending' && (
-          <Button size="small" variant="outlined" startIcon={<CheckCircle />} onClick={() => confirmAppt(a)}>Confirm</Button>
+          <Button size="small" variant="outlined" startIcon={<CheckCircle />} onClick={() => confirmAppt(a)}>{t('hosp.appts.confirm')}</Button>
         )}
         {status === 'Confirmed' && (
           <Button size="small" variant="contained" color="success" startIcon={<HowToReg />}
-            onClick={() => setConfirmAction({ type: 'checkin', appt: a })}>Check in</Button>
+            onClick={() => setConfirmAction({ type: 'checkin', appt: a })}>{t('hosp.appts.checkIn')}</Button>
         )}
-        <Tooltip title="Cancel appointment" arrow>
-          <IconButton size="small" aria-label={`Cancel ${a.fullName}’s appointment`} onClick={() => setConfirmAction({ type: 'cancel', appt: a })}
+        <Tooltip title={t('hosp.appts.cancelAppointment')} arrow>
+          <IconButton size="small" aria-label={t('hosp.appts.cancelAria', { name: a.fullName })} onClick={() => setConfirmAction({ type: 'cancel', appt: a })}
             sx={{ color: 'text.secondary', '&:hover': { color: 'error.main' } }}>
             <EventBusy fontSize="small" />
           </IconButton>
@@ -205,21 +200,21 @@ export default function HospitalAppointments() {
   const tabsBar = (
     <Box display="flex" flexDirection="column" gap={1.5}>
       <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto" sx={{ minHeight: 40, mx: -1 }}>
-        {TABS.map((t) => (
-          <Tab key={t.key} value={t.key} sx={{ minHeight: 40, textTransform: 'none', fontWeight: 600 }}
-            label={<Box display="flex" alignItems="center" gap={0.75}>{t.label}
+        {TABS.map((d) => (
+          <Tab key={d.key} value={d.key} sx={{ minHeight: 40, textTransform: 'none', fontWeight: 600 }}
+            label={<Box display="flex" alignItems="center" gap={0.75}>{t(`hosp.appts.tabs.${d.key}`)}
               <Box component="span" sx={{ px: 0.8, minWidth: 20, height: 20, borderRadius: 10, fontSize: '0.7rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                bgcolor: tab === t.key ? 'primary.main' : 'action.hover', color: tab === t.key ? '#fff' : 'text.secondary' }}>
-                {loading ? '·' : counts[t.key]}
+                bgcolor: tab === d.key ? 'primary.main' : 'action.hover', color: tab === d.key ? '#fff' : 'text.secondary' }}>
+                {loading ? '·' : counts[d.key]}
               </Box>
             </Box>} />
         ))}
       </Tabs>
-      <TextField size="small" placeholder="Search donor, phone, blood type, date…" value={search} onChange={(e) => setSearch(e.target.value)}
+      <TextField size="small" placeholder={t('hosp.appts.searchDonorPhoneBlood')} value={search} onChange={(e) => setSearch(e.target.value)}
         sx={{ maxWidth: { sm: 420 } }}
         slotProps={{ input: {
           startAdornment: <InputAdornment position="start"><Search fontSize="small" /></InputAdornment>,
-          endAdornment: search && <InputAdornment position="end"><IconButton size="small" aria-label="Clear search" onClick={() => setSearch('')}><Close fontSize="small" /></IconButton></InputAdornment>,
+          endAdornment: search && <InputAdornment position="end"><IconButton size="small" aria-label={t('hosp.appts.clearSearch')} onClick={() => setSearch('')}><Close fontSize="small" /></IconButton></InputAdornment>,
         } }} />
     </Box>
   );
@@ -227,10 +222,10 @@ export default function HospitalAppointments() {
   const empty = (
     <EmptyState
       icon={search ? <FilterAltOff /> : <EventAvailable />}
-      title={search ? 'No appointments match your search' : tab === 'upcoming' ? 'No upcoming appointments' : 'Nothing here'}
-      description={search ? 'Try another name, phone number or date.' : 'Appointments donors book at your hospital appear here.'}
-      action={search ? <Button size="small" variant="outlined" onClick={() => setSearch('')}>Clear search</Button>
-        : tab !== 'all' ? <Button size="small" variant="outlined" onClick={() => setTab('all')}>Show all</Button> : null}
+      title={search ? t('hosp.appts.noMatch') : tab === 'upcoming' ? t('hosp.appts.noUpcoming') : t('hosp.appts.nothingHere')}
+      description={search ? t('hosp.appts.tryAnother') : t('hosp.appts.emptyText')}
+      action={search ? <Button size="small" variant="outlined" onClick={() => setSearch('')}>{t('hosp.appts.clearSearch')}</Button>
+        : tab !== 'all' ? <Button size="small" variant="outlined" onClick={() => setTab('all')}>{t('hosp.appts.showAll')}</Button> : null}
     />
   );
 
@@ -239,19 +234,19 @@ export default function HospitalAppointments() {
   return (
     <Box>
       <PageHeader
-        title="Appointments"
-        subtitle="Confirm bookings, check donors in and handle change requests."
+        title={t('hosp.appts.appointments')}
+        subtitle={t('hosp.appts.confirmBookingsCheckDonors')}
         actions={<>
-          <Button variant="outlined" startIcon={<Refresh />} onClick={load} disabled={loading}>Refresh</Button>
-          <Button variant="contained" startIcon={<QrCodeScanner />} component={Link} href="/dashboard/hospital/scan">Scan Donor QR</Button>
+          <Button variant="outlined" startIcon={<Refresh />} onClick={load} disabled={loading}>{t('hosp.appts.refresh')}</Button>
+          <Button variant="contained" startIcon={<QrCodeScanner />} component={Link} href="/dashboard/hospital/scan">{t('hosp.appts.scanDonorQr')}</Button>
         </>}
       />
 
       <ResponsiveGrid min={150} gap={{ xs: 1.5, md: 2.5 }} sx={{ mb: 3 }}>
-        <StatCard label="Today" value={stats.today} icon={<Today />} tone="error" loading={loading} hint={isPhone ? undefined : 'Booked for today'} />
-        <StatCard label="To confirm" value={stats.pending} icon={<HourglassEmpty />} tone="warning" loading={loading} hint={isPhone ? undefined : 'Waiting for you'} />
-        <StatCard label="Confirmed" value={stats.confirmed} icon={<EventAvailable />} tone="info" loading={loading} hint={isPhone ? undefined : 'Ready for check-in'} />
-        <StatCard label="Donated" value={stats.donated} icon={<Favorite />} tone="success" loading={loading} hint={isPhone ? undefined : 'Checked in, all time'} />
+        <StatCard label={t('hosp.appts.today')} value={stats.today} icon={<Today />} tone="error" loading={loading} hint={isPhone ? undefined : t('hosp.appts.hints.today')} />
+        <StatCard label={t('hosp.appts.toConfirm')} value={stats.pending} icon={<HourglassEmpty />} tone="warning" loading={loading} hint={isPhone ? undefined : t('hosp.appts.hints.pending')} />
+        <StatCard label={t('hosp.appts.confirmed')} value={stats.confirmed} icon={<EventAvailable />} tone="info" loading={loading} hint={isPhone ? undefined : t('hosp.appts.hints.confirmed')} />
+        <StatCard label={t('hosp.appts.donated')} value={stats.donated} icon={<Favorite />} tone="success" loading={loading} hint={isPhone ? undefined : t('hosp.appts.hints.donated')} />
       </ResponsiveGrid>
 
       {actionError && <Alert severity="error" onClose={() => setActionError('')} sx={{ mb: 2 }}>{actionError}</Alert>}
@@ -262,8 +257,8 @@ export default function HospitalAppointments() {
 
       <TableCard minWidth={isMobile ? 0 : 820} toolbar={tabsBar}>
         {loadError ? (
-          <EmptyState icon={<WarningAmber />} title="Couldn’t load appointments" description={loadError}
-            action={<Button size="small" variant="contained" startIcon={<Refresh />} onClick={load}>Try again</Button>} />
+          <EmptyState icon={<WarningAmber />} title={t('hosp.appts.couldnTLoadAppointments')} description={apiErrorMessage(loadError, t('hosp.appts.loadFailed'))}
+            action={<Button size="small" variant="contained" startIcon={<Refresh />} onClick={load}>{t('hosp.appts.tryAgain')}</Button>} />
         ) : isMobile ? (
           <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
             {loading ? [0, 1, 2].map((i) => <Skeleton key={i} variant="rounded" height={120} />)
@@ -287,8 +282,8 @@ export default function HospitalAppointments() {
           <Table size="small">
             <TableHead>
               <TableRow>
-                {['Donor', 'Blood Type', 'Date & Time', 'Status', 'Actions'].map((h) => (
-                  <TableCell key={h} align={h === 'Actions' ? 'right' : 'left'} sx={{ py: 1.5, whiteSpace: 'nowrap' }}>{h}</TableCell>
+                {['donor', 'bloodType', 'dateTime', 'status', 'actions'].map((h) => (
+                  <TableCell key={h} align={h === 'actions' ? 'right' : 'left'} sx={{ py: 1.5, whiteSpace: 'nowrap' }}>{t(`hosp.appts.cols.${h}`)}</TableCell>
                 ))}
               </TableRow>
             </TableHead>
@@ -312,7 +307,7 @@ export default function HospitalAppointments() {
         {!loadError && !loading && filtered.length > 0 && (
           <TablePagination component="div" count={filtered.length} page={currentPage} onPageChange={(_, p) => setPage(p)}
             rowsPerPage={rowsPerPage} onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
-            rowsPerPageOptions={[10, 25, 50]} labelRowsPerPage={isPhone ? 'Rows' : 'Rows per page'}
+            rowsPerPageOptions={[10, 25, 50]} labelRowsPerPage={t(isPhone ? 'ui.pagination.rows' : 'ui.pagination.rowsPerPage')}
             sx={{ borderTop: 1, borderColor: 'divider' }} />
         )}
       </TableCard>
@@ -322,7 +317,7 @@ export default function HospitalAppointments() {
         {ca && (
           <>
             <DialogTitle sx={{ fontWeight: 800 }}>
-              {confirmAction.type === 'checkin' ? `Check in ${ca.fullName}?` : 'Cancel this appointment?'}
+              {confirmAction.type === 'checkin' ? t('hosp.appts.checkInTitle', { name: ca.fullName }) : t('hosp.appts.cancelTitle')}
             </DialogTitle>
             <DialogContent>
               <Box display="flex" alignItems="center" gap={1.5} mb={2}>
@@ -330,7 +325,7 @@ export default function HospitalAppointments() {
                 <Box ml="auto"><BloodChip type={ca.bloodType} /></Box>
               </Box>
               <Typography variant="body2" color="text.secondary" mb={1}>
-                {fmtDay(ca.date)} at {ca.time}
+                {t('hosp.appts.dayAt', { date: fmtDay(ca.date), time: ca.time })}
               </Typography>
               <Box display="flex" gap={2} flexWrap="wrap" mb={1.5}>
                 {ca.phone && <Button size="small" startIcon={<Phone />} href={telHref(ca.phone)} sx={{ color: 'text.secondary', px: 0 }}>{ca.phone}</Button>}
@@ -338,18 +333,18 @@ export default function HospitalAppointments() {
               </Box>
               <Alert severity={confirmAction.type === 'checkin' ? 'info' : 'warning'} sx={{ borderRadius: 2 }}>
                 {confirmAction.type === 'checkin'
-                  ? 'This records a completed donation on the donor’s record and can’t be undone.'
-                  : 'The donor will see the appointment as cancelled. Let them know if you can.'}
+                  ? t('hosp.appts.checkInWarning')
+                  : t('hosp.appts.cancelWarning')}
               </Alert>
             </DialogContent>
             <DialogActions sx={{ px: 3, pb: 2.5 }}>
-              <Button color="inherit" onClick={() => setConfirmAction(null)} disabled={!!busyId}>Back</Button>
+              <Button color="inherit" onClick={() => setConfirmAction(null)} disabled={!!busyId}>{t('hosp.appts.back')}</Button>
               {confirmAction.type === 'checkin' ? (
                 <Button variant="contained" color="success" onClick={() => checkIn(ca)} disabled={!!busyId}
-                  startIcon={busyId ? <CircularProgress size={16} color="inherit" /> : <HowToReg />}>Check in</Button>
+                  startIcon={busyId ? <CircularProgress size={16} color="inherit" /> : <HowToReg />}>{t('hosp.appts.checkIn')}</Button>
               ) : (
                 <Button variant="contained" color="error" onClick={() => cancel(ca)} disabled={!!busyId}
-                  startIcon={busyId ? <CircularProgress size={16} color="inherit" /> : <EventBusy />}>Cancel appointment</Button>
+                  startIcon={busyId ? <CircularProgress size={16} color="inherit" /> : <EventBusy />}>{t('hosp.appts.cancelAppointment')}</Button>
               )}
             </DialogActions>
           </>

@@ -1,4 +1,5 @@
-export const metadata = { title: 'Terms of Service' };
+import { pageTitle } from '@/i18n/server';
+export const generateMetadata = pageTitle('termsOfService');
 
 export default function PublicTermsLayout({ children }) {
   return children;

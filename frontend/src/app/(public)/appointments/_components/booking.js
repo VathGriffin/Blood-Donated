@@ -1,3 +1,4 @@
+import { currentIntlLocale } from '@/i18n/config';
 import API_BASE from '@/lib/config';
 
 // Shared constants and helpers for the appointment booking page.
@@ -23,7 +24,14 @@ const pad = (n) => String(n).padStart(2, '0');
 export const toIso = (year, month, day) => `${year}-${pad(month + 1)}-${pad(day)}`;
 export const parseIso = (iso) => { const [y, m, d] = iso.split('-').map(Number); return new Date(y, m - 1, d); };
 export const formatLongDate = (iso) =>
-  parseIso(iso).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  parseIso(iso).toLocaleDateString(currentIntlLocale(), { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+// "8:00 AM" (the stored slot value) shown in the interface language's time format.
+export const formatSlot = (slot) => {
+  const minutes = slotStartMinutes(slot);
+  if (Number.isNaN(minutes)) return slot;
+  return new Date(2000, 0, 1, Math.floor(minutes / 60), minutes % 60).toLocaleTimeString(currentIntlLocale(), { hour: 'numeric', minute: '2-digit' });
+};
 
 // "01:30 PM" -> minutes since midnight, to grey out slots that have already passed today.
 export const slotStartMinutes = (slot) => {

@@ -1,4 +1,5 @@
 'use client';
+import { useT } from '@/i18n/I18nProvider';
 import { Box, Button, Dialog, IconButton, Typography } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import CheckIcon from '@mui/icons-material/Check';
@@ -13,12 +14,13 @@ const CONFETTI = [
 
 /** Shown after a reschedule request is sent (or a pending booking moved directly). */
 export default function SubmittedDialog({ mode, request, onClose }) {
+  const t = useT();
   const requested = mode === 'requested';
   return (
     <Dialog open onClose={onClose} maxWidth="xs" fullWidth aria-labelledby="submitted-title" aria-describedby="submitted-text"
       slotProps={{ paper: { sx: { borderRadius: '16px' } } }}>
       <Box sx={{ position: 'relative', px: { xs: 3, sm: 4 }, pt: 5, pb: 4, textAlign: 'center' }}>
-        <IconButton onClick={onClose} aria-label="Close" sx={{ position: 'absolute', top: 10, right: 10 }}><CloseIcon /></IconButton>
+        <IconButton onClick={onClose} aria-label={t('donor.submitted.close')} sx={{ position: 'absolute', top: 10, right: 10 }}><CloseIcon /></IconButton>
 
         <Box aria-hidden="true" sx={{ position: 'relative', width: 72, height: 72, mx: 'auto', mb: 3 }}>
           {CONFETTI.map(([x, y, c, s, r], i) => (
@@ -40,14 +42,14 @@ export default function SubmittedDialog({ mode, request, onClose }) {
         </Box>
 
         <Typography id="submitted-title" component="h2" sx={{ fontWeight: 700, fontSize: '1.2rem' }}>
-          {requested ? 'Reschedule Request Submitted' : 'Appointment Date Changed'}
+          {requested ? t('donor.submitted.requestedTitle') : t('donor.submitted.changedTitle')}
         </Typography>
         <Typography id="submitted-text" color="text.secondary" sx={{ mt: 1.25, fontSize: '0.92rem', lineHeight: 1.65 }}>
           {requested
-            ? 'Your request to change the appointment date has been sent to the hospital. You will receive a notification once the hospital responds.'
-            : `Your appointment is now on ${request ? whenLabel(request.toDate, request.toTime) : 'the new date'}. The hospital will confirm the new slot.`}
+            ? t('donor.submitted.requestedText')
+            : t('donor.submitted.changedText', { when: request ? whenLabel(request.toDate, request.toTime) : t('donor.submitted.newDate') })}
         </Typography>
-        <Button variant="contained" onClick={onClose} autoFocus sx={{ mt: 3.5, minWidth: 150, height: 44 }}>OK</Button>
+        <Button variant="contained" onClick={onClose} autoFocus sx={{ mt: 3.5, minWidth: 150, height: 44 }}>{t('donor.submitted.ok')}</Button>
       </Box>
     </Dialog>
   );

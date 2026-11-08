@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { Box, Typography } from '@mui/material';
 import logoMark from '@/assets/logo-mark.png';
 import { BRAND } from '@/lib/brand';
+import { useT } from '@/i18n/I18nProvider';
 
 /**
  * Logo mark + product name (`name`, default BRAND.name), with an optional caption.
@@ -12,12 +13,13 @@ import { BRAND } from '@/lib/brand';
  * `onDark={false}` for use on a light surface.
  */
 export default function BrandLogo({ href = '/', name = BRAND.name, caption, wrapCaption = false, onDark = true, onClick }) {
+  const t = useT();
   return (
     <Box
       component={Link}
       href={href}
       onClick={onClick}
-      aria-label={`${name} — ${caption || 'home'}`}
+      aria-label={`${name} — ${caption || t('common.home')}`}
       sx={{ display: 'flex', alignItems: 'center', gap: 1.5, textDecoration: 'none', minWidth: 0 }}
     >
       <Box

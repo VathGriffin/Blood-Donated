@@ -1,4 +1,8 @@
 'use client';
+import { useI18n, useT } from '@/i18n/I18nProvider';
+import { currentLang } from '@/i18n/config';
+import { translate } from '@/i18n/translate';
+import { translateServerMessage } from '@/lib/api-error';
 import React, { useState } from 'react';
 import {
   Box, Typography, Paper, useTheme, Avatar, List, ListItemButton,
@@ -18,34 +22,43 @@ import { MAX_PHOTO_SIZE, PHOTO_TYPES, photoFileError } from '@/lib/validation';
 import dynamic from 'next/dynamic';
 
 // The About editor pulls in the rich-text editor (TipTap); load it only when that section opens.
-const AboutEditor = dynamic(() => import('@/components/about-editor/AboutEditor'), {
-  ssr: false,
-  loading: () => (
+// Shown while the editor's code loads. A component of its own, so it can use the translation hook.
+function EditorLoading() {
+  const t = useT();
+  return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 6, justifyContent: 'center' }}>
       <CircularProgress size={22} color="error" />
-      <Typography color="text.secondary">Loading editor…</Typography>
+      <Typography color="text.secondary">{t('adm.settings.loadingEditor')}</Typography>
     </Box>
-  ),
+  );
+}
+
+const AboutEditor = dynamic(() => import('@/components/about-editor/AboutEditor'), {
+  ssr: false,
+  loading: () => <EditorLoading />,
 });
 
+// Labels: adm.settings.sections.<id>
 const SECTIONS = [
-  { id: 'profile',     label: 'My Profile',           icon: <Person sx={{ fontSize: 18 }} /> },
-  { id: 'homepage',    label: 'Homepage Profiles',    icon: <Settings sx={{ fontSize: 18 }} /> },
+  { id: 'profile',     icon: <Person sx={{ fontSize: 18 }} /> },
+  { id: 'homepage',    icon: <Settings sx={{ fontSize: 18 }} /> },
   // wide: the section needs the full width, so the menu shrinks to an icon rail while it's open
-  { id: 'about',       label: 'About Page',           icon: <Info sx={{ fontSize: 18 }} />, wide: true },
-  { id: 'ai',          label: 'AI Configuration',     icon: <SmartToy sx={{ fontSize: 18 }} /> },
-  { id: 'blood',       label: 'Blood Rules',          icon: <Bloodtype sx={{ fontSize: 18 }} /> },
-  { id: 'appointment', label: 'Appointment Rules',    icon: <CalendarMonth sx={{ fontSize: 18 }} /> },
-  { id: 'security',    label: 'Security',             icon: <Security sx={{ fontSize: 18 }} /> },
+  { id: 'about',       icon: <Info sx={{ fontSize: 18 }} />, wide: true },
+  { id: 'ai',          icon: <SmartToy sx={{ fontSize: 18 }} /> },
+  { id: 'blood',       icon: <Bloodtype sx={{ fontSize: 18 }} /> },
+  { id: 'appointment', icon: <CalendarMonth sx={{ fontSize: 18 }} /> },
+  { id: 'security',    icon: <Security sx={{ fontSize: 18 }} /> },
 ];
 
-const ROLE_LABEL = { admin: 'Administrator', hospital_staff: 'Hospital Staff' };
+// Role names: adm.settings.roles.<role>
+const ROLES = ['admin', 'hospital_staff'];
 
 // Role choices for homepage profiles. Each also sets the badge, which picks the card's icon on the homepage.
+// `label` is the value stored on the profile; it is shown translated (adm.settings.hpRoles.<key>).
 const HP_ROLES = [
-  { label: 'Blood Donor',             badge: 'Blood Donor' },
-  { label: 'Volunteer',               badge: 'Community Volunteer' },
-  { label: 'Hospital Representative', badge: 'Healthcare Partner' },
+  { key: 'donor', label: 'Blood Donor',             badge: 'Blood Donor' },
+  { key: 'volunteer', label: 'Volunteer',               badge: 'Community Volunteer' },
+  { key: 'hospital', label: 'Hospital Representative', badge: 'Healthcare Partner' },
 ];
 
 
@@ -71,7 +84,7 @@ const SectionTitle = ({ children, sub }) => (
 // Shared GET-and-parse for the read-only status panels below.
 async function getJson(url, options) {
   const res = await fetch(url, options);
-  if (!res.ok) throw new Error(`Server returned ${res.status}`);
+  if (!res.ok) throw new Error(translate(currentLang(), 'adm.settings.serverReturned', { status: res.status }));
   return res.json();
 }
 
@@ -89,6 +102,7 @@ async function withSaving(setSaving, setMsg, action) {
 }
 
 export default function AdminSettings() {
+  const { t, lang } = useI18n();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const { token, staff, login, updateStaff } = useAuth();
@@ -117,9 +131,9 @@ export default function AdminSettings() {
         body: JSON.stringify({ fullName: fullName.trim() }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Failed to update profile.');
+      if (!res.ok) throw new Error(data.message || t('adm.settings.fbUpdateProfile'));
       login(token, { ...staff, fullName: data.fullName });
-      setProfileMsg({ type: 'success', text: 'Profile updated.' });
+      setProfileMsg({ type: 'success', text: t('adm.settings.profileUpdated') });
     });
   };
 
@@ -141,9 +155,9 @@ export default function AdminSettings() {
       form.append('photo', file);
       const res = await fetch(`${API_BASE}/api/staff/me/photo`, { method: 'POST', headers: authHeader, body: form });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.message || 'Photo upload failed.');
+      if (!res.ok) throw new Error(data.message || t('adm.settings.fbPhotoUpload'));
       updateStaff({ photo: data.photo });
-      setProfileMsg({ type: 'success', text: 'Profile photo updated.' });
+      setProfileMsg({ type: 'success', text: t('adm.settings.photoUpdated') });
     });
   };
 
@@ -151,9 +165,9 @@ export default function AdminSettings() {
     await withSaving(setPhotoBusy, setProfileMsg, async () => {
       const res = await fetch(`${API_BASE}/api/staff/me/photo`, { method: 'DELETE', headers: authHeader });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.message || 'Could not remove the photo.');
+      if (!res.ok) throw new Error(data.message || t('adm.settings.fbRemovePhoto'));
       updateStaff({ photo: null });
-      setProfileMsg({ type: 'success', text: 'Profile photo removed.' });
+      setProfileMsg({ type: 'success', text: t('adm.settings.photoRemoved') });
     });
   };
 
@@ -170,7 +184,7 @@ export default function AdminSettings() {
     setHpError('');
     getJson(`${API_BASE}/api/homepage/all`, { headers: authHeader })
       .then(data => setHpProfiles(Array.isArray(data) ? data : []))
-      .catch(err => setHpError(err.message || 'Failed to load profiles.'))
+      .catch(err => setHpError(err.message || translate(currentLang(), 'adm.settings.fbLoadProfiles')))
       .finally(() => setHpLoading(false));
   }, [authHeader]);
 
@@ -186,7 +200,7 @@ export default function AdminSettings() {
     form.append('photo', file);
     const res = await fetch(`${API_BASE}/api/homepage/${profileId}/photo`, { method: 'POST', headers: authHeader, body: form });
     const updated = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(updated.message || 'Photo upload failed.');
+    if (!res.ok) throw new Error(updated.message || t('adm.settings.fbPhotoUpload'));
     return updated;
   };
 
@@ -211,7 +225,7 @@ export default function AdminSettings() {
         method: 'DELETE',
         headers: authHeader,
       });
-      if (!res.ok) throw new Error('Remove failed');
+      if (!res.ok) throw new Error(t('adm.settings.fbRemove'));
       setHpProfiles(prev => prev.map(p => p._id === profileId ? { ...p, photo: null } : p));
     } catch (err) {
       setHpError(err.message);
@@ -227,7 +241,7 @@ export default function AdminSettings() {
       body: JSON.stringify(body),
     });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.message || 'Failed to save profile.');
+    if (!res.ok) throw new Error(data.message || t('adm.settings.fbSaveProfile'));
     return data;
   };
 
@@ -285,7 +299,7 @@ export default function AdminSettings() {
 
   const handleSaveProfile = async () => {
     if (!hpForm.name.trim() || !hpForm.role.trim()) {
-      setHpFormError('Full name and role are required.');
+      setHpFormError(t('adm.settings.nameRoleRequired'));
       return;
     }
     setHpSaving(true);
@@ -310,7 +324,7 @@ export default function AdminSettings() {
           body: JSON.stringify(body),
         });
         saved = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(saved.message || 'Failed to add profile.');
+        if (!res.ok) throw new Error(saved.message || t('adm.settings.fbAddProfile'));
         setHpProfiles(prev => [...prev, saved]);
         setHpEditingId(saved._id); // a failed photo upload below then retries as an edit, not a duplicate
       }
@@ -334,7 +348,7 @@ export default function AdminSettings() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.message || 'Failed to delete profile.');
+        throw new Error(data.message || t('adm.settings.fbDeleteProfile'));
       }
       setHpProfiles(prev => prev.filter(p => p._id !== profileId));
     } catch (err) {
@@ -354,7 +368,7 @@ export default function AdminSettings() {
     setAiError('');
     getJson(`${API_BASE}/api/chat/status`, { headers: authHeader })
       .then(setAiStatus)
-      .catch(err => setAiError(err.message || 'Failed to load AI status.'))
+      .catch(err => setAiError(err.message || translate(currentLang(), 'adm.settings.fbLoadAi')))
       .finally(() => setAiLoading(false));
   }, [authHeader]);
 
@@ -371,11 +385,11 @@ export default function AdminSettings() {
   const changePassword = async () => {
     setPwMsg(null);
     if (pwForm.newPassword.length < 8) {
-      setPwMsg({ type: 'error', text: 'New password must be at least 8 characters.' });
+      setPwMsg({ type: 'error', text: t('adm.settings.pwShort') });
       return;
     }
     if (pwForm.newPassword !== pwForm.confirmPassword) {
-      setPwMsg({ type: 'error', text: 'New password and confirmation do not match.' });
+      setPwMsg({ type: 'error', text: t('adm.settings.pwMismatch') });
       return;
     }
     await withSaving(setPwSaving, setPwMsg, async () => {
@@ -388,8 +402,8 @@ export default function AdminSettings() {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Failed to change password.');
-      setPwMsg({ type: 'success', text: 'Password updated.' });
+      if (!res.ok) throw new Error(data.message || t('adm.settings.fbChangePassword'));
+      setPwMsg({ type: 'success', text: t('adm.settings.pwUpdated') });
       setPwForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
     });
   };
@@ -401,10 +415,10 @@ export default function AdminSettings() {
       case 'profile':
         return (
           <Box>
-            <SectionTitle sub="Your own admin account details">My Profile</SectionTitle>
+            <SectionTitle sub={t('adm.settings.yourOwnAdminAccount')}>{t('adm.settings.myProfile')}</SectionTitle>
             <Paper elevation={0} sx={{ ...cardSx, mb: 2.5 }}>
               <Box px={3} py={2}>
-                <Row label="Profile Photo" border={border}>
+                <Row label={t('adm.settings.profilePhoto')} border={border}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                     <Avatar src={adminPhotoSrc} alt="" sx={{ width: 64, height: 64, bgcolor: '#A91529', fontWeight: 800, opacity: photoBusy ? 0.5 : 1 }}>
                       {initials}
@@ -414,37 +428,37 @@ export default function AdminSettings() {
                         startIcon={photoBusy ? <CircularProgress size={14} color="inherit" /> : <AddAPhoto sx={{ fontSize: 16 }} />}
                         onClick={() => adminPhotoInput.current?.click()}
                         sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2 }}>
-                        {photoBusy ? 'Working…' : staff?.photo ? 'Change photo' : 'Upload photo'}
+                        {photoBusy ? t('adm.settings.working') : staff?.photo ? t('adm.settings.changePhotoLower') : t('adm.settings.uploadPhotoLower')}
                       </Button>
                       {staff?.photo && (
                         <Button size="small" color="inherit" disabled={photoBusy} startIcon={<Delete sx={{ fontSize: 15 }} />}
                           onClick={removePhoto} sx={{ textTransform: 'none', color: 'text.secondary', fontWeight: 600, p: 0, minWidth: 0 }}>
-                          Remove
+                          {t('adm.settings.remove')}
                         </Button>
                       )}
-                      <Typography variant="caption" color="text.secondary">JPG, PNG, WebP or GIF · up to 10 MB</Typography>
+                      <Typography variant="caption" color="text.secondary">{t('adm.settings.jpgPngWebpOr')}</Typography>
                     </Box>
                     <input ref={adminPhotoInput} type="file" hidden accept={PHOTO_TYPES.join(',')} onChange={changePhoto} />
                   </Box>
                 </Row>
-                <Row label="Display Name" border={border}>
+                <Row label={t('adm.settings.displayName')} border={border}>
                   <TextField size="small" value={fullName} onChange={e => setFullName(e.target.value)} sx={{ width: 240 }} />
                 </Row>
-                <Row label="Email" border={border}>
+                <Row label={t('adm.settings.email')} border={border}>
                   <Typography fontSize="0.86rem" color="text.secondary">{staff?.email}</Typography>
                 </Row>
-                <Row label="Role" border={border}>
-                  <Chip label={ROLE_LABEL[staff?.role] || staff?.role} size="small"
+                <Row label={t('adm.settings.role')} border={border}>
+                  <Chip label={ROLES.includes(staff?.role) ? t(`adm.settings.roles.${staff.role}`) : staff?.role} size="small"
                     sx={{ bgcolor: isDark ? 'rgba(201,29,50,0.12)' : '#FFF1F2', color: '#C91D32', fontWeight: 700 }} />
                 </Row>
               </Box>
             </Paper>
             {profileMsg && (
-              <Alert severity={profileMsg.type} sx={{ mb: 2, borderRadius: 2 }}>{profileMsg.text}</Alert>
+              <Alert severity={profileMsg.type} sx={{ mb: 2, borderRadius: 2 }}>{translateServerMessage(profileMsg.text, lang)}</Alert>
             )}
             <Button variant="contained" color="error" onClick={saveProfile} disabled={profileSaving || !fullName.trim()}
               sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2 }}>
-              {profileSaving ? 'Saving…' : 'Save Profile'}
+              {profileSaving ? t('adm.settings.saving') : t('adm.settings.saveProfile')}
             </Button>
           </Box>
         );
@@ -454,28 +468,28 @@ export default function AdminSettings() {
         return (
           <Box>
             <Box display="flex" alignItems="flex-start" justifyContent="space-between" gap={2}>
-              <SectionTitle sub="Add, edit, and choose which profiles appear in the 'People Behind the Mission' section">
-                Homepage Profiles
+              <SectionTitle sub={t('adm.settings.addEditAndChoose')}>
+                {t('adm.settings.homepageProfiles')}
               </SectionTitle>
               <Button variant="contained" color="error" startIcon={<PersonAdd sx={{ fontSize: 18 }} />}
                 onClick={() => openHpDialog()}
                 sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2, flexShrink: 0 }}>
-                Add Profile
+                {t('adm.settings.addProfile')}
               </Button>
             </Box>
             {hpError && (
               <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }} onClose={() => setHpError('')}
                 action={
                   <Button color="error" size="small" onClick={loadHpProfiles} sx={{ fontWeight: 700, textTransform: 'none' }}>
-                    Retry
+                    {t('adm.settings.retry')}
                   </Button>
                 }
               >
-                {hpError}
+                {translateServerMessage(hpError, lang)}
               </Alert>
             )}
             {hpLoading ? (
-              <Typography color="text.secondary" fontSize="0.9rem">Loading profiles…</Typography>
+              <Typography color="text.secondary" fontSize="0.9rem">{t('adm.settings.loadingProfiles')}</Typography>
             ) : (
               <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }} gap={2.5}>
                 {hpProfiles.map(p => {
@@ -505,10 +519,10 @@ export default function AdminSettings() {
                           </Box>
                         )}
                         {hidden && (
-                          <Chip icon={<VisibilityOff sx={{ fontSize: 14 }} />} label="Hidden" size="small"
+                          <Chip icon={<VisibilityOff sx={{ fontSize: 14 }} />} label={t('adm.settings.hidden')} size="small"
                             sx={{ position: 'absolute', top: 10, left: 10, fontWeight: 700, bgcolor: 'rgba(0,0,0,0.65)', color: '#fff', '& .MuiChip-icon': { color: '#fff' } }} />
                         )}
-                        <IconButton size="small" aria-label={`More actions for ${p.name}`}
+                        <IconButton size="small" aria-label={t('adm.settings.moreFor', { name: p.name })}
                           onClick={(e) => setHpMenu({ anchor: e.currentTarget, profile: p })}
                           sx={{ position: 'absolute', top: 8, right: 8, bgcolor: 'rgba(255,255,255,0.9)', color: '#333',
                             '&:hover': { bgcolor: '#fff' } }}>
@@ -527,26 +541,26 @@ export default function AdminSettings() {
                         <Typography fontSize="0.82rem" color="text.secondary" sx={{
                           mt: 0.5, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
                         }}>
-                          {p.bio || 'No description yet.'}
+                          {p.bio || t('adm.settings.noBio')}
                         </Typography>
 
                         <Box display="flex" alignItems="center" gap={1} mt="auto" pt={2}>
                           <Button size="small" variant="contained" color="error" startIcon={<Edit sx={{ fontSize: 15 }} />}
                             onClick={() => openHpDialog(p)}
                             sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2, fontSize: '0.78rem', boxShadow: 'none' }}>
-                            Edit
+                            {t('adm.settings.edit')}
                           </Button>
                           <Button size="small" variant="outlined" color="error" startIcon={<AddAPhoto sx={{ fontSize: 15 }} />}
                             disabled={isUploading}
                             onClick={() => photoInputRefs.current[p._id]?.click()}
                             sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2, fontSize: '0.78rem' }}>
-                            Change Photo
+                            {t('adm.settings.changePhoto')}
                           </Button>
-                          <Tooltip title="Delete profile">
+                          <Tooltip title={t('adm.settings.deleteProfile')}>
                             <span style={{ marginLeft: 'auto' }}>
-                              <IconButton size="small" disabled={isDeleting} aria-label={`Delete ${p.name}`}
+                              <IconButton size="small" disabled={isDeleting} aria-label={t('adm.settings.deleteFor', { name: p.name })}
                                 onClick={() => {
-                                  if (window.confirm(`Delete "${p.name}"? This can't be undone.`)) handleDeleteProfile(p._id);
+                                  if (window.confirm(t('adm.settings.confirmDelete', { name: p.name }))) handleDeleteProfile(p._id);
                                 }}
                                 sx={{ color: 'text.secondary', '&:hover': { color: '#C91D32' } }}>
                                 {isDeleting ? <CircularProgress size={16} /> : <Delete sx={{ fontSize: 19 }} />}
@@ -567,15 +581,15 @@ export default function AdminSettings() {
             <Menu anchorEl={hpMenu?.anchor} open={!!hpMenu?.anchor} onClose={closeHpMenu}
               anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} transformOrigin={{ vertical: 'top', horizontal: 'right' }}>
               <MenuItem onClick={() => { openHpDialog(hpMenu.profile); closeHpMenu(); }}>
-                <ListItemIcon><Edit fontSize="small" /></ListItemIcon>Edit profile
+                <ListItemIcon><Edit fontSize="small" /></ListItemIcon>{t('adm.settings.editProfileLower')}
               </MenuItem>
               <MenuItem onClick={() => { toggleHpVisible(hpMenu.profile); closeHpMenu(); }}>
                 <ListItemIcon>{hpMenu?.profile.visible === false ? <Visibility fontSize="small" /> : <VisibilityOff fontSize="small" />}</ListItemIcon>
-                {hpMenu?.profile.visible === false ? 'Show on homepage' : 'Hide from homepage'}
+                {hpMenu?.profile.visible === false ? t('adm.settings.showOnHome') : t('adm.settings.hideFromHome')}
               </MenuItem>
               {hpMenu?.profile.photo && (
                 <MenuItem onClick={() => { handlePhotoRemove(hpMenu.profile._id); closeHpMenu(); }}>
-                  <ListItemIcon><HideImage fontSize="small" /></ListItemIcon>Remove photo
+                  <ListItemIcon><HideImage fontSize="small" /></ListItemIcon>{t('adm.settings.removePhoto')}
                 </MenuItem>
               )}
             </Menu>
@@ -583,11 +597,11 @@ export default function AdminSettings() {
             <Dialog open={hpDialogOpen} onClose={() => !hpSaving && setHpDialogOpen(false)} maxWidth="xs" fullWidth
               PaperProps={{ sx: { borderRadius: 3, bgcolor: isDark ? '#17263D' : '#fff' } }}>
               <DialogTitle sx={{ fontWeight: 800, fontSize: '1.05rem', pb: 1 }}>
-                {hpEditingId ? 'Edit Profile' : 'Add Profile'}
+                {hpEditingId ? t('adm.settings.editProfile') : t('adm.settings.addProfile')}
               </DialogTitle>
               <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.25, pt: '8px !important' }}>
                 <Box>
-                  <Typography fontSize="0.8rem" fontWeight={700} color="text.secondary" mb={1}>Photo</Typography>
+                  <Typography fontSize="0.8rem" fontWeight={700} color="text.secondary" mb={1}>{t('adm.settings.photo')}</Typography>
                   <Box display="flex" alignItems="center" gap={2}>
                     <Avatar src={hpPhotoPreview || undefined} sx={{ width: 64, height: 64, bgcolor: '#C91D32', fontWeight: 800 }}>
                       {(hpForm.name.trim() || '?').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase()}
@@ -595,48 +609,48 @@ export default function AdminSettings() {
                     <Button size="small" variant="outlined" color="error" startIcon={<AddAPhoto sx={{ fontSize: 16 }} />}
                       onClick={() => hpDialogPhotoInput.current?.click()}
                       sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2 }}>
-                      {hpPhotoPreview ? 'Change Photo' : 'Upload Photo'}
+                      {hpPhotoPreview ? t('adm.settings.changePhoto') : t('adm.settings.uploadPhoto')}
                     </Button>
                     <input ref={hpDialogPhotoInput} type="file" hidden accept={PHOTO_TYPES.join(',')} onChange={pickHpDialogPhoto} />
                   </Box>
                 </Box>
-                <TextField label="Full Name" value={hpForm.name} required fullWidth size="small"
+                <TextField label={t('adm.settings.fullName')} value={hpForm.name} required fullWidth size="small"
                   onChange={e => setHpForm(f => ({ ...f, name: e.target.value }))} />
                 <FormControl fullWidth size="small" required>
-                  <InputLabel>Role</InputLabel>
-                  <Select label="Role" value={hpForm.role}
+                  <InputLabel>{t('adm.settings.role')}</InputLabel>
+                  <Select label={t('adm.settings.role')} value={hpForm.role}
                     onChange={e => setHpForm(f => ({ ...f, role: e.target.value }))}>
-                    {HP_ROLES.map(r => <MenuItem key={r.label} value={r.label}>{r.label}</MenuItem>)}
+                    {HP_ROLES.map(r => <MenuItem key={r.label} value={r.label}>{t(`adm.settings.hpRoles.${r.key}`)}</MenuItem>)}
                     {/* Keep an older free-text role selectable so editing doesn't silently change it */}
                     {hpForm.role && !HP_ROLES.some(r => r.label === hpForm.role) && (
                       <MenuItem value={hpForm.role}>{hpForm.role}</MenuItem>
                     )}
                   </Select>
                 </FormControl>
-                <TextField label="Short Description" value={hpForm.bio} fullWidth multiline minRows={3} size="small"
+                <TextField label={t('adm.settings.shortDescription')} value={hpForm.bio} fullWidth multiline minRows={3} size="small"
                   inputProps={{ maxLength: 300 }} helperText={`${hpForm.bio.length}/300`}
                   onChange={e => setHpForm(f => ({ ...f, bio: e.target.value }))} />
                 <Box display="flex" alignItems="center" justifyContent="space-between"
                   sx={{ px: 1.5, py: 1, borderRadius: 2, border: `1px solid ${border}` }}>
                   <Box>
-                    <Typography fontSize="0.88rem" fontWeight={700}>Display on Homepage</Typography>
+                    <Typography fontSize="0.88rem" fontWeight={700}>{t('adm.settings.displayOnHomepage')}</Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {hpForm.visible ? 'Visible to everyone' : 'Hidden — only admins see it'}
+                      {hpForm.visible ? t('adm.settings.visible') : t('adm.settings.hiddenLong')}
                     </Typography>
                   </Box>
                   <Switch color="error" checked={hpForm.visible}
                     onChange={e => setHpForm(f => ({ ...f, visible: e.target.checked }))}
-                    inputProps={{ 'aria-label': 'Display on homepage' }} />
+                    inputProps={{ 'aria-label': t('adm.settings.displayOnHome') }} />
                 </Box>
-                {hpFormError && <Alert severity="error" sx={{ borderRadius: 2 }}>{hpFormError}</Alert>}
+                {hpFormError && <Alert severity="error" sx={{ borderRadius: 2 }}>{translateServerMessage(hpFormError, lang)}</Alert>}
               </DialogContent>
               <DialogActions sx={{ px: 3, pb: 2.5 }}>
                 <Button onClick={() => setHpDialogOpen(false)} color="inherit" disabled={hpSaving} sx={{ textTransform: 'none', fontWeight: 600 }}>
-                  Cancel
+                  {t('adm.settings.cancel')}
                 </Button>
                 <Button onClick={handleSaveProfile} variant="contained" color="error" disabled={hpSaving}
                   sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2, minWidth: 120 }}>
-                  {hpSaving ? <CircularProgress size={16} sx={{ color: 'white' }} /> : 'Save Profile'}
+                  {hpSaving ? <CircularProgress size={16} sx={{ color: 'white' }} /> : t('adm.settings.saveProfile')}
                 </Button>
               </DialogActions>
             </Dialog>
@@ -651,24 +665,24 @@ export default function AdminSettings() {
       case 'ai':
         return (
           <Box>
-            <SectionTitle sub="Live status of the Gemini-powered chatbot">AI Configuration</SectionTitle>
+            <SectionTitle sub={t('adm.settings.liveStatusOfThe')}>{t('adm.settings.aiConfiguration')}</SectionTitle>
             {aiError && (
               <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}
-                action={<Button color="error" size="small" onClick={loadAiStatus} sx={{ fontWeight: 700, textTransform: 'none' }}>Retry</Button>}>
-                {aiError}
+                action={<Button color="error" size="small" onClick={loadAiStatus} sx={{ fontWeight: 700, textTransform: 'none' }}>{t('adm.settings.retry')}</Button>}>
+                {translateServerMessage(aiError, lang)}
               </Alert>
             )}
             {aiLoading ? (
               <Box display="flex" alignItems="center" gap={1.5} py={2}>
                 <CircularProgress size={18} color="error" />
-                <Typography color="text.secondary" fontSize="0.9rem">Checking status…</Typography>
+                <Typography color="text.secondary" fontSize="0.9rem">{t('adm.settings.checkingStatus')}</Typography>
               </Box>
             ) : aiStatus && (
               <Paper elevation={0} sx={{ ...cardSx, mb: 2.5 }}>
                 <Box px={3} py={2}>
-                  <Row label="Status" border={border}>
+                  <Row label={t('adm.settings.status')} border={border}>
                     <Chip
-                      label={aiStatus.configured ? 'Configured' : 'Not Configured'}
+                      label={aiStatus.configured ? t('adm.settings.configured') : t('adm.settings.notConfigured')}
                       size="small"
                       sx={{
                         fontWeight: 700,
@@ -677,15 +691,15 @@ export default function AdminSettings() {
                       }}
                     />
                   </Row>
-                  <Row label="Model" border={border}><Typography fontSize="0.86rem" fontFamily="monospace">{aiStatus.model}</Typography></Row>
-                  <Row label="Provider" border={border}><Typography fontSize="0.86rem">Google Gemini</Typography></Row>
+                  <Row label={t('adm.settings.model')} border={border}><Typography fontSize="0.86rem" fontFamily="monospace">{aiStatus.model}</Typography></Row>
+                  <Row label={t('adm.settings.provider')} border={border}><Typography fontSize="0.86rem">{t('adm.settings.googleGemini')}</Typography></Row>
                 </Box>
               </Paper>
             )}
             <Alert severity="info" sx={{ borderRadius: 3, fontSize: '0.82rem' }}>
               {aiStatus?.configured === false
-                ? 'The AI assistant is currently using rule-based fallback responses. Set GEMINI_API_KEY in Backend/.env and restart the server to enable real Gemini responses.'
-                : 'To change the model, set GEMINI_MODEL in Backend/.env and restart the server — there is no runtime model switch by design.'}
+                ? t('adm.settings.aiFallback')
+                : t('adm.settings.aiModel')}
             </Alert>
           </Box>
         );
@@ -694,12 +708,12 @@ export default function AdminSettings() {
       case 'blood':
         return (
           <Box>
-            <SectionTitle sub="Eligibility rules actually enforced by the platform">Blood Rules</SectionTitle>
+            <SectionTitle sub={t('adm.settings.eligibilityRulesActuallyEnforced')}>{t('adm.settings.bloodRules')}</SectionTitle>
             <Paper elevation={0} sx={{ ...cardSx, mb: 2.5 }}>
               <Box px={3} py={2}>
-                <Row label="Minimum interval between donations" value="56 days" border={border} />
-                <Row label="Enforced by" value="QR check-in & AI eligibility tool" border={border} />
-                <Row label="Defined in" value="Backend/src/common/eligibility.js" border={border} />
+                <Row label={t('adm.settings.minimumIntervalBetweenDonations')} value={t('adm.settings.days', { count: 56 })} border={border} />
+                <Row label={t('adm.settings.enforcedBy')} value={t('adm.settings.enforcedValue')} border={border} />
+                <Row label={t('adm.settings.definedIn')} value="Backend/src/common/eligibility.js" border={border} />
               </Box>
             </Paper>
             <Alert severity="info" sx={{ borderRadius: 3, fontSize: '0.82rem' }}>
@@ -714,17 +728,16 @@ export default function AdminSettings() {
       case 'appointment':
         return (
           <Box>
-            <SectionTitle sub="Booking configuration actually used by the appointment flow">Appointment Rules</SectionTitle>
+            <SectionTitle sub={t('adm.settings.bookingConfigurationActuallyUsed')}>{t('adm.settings.appointmentRules')}</SectionTitle>
             <Paper elevation={0} sx={{ ...cardSx, mb: 2.5 }}>
               <Box px={3} py={2}>
-                <Row label="Morning slots" value="08:00, 09:00, 10:00, 11:00 AM" border={border} />
-                <Row label="Afternoon slots" value="01:00, 02:00, 03:00, 04:00 PM" border={border} />
-                <Row label="Defined in" value="frontend/.../appointments/page.jsx" border={border} />
+                <Row label={t('adm.settings.morningSlots')} value="08:00, 09:00, 10:00, 11:00 AM" border={border} />
+                <Row label={t('adm.settings.afternoonSlots')} value="01:00, 02:00, 03:00, 04:00 PM" border={border} />
+                <Row label={t('adm.settings.definedIn')} value="frontend/.../appointments/page.jsx" border={border} />
               </Box>
             </Paper>
             <Alert severity="info" sx={{ borderRadius: 3, fontSize: '0.82rem' }}>
-              There is currently no server-side cap on appointments per day, no cancellation window, and
-              no automated reminder system — booking a slot doesn&apos;t check how many others already picked it.
+              {t('adm.settings.noCapNote')}
             </Alert>
           </Box>
         );
@@ -733,38 +746,38 @@ export default function AdminSettings() {
       case 'security':
         return (
           <Box>
-            <SectionTitle sub="Change your password and review what's actually enforced">Security</SectionTitle>
+            <SectionTitle sub={t('adm.settings.changeYourPasswordAnd')}>{t('adm.settings.security')}</SectionTitle>
 
             <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: `1px solid ${border}`, bgcolor: card, mb: 2.5 }}>
               <Typography fontWeight={700} fontSize="0.88rem" mb={1.5} display="flex" alignItems="center" gap={0.8}>
-                <Lock sx={{ fontSize: 16 }} /> Change Password
+                <Lock sx={{ fontSize: 16 }} /> {t('adm.settings.changePassword')}
               </Typography>
               <Box display="flex" flexDirection="column" gap={1.5} maxWidth={320}>
-                <TextField label="Current Password" type="password" size="small" fullWidth
+                <TextField label={t('adm.settings.currentPassword')} type="password" size="small" fullWidth
                   value={pwForm.currentPassword} onChange={e => setPwForm(p => ({ ...p, currentPassword: e.target.value }))} />
-                <TextField label="New Password" type="password" size="small" fullWidth
+                <TextField label={t('adm.settings.newPassword')} type="password" size="small" fullWidth
                   value={pwForm.newPassword} onChange={e => setPwForm(p => ({ ...p, newPassword: e.target.value }))} />
-                <TextField label="Confirm New Password" type="password" size="small" fullWidth
+                <TextField label={t('adm.settings.confirmNewPassword')} type="password" size="small" fullWidth
                   value={pwForm.confirmPassword} onChange={e => setPwForm(p => ({ ...p, confirmPassword: e.target.value }))} />
-                {pwMsg && <Alert severity={pwMsg.type} sx={{ borderRadius: 2, fontSize: '0.8rem' }}>{pwMsg.text}</Alert>}
+                {pwMsg && <Alert severity={pwMsg.type} sx={{ borderRadius: 2, fontSize: '0.8rem' }}>{translateServerMessage(pwMsg.text, lang)}</Alert>}
                 <Button variant="outlined" color="error" onClick={changePassword}
                   disabled={pwSaving || !pwForm.currentPassword || !pwForm.newPassword || !pwForm.confirmPassword}
                   sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2, alignSelf: 'flex-start' }}>
-                  {pwSaving ? 'Updating…' : 'Update Password'}
+                  {pwSaving ? t('adm.settings.updating') : t('adm.settings.updatePassword')}
                 </Button>
               </Box>
             </Paper>
 
             <Paper elevation={0} sx={cardSx}>
               <Box px={3} py={1} sx={{ borderBottom: `1px solid ${border}`, bgcolor: subBg }}>
-                <Typography fontWeight={700} fontSize="0.85rem" py={1}>What&apos;s Actually Enforced</Typography>
+                <Typography fontWeight={700} fontSize="0.85rem" py={1}>{t('adm.settings.enforced')}</Typography>
               </Box>
               <Box px={3} py={1}>
-                <Row label="Password storage" value="bcrypt hash" border={border} />
-                <Row label="Session length" value="7 days (JWT expiry)" border={border} />
-                <Row label="Auth rate limiting" value="10 req / 15 min per IP (dev)" border={border} />
-                <Row label="Input sanitization" value="NoSQL injection stripping" border={border} />
-                <Row label="HTTP headers" value="helmet" border={border} />
+                <Row label={t('adm.settings.passwordStorage')} value={t('adm.settings.bcrypt')} border={border} />
+                <Row label={t('adm.settings.sessionLength')} value={t('adm.settings.sessionValue')} border={border} />
+                <Row label={t('adm.settings.authRateLimiting')} value={t('adm.settings.rateValue')} border={border} />
+                <Row label={t('adm.settings.inputSanitization')} value={t('adm.settings.nosql')} border={border} />
+                <Row label={t('adm.settings.httpHeaders')} value="helmet" border={border} />
               </Box>
             </Paper>
           </Box>
@@ -785,10 +798,10 @@ export default function AdminSettings() {
         <Box>
           <Typography variant="h5" fontWeight={800}
             sx={{ color: 'text.primary', lineHeight: 1.2 }}>
-            System Settings
+            {t('adm.settings.systemSettings')}
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            Your profile, and the platform&apos;s real configuration
+            {t('adm.settings.navLead')}
           </Typography>
         </Box>
       </Box>
@@ -803,8 +816,8 @@ export default function AdminSettings() {
         }}>
           <List dense disablePadding sx={{ py: 1 }}>
             {SECTIONS.map((s) => (
-              <Tooltip key={s.id} title={railNav ? s.label : ''} placement="right">
-              <ListItemButton selected={section === s.id} onClick={() => setSection(s.id)} aria-label={s.label}
+              <Tooltip key={s.id} title={railNav ? t(`adm.settings.sections.${s.id}`) : ''} placement="right">
+              <ListItemButton selected={section === s.id} onClick={() => setSection(s.id)} aria-label={t(`adm.settings.sections.${s.id}`)}
                 sx={{
                   mx: 1, borderRadius: 2, mb: 0.3, py: 0.9, px: railNav ? 1.25 : 2, whiteSpace: 'nowrap',
                   '&.Mui-selected': {
@@ -817,7 +830,7 @@ export default function AdminSettings() {
                 <ListItemIcon sx={{ minWidth: 32, color: section === s.id ? '#C91D32' : 'text.disabled' }}>
                   {s.icon}
                 </ListItemIcon>
-                <ListItemText primary={s.label} sx={{ opacity: railNav ? 0 : 1, transition: 'opacity 0.2s' }}
+                <ListItemText primary={t(`adm.settings.sections.${s.id}`)} sx={{ opacity: railNav ? 0 : 1, transition: 'opacity 0.2s' }}
                   primaryTypographyProps={{ fontSize: '0.845rem', fontWeight: section === s.id ? 700 : 500 }} />
               </ListItemButton>
               </Tooltip>

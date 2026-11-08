@@ -1,4 +1,5 @@
-export const metadata = { title: 'Book a Donation Appointment' };
+import { pageTitle } from '@/i18n/server';
+export const generateMetadata = pageTitle('bookADonationAppointment');
 
 export default function AppointmentsLayout({ children }) {
   return children;

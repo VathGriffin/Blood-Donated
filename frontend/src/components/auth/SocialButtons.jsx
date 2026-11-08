@@ -1,4 +1,6 @@
 'use client';
+import { useI18n } from '@/i18n/I18nProvider';
+import { apiErrorMessage } from '@/lib/api-error';
 import { useEffect } from "react";
 import { Box, Button } from "@mui/material";
 import { OrDivider } from "@/components/auth/authUi";
@@ -47,6 +49,7 @@ const loadFacebookSDK = (appId) => {
 };
 
 const GoogleLoginButton = ({ onError }) => {
+    const { t } = useI18n();
     const { login } = useUserAuth();
     const router = useRouter();
 
@@ -57,10 +60,10 @@ const GoogleLoginButton = ({ onError }) => {
                 login(data.token, data.user);
                 router.push(nextPath("/notification"));
             } catch (err) {
-                onError(err.response?.data?.message || "Google sign-in failed. Please try again.");
+                onError(apiErrorMessage(err, t('auth.social.googleFailed')));
             }
         },
-        onError: () => onError("Google sign-in was cancelled or failed."),
+        onError: () => onError(t('auth.social.googleCancelled')),
     });
 
     return (
@@ -71,18 +74,19 @@ const GoogleLoginButton = ({ onError }) => {
 };
 
 const FacebookLoginButton = ({ onError }) => {
+    const { t } = useI18n();
     const { login } = useUserAuth();
     const router = useRouter();
 
     useEffect(() => { loadFacebookSDK(FACEBOOK_APP_ID); }, []);
 
     const handleFacebookLogin = () => {
-        if (!window.FB) { onError("Facebook is loading — please try again in a moment."); return; }
+        if (!window.FB) { onError(t('auth.social.facebookLoading')); return; }
         window.FB.login((response) => {
-            if (!response.authResponse) { onError("Facebook sign-in was cancelled."); return; }
+            if (!response.authResponse) { onError(t('auth.social.facebookCancelled')); return; }
             axios.post(`${API_BASE}/api/user/facebook`, { accessToken: response.authResponse.accessToken })
                 .then(({ data }) => { login(data.token, data.user); router.push(nextPath("/notification")); })
-                .catch((err) => { onError(err.response?.data?.message || "Facebook sign-in failed. Please try again."); });
+                .catch((err) => { onError(apiErrorMessage(err, t('auth.social.facebookFailed'))); });
         }, { scope: "public_profile,email" });
     };
 

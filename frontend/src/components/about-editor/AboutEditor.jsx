@@ -1,4 +1,8 @@
 'use client';
+import { useI18n, useT } from '@/i18n/I18nProvider';
+import { translateServerMessage } from '@/lib/api-error';
+import { currentLang } from '@/i18n/config';
+import { translate } from '@/i18n/translate';
 import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert, Avatar, Box, Breadcrumbs, Button, Chip, CircularProgress, IconButton, Snackbar, Tab, Tabs,
@@ -19,19 +23,20 @@ import RichTextEditor from './RichTextEditor';
 const RED = '#C91D32';
 const IMAGE_FIELD = { hero: 'heroImage', purpose: 'purposeImage', creator: 'creatorPhoto' };
 
+// Labels: adm.aboutEd.tabs.<id> and adm.aboutEd.devices.<id>
 const TABS = [
-  { id: 'general', label: 'General', icon: <ArticleOutlined /> },
-  { id: 'mission', label: 'Our Mission', icon: <Favorite /> },
-  { id: 'values', label: 'Our Values', icon: <AutoAwesome /> },
-  { id: 'team', label: 'Our Team', icon: <Groups /> },
-  { id: 'stats', label: 'Stats', icon: <BarChart /> },
-  { id: 'cta', label: 'Call to Action', icon: <Campaign /> },
+  { id: 'general', icon: <ArticleOutlined /> },
+  { id: 'mission', icon: <Favorite /> },
+  { id: 'values', icon: <AutoAwesome /> },
+  { id: 'team', icon: <Groups /> },
+  { id: 'stats', icon: <BarChart /> },
+  { id: 'cta', icon: <Campaign /> },
 ];
 
 const DEVICES = [
-  { id: 'desktop', label: 'Desktop', icon: <DesktopWindows fontSize="small" />, width: 820 },
-  { id: 'tablet', label: 'Tablet', icon: <TabletMac fontSize="small" />, width: 600 },
-  { id: 'mobile', label: 'Mobile', icon: <PhoneIphone fontSize="small" />, width: 375 },
+  { id: 'desktop', icon: <DesktopWindows fontSize="small" />, width: 820 },
+  { id: 'tablet', icon: <TabletMac fontSize="small" />, width: 600 },
+  { id: 'mobile', icon: <PhoneIphone fontSize="small" />, width: 375 },
 ];
 
 const fadeUp = keyframes`
@@ -85,6 +90,7 @@ const Field = memo(function Field({ id, label, value, onChange, max, multiline, 
 
 // Current image + a drop zone that uploads straight away (images are saved independently of the text).
 function ImageSlot({ label, hint, src, custom, busy, round, fallback, onFile, onRemove }) {
+  const t = useT();
   const isDark = useTheme().palette.mode === 'dark';
   const input = useRef(null);
   const [over, setOver] = useState(false);
@@ -107,12 +113,12 @@ function ImageSlot({ label, hint, src, custom, busy, round, fallback, onFile, on
           )}
           {busy && <CircularProgress size={28} color="error" sx={{ position: 'absolute', top: '50%', left: '50%', mt: '-14px', ml: '-14px' }} />}
           {!busy && (
-            <Chip size="small" label={custom ? 'Custom' : 'Default'}
+            <Chip size="small" label={custom ? t('adm.aboutEd.custom') : t('adm.aboutEd.default')}
               sx={{ position: 'absolute', top: 8, left: 8, fontWeight: 700, fontSize: '0.68rem', bgcolor: custom ? RED : 'rgba(0,0,0,0.55)', color: '#fff' }} />
           )}
         </Box>
         <Box
-          role="button" tabIndex={0} aria-label={`Upload ${label.toLowerCase()}`} aria-disabled={busy}
+          role="button" tabIndex={0} aria-label={t('adm.aboutEd.uploadAria', { label })} aria-disabled={busy}
           onClick={() => !busy && input.current?.click()}
           onKeyDown={(e) => { if (!busy && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); input.current?.click(); } }}
           onDragOver={(e) => { e.preventDefault(); setOver(true); }}
@@ -130,14 +136,14 @@ function ImageSlot({ label, hint, src, custom, busy, round, fallback, onFile, on
           }}
         >
           <CloudUpload className="up-icon" sx={{ fontSize: 32, color: RED, transition: 'transform 0.2s', ...calm }} />
-          <Typography sx={{ fontWeight: 700, fontSize: '0.9rem' }}>{custom ? 'Change Image' : 'Upload Image'}</Typography>
-          <Typography sx={{ color: 'text.secondary', fontSize: '0.78rem' }}>Click to upload or drag and drop</Typography>
-          <Typography sx={{ color: 'text.disabled', fontSize: '0.72rem' }}>JPG, PNG, WebP or GIF · max 10 MB</Typography>
+          <Typography sx={{ fontWeight: 700, fontSize: '0.9rem' }}>{custom ? t('adm.aboutEd.changeImage') : t('adm.aboutEd.uploadImage')}</Typography>
+          <Typography sx={{ color: 'text.secondary', fontSize: '0.78rem' }}>{t('adm.aboutEd.clickToUploadOr')}</Typography>
+          <Typography sx={{ color: 'text.disabled', fontSize: '0.72rem' }}>{t('adm.aboutEd.jpgPngWebpOr')}</Typography>
           {custom && (
             <Button size="small" color="inherit" startIcon={<DeleteOutline sx={{ fontSize: 16 }} />} disabled={busy}
               onClick={(e) => { e.stopPropagation(); onRemove(); }}
               sx={{ mt: 0.5, textTransform: 'none', color: 'text.secondary', fontWeight: 600 }}>
-              {round ? 'Remove photo' : 'Restore default'}
+              {round ? t('adm.aboutEd.removePhoto') : t('adm.aboutEd.restoreDefault')}
             </Button>
           )}
           <input ref={input} type="file" hidden accept={PHOTO_TYPES.join(',')}
@@ -174,6 +180,7 @@ function ScaledFrame({ width, children }) {
 }
 
 export default function AboutEditor({ token }) {
+  const { t, lang } = useI18n();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const authHeader = useMemo(() => ({ Authorization: `Bearer ${token}` }), [token]);
@@ -197,7 +204,7 @@ export default function AboutEditor({ token }) {
     setLoading(true);
     setLoadError('');
     fetch(`${API_BASE}/api/about`)
-      .then((res) => { if (!res.ok) throw new Error(`Server returned ${res.status}`); return res.json(); })
+      .then((res) => { if (!res.ok) throw new Error(''); return res.json(); })
       .then((data) => {
         const merged = mergeSections(data.sections);
         setSaved(merged);
@@ -205,7 +212,7 @@ export default function AboutEditor({ token }) {
         setImages({ heroImage: data.heroImage, purposeImage: data.purposeImage, creatorPhoto: data.creatorPhoto });
         setLimits(data.limits);
       })
-      .catch((err) => setLoadError(err.message || 'Failed to load the About page content.'))
+      .catch((err) => setLoadError(err.message || 'load-failed'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -244,11 +251,11 @@ export default function AboutEditor({ token }) {
         body: JSON.stringify({ sections: overridesOnly(draft) }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.message || 'Could not save the About page.');
+      if (!res.ok) throw new Error(data.message || translate(currentLang(), 'adm.aboutEd.saveFailed'));
       const merged = mergeSections(data.sections);
       setSaved(merged);
       setDraft(merged);
-      setToast({ type: 'success', text: 'Saved. The public About page now shows your changes.' });
+      setToast({ type: 'success', text: translate(currentLang(), 'adm.aboutEd.saved') });
     } catch (err) {
       setToast({ type: 'error', text: err.message });
     } finally {
@@ -273,8 +280,8 @@ export default function AboutEditor({ token }) {
       const invalid = photoFileError(file);
       if (invalid) { setToast({ type: 'error', text: invalid }); return; }
     } else if (!window.confirm(slot === 'creator'
-      ? 'Remove the creator photo? The page will show initials instead.'
-      : 'Remove this image and go back to the built-in one?')) {
+      ? t('adm.aboutEd.confirmRemoveCreator')
+      : t('adm.aboutEd.confirmRemoveImage'))) {
       return;
     }
     setImageBusy((b) => ({ ...b, [slot]: true }));
@@ -283,9 +290,9 @@ export default function AboutEditor({ token }) {
       if (file) { body = new FormData(); body.append('photo', file); }
       const res = await fetch(`${API_BASE}/api/about/images/${slot}`, { method: file ? 'POST' : 'DELETE', headers: authHeader, body });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.message || (file ? 'Image upload failed.' : 'Could not remove the image.'));
+      if (!res.ok) throw new Error(data.message || (file ? t('adm.aboutEd.uploadFailed') : t('adm.aboutEd.removeFailed')));
       setImages((im) => ({ ...im, ...data }));
-      setToast({ type: 'success', text: file ? 'Image uploaded. It is live on the About page.' : 'Image removed.' });
+      setToast({ type: 'success', text: file ? t('adm.aboutEd.uploaded') : t('adm.aboutEd.removed') });
     } catch (err) {
       setToast({ type: 'error', text: err.message });
     } finally {
@@ -316,87 +323,87 @@ export default function AboutEditor({ token }) {
   const panels = L && {
     general: (
       <>
-        <SectionBlock first title="Hero Section" sub="The banner and introduction at the top of the About page.">
-          {f('hero', 'eyebrow', 'Eyebrow text')}
+        <SectionBlock first title={t('adm.aboutEd.heroSection')} sub={t('adm.aboutEd.theBannerAndIntroduction')}>
+          {f('hero', 'eyebrow', t('adm.aboutEd.fEyebrow'))}
           <Box sx={two}>
-            {f('hero', 'title', 'Page title')}
-            {f('hero', 'titleAccent', 'Title highlight (red)')}
+            {f('hero', 'title', t('adm.aboutEd.fTitle'))}
+            {f('hero', 'titleAccent', t('adm.aboutEd.fAccent'))}
           </Box>
-          {f('hero', 'headline', 'Subtitle')}
-          <RichTextEditor id="about-hero-intro" label="Introduction" helper="Introduce your platform to visitors."
+          {f('hero', 'headline', t('adm.aboutEd.fSubtitle'))}
+          <RichTextEditor id="about-hero-intro" label={t('adm.aboutEd.introduction')} helper={t('adm.aboutEd.introHelper')}
             value={draft.hero.intro} onChange={setField('hero', 'intro')} max={L.hero.intro}
-            placeholder="Tell visitors what BloodLife AI is and why it matters…" />
+            placeholder={t('adm.aboutEd.tellVisitorsWhatBloodlife')} />
         </SectionBlock>
-        <SectionBlock title="Hero Image" sub="Recommended size: 1200 × 1000 or larger. Uploads go live immediately.">
-          {imageSlot('hero', 'Hero image', 'Shown beside the introduction.')}
+        <SectionBlock title={t('adm.aboutEd.heroImage')} sub={t('adm.aboutEd.recommendedSize12001000')}>
+          {imageSlot('hero', t('adm.aboutEd.heroImage'), t('adm.aboutEd.heroImageHint'))}
         </SectionBlock>
       </>
     ),
     mission: (
       <>
-        <SectionBlock first title="Our Purpose" sub="The story section below the stats.">
-          {f('purpose', 'eyebrow', 'Eyebrow text')}
-          {f('purpose', 'title', 'Heading')}
-          {f('purpose', 'text', 'Body text', { multiline: true, rows: 4 })}
-          {f('purpose', 'quote', 'Quote card')}
+        <SectionBlock first title={t('adm.aboutEd.ourPurpose')} sub={t('adm.aboutEd.theStorySectionBelow')}>
+          {f('purpose', 'eyebrow', t('adm.aboutEd.fEyebrow'))}
+          {f('purpose', 'title', t('adm.aboutEd.fHeading'))}
+          {f('purpose', 'text', t('adm.aboutEd.fBody'), { multiline: true, rows: 4 })}
+          {f('purpose', 'quote', t('adm.aboutEd.fQuote'))}
         </SectionBlock>
-        <SectionBlock title="Mission, Vision & Impact" sub="The three cards under the purpose text.">
+        <SectionBlock title={t('adm.aboutEd.missionVisionImpact')} sub={t('adm.aboutEd.theThreeCardsUnder')}>
           {draft.pillars.map((_, i) => (
             <Box key={i} sx={{ p: 2, borderRadius: '14px', border: 1, borderColor: 'divider', display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-              {f('pillars', 'title', `Card ${i + 1} title`, { index: i })}
-              {f('pillars', 'desc', `Card ${i + 1} description`, { index: i, multiline: true, rows: 2 })}
+              {f('pillars', 'title', t('adm.aboutEd.fCardTitle', { n: i + 1 }), { index: i })}
+              {f('pillars', 'desc', t('adm.aboutEd.fCardDesc', { n: i + 1 }), { index: i, multiline: true, rows: 2 })}
             </Box>
           ))}
         </SectionBlock>
-        <SectionBlock title="Purpose Image">
-          {imageSlot('purpose', 'Purpose image', 'Shown beside the purpose text, with the quote card on top.')}
+        <SectionBlock title={t('adm.aboutEd.purposeImage')}>
+          {imageSlot('purpose', t('adm.aboutEd.purposeImage'), t('adm.aboutEd.purposeImageHint'))}
         </SectionBlock>
       </>
     ),
     values: (
-      <SectionBlock first title="Our Values" sub="The three highlights under the hero buttons.">
+      <SectionBlock first title={t('adm.aboutEd.ourValues')} sub={t('adm.aboutEd.theThreeHighlightsUnder')}>
         {draft.values.map((_, i) => (
           <Box key={i} sx={{ ...two, p: 2, borderRadius: '14px', border: 1, borderColor: 'divider' }}>
-            {f('values', 'title', `Value ${i + 1}`, { index: i })}
-            {f('values', 'subtitle', 'Short description', { index: i })}
+            {f('values', 'title', t('adm.aboutEd.fValue', { n: i + 1 }), { index: i })}
+            {f('values', 'subtitle', t('adm.aboutEd.fShortDesc'), { index: i })}
           </Box>
         ))}
       </SectionBlock>
     ),
     team: (
       <>
-        <SectionBlock first title="Creator Profile" sub="The card in “The Builders Behind It”.">
+        <SectionBlock first title={t('adm.aboutEd.creatorProfile')} sub={t('adm.aboutEd.theCardInThe')}>
           <Box sx={two}>
-            {f('team', 'name', 'Name')}
-            {f('team', 'position', 'Role')}
+            {f('team', 'name', t('adm.aboutEd.fName'))}
+            {f('team', 'position', t('adm.aboutEd.fRole'))}
           </Box>
-          <RichTextEditor id="about-team-bio" label="Bio" helper="Tell visitors about the person behind BloodLife AI."
+          <RichTextEditor id="about-team-bio" label={t('adm.aboutEd.bio')} helper={t('adm.aboutEd.bioHelper')}
             value={draft.team.bio} onChange={setField('team', 'bio')} max={L.team.bio}
-            placeholder="Background, role in the project, what drives the work…" />
+            placeholder={t('adm.aboutEd.backgroundRoleInThe')} />
         </SectionBlock>
-        <SectionBlock title="Creator Photo">
-          {imageSlot('creator', 'Portrait', 'A square photo works best. Without one, the page shows initials.', true)}
+        <SectionBlock title={t('adm.aboutEd.creatorPhoto')}>
+          {imageSlot('creator', t('adm.aboutEd.portrait'), t('adm.aboutEd.portraitHint'), true)}
         </SectionBlock>
       </>
     ),
     stats: (
-      <SectionBlock first title="Impact Stats" sub="The numbers are counted live from the database; you can rename what they mean.">
+      <SectionBlock first title={t('adm.aboutEd.impactStats')} sub={t('adm.aboutEd.theNumbersAreCounted')}>
         <Alert icon={<Info fontSize="small" />} severity="info" sx={{ borderRadius: '12px', fontSize: '0.82rem' }}>
-          Stat values (donors, donations, hospitals, fulfilled requests) can&apos;t be typed in, so the page never shows made-up numbers.
+          {t('adm.aboutEd.statsNote')}
         </Alert>
         {draft.stats.map((_, i) => (
           <Box key={i} sx={{ ...two, p: 2, borderRadius: '14px', border: 1, borderColor: 'divider' }}>
-            {f('stats', 'label', `Stat ${i + 1} label`, { index: i })}
-            {f('stats', 'caption', 'Caption', { index: i })}
+            {f('stats', 'label', t('adm.aboutEd.fStatLabel', { n: i + 1 }), { index: i })}
+            {f('stats', 'caption', t('adm.aboutEd.fCaption'), { index: i })}
           </Box>
         ))}
       </SectionBlock>
     ),
     cta: (
-      <SectionBlock first title="Call to Action" sub="The strip at the bottom of the page. The button links to the donate page.">
-        {f('cta', 'title', 'Heading')}
-        {f('cta', 'text', 'Text', { multiline: true, rows: 2 })}
-        {f('cta', 'button', 'Button label')}
+      <SectionBlock first title={t('adm.aboutEd.callToAction')} sub={t('adm.aboutEd.theStripAtThe')}>
+        {f('cta', 'title', t('adm.aboutEd.fHeading'))}
+        {f('cta', 'text', t('adm.aboutEd.fText'), { multiline: true, rows: 2 })}
+        {f('cta', 'button', t('adm.aboutEd.fButton'))}
       </SectionBlock>
     ),
   };
@@ -415,8 +422,8 @@ export default function AboutEditor({ token }) {
       {/* Header */}
       <Box sx={enter(0)}>
         <Breadcrumbs sx={{ fontSize: '0.85rem', mb: 1.5 }}>
-          <Typography sx={{ fontSize: 'inherit', color: 'text.secondary' }}>Settings</Typography>
-          <Typography sx={{ fontSize: 'inherit', color: 'text.primary', fontWeight: 600 }}>About Page</Typography>
+          <Typography sx={{ fontSize: 'inherit', color: 'text.secondary' }}>{t('adm.aboutEd.settings')}</Typography>
+          <Typography sx={{ fontSize: 'inherit', color: 'text.primary', fontWeight: 600 }}>{t('adm.aboutEd.aboutPage')}</Typography>
         </Breadcrumbs>
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start', flexWrap: 'wrap', mb: 3 }}>
           <Box sx={{
@@ -427,19 +434,19 @@ export default function AboutEditor({ token }) {
           </Box>
           <Box sx={{ flex: '1 1 280px', minWidth: 0 }}>
             <Typography component="h2" sx={{ fontWeight: 800, fontSize: { xs: '1.35rem', sm: '1.6rem' }, letterSpacing: '-0.02em', lineHeight: 1.2 }}>
-              About Page Editor
+              {t('adm.aboutEd.aboutPageEditor')}
             </Typography>
             <Typography sx={{ color: 'text.secondary', fontSize: '0.9rem', mt: 0.5, maxWidth: 560 }}>
-              Update your organization&apos;s story, mission and information. Saved changes appear on the public About page.
+              {t('adm.aboutEd.lead')}
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, flexWrap: 'wrap' }}>
             {dirty && (
               <>
-                <Chip size="small" label="Unsaved changes" sx={{ fontWeight: 700, bgcolor: isDark ? 'rgba(245,158,11,0.15)' : '#fff7e6', color: '#b45309', ...enter(0) }} />
+                <Chip size="small" label={t('adm.aboutEd.unsavedChanges')} sx={{ fontWeight: 700, bgcolor: isDark ? 'rgba(245,158,11,0.15)' : '#fff7e6', color: '#b45309', ...enter(0) }} />
                 <Button onClick={() => setDraft(saved)} startIcon={<Undo />} disabled={saving}
                   sx={{ textTransform: 'none', fontWeight: 600, color: 'text.secondary' }}>
-                  Discard
+                  {t('adm.aboutEd.discard')}
                 </Button>
               </>
             )}
@@ -448,7 +455,7 @@ export default function AboutEditor({ token }) {
                 textTransform: 'none', fontWeight: 700, borderRadius: '12px', px: 2, py: 1, color: RED, borderColor: isDark ? '#475569' : '#F5C6CC',
                 transition: 'transform 0.2s, background-color 0.2s', '&:hover': { borderColor: RED, bgcolor: isDark ? 'rgba(201,29,50,0.08)' : '#FFF1F2', transform: 'translateY(-1px)' }, ...calm,
               }}>
-              Preview Page
+              {t('adm.aboutEd.previewPage')}
             </Button>
             <Button onClick={save} variant="contained" disabled={!dirty || saving || loading}
               startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <Save />}
@@ -460,7 +467,7 @@ export default function AboutEditor({ token }) {
                 '&.Mui-disabled': { color: '#fff', opacity: 0.55, background: 'linear-gradient(135deg, #E63946 0%, #C91D32 100%)' },
                 ...calm,
               }}>
-              {saving ? 'Saving…' : 'Save Changes'}
+              {saving ? t('adm.aboutEd.saving') : t('adm.aboutEd.saveChanges')}
             </Button>
           </Box>
         </Box>
@@ -468,8 +475,8 @@ export default function AboutEditor({ token }) {
 
       {loadError && (
         <Alert severity="error" sx={{ mb: 2, borderRadius: '12px' }}
-          action={<Button color="error" size="small" onClick={load} sx={{ fontWeight: 700, textTransform: 'none' }}>Retry</Button>}>
-          {loadError}
+          action={<Button color="error" size="small" onClick={load} sx={{ fontWeight: 700, textTransform: 'none' }}>{t('adm.aboutEd.retry')}</Button>}>
+          {loadError === 'load-failed' ? t('adm.aboutEd.loadFailed') : translateServerMessage(loadError, lang)}
         </Alert>
       )}
 
@@ -480,7 +487,7 @@ export default function AboutEditor({ token }) {
         {/* Editor */}
         <Box sx={{ ...cardSx, overflow: 'hidden', ...enter(0.08) }}>
           <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto" allowScrollButtonsMobile
-            aria-label="About page sections"
+            aria-label={t('adm.aboutEd.aboutPageSections')}
             sx={{
               px: 1.5, borderBottom: 1, borderColor: 'divider', minHeight: 56,
               '& .MuiTabs-indicator': { bgcolor: RED, height: 3, borderRadius: '3px 3px 0 0' },
@@ -491,13 +498,13 @@ export default function AboutEditor({ token }) {
               },
               '& .MuiTab-root.Mui-selected': { color: RED, fontWeight: 700 },
             }}>
-            {TABS.map((t) => <Tab key={t.id} value={t.id} label={t.label} icon={t.icon} iconPosition="start" id={`about-tab-${t.id}`} aria-controls="about-tabpanel" />)}
+            {TABS.map((tb) => <Tab key={tb.id} value={tb.id} label={t(`adm.aboutEd.tabs.${tb.id}`)} icon={tb.icon} iconPosition="start" id={`about-tab-${tb.id}`} aria-controls="about-tabpanel" />)}
           </Tabs>
           <Box id="about-tabpanel" role="tabpanel" aria-labelledby={`about-tab-${tab}`} sx={{ p: { xs: 2.25, sm: 3 } }}>
             {loading || !limits ? (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 6, justifyContent: 'center' }}>
                 {!loadError && <CircularProgress size={22} color="error" />}
-                <Typography color="text.secondary">{loadError ? 'Content could not be loaded.' : 'Loading content…'}</Typography>
+                <Typography color="text.secondary">{loadError ? t('adm.aboutEd.notLoaded') : t('adm.aboutEd.loadingContent')}</Typography>
               </Box>
             ) : (
               <Box key={tab} sx={enter(0)}>{panels[tab]}</Box>
@@ -515,15 +522,15 @@ export default function AboutEditor({ token }) {
               <Visibility fontSize="small" />
             </Box>
             <Box sx={{ mr: 'auto', minWidth: 0 }}>
-              <Typography sx={{ fontWeight: 800, fontSize: '0.95rem' }}>Live Preview</Typography>
+              <Typography sx={{ fontWeight: 800, fontSize: '0.95rem' }}>{t('adm.aboutEd.livePreview')}</Typography>
               <Typography sx={{ color: 'text.secondary', fontSize: '0.76rem' }}>
                 {dirty ? 'Showing unsaved changes' : 'This is how your About page looks'}
               </Typography>
             </Box>
-            <Box role="group" aria-label="Preview size" sx={{ display: 'flex', gap: 0.5, p: 0.5, borderRadius: '10px', bgcolor: isDark ? '#1C2E49' : '#f6f1f1' }}>
+            <Box role="group" aria-label={t('adm.aboutEd.previewSize')} sx={{ display: 'flex', gap: 0.5, p: 0.5, borderRadius: '10px', bgcolor: isDark ? '#1C2E49' : '#f6f1f1' }}>
               {DEVICES.map((d) => (
-                <Tooltip key={d.id} title={d.label}>
-                  <IconButton size="small" aria-label={`${d.label} preview`} aria-pressed={device === d.id} onClick={() => setDevice(d.id)}
+                <Tooltip key={d.id} title={t(`adm.aboutEd.devices.${d.id}`)}>
+                  <IconButton size="small" aria-label={t('adm.aboutEd.previewAria', { device: t(`adm.aboutEd.devices.${d.id}`) })} aria-pressed={device === d.id} onClick={() => setDevice(d.id)}
                     sx={{
                       borderRadius: '8px', color: device === d.id ? RED : 'text.secondary',
                       bgcolor: device === d.id ? 'background.paper' : 'transparent',
@@ -550,7 +557,7 @@ export default function AboutEditor({ token }) {
         <Snackbar open key={toast.text} autoHideDuration={4500} onClose={() => setToast(null)} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
           <Alert severity={toast.type} variant="filled" onClose={() => setToast(null)} sx={{ borderRadius: '12px', fontWeight: 600 }}
             iconMapping={{ success: <VolunteerActivism fontSize="inherit" /> }}>
-            {toast.text}
+            {translateServerMessage(toast.text, lang)}
           </Alert>
         </Snackbar>
       )}

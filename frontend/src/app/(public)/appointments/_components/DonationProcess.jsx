@@ -1,4 +1,5 @@
 'use client';
+import { useI18n } from '@/i18n/I18nProvider';
 import { Fragment } from 'react';
 import { Box, Typography, useTheme } from '@mui/material';
 import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
@@ -10,15 +11,16 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { C } from './booking';
 
 const STAGES = [
-  { icon: <AssignmentIndIcon />, title: 'Registration', text: 'Check in with your ID' },
-  { icon: <MonitorHeartIcon />, title: 'Health Screening', text: 'A quick health check' },
-  { icon: <BloodtypeIcon />, title: 'Donation', text: 'Collected by trained staff' },
-  { icon: <LocalCafeIcon />, title: 'Rest & Refreshment', text: 'A drink and a snack' },
+  { icon: <AssignmentIndIcon />, key: 'registration' },
+  { icon: <MonitorHeartIcon />, key: 'screening' },
+  { icon: <BloodtypeIcon />, key: 'donation' },
+  { icon: <LocalCafeIcon />, key: 'rest' },
 ];
 
 // Compact strip: title on the left, the four stages in a row with arrows (wraps on smaller screens).
 export default function DonationProcess() {
   const isDark = useTheme().palette.mode === 'dark';
+  const { t } = useI18n();
   const circle = (size) => ({
     width: size, height: size, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
     color: C.primary, bgcolor: isDark ? 'rgba(201,29,50,0.2)' : '#FFFFFF', '& svg': { fontSize: size * 0.5 },
@@ -32,8 +34,8 @@ export default function DonationProcess() {
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexShrink: 0, width: { xs: '100%', xl: 'auto' } }}>
         <Box aria-hidden="true" sx={circle(52)}><VolunteerActivismIcon /></Box>
         <Box>
-          <Typography component="h2" id="donation-process-title" sx={{ fontWeight: 800, fontSize: '1.02rem', color: C.primary }}>The Donation Process</Typography>
-          <Typography sx={{ color: 'text.secondary', fontSize: '0.82rem' }}>A safe and simple process</Typography>
+          <Typography component="h2" id="donation-process-title" sx={{ fontWeight: 800, fontSize: '1.02rem', color: C.primary }}>{t('booking.process.title')}</Typography>
+          <Typography sx={{ color: 'text.secondary', fontSize: '0.82rem' }}>{t('booking.process.subtitle')}</Typography>
         </Box>
       </Box>
 
@@ -43,14 +45,14 @@ export default function DonationProcess() {
         justifyContent: { md: 'space-between' }, gap: { xs: 1.5, md: 1 },
       }}>
         {STAGES.map((s, i) => (
-          <Fragment key={s.title}>
+          <Fragment key={s.key}>
             <Box component="li" sx={{ display: 'flex', alignItems: 'center', gap: 1.1, minWidth: 0 }}>
               <Box aria-hidden="true" sx={{ ...circle(42), bgcolor: C.primary, color: '#fff', boxShadow: '0 4px 12px rgba(201,29,50,0.25)' }}>{s.icon}</Box>
               <Box sx={{ minWidth: 0 }}>
                 <Typography component="h3" sx={{ fontWeight: 700, fontSize: '0.86rem', lineHeight: 1.25 }}>
-                  <Box component="span" sx={srOnly}>Step {i + 1}: </Box>{s.title}
+                  <Box component="span" sx={srOnly}>{t('booking.process.step', { n: i + 1 })} </Box>{t(`booking.process.${s.key}.title`)}
                 </Typography>
-                <Typography sx={{ color: 'text.secondary', fontSize: '0.76rem' }}>{s.text}</Typography>
+                <Typography sx={{ color: 'text.secondary', fontSize: '0.76rem' }}>{t(`booking.process.${s.key}.text`)}</Typography>
               </Box>
               {i < STAGES.length - 1 && (
                 <ArrowForwardIcon aria-hidden="true" sx={{ display: { xs: 'none', md: 'block' }, ml: 'auto', pl: 1, fontSize: 26, color: '#F19AA5', flexShrink: 0 }} />

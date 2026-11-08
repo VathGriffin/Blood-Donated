@@ -8,9 +8,21 @@ if (process.env.NODE_ENV === 'production' && !process.env.NEXT_PUBLIC_API_URL) {
   );
 }
 
+// A fingerprint of every translation file. The browser caches each language's texts
+// (app/i18n/[lang]/route.js) under a URL with this version, so it re-downloads them only when
+// a translation changed.
+const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
+const messagesDir = path.join(__dirname, 'src/i18n/messages');
+const i18nVersion = crypto.createHash('sha256')
+  .update(fs.readdirSync(messagesDir).sort().map((f) => fs.readFileSync(path.join(messagesDir, f), 'utf8')).join('\0'))
+  .digest('hex').slice(0, 12);
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   poweredByHeader: false,
+  env: { NEXT_PUBLIC_I18N_VERSION: i18nVersion },
   // Basic browser security headers. Camera is allowed for the hospital QR scanner and
   // location for the hospital map / appointment booking; both only for this site.
   async headers() {

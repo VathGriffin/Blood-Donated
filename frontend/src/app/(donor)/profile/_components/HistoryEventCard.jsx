@@ -8,6 +8,7 @@ import HowToRegIcon from '@mui/icons-material/HowToReg';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import NotesIcon from '@mui/icons-material/Notes';
 import { MetaLine, Pill, formatDate, itemCardSx } from '@/components/donor/ui';
+import { useT } from '@/i18n/I18nProvider';
 import { DateBadge } from './AppointmentCard';
 
 /**
@@ -17,37 +18,38 @@ import { DateBadge } from './AppointmentCard';
  *  - reported:   the last donation date the donor entered when registering
  */
 export default function HistoryEventCard({ item }) {
+  const t = useT();
   const { kind, date } = item;
   const when = formatDate(date);
 
   const content = {
     registered: {
-      title: 'Registered as a donor',
-      pill: <Pill tone="success" icon={<HowToRegIcon />}>Registered</Pill>,
+      title: t('donor.history.registeredTitle'),
+      pill: <Pill tone="success" icon={<HowToRegIcon />}>{t('donor.history.registered')}</Pill>,
       meta: [
-        item.donor?.bloodType && <MetaLine key="bt" icon={<WaterDropOutlinedIcon />}>Blood type {item.donor.bloodType}</MetaLine>,
+        item.donor?.bloodType && <MetaLine key="bt" icon={<WaterDropOutlinedIcon />}>{t('donor.history.bloodType', { type: item.donor.bloodType })}</MetaLine>,
         item.donor?.location && <MetaLine key="loc" icon={<PlaceOutlinedIcon />}>{item.donor.location}</MetaLine>,
       ],
-      text: 'Thank you for joining! You now appear in the donor directory, where hospitals can find you.',
+      text: t('donor.history.registeredText'),
     },
     recorded: {
-      title: item.entry?.location || 'Blood donation',
-      pill: <Pill tone="info" icon={<FavoriteIcon />}>Donated</Pill>,
+      title: item.entry?.location || t('donor.history.donation'),
+      pill: <Pill tone="info" icon={<FavoriteIcon />}>{t('donor.history.donated')}</Pill>,
       meta: [
-        item.entry?.units > 1 && <MetaLine key="u" icon={<WaterDropOutlinedIcon />}>{item.entry.units} units</MetaLine>,
+        item.entry?.units > 1 && <MetaLine key="u" icon={<WaterDropOutlinedIcon />}>{t('donor.history.units', { count: item.entry.units })}</MetaLine>,
         item.entry?.notes && <MetaLine key="n" icon={<NotesIcon />}>{item.entry.notes}</MetaLine>,
       ],
     },
     reported: {
-      title: 'Previous donation',
-      pill: <Pill tone="neutral" icon={<EditNoteIcon />}>Reported by you</Pill>,
+      title: t('donor.history.previous'),
+      pill: <Pill tone="neutral" icon={<EditNoteIcon />}>{t('donor.history.reported')}</Pill>,
       meta: [],
-      text: 'The last donation date you entered when you registered as a donor.',
+      text: t('donor.history.reportedText'),
     },
   }[kind];
 
   return (
-    <Paper component="article" elevation={0} aria-label={`${content.title} on ${when}`} sx={itemCardSx}>
+    <Paper component="article" elevation={0} aria-label={t('donor.history.aria', { title: content.title, date: when })} sx={itemCardSx}>
       <Box sx={{ display: 'flex', gap: { xs: 1.75, sm: 3 }, alignItems: 'center' }}>
         <DateBadge date={date} />
         <Box sx={{ flex: 1, minWidth: 0 }}>

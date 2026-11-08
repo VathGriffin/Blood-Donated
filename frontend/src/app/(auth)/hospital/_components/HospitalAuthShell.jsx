@@ -1,5 +1,7 @@
 'use client';
 import { Alert, Box, Paper, Typography } from '@mui/material';
+import { useT } from '@/i18n/I18nProvider';
+import LanguageSwitcher from '@/components/layout/LanguageSwitcher';
 import { Favorite, CheckCircle, QrCodeScanner, Inventory2, EventAvailable } from '@mui/icons-material';
 
 // Same palette as the hospital dashboard: deep navy structure, medical-red actions.
@@ -41,17 +43,19 @@ export function ResultPanel({ tone = 'info', icon, title, role = 'status', child
     );
 }
 
+// Text: auth.hospital.capabilities.<key>
 const capabilities = [
-    { icon: <EventAvailable sx={{ fontSize: 17 }} />, text: 'Confirm and check in appointments' },
-    { icon: <Inventory2 sx={{ fontSize: 17 }} />, text: "Manage your hospital's blood stock" },
-    { icon: <QrCodeScanner sx={{ fontSize: 17 }} />, text: 'Scan donor QR codes at check-in' },
+    { icon: <EventAvailable sx={{ fontSize: 17 }} />, key: 'appointments' },
+    { icon: <Inventory2 sx={{ fontSize: 17 }} />, key: 'stock' },
+    { icon: <QrCodeScanner sx={{ fontSize: 17 }} />, key: 'scan' },
 ];
 
 /**
  * Hospital portal frame: the navy brand panel on the left (desktop only) and a card on the right
  * with a blue header carrying `icon`, `title` and `subtitle`.
  */
-export default function HospitalAuthShell({ icon, title, subtitle, children, footer = 'Hospital staff only · accounts are created by BloodLife admins' }) {
+export default function HospitalAuthShell({ icon, title, subtitle, children, footer }) {
+    const t = useT();
     return (
         <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#F6F8FC' }}>
             <Box sx={{
@@ -70,26 +74,26 @@ export default function HospitalAuthShell({ icon, title, subtitle, children, foo
                     <Box>
                         <Typography fontWeight={800} fontSize="1.05rem" color="white" lineHeight={1.2}>BloodLife</Typography>
                         <Typography fontSize="0.72rem" sx={{ color: 'rgba(255,255,255,0.6)', fontWeight: 600, letterSpacing: '0.08em' }}>
-                            HOSPITAL PORTAL
+                            {t('auth.hospital.portal')}
                         </Typography>
                     </Box>
                 </Box>
 
                 <Box>
                     <Typography fontWeight={900} fontSize={{ md: '2rem', lg: '2.3rem' }} color="white" lineHeight={1.2} mb={1.5}>
-                        Your Hospital&apos;s<br />Blood Operations
+                        {t('auth.hospital.heroTitle.line1')}<br />{t('auth.hospital.heroTitle.line2')}
                     </Typography>
                     <Typography fontSize="0.95rem" sx={{ color: 'rgba(255,255,255,0.7)', lineHeight: 1.7, mb: 4 }}>
-                        Manage requests, inventory, and donor check-ins for your facility.
+                        {t('auth.hospital.heroLead')}
                     </Typography>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                        {capabilities.map((c, i) => (
-                            <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        {capabilities.map((c) => (
+                            <Box key={c.key} sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                                 <Box sx={{
                                     width: 32, height: 32, borderRadius: 1.5, bgcolor: 'rgba(255,255,255,0.12)',
                                     display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#F28B95', flexShrink: 0,
                                 }}>{c.icon}</Box>
-                                <Typography fontSize="0.875rem" color="rgba(255,255,255,0.85)" fontWeight={500}>{c.text}</Typography>
+                                <Typography fontSize="0.875rem" color="rgba(255,255,255,0.85)" fontWeight={500}>{t(`auth.hospital.capabilities.${c.key}`)}</Typography>
                                 <CheckCircle sx={{ fontSize: 15, color: 'rgba(255,255,255,0.35)', ml: 'auto', flexShrink: 0 }} />
                             </Box>
                         ))}
@@ -97,11 +101,14 @@ export default function HospitalAuthShell({ icon, title, subtitle, children, foo
                 </Box>
 
                 <Typography fontSize="0.72rem" sx={{ color: 'rgba(255,255,255,0.3)', fontWeight: 600, letterSpacing: '0.06em' }}>
-                    © 2026 HUST · DATA SCIENCE 4TH YEAR
+                    {t('auth.hospital.copyright')}
                 </Typography>
             </Box>
 
-            <Box component="main" sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', p: { xs: 2, sm: 4 } }}>
+            <Box component="main" sx={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', p: { xs: 2, sm: 4 }, pt: { xs: 9, sm: 10 } }}>
+                <Box sx={{ position: 'absolute', top: { xs: 16, sm: 24 }, right: { xs: 16, sm: 24 } }}>
+                    <LanguageSwitcher labelDisplay={{ xs: 'none', sm: 'inline' }} />
+                </Box>
                 <Box sx={{ width: '100%', maxWidth: 440 }}>
                     <Paper elevation={0} sx={{ borderRadius: 4, overflow: 'hidden', border: '1px solid #E2E8F0', bgcolor: '#fff' }}>
                         <Box sx={{ background: NAVY_GRADIENT, borderBottom: `3px solid ${RED}`, px: { xs: 3, sm: 4 }, py: 3.5, display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -120,7 +127,7 @@ export default function HospitalAuthShell({ icon, title, subtitle, children, foo
                         <Box sx={{ p: { xs: 3, sm: 4 } }}>{children}</Box>
                     </Paper>
                     <Typography variant="caption" color="text.disabled" sx={{ display: 'block', textAlign: 'center', mt: 2.5 }}>
-                        {footer}
+                        {footer ?? t('auth.hospital.footer')}
                     </Typography>
                 </Box>
             </Box>

@@ -1,4 +1,5 @@
 'use client';
+import { useT } from '@/i18n/I18nProvider';
 import { useEffect, useRef, useState } from 'react';
 import {
   Box, Typography, Avatar, Button, Alert, CircularProgress, TextField, Snackbar, InputAdornment, IconButton,
@@ -22,6 +23,7 @@ const PASSWORD_MIN = 8; // must match Backend/src/staff/password-rules.js
 // changes into the top-bar account menu straight away.
 export default function HospitalProfile() {
   const { token, staff, updateStaff } = useAuth();
+  const t = useT();
   const auth = { headers: { Authorization: `Bearer ${token}` } };
   const [toast, setToast] = useState('');
 
@@ -45,8 +47,8 @@ export default function HospitalProfile() {
     const file = e.target.files?.[0];
     e.target.value = ''; // allow re-selecting the same file later
     if (!file) return;
-    if (!PHOTO_TYPES.includes(file.type)) { setPhotoError('Please choose a JPG, PNG, WebP or GIF image.'); return; }
-    if (file.size > MAX_PHOTO_SIZE) { setPhotoError(`Image is too large — max ${MAX_PHOTO_SIZE / (1024 * 1024)} MB.`); return; }
+    if (!PHOTO_TYPES.includes(file.type)) { setPhotoError(t('hosp.profile.photoType')); return; }
+    if (file.size > MAX_PHOTO_SIZE) { setPhotoError(t('hosp.profile.photoSize', { max: MAX_PHOTO_SIZE / (1024 * 1024) })); return; }
     setPhotoBusy(true);
     setPhotoError('');
     try {
@@ -54,9 +56,9 @@ export default function HospitalProfile() {
       form.append('photo', file);
       const { data } = await axios.post(`${API_BASE}/api/staff/me/photo`, form, auth);
       updateStaff({ photo: data.photo });
-      setToast('Profile photo updated.');
+      setToast(t('hosp.profile.photoUpdated'));
     } catch (err) {
-      setPhotoError(apiErrorMessage(err, 'Photo upload failed.'));
+      setPhotoError(apiErrorMessage(err, t('hosp.profile.photoFailed')));
     } finally { setPhotoBusy(false); }
   };
 
@@ -66,9 +68,9 @@ export default function HospitalProfile() {
     try {
       await axios.delete(`${API_BASE}/api/staff/me/photo`, auth);
       updateStaff({ photo: null });
-      setToast('Profile photo removed.');
+      setToast(t('hosp.profile.photoRemoved'));
     } catch (err) {
-      setPhotoError(apiErrorMessage(err, 'Could not remove the photo.'));
+      setPhotoError(apiErrorMessage(err, t('hosp.profile.removeFailed')));
     } finally { setPhotoBusy(false); }
   };
 
@@ -80,16 +82,16 @@ export default function HospitalProfile() {
 
   const saveName = async (e) => {
     e.preventDefault();
-    if (!name.trim()) { setNameError('Your name can’t be empty.'); return; }
+    if (!name.trim()) { setNameError(t('hosp.profile.nameEmpty')); return; }
     setNameBusy(true);
     setNameError('');
     try {
       const { data } = await axios.patch(`${API_BASE}/api/staff/me`, { fullName: name.trim() }, auth);
       updateStaff({ fullName: data.fullName || name.trim() });
       setName(data.fullName || name.trim());
-      setToast('Name updated.');
+      setToast(t('hosp.profile.nameUpdated'));
     } catch (err) {
-      setNameError(apiErrorMessage(err, 'Could not update your name.'));
+      setNameError(apiErrorMessage(err, t('hosp.profile.nameFailed')));
     } finally { setNameBusy(false); }
   };
 
@@ -105,23 +107,23 @@ export default function HospitalProfile() {
 
   const savePassword = async (e) => {
     e.preventDefault();
-    if (!pw.current || !pw.next) { setPwError('Fill in your current and new password.'); return; }
+    if (!pw.current || !pw.next) { setPwError(t('hosp.profile.pwMissing')); return; }
     if (tooShort || mismatch) return;
-    if (pw.current === pw.next) { setPwError('Choose a password different from your current one.'); return; }
+    if (pw.current === pw.next) { setPwError(t('hosp.profile.pwSame')); return; }
     setPwBusy(true);
     setPwError('');
     try {
       await axios.patch(`${API_BASE}/api/staff/me/password`, { currentPassword: pw.current, newPassword: pw.next }, auth);
       setPw(emptyPw);
-      setToast('Password changed.');
+      setToast(t('hosp.profile.pwChanged'));
     } catch (err) {
-      setPwError(apiErrorMessage(err, 'Could not change your password.'));
+      setPwError(apiErrorMessage(err, t('hosp.profile.pwFailed')));
     } finally { setPwBusy(false); }
   };
 
   const eye = (
     <InputAdornment position="end">
-      <IconButton size="small" aria-label={showPw ? 'Hide passwords' : 'Show passwords'} onClick={() => setShowPw((s) => !s)}>
+      <IconButton size="small" aria-label={t(showPw ? 'auth.hidePasswords' : 'auth.showPasswords')} onClick={() => setShowPw((s) => !s)}>
         {showPw ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
       </IconButton>
     </InputAdornment>
@@ -129,7 +131,7 @@ export default function HospitalProfile() {
 
   return (
     <Box sx={{ maxWidth: 980 }}>
-      <PageHeader title="My Profile" subtitle="Your photo, name and password for the hospital dashboard." />
+      <PageHeader title={t('hosp.profile.myProfile')} subtitle={t('hosp.profile.yourPhotoNameAnd')} />
 
       <Box sx={{ display: 'grid', gap: { xs: 2, md: 3 }, gridTemplateColumns: { xs: 'minmax(0,1fr)', md: '320px minmax(0,1fr)' }, alignItems: 'start' }}>
         {/* Identity card */}
@@ -145,28 +147,28 @@ export default function HospitalProfile() {
             </Box>
             <Box>
               <Typography fontWeight={800} fontSize="1.15rem">{staff?.fullName}</Typography>
-              <Typography variant="body2" color="text.secondary">Hospital Staff</Typography>
+              <Typography variant="body2" color="text.secondary">{t('hosp.profile.hospitalStaff')}</Typography>
             </Box>
             <Box display="flex" gap={1} flexWrap="wrap" justifyContent="center">
               <Button size="small" variant="outlined" disabled={photoBusy} startIcon={<AddAPhoto />} onClick={() => fileInput.current?.click()}>
-                {staff?.photo ? 'Change photo' : 'Upload photo'}
+                {staff?.photo ? t('hosp.profile.changePhoto') : t('hosp.profile.uploadPhoto')}
               </Button>
               {staff?.photo && (
                 <Button size="small" color="inherit" disabled={photoBusy} startIcon={<Delete />} onClick={removePhoto} sx={{ color: 'text.secondary' }}>
-                  Remove
+                  {t('hosp.profile.remove')}
                 </Button>
               )}
             </Box>
             <Typography variant="caption" color={photoError ? 'error' : 'text.secondary'}>
-              {photoError || 'JPG, PNG, WebP or GIF · up to 10 MB'}
+              {photoError || t('hosp.profile.photoHint')}
             </Typography>
             <input ref={fileInput} type="file" hidden accept={PHOTO_TYPES.join(',')} onChange={changePhoto} />
 
             <Box sx={{ width: '100%', borderTop: 1, borderColor: 'divider', pt: 2, mt: 0.5, display: 'flex', flexDirection: 'column', gap: 1.25, textAlign: 'left' }}>
               {[
-                { icon: <LocalHospital />, label: 'Hospital', value: hospitalName || '—' },
-                { icon: <Email />, label: 'Sign-in email', value: staff?.email },
-                { icon: <BadgeIcon />, label: 'Role', value: 'Hospital Staff' },
+                { icon: <LocalHospital />, label: t('hosp.profile.hospital'), value: hospitalName || '—' },
+                { icon: <Email />, label: t('hosp.profile.signInEmail'), value: staff?.email },
+                { icon: <BadgeIcon />, label: t('hosp.profile.role'), value: t('hosp.profile.hospitalStaff') },
               ].map((r) => (
                 <Box key={r.label} display="flex" gap={1.25} alignItems="flex-start">
                   <Box sx={{ color: 'primary.main', display: 'flex', mt: 0.25, '& svg': { fontSize: 18 } }}>{r.icon}</Box>
@@ -182,31 +184,31 @@ export default function HospitalProfile() {
 
         <Box display="flex" flexDirection="column" gap={{ xs: 2, md: 3 }}>
           {/* Name */}
-          <SectionCard icon={<Person />} title="Display name" subtitle="Shown in the dashboard and on actions you take.">
+          <SectionCard icon={<Person />} title={t('hosp.profile.displayName')} subtitle={t('hosp.profile.shownInTheDashboard')}>
             <Box component="form" onSubmit={saveName} display="flex" gap={1.5} flexWrap="wrap" alignItems="flex-start">
-              <TextField label="Full name" value={name} onChange={(e) => { setName(e.target.value); setNameError(''); }}
+              <TextField label={t('hosp.profile.fullName')} value={name} onChange={(e) => { setName(e.target.value); setNameError(''); }}
                 error={!!nameError} helperText={nameError} autoComplete="name" sx={{ flex: '1 1 260px' }} />
               <Button type="submit" variant="contained" disabled={!nameChanged || nameBusy} sx={{ height: 56 }}
                 startIcon={nameBusy ? <CircularProgress size={16} color="inherit" /> : <Save />}>
-                Save
+                {t('hosp.profile.save')}
               </Button>
             </Box>
           </SectionCard>
 
           {/* Password */}
-          <SectionCard icon={<Lock />} title="Change password" subtitle={`Use at least ${PASSWORD_MIN} characters.`}>
+          <SectionCard icon={<Lock />} title={t('hosp.profile.changePassword')} subtitle={t('hosp.profile.pwRule', { min: PASSWORD_MIN })}>
             <Box component="form" onSubmit={savePassword} display="grid" gap={2} gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }}>
-              <TextField label="Current password" type={showPw ? 'text' : 'password'} value={pw.current} onChange={setPwField('current')}
+              <TextField label={t('hosp.profile.currentPassword')} type={showPw ? 'text' : 'password'} value={pw.current} onChange={setPwField('current')}
                 autoComplete="current-password" sx={{ gridColumn: '1 / -1' }} slotProps={{ input: { endAdornment: eye } }} />
-              <TextField label="New password" type={showPw ? 'text' : 'password'} value={pw.next} onChange={setPwField('next')}
-                autoComplete="new-password" error={!!tooShort} helperText={tooShort ? `At least ${PASSWORD_MIN} characters.` : ' '} />
-              <TextField label="Confirm new password" type={showPw ? 'text' : 'password'} value={pw.confirm} onChange={setPwField('confirm')}
-                autoComplete="new-password" error={!!mismatch} helperText={mismatch ? 'Passwords don’t match.' : ' '} />
+              <TextField label={t('hosp.profile.newPassword')} type={showPw ? 'text' : 'password'} value={pw.next} onChange={setPwField('next')}
+                autoComplete="new-password" error={!!tooShort} helperText={tooShort ? t('hosp.profile.pwShort', { min: PASSWORD_MIN }) : ' '} />
+              <TextField label={t('hosp.profile.confirmNewPassword')} type={showPw ? 'text' : 'password'} value={pw.confirm} onChange={setPwField('confirm')}
+                autoComplete="new-password" error={!!mismatch} helperText={mismatch ? t('hosp.profile.pwMismatch') : ' '} />
               {pwError && <Alert severity="error" sx={{ gridColumn: '1 / -1', borderRadius: 2 }}>{pwError}</Alert>}
               <Box sx={{ gridColumn: '1 / -1' }}>
                 <Button type="submit" variant="contained" disabled={pwBusy || !pw.current || !pw.next || !pw.confirm || !!tooShort || !!mismatch}
                   startIcon={pwBusy ? <CircularProgress size={16} color="inherit" /> : <Lock />}>
-                  Change password
+                  {t('hosp.profile.changePassword')}
                 </Button>
               </Box>
             </Box>

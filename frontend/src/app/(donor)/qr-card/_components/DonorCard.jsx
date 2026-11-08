@@ -1,4 +1,5 @@
 'use client';
+import { useT } from '@/i18n/I18nProvider';
 import { forwardRef } from 'react';
 import { Avatar, Box, Button, CircularProgress, Typography } from '@mui/material';
 import FavoriteIcon from '@mui/icons-material/Favorite';
@@ -34,6 +35,7 @@ function Field({ label, children }) {
 const DonorCard = forwardRef(function DonorCard(
   { name, photoSrc, initials, bloodType, donorId, verified, qrToken, qrState, validUntil, onRetry }, ref,
 ) {
+  const t = useT();
   return (
     <Box ref={ref} id="donor-card" sx={{
       position: 'relative', overflow: 'hidden', borderRadius: '20px', color: '#fff', background: RED,
@@ -57,14 +59,14 @@ const DonorCard = forwardRef(function DonorCard(
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Typography sx={{ fontWeight: 800, fontSize: '1rem', lineHeight: 1.1, color: '#fff' }}>{BRAND.name}</Typography>
           <Typography sx={{ fontSize: '0.64rem', fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.75)' }}>
-            Blood Donor ID Card
+            {t('donor.qr.card.title')}
           </Typography>
         </Box>
         <Box sx={{
           px: 1.5, py: 0.5, borderRadius: '12px', bgcolor: '#fff', color: '#C91D32', textAlign: 'center', flexShrink: 0,
           boxShadow: '0 6px 14px rgba(0,0,0,0.18)',
         }}>
-          <Typography sx={{ fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.12em', color: 'rgba(201,29,50,0.75)', lineHeight: 1.2 }}>TYPE</Typography>
+          <Typography sx={{ fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.12em', color: 'rgba(201,29,50,0.75)', lineHeight: 1.2 }}>{t('donor.qr.card.type')}</Typography>
           <Typography sx={{ fontWeight: 900, fontSize: '1.45rem', lineHeight: 1, letterSpacing: '-0.02em' }}>{bloodType || '—'}</Typography>
         </Box>
       </Box>
@@ -81,7 +83,7 @@ const DonorCard = forwardRef(function DonorCard(
             </Avatar>
             <Box sx={{ minWidth: 0 }}>
               <Typography sx={{ fontWeight: 800, fontSize: { xs: '1.05rem', sm: '1.25rem' }, lineHeight: 1.15, color: '#fff', overflowWrap: 'anywhere' }}>
-                {name || 'Donor'}
+                {name || t('donor.qr.card.donor')}
               </Typography>
               <Box sx={{
                 mt: 0.6, display: 'inline-flex', alignItems: 'center', gap: 0.5, px: 1, py: 0.25, borderRadius: '999px',
@@ -89,13 +91,13 @@ const DonorCard = forwardRef(function DonorCard(
                 fontSize: '0.7rem', fontWeight: 700, color: '#fff',
               }}>
                 {verified ? <VerifiedIcon sx={{ fontSize: 13 }} /> : <LockIcon sx={{ fontSize: 12 }} />}
-                {verified ? 'Verified donor' : 'Not registered'}
+                {verified ? t('donor.qr.card.verified') : t('donor.qr.card.notRegistered')}
               </Box>
             </Box>
           </Box>
           <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5 }}>
-            <Field label="Donor ID"><Box component="span" sx={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', letterSpacing: '0.04em' }}>{donorId}</Box></Field>
-            <Field label="QR valid until">{validUntil || '—'}</Field>
+            <Field label={t('donor.qr.card.donorId')}><Box component="span" sx={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', letterSpacing: '0.04em' }}>{donorId}</Box></Field>
+            <Field label={t('donor.qr.card.validUntil')}>{validUntil || '—'}</Field>
           </Box>
         </Box>
 
@@ -106,21 +108,21 @@ const DonorCard = forwardRef(function DonorCard(
         }}>
           {qrState === 'ready' ? (
             <QRCode value={qrToken} size={256} fgColor={QR_INK} bgColor="#FFFFFF" level="M"
-              style={{ width: '100%', height: '100%' }} title="Donor QR code" />
+              style={{ width: '100%', height: '100%' }} title={t('donor.qr.card.qrTitle')} />
           ) : qrState === 'loading' ? (
-            <CircularProgress size={26} sx={{ color: '#C91D32' }} aria-label="Generating QR code" />
+            <CircularProgress size={26} sx={{ color: '#C91D32' }} aria-label={t('donor.qr.card.generating')} />
           ) : qrState === 'error' ? (
             <Box sx={{ textAlign: 'center', color: '#64748B' }}>
-              <Typography sx={{ fontSize: '0.7rem', fontWeight: 600, mb: 0.5 }}>Couldn’t load QR</Typography>
+              <Typography sx={{ fontSize: '0.7rem', fontWeight: 600, mb: 0.5 }}>{t('donor.qr.card.qrFailed')}</Typography>
               <Button size="small" onClick={onRetry} startIcon={<RefreshIcon sx={{ fontSize: 16 }} />}
                 sx={{ fontSize: '0.72rem', fontWeight: 700, color: '#C91D32', minWidth: 0, px: 1 }}>
-                Retry
+                {t('donor.qr.card.retry')}
               </Button>
             </Box>
           ) : (
             <Box sx={{ textAlign: 'center', color: '#94A3B8' }}>
               <LockIcon sx={{ fontSize: 28 }} />
-              <Typography sx={{ fontSize: '0.66rem', fontWeight: 600, mt: 0.25, lineHeight: 1.3 }}>Register to<br />unlock</Typography>
+              <Typography sx={{ fontSize: '0.66rem', fontWeight: 600, mt: 0.25, lineHeight: 1.3 }}>{t('donor.qr.card.unlock1')}<br />{t('donor.qr.card.unlock2')}</Typography>
             </Box>
           )}
         </Box>
@@ -132,10 +134,10 @@ const DonorCard = forwardRef(function DonorCard(
         display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2,
       }}>
         <Typography sx={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.85)', fontWeight: 600 }}>
-          Show at any partner hospital or blood drive
+          {t('donor.qr.card.footer')}
         </Typography>
         <Typography sx={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.85)', fontWeight: 600, whiteSpace: 'nowrap' }}>
-          {BRAND.tagline}
+          {t('common.brandTagline')}
         </Typography>
       </Box>
     </Box>

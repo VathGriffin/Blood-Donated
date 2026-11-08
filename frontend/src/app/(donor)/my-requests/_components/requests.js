@@ -9,12 +9,13 @@ const daysAgo = (n) => Date.now() - n * 86400000;
 
 // Date-range filter on when the request was submitted (createdAt). The API returns all of the
 // donor's own requests in one call, so this filters what is already loaded.
+// Labels: donor.mreq.ranges.<value>
 export const RANGES = [
-  { value: 'all', label: 'All time', test: () => true },
-  { value: '7', label: 'Past 7 days', test: (t) => t >= daysAgo(7) },
-  { value: '30', label: 'Past 30 days', test: (t) => t >= daysAgo(30) },
-  { value: '90', label: 'Past 3 months', test: (t) => t >= daysAgo(90) },
-  { value: 'year', label: 'This year', test: (t) => new Date(t).getFullYear() === new Date().getFullYear() },
+  { value: 'all', test: () => true },
+  { value: '7', test: (t) => t >= daysAgo(7) },
+  { value: '30', test: (t) => t >= daysAgo(30) },
+  { value: '90', test: (t) => t >= daysAgo(90) },
+  { value: 'year', test: (t) => new Date(t).getFullYear() === new Date().getFullYear() },
 ];
 
 // Most urgent first among open requests, then newest first.

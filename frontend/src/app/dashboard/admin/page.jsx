@@ -1,4 +1,6 @@
 'use client';
+import { apiErrorMessage } from '@/lib/api-error';
+import { useI18n } from '@/i18n/I18nProvider';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -48,12 +50,13 @@ const splitRow = (main = 2, side = 1) => ({
 const DAY = 24 * 60 * 60 * 1000;
 const endOfToday = (n) => new Date(new Date(n.getFullYear(), n.getMonth(), n.getDate()).getTime() + DAY);
 const lastDays = (days) => (n) => { const to = endOfToday(n); return [new Date(to - days * DAY), to]; };
+// Labels: adm.home.ranges.<key>
 const RANGES = {
-  month: { label: 'Month to date', get: (n) => [new Date(n.getFullYear(), n.getMonth(), 1), endOfToday(n)] },
-  last7: { label: 'Last 7 days', get: lastDays(7) },
-  last30: { label: 'Last 30 days', get: lastDays(30) },
-  last90: { label: 'Last 90 days', get: lastDays(90) },
-  year: { label: 'Year to date', get: (n) => [new Date(n.getFullYear(), 0, 1), endOfToday(n)] },
+  month: { get: (n) => [new Date(n.getFullYear(), n.getMonth(), 1), endOfToday(n)] },
+  last7: { get: lastDays(7) },
+  last30: { get: lastDays(30) },
+  last90: { get: lastDays(90) },
+  year: { get: (n) => [new Date(n.getFullYear(), 0, 1), endOfToday(n)] },
 };
 const REFRESH_MS = 60 * 1000; // silent background refresh so charts follow the database
 
@@ -71,6 +74,7 @@ const headerBtnSx = { border: 1, borderColor: 'divider', borderRadius: '10px', b
 
 // ── Page ───────────────────────────────────────────────────────────────────────
 const Dashboard = () => {
+  const { t, lang } = useI18n();
   const { token } = useAuth();
   const [rangeKey, setRangeKey] = useState('month');
   const [hospitalId, setHospitalId] = useState('all');
@@ -101,10 +105,11 @@ const Dashboard = () => {
   const loadStats = useCallback(async () => {
     try {
       const { data } = await axios.get(`${API_BASE}/api/stats`, { ...auth, signal: signalFor('stats') });
+      if (!data?.donors) throw new Error('Unexpected stats response');
       setStats(keepIfSame(data));
       setStatsError(null);
     } catch (err) {
-      if (!axios.isCancel(err)) setStatsError(err.response?.data?.error || 'Could not load dashboard figures.');
+      if (!axios.isCancel(err)) setStatsError(err);
     }
   }, [auth, signalFor]);
 
@@ -127,7 +132,7 @@ const Dashboard = () => {
       setInventory(keepIfSame(Array.isArray(data) ? data : []));
       setInventoryError(null);
     } catch (err) {
-      if (!axios.isCancel(err)) setInventoryError(err.response?.data?.error || err.response?.data?.message || 'Could not load blood inventory.');
+      if (!axios.isCancel(err)) setInventoryError(err);
     }
   }, [hospitalId, signalFor]);
 
@@ -169,39 +174,42 @@ const Dashboard = () => {
   const totals = useMemo(() => summarize(stock), [stock]);
   // Nothing recorded (no rows, or every row at 0): show one calm empty state, not eight red zeros.
   const noStock = inventory !== null && totals.totalUnits === 0;
-  const scopeName = hospitalId === 'all' ? 'the network' : (hospitals.find((h) => h._id === hospitalId)?.name || 'this hospital');
+  const scopeName = hospitalId === 'all' ? t('adm.home.theNetwork') : (hospitals.find((h) => h._id === hospitalId)?.name || t('adm.home.thisHospital'));
   // The critical bucket also holds out-of-stock types (0 units, so they add nothing to the donut).
   const donut = useMemo(() => ['adequate', 'low', 'critical']
     .map((k) => ({ key: k, name: STOCK[k].label, value: totals[k].units, color: STOCK[k].color }))
-    .filter((d) => d.value > 0), [totals]);
+    // `lang` re-labels the slices when the language changes.
+    .filter((d) => d.value > 0), [totals, lang]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Legend thresholds, when every type shares one minimum (the default is 10 → ≥ 20 / 10 – 19 / 1 – 9).
   const mins = [...new Set(stock.map((i) => i.minUnits))];
   const m = mins.length === 1 ? mins[0] : null;
   const legend = [
-    { k: 'adequate', text: m ? `Adequate (≥ ${m * 2})` : 'Adequate' },
-    { k: 'low', text: m ? `Low (${m}–${m * 2 - 1})` : 'Low' },
-    { k: 'critical', text: m ? `Critical (1–${m - 1})` : 'Critical' },
-    { k: 'empty', text: 'Out of stock (0)' },
+    { k: 'adequate', text: m ? t('adm.home.legend.adequateMin', { min: m * 2 }) : STOCK.adequate.label },
+    { k: 'low', text: m ? t('adm.home.legend.lowRange', { from: m, to: m * 2 - 1 }) : STOCK.low.label },
+    { k: 'critical', text: m ? t('adm.home.legend.criticalRange', { to: m - 1 }) : STOCK.critical.label },
+    { k: 'empty', text: t('adm.home.legend.empty') },
   ];
 
   const handleExport = () => {
     if (!stats) return;
     const rows = [
-      ['Metric', 'Value'],
-      ['Total Donors', stats.donors.total],
-      ['Available Donors', stats.donors.available],
-      ['Total Donations', stats.donations.total],
-      ['Partner Hospitals', stats.hospitals.total],
-      ['Total Requests', stats.requests.total],
-      ['Pending Requests', stats.requests.pending],
-      ['Critical Requests', stats.requests.critical],
-      ['Total Appointments', stats.appointments.total],
-      ['Pending Appointments', stats.appointments.pending],
-      ['Contact Messages', stats.messages.total],
-      ['Blood Units In Stock', totals.totalUnits],
+      [t('adm.home.csv.metric'), t('adm.home.csv.value')],
+      [t('adm.home.csv.totalDonors'), stats.donors.total],
+      [t('adm.home.csv.availableDonors'), stats.donors.available],
+      [t('adm.home.csv.totalDonations'), stats.donations.total],
+      [t('adm.home.csv.hospitals'), stats.hospitals.total],
+      [t('adm.home.csv.totalRequests'), stats.requests.total],
+      [t('adm.home.csv.pendingRequests'), stats.requests.pending],
+      [t('adm.home.csv.criticalRequests'), stats.requests.critical],
+      [t('adm.home.csv.totalAppointments'), stats.appointments.total],
+      [t('adm.home.csv.pendingAppointments'), stats.appointments.pending],
+      [t('adm.home.csv.messages'), stats.messages.total],
+      [t('adm.home.csv.units'), totals.totalUnits],
     ];
-    const blob = new Blob([rows.map((r) => r.join(',')).join('\n')], { type: 'text/csv' });
+    // Quoted cells, with a BOM so spreadsheet apps read Khmer and Vietnamese text correctly.
+    const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url; a.download = 'dashboard_report.csv'; a.click();
@@ -212,17 +220,17 @@ const Dashboard = () => {
   // Memoised on `stats` so the (memoised) cards skip re-rendering when nothing they show changed.
   // Accent colours are fixed hues, so they read the same in light and dark mode.
   const cards = useMemo(() => [
-    { key: 'donors', color: '#C91D32', label: 'Total Donors', icon: <PeopleAltRoundedIcon />, value: stats?.donors.total, hint: stats && `${stats.donors.available} available`, noun: 'new', href: '/dashboard/admin/donors' },
-    { key: 'donations', color: '#2563EB', label: 'Total Donations', icon: <WaterDropIcon />, value: stats?.donations.total, hint: 'Completed donations', noun: 'recorded' },
-    { key: 'requests', color: '#F59E0B', label: 'Blood Requests', icon: <DescriptionRoundedIcon />, value: stats?.requests.total, noun: 'new', href: '/dashboard/admin/requests',
+    { key: 'donors', color: '#C91D32', label: t('adm.home.cards.donors'), icon: <PeopleAltRoundedIcon />, value: stats?.donors.total, hint: stats && t('adm.home.cards.available', { count: stats.donors.available }), trendKey: 'new', href: '/dashboard/admin/donors' },
+    { key: 'donations', color: '#2563EB', label: t('adm.home.cards.donations'), icon: <WaterDropIcon />, value: stats?.donations.total, hint: t('adm.home.cards.completed'), trendKey: 'recorded' },
+    { key: 'requests', color: '#F59E0B', label: t('adm.home.cards.requests'), icon: <DescriptionRoundedIcon />, value: stats?.requests.total, trendKey: 'new', href: '/dashboard/admin/requests',
       hint: stats && (
         <>
-          {stats.requests.pending} pending
-          {stats.requests.critical > 0 && <Box component="span" sx={{ color: 'error.main', fontWeight: 700, ml: 0.75 }}>· {stats.requests.critical} critical</Box>}
+          {t('adm.home.cards.pending', { count: stats.requests.pending })}
+          {stats.requests.critical > 0 && <Box component="span" sx={{ color: 'error.main', fontWeight: 700, ml: 0.75 }}>· {t('adm.home.cards.critical', { count: stats.requests.critical })}</Box>}
         </>
       ) },
-    { key: 'hospitals', color: '#16A34A', label: 'Partner Hospitals', icon: <ApartmentRoundedIcon />, value: stats?.hospitals.total, hint: 'Registered partners', noun: 'added', href: '/dashboard/admin/hospitals' },
-  ], [stats]);
+    { key: 'hospitals', color: '#16A34A', label: t('adm.home.cards.hospitals'), icon: <ApartmentRoundedIcon />, value: stats?.hospitals.total, hint: t('adm.home.cards.registered'), trendKey: 'added', href: '/dashboard/admin/hospitals' },
+  ], [stats, t]);
 
   const inventoryHref = '/dashboard/admin/inventory';
 
@@ -230,21 +238,21 @@ const Dashboard = () => {
     <Box>
       <PageHeader
         icon={<GridViewRoundedIcon />}
-        title="Admin Dashboard"
-        subtitle="Overview of your blood donation management system"
+        title={t('adm.home.adminDashboard')}
+        subtitle={t('adm.home.overviewOfYourBlood')}
         sx={{ mb: { xs: 2.5, md: 3 } }}
         actions={
           <>
-            <Tooltip title="Export CSV">
+            <Tooltip title={t('adm.home.exportCsv')}>
               <span>
-                <IconButton onClick={handleExport} disabled={!stats} aria-label="Export CSV" sx={headerBtnSx}>
+                <IconButton onClick={handleExport} disabled={!stats} aria-label={t('adm.home.exportCsv')} sx={headerBtnSx}>
                   <FileDownloadIcon fontSize="small" />
                 </IconButton>
               </span>
             </Tooltip>
-            <Tooltip title="Refresh data">
+            <Tooltip title={t('adm.home.refreshData')}>
               <span>
-                <IconButton onClick={() => refresh()} disabled={refreshing} aria-label="Refresh data" sx={headerBtnSx}>
+                <IconButton onClick={() => refresh()} disabled={refreshing} aria-label={t('adm.home.refreshData')} sx={headerBtnSx}>
                   {refreshing ? <CircularProgress size={18} /> : <RefreshIcon fontSize="small" />}
                 </IconButton>
               </span>
@@ -253,7 +261,7 @@ const Dashboard = () => {
               size="small"
               value={rangeKey}
               onChange={(e) => setRangeKey(e.target.value)}
-              aria-label="Date range for trends"
+              aria-label={t('adm.home.dateRangeForTrends')}
               renderValue={() => (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
                   <CalendarTodayOutlinedIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
@@ -264,7 +272,7 @@ const Dashboard = () => {
             >
               {Object.entries(RANGES).map(([k, r]) => (
                 <MenuItem key={k} value={k}>
-                  <ListItemText primary={r.label} secondary={rangeText(r.get(new Date()))} />
+                  <ListItemText primary={t(`adm.home.ranges.${k}`)} secondary={rangeText(r.get(new Date()))} />
                 </MenuItem>
               ))}
             </Select>
@@ -273,8 +281,8 @@ const Dashboard = () => {
       />
 
       {statsError && (
-        <Alert severity="error" sx={{ mb: 2.5 }} action={<Button color="inherit" size="small" onClick={() => refresh()}>Retry</Button>}>
-          {statsError}{stats && ' Showing the last figures that loaded.'}
+        <Alert severity="error" sx={{ mb: 2.5 }} action={<Button color="inherit" size="small" onClick={() => refresh()}>{t('adm.home.retry')}</Button>}>
+          {apiErrorMessage(statsError, t('adm.home.statsFailed'))}{stats && ` ${t('adm.home.showingLast')}`}
         </Alert>
       )}
 
@@ -290,24 +298,24 @@ const Dashboard = () => {
         <SectionCard
           padded={false}
           icon={<WaterDropIcon />}
-          title="Blood Inventory by Type"
-          subtitle="Units in stock, coloured by stock level"
+          title={t('adm.home.bloodInventoryByType')}
+          subtitle={t('adm.home.unitsInStockColoured')}
           action={
-            <Select size="small" value={hospitalId} onChange={(e) => setHospitalId(e.target.value)} aria-label="Hospital" sx={{ minWidth: 160, maxWidth: 240, borderRadius: '10px', fontSize: '0.85rem', fontWeight: 600 }}>
-              <MenuItem value="all">All Hospitals</MenuItem>
+            <Select size="small" value={hospitalId} onChange={(e) => setHospitalId(e.target.value)} aria-label={t('adm.home.hospital')} sx={{ minWidth: 160, maxWidth: 240, borderRadius: '10px', fontSize: '0.85rem', fontWeight: 600 }}>
+              <MenuItem value="all">{t('adm.home.allHospitals')}</MenuItem>
               {hospitals.map((h) => <MenuItem key={h._id} value={h._id}>{h.name}</MenuItem>)}
             </Select>
           }
         >
-          {inventoryError && <CardError message={inventoryError} onRetry={loadInventory} />}
+          {inventoryError && <CardError message={apiErrorMessage(inventoryError, t('adm.home.inventoryFailed'))} onRetry={loadInventory} />}
           <Box sx={{ px: { xs: 1, md: 2.5 }, pb: 2.5 }}>
             {inventory === null ? (inventoryError ? null : <Skeleton variant="rounded" height={300} />) : noStock ? (
               <Box sx={{ minHeight: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <EmptyState
                   icon={<WaterDropIcon />}
-                  title="No inventory data recorded"
-                  description={`No blood units have been entered for ${scopeName} yet. Stock levels and the chart appear here once inventory is updated.`}
-                  action={<Button component={Link} href={inventoryHref} variant="outlined" size="small">Update inventory</Button>}
+                  title={t('adm.home.noInventoryDataRecorded')}
+                  description={t('adm.home.noUnits', { scope: scopeName })}
+                  action={<Button component={Link} href={inventoryHref} variant="outlined" size="small">{t('adm.home.updateInventory')}</Button>}
                 />
               </Box>
             ) : (
@@ -326,11 +334,11 @@ const Dashboard = () => {
           </Box>
         </SectionCard>
 
-        <SectionCard padded={false} icon={<PieChartRoundedIcon />} title="Inventory Status" subtitle="Share of units by stock level">
+        <SectionCard padded={false} icon={<PieChartRoundedIcon />} title={t('adm.home.inventoryStatus')} subtitle={t('adm.home.shareOfUnitsBy')}>
           <Box sx={{ px: { xs: 2, md: 3 }, pb: 3 }}>
             {inventory === null ? (inventoryError ? null : <Skeleton variant="circular" width={210} height={210} sx={{ mx: 'auto', mt: 2 }} />) : noStock ? (
               <Box sx={{ minHeight: 260, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <EmptyState icon={<PieChartRoundedIcon />} title="Nothing to chart yet" description="The stock-level split appears once units are recorded." />
+                <EmptyState icon={<PieChartRoundedIcon />} title={t('adm.home.nothingToChartYet')} description={t('adm.home.theStockLevelSplit')} />
               </Box>
             ) : (
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: { xs: 'column', sm: 'row', lg: 'column', xl: 'row' }, gap: 3, pt: 2 }}>
@@ -341,7 +349,7 @@ const Dashboard = () => {
                       <Box sx={{ width: 14, height: 14, borderRadius: '50%', bgcolor: d.color, flexShrink: 0, mt: 0.4 }} />
                       <Box sx={{ flexGrow: 1, minWidth: 0 }}>
                         <Typography variant="body2" sx={{ fontWeight: 700 }}>{d.name}</Typography>
-                        <Typography variant="body2" color="text.secondary">{d.value.toLocaleString()} units</Typography>
+                        <Typography variant="body2" color="text.secondary">{t('shared.charts.inStock', { count: d.value, units: d.value.toLocaleString() })}</Typography>
                       </Box>
                       <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
                         {Math.round((d.value / totals.totalUnits) * 100)}%
@@ -350,7 +358,7 @@ const Dashboard = () => {
                   ))}
                   {totals.empty.types > 0 && (
                     <Typography variant="caption" color="error.main" sx={{ fontWeight: 600 }}>
-                      {totals.empty.types} blood type{totals.empty.types === 1 ? ' is' : 's are'} out of stock.
+                      {t('adm.home.typesOut', { count: totals.empty.types })}
                     </Typography>
                   )}
                 </Box>
@@ -365,14 +373,14 @@ const Dashboard = () => {
         <SectionCard
           padded={false}
           icon={<DescriptionRoundedIcon />}
-          title="Recent Blood Requests"
-          action={<Button component={Link} href="/dashboard/admin/requests" size="small" sx={{ fontWeight: 700 }}>View All</Button>}
+          title={t('adm.home.recentBloodRequests')}
+          action={<Button component={Link} href="/dashboard/admin/requests" size="small" sx={{ fontWeight: 700 }}>{t('adm.home.viewAll')}</Button>}
         >
           <TableContainer sx={compactTableContainerSx}>
             <Table size="small" sx={{ minWidth: 700, '& td': { borderBottom: 'none', py: 1.25 } }}>
               <TableHead>
                 <TableRow>
-                  {['#', 'Patient Name', 'Blood Type', 'Hospital', 'Urgency', 'Status', 'Date', ''].map((h, i) => (
+                  {['#', t('adm.home.cols.patient'), t('adm.home.cols.bloodType'), t('adm.home.cols.hospital'), t('adm.home.cols.urgency'), t('adm.home.cols.status'), t('adm.home.cols.date'), ''].map((h, i) => (
                     <TableCell key={i} sx={compactHeadCell}>{h}</TableCell>
                   ))}
                 </TableRow>
@@ -382,10 +390,10 @@ const Dashboard = () => {
                   <TableRow key={i}><TableCell colSpan={8}><Skeleton variant="text" /></TableCell></TableRow>
                 ))}
                 {!stats && statsError && (
-                  <TableRow><TableCell colSpan={8}><EmptyState icon={<DescriptionRoundedIcon />} title="Requests unavailable" description="Recent requests could not be loaded. Use refresh to try again." /></TableCell></TableRow>
+                  <TableRow><TableCell colSpan={8}><EmptyState icon={<DescriptionRoundedIcon />} title={t('adm.home.requestsUnavailable')} description={t('adm.home.recentRequestsCouldNot')} /></TableCell></TableRow>
                 )}
                 {stats && stats.recentRequests.length === 0 && (
-                  <TableRow><TableCell colSpan={8}><EmptyState icon={<DescriptionRoundedIcon />} title="No requests yet" description="Blood requests will appear here as they come in." /></TableCell></TableRow>
+                  <TableRow><TableCell colSpan={8}><EmptyState icon={<DescriptionRoundedIcon />} title={t('adm.home.noRequestsYet')} description={t('adm.home.bloodRequestsWillAppear')} /></TableCell></TableRow>
                 )}
                 {stats?.recentRequests.map((r, i) => (
                   <TableRow key={r._id} hover>
@@ -403,7 +411,7 @@ const Dashboard = () => {
                     <TableCell><StatusBadge status={r.urgency} size="small" dot={false} /></TableCell>
                     <TableCell><StatusBadge status={r.status} size="small" dot={false} /></TableCell>
                     <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDate(r.createdAt)}</TableCell>
-                    <TableCell align="right"><RowMenu label="Open requests" href="/dashboard/admin/requests" /></TableCell>
+                    <TableCell align="right"><RowMenu label={t('adm.home.openRequests')} href="/dashboard/admin/requests" /></TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -414,7 +422,7 @@ const Dashboard = () => {
         <LowStockAlert
           items={inventory}
           href={inventoryHref}
-          error={inventoryError && 'Stock alerts could not be loaded.'}
+          error={inventoryError && t('adm.home.alertsFailed')}
           onRetry={loadInventory}
         />
       </Box>

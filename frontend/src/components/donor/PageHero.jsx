@@ -1,4 +1,5 @@
 'use client';
+import { useT } from '@/i18n/I18nProvider';
 import Link from 'next/link';
 import { Box, Button, Typography } from '@mui/material';
 import FavoriteIcon from '@mui/icons-material/Favorite';
@@ -11,6 +12,7 @@ import { script } from '@/lib/fonts';
  * style as the profile banner: icon tile, title, subtitle and an optional primary action.
  */
 export default function DonorPageHero({ id, icon, title, subtitle, actionHref, actionLabel, badge }) {
+  const t = useT();
   return (
     <Box component="section" aria-labelledby={id} sx={{
       position: 'relative', overflow: 'hidden', color: '#fff', borderRadius: '18px',
@@ -28,7 +30,7 @@ export default function DonorPageHero({ id, icon, title, subtitle, actionHref, a
           display: { xs: 'none', xl: 'block' }, position: 'absolute', right: 225, top: 26, transform: 'rotate(-10deg)',
           fontSize: '2.1rem', lineHeight: 1.05, fontWeight: 700, color: '#fff', textAlign: 'center', textShadow: '0 2px 10px rgba(90,8,18,0.35)',
         }}>
-          Give Blood<br />Give Hope
+          {t('donor.pageHero.line1')}<br />{t('donor.pageHero.line2')}
           <FavoriteIcon sx={{ fontSize: 22, ml: 0.5, verticalAlign: 'top' }} />
         </Typography>
       </Box>

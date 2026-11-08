@@ -9,6 +9,7 @@ import DashboardTopBar from './DashboardTopBar';
 import { useDashboardSession } from '@/hooks/useDashboardSession';
 import { useDashboardNotifications } from '@/hooks/useDashboardNotifications';
 import { ROLE_CONFIG, ROLES } from '@/lib/navigation';
+import { useT } from '@/i18n/I18nProvider';
 
 // Shown instead of the page while the session is being checked or a redirect is in
 // flight — protected content is never rendered before the server confirms the role.
@@ -50,6 +51,7 @@ export default function DashboardShell({ role, children }) {
   const session = useDashboardSession(role);
   const notifications = useDashboardNotifications(session);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const t = useT();
 
   useEffect(() => {
     if (session.status === 'unauthenticated') {
@@ -66,10 +68,10 @@ export default function DashboardShell({ role, children }) {
     return (
       <ShellStatus>
         <Alert severity="error" sx={{ maxWidth: 420, textAlign: 'left' }}
-          action={<Button color="inherit" size="small" onClick={session.retry}>Retry</Button>}>
-          We couldn&apos;t verify your session. Check your connection and try again.
+          action={<Button color="inherit" size="small" onClick={session.retry}>{t('common.retry')}</Button>}>
+          {t('layout.shell.verifyError')}
         </Alert>
-        <Button color="inherit" onClick={session.logout}>Sign out</Button>
+        <Button color="inherit" onClick={session.logout}>{t('common.signOut')}</Button>
       </ShellStatus>
     );
   }
@@ -80,7 +82,7 @@ export default function DashboardShell({ role, children }) {
       <ShellStatus>
         <CircularProgress size={28} color="primary" />
         <Typography variant="body2" color="text.secondary">
-          {redirecting ? 'Redirecting…' : 'Checking your session…'}
+          {t(redirecting ? 'layout.shell.redirecting' : 'layout.shell.checking')}
         </Typography>
       </ShellStatus>
     );
@@ -97,7 +99,7 @@ export default function DashboardShell({ role, children }) {
           '&:focus': { top: 8 },
         }}
       >
-        Skip to content
+        {t('common.skipToContent')}
       </Box>
 
       <DashboardSidebar role={role} profile={session.profile} badges={navBadges(notifications.items)} open={mobileOpen} onClose={() => setMobileOpen(false)} />

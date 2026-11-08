@@ -138,7 +138,6 @@ export const AuthProvider = ({ children }) => {
             }
         );
         return () => axios.interceptors.response.eject(interceptor);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [token, staffRole, router]);
 
     const role = staffRole;

@@ -11,6 +11,7 @@ import WifiOffIcon from '@mui/icons-material/WifiOff';
 import { useUserAuth } from '@/store/UserAuthContext';
 import { detectLanguage, QUICK_PROMPTS } from '@/lib/chatbot-kb';
 import { askAssistant } from '@/lib/chat-client';
+import { useI18n } from '@/i18n/I18nProvider';
 import ChatMessage from '@/components/chat/ChatMessage';
 
 export default function AssistantPage() {
@@ -21,7 +22,8 @@ export default function AssistantPage() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [promptLang, setPromptLang] = useState('en');
+  // Suggestions and the interface follow the site language (no separate language state).
+  const { t, lang: promptLang } = useI18n();
   const chatPanelRef = useRef(null);
   const messagesRef = useRef(null);
   const inputRef = useRef(null);
@@ -45,8 +47,9 @@ export default function AssistantPage() {
     const content = (text ?? input).trim();
     if (!content || loading) return;
 
-    const lang = detectLanguage(content);
-    setPromptLang(lang);
+    // Reply in the site language, unless the question is plainly written in Khmer or Vietnamese.
+    const detected = detectLanguage(content);
+    const lang = detected !== 'en' ? detected : promptLang;
 
     setMessages([...messages, { role: 'user', content }]);
     setInput('');
@@ -92,9 +95,9 @@ export default function AssistantPage() {
               <SmartToyIcon sx={{ fontSize: 32, color: 'white' }} />
             </Box>
             <Box>
-              <Typography fontWeight={800} fontSize="1.05rem">How can I help you today?</Typography>
+              <Typography fontWeight={800} fontSize="1.05rem">{t('assistant.helpTitle')}</Typography>
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-                Ask about eligibility, blood types, appointments, or anything about donating.
+                {t('assistant.helpLead')}
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, width: '100%', mt: 1 }}>
@@ -127,8 +130,8 @@ export default function AssistantPage() {
                 <FavoriteIcon sx={{ fontSize: 16 }} />
               </Avatar>
               <Box>
-                <Typography fontWeight={700} fontSize="0.9rem">BloodLife Assistant</Typography>
-                <Typography variant="caption" color="text.secondary">Ask a question below to get started</Typography>
+                <Typography fontWeight={700} fontSize="0.9rem">{t('assistant.name')}</Typography>
+                <Typography variant="caption" color="text.secondary">{t('assistant.startHint')}</Typography>
               </Box>
             </Box>
 
@@ -137,7 +140,7 @@ export default function AssistantPage() {
                 <Box sx={{ m: 'auto', textAlign: 'center', color: 'text.disabled', px: 3 }}>
                   <SmartToyIcon sx={{ fontSize: 40, mb: 1, opacity: 0.5 }} />
                   <Typography fontSize="0.85rem">
-                    Pick a suggestion on the left, or type your own question.
+                    {t('assistant.emptyHint')}
                   </Typography>
                 </Box>
               )}
@@ -174,7 +177,7 @@ export default function AssistantPage() {
                             ? <WifiOffIcon sx={{ fontSize: 12, color: 'text.disabled' }} />
                             : <SmartToyIcon sx={{ fontSize: 12, color: 'text.disabled' }} />}
                           <Typography variant="caption" color="text.disabled" fontSize="0.68rem">
-                            {msg.offline ? `Offline answer — ${msg.error || 'AI temporarily unavailable'}` : 'Powered by Google Gemini'}
+                            {t(msg.offline ? 'assistant.offline' : 'assistant.poweredBy')}
                           </Typography>
                         </Box>
                       )}
@@ -215,14 +218,14 @@ export default function AssistantPage() {
               <TextField
                 inputRef={inputRef}
                 fullWidth multiline maxRows={4} size="small"
-                placeholder="Type your question…"
+                placeholder={t('assistant.placeholder')}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: isDark ? '#1C2E49' : '#fff' } }}
               />
               <IconButton
-                aria-label="Send message"
+                aria-label={t('assistant.send')}
                 onClick={() => sendMessage()}
                 disabled={loading || !input.trim()}
                 sx={{

@@ -15,6 +15,8 @@ import HistoryIcon from '@mui/icons-material/History';
 import {
   APPT_STATUS, CardMenu, MetaLine, Notice, Pill, actionBtnSx, dangerBtnSx, formatDate, itemCardSx, todayKey,
 } from '@/components/donor/ui';
+import { useT } from '@/i18n/I18nProvider';
+import { currentIntlLocale } from '@/i18n/config';
 import HospitalPhoto from '@/app/(public)/appointments/_components/HospitalPhoto';
 
 const STATUS_ICON = {
@@ -41,6 +43,7 @@ export function DateBadge({ date }) {
 
 /** One of the signed-in donor's own appointments. Donors can't change status here (staff do). */
 export default function AppointmentCard({ appt, hospitalPhone, hospitalImage }) {
+  const t = useT();
   const status = appt.status || 'Pending';
   const meta = APPT_STATUS[status] || APPT_STATUS.Pending;
   const open = status === 'Pending' || status === 'Confirmed';
@@ -49,60 +52,60 @@ export default function AppointmentCard({ appt, hospitalPhone, hospitalImage }) 
   const longDate = formatDate(appt.date, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
   const rebookHref = appt.hospital ? `/appointments?hospital=${encodeURIComponent(appt.hospital)}` : '/appointments';
 
-  const qrBtn = <Button component={Link} href="/qr-card" variant="outlined" startIcon={<QrCode2Icon />} sx={actionBtnSx}>My QR Card</Button>;
+  const qrBtn = <Button component={Link} href="/qr-card" variant="outlined" startIcon={<QrCode2Icon />} sx={actionBtnSx}>{t('donor.appt.qrCard')}</Button>;
   const callBtn = tel && (
     <Button component="a" href={tel} variant="outlined" startIcon={<HeadsetMicOutlinedIcon />} sx={dangerBtnSx}
-      aria-label={`Contact ${appt.location} by phone`}>
-      Contact Center
+      aria-label={t('donor.appt.contactAria', { place: appt.location })}>
+      {t('donor.appt.contactCenter')}
     </Button>
   );
-  const bookAgain = <Button component={Link} href={rebookHref} variant="outlined" startIcon={<EventRepeatIcon />} sx={dangerBtnSx}>Book Again</Button>;
+  const bookAgain = <Button component={Link} href={rebookHref} variant="outlined" startIcon={<EventRepeatIcon />} sx={dangerBtnSx}>{t('donor.appt.bookAgain')}</Button>;
 
   let notice = null;
   let actions = null;
   if (past) {
     notice = (
       <Notice tone="neutral" icon={<HistoryIcon />}>
-        This date has passed without a check-in.
-        <Box component="span" sx={{ display: 'block', fontWeight: 500 }}>Still want to donate? Pick a new slot.</Box>
+        {t('donor.appt.pastTitle')}
+        <Box component="span" sx={{ display: 'block', fontWeight: 500 }}>{t('donor.appt.pastText')}</Box>
       </Notice>
     );
     actions = bookAgain;
   } else if (status === 'Pending') {
     notice = (
       <Notice tone="warning" icon={<HourglassTopIcon />}>
-        Waiting for the donation center to confirm your slot.
-        <Box component="span" sx={{ display: 'block', fontWeight: 500 }}>Bring your QR card on the day so staff can check you in.</Box>
+        {t('donor.appt.pendingTitle')}
+        <Box component="span" sx={{ display: 'block', fontWeight: 500 }}>{t('donor.appt.pendingText')}</Box>
       </Notice>
     );
     actions = <>{qrBtn}{callBtn}</>;
   } else if (status === 'Confirmed') {
     notice = (
       <Notice tone="success" icon={<CheckCircleIcon />}>
-        Your appointment is confirmed. See you at the center!
-        <Box component="span" sx={{ display: 'block', fontWeight: 500 }}>To change it, please contact the donation center.</Box>
+        {t('donor.appt.confirmedTitle')}
+        <Box component="span" sx={{ display: 'block', fontWeight: 500 }}>{t('donor.appt.confirmedText')}</Box>
       </Notice>
     );
     actions = <>{qrBtn}{callBtn}</>;
   } else if (status === 'CheckedIn') {
     notice = (
       <Notice tone="info" icon={<FavoriteIcon />}>
-        You checked in{formatDate(appt.checkedInAt) ? ` on ${formatDate(appt.checkedInAt)}` : ''}. Thank you for donating!
+        {formatDate(appt.checkedInAt) ? t('donor.appt.checkedInOn', { date: formatDate(appt.checkedInAt) }) : t('donor.appt.checkedIn')}
       </Notice>
     );
   } else if (status === 'Cancelled') {
-    notice = <Notice tone="neutral" icon={<DoNotDisturbOnOutlinedIcon />}>This appointment was cancelled.</Notice>;
+    notice = <Notice tone="neutral" icon={<DoNotDisturbOnOutlinedIcon />}>{t('donor.appt.cancelled')}</Notice>;
     actions = bookAgain;
   }
 
   const menuItems = [
-    open && !past && { label: 'Show my QR card', icon: <QrCode2Icon />, href: '/qr-card' },
-    tel && { label: `Call ${appt.location}`, icon: <HeadsetMicOutlinedIcon />, href: tel, external: true },
-    { label: 'Book another appointment', icon: <EventRepeatIcon />, href: rebookHref },
+    open && !past && { label: t('donor.appt.showQr'), icon: <QrCode2Icon />, href: '/qr-card' },
+    tel && { label: t('donor.appt.call', { place: appt.location }), icon: <HeadsetMicOutlinedIcon />, href: tel, external: true },
+    { label: t('donor.appt.bookAnother'), icon: <EventRepeatIcon />, href: rebookHref },
   ].filter(Boolean);
 
   return (
-    <Paper component="article" elevation={0} aria-label={`Appointment at ${appt.location} on ${longDate || appt.date}, ${past ? 'missed' : meta.label}`} sx={itemCardSx}>
+    <Paper component="article" elevation={0} aria-label={t('donor.appt.aria', { place: appt.location, date: longDate || appt.date, status: past ? t('donor.appt.missed') : meta.label })} sx={itemCardSx}>
       <Box sx={{ display: 'flex', flexWrap: { xs: 'wrap', sm: 'nowrap' }, gap: { xs: 1.75, sm: 3 }, alignItems: 'flex-start' }}>
         {/* The center's photo: a banner across the top on phones, a thumbnail beside the date from sm up. */}
         <Box sx={{ order: { xs: -1, sm: 0 }, width: { xs: '100%', sm: 150 }, flexShrink: 0 }}>
@@ -113,9 +116,9 @@ export default function AppointmentCard({ appt, hospitalPhone, hospitalImage }) 
           <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
             <Box sx={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 1.25, flexWrap: 'wrap' }}>
               <Typography component="h3" sx={{ fontWeight: 800, fontSize: '1.2rem', mr: 0.5, overflowWrap: 'anywhere' }}>{appt.location}</Typography>
-              <Pill tone={past ? 'neutral' : meta.tone} icon={past ? <HistoryIcon /> : STATUS_ICON[status]}>{past ? 'Missed' : meta.label}</Pill>
+              <Pill tone={past ? 'neutral' : meta.tone} icon={past ? <HistoryIcon /> : STATUS_ICON[status]}>{past ? t('donor.appt.missed') : meta.label}</Pill>
             </Box>
-            <CardMenu id={appt._id} label={`the appointment at ${appt.location}`} items={menuItems} />
+            <CardMenu id={appt._id} label={t('donor.appt.menuLabel', { place: appt.location })} items={menuItems} />
           </Box>
           <Box sx={{ mt: 1.25, display: 'flex', flexWrap: 'wrap', columnGap: 3.5, rowGap: 0.75 }}>
             <MetaLine icon={<EventOutlinedIcon />}>{longDate || appt.date}</MetaLine>
@@ -124,7 +127,7 @@ export default function AppointmentCard({ appt, hospitalPhone, hospitalImage }) 
           </Box>
           {appt.notes?.trim() && (
             <>
-              <Typography component="h4" sx={{ mt: 2, fontWeight: 700, fontSize: '0.95rem' }}>Notes</Typography>
+              <Typography component="h4" sx={{ mt: 2, fontWeight: 700, fontSize: '0.95rem' }}>{t('donor.appt.notes')}</Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mt: 0.4, fontSize: '0.92rem', lineHeight: 1.6, overflowWrap: 'anywhere', maxWidth: 720 }}>
                 {appt.notes}
               </Typography>
@@ -149,9 +152,10 @@ export default function AppointmentCard({ appt, hospitalPhone, hospitalImage }) 
 
 /** A completed donation: an appointment staff checked in (check-in records the donation on the donor). */
 export function DonationCard({ appt, hospitalImage }) {
+  const t = useT();
   const when = appt.checkedInAt || appt.date;
   return (
-    <Paper component="article" elevation={0} aria-label={`Donation at ${appt.location} on ${formatDate(when)}`} sx={itemCardSx}>
+    <Paper component="article" elevation={0} aria-label={t('donor.appt.donationAria', { place: appt.location, date: formatDate(when) })} sx={itemCardSx}>
       <Box sx={{ display: 'flex', flexWrap: { xs: 'wrap', sm: 'nowrap' }, gap: { xs: 1.75, sm: 3 }, alignItems: 'center' }}>
         {/* Same photo placement as AppointmentCard: banner on phones, thumbnail beside the date from sm up. */}
         <Box sx={{ order: { xs: -1, sm: 0 }, width: { xs: '100%', sm: 150 }, flexShrink: 0 }}>
@@ -161,13 +165,13 @@ export function DonationCard({ appt, hospitalImage }) {
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, flexWrap: 'wrap' }}>
             <Typography component="h3" sx={{ fontWeight: 800, fontSize: '1.15rem', mr: 0.5, overflowWrap: 'anywhere' }}>{appt.location}</Typography>
-            <Pill tone="info" icon={<FavoriteIcon />}>Donated</Pill>
+            <Pill tone="info" icon={<FavoriteIcon />}>{t('donor.appt.donated')}</Pill>
           </Box>
           <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', columnGap: 3.5, rowGap: 0.75 }}>
             <MetaLine icon={<EventOutlinedIcon />}>{formatDate(when)}</MetaLine>
             {appt.checkedInAt && (
               <MetaLine icon={<AccessTimeIcon />}>
-                Checked in {new Date(appt.checkedInAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                {t('donor.appt.checkedInAt', { time: new Date(appt.checkedInAt).toLocaleTimeString(currentIntlLocale(), { hour: 'numeric', minute: '2-digit' }) })}
               </MetaLine>
             )}
             {appt.bloodType && <MetaLine icon={<WaterDropOutlinedIcon />}>{appt.bloodType}</MetaLine>}

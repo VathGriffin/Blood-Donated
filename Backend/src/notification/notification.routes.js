@@ -24,6 +24,9 @@ const dayStart = (iso) => {
 const shortDate = (iso) => dayStart(iso)?.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) ?? iso;
 // Today as "YYYY-MM-DD" (server local time), the format appointment dates are stored in.
 const localIsoDay = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+// Additive: a message key and raw values, so the website can show the item in the reader's
+// language (frontend i18n/messages/feed.js). `title`/`body` stay as before, in English.
+const tx = (key, vars = {}) => ({ key, vars });
 const clip = (text, n = 110) => (text.length > n ? `${text.slice(0, n - 1)}…` : text);
 
 const APPOINTMENT_STATUS = {
@@ -53,6 +56,7 @@ async function buildFeed(user) {
   replies.forEach((m) => items.push({
     id: `message-${m._id}`, type: 'message', tone: 'info',
     title: 'New reply from the BloodLife team', body: clip(m.content),
+    i18n: { title: tx('donor.reply') },
     href: '/notification', at: m.createdAt,
   }));
 
@@ -68,6 +72,12 @@ async function buildFeed(user) {
       items.push({
         id: `appointment-${a._id}-${a.status}`, type: 'appointment', tone: status.tone, title: status.title,
         body: a.status === 'CheckedIn' ? `Your donation${where} has been recorded.` : `${when}${where}`,
+        i18n: {
+          title: tx(`donor.appt.${a.status}`),
+          body: a.status === 'CheckedIn'
+            ? tx(a.location ? 'donor.donationRecordedAt' : 'donor.donationRecorded', { place: a.location })
+            : tx(a.location ? 'common.whenAt' : 'common.when', { date: a.date, time: a.time, place: a.location }),
+        },
         href: '/my-appointments', at: changedAt || a.updatedAt,
       });
     }
@@ -81,11 +91,13 @@ async function buildFeed(user) {
         items.push({
           id: `reschedule-${r._id}-Approved`, type: 'appointment', tone: 'success', title: 'Hospital approved the new date',
           body: `Your appointment${where} has been moved to ${to}.`, href: '/my-appointments', at: r.reviewedAt,
+          i18n: { title: tx('donor.rescheduleApproved'), body: tx(a.location ? 'donor.movedAt' : 'donor.moved', { place: a.location, date: r.toDate, time: r.toTime }) },
         });
       } else if (r.status === 'Rejected') {
         items.push({
           id: `reschedule-${r._id}-Rejected`, type: 'appointment', tone: 'error', title: 'Reschedule request declined',
           body: clip(`Your appointment stays on ${from}${where}.${r.decisionNote ? ` ${r.decisionNote}` : ''}`),
+          i18n: { title: tx('donor.rescheduleDeclined'), body: tx(a.location ? 'donor.staysAt' : 'donor.stays', { place: a.location, date: r.fromDate, time: r.fromTime, suffix: r.decisionNote ? clip(r.decisionNote, 80) : '' }) },
           href: '/my-appointments', at: r.reviewedAt,
         });
       }
@@ -99,6 +111,10 @@ async function buildFeed(user) {
         items.push({
           id: `reminder-${a._id}`, type: 'reminder', tone: 'warning',
           title: `Your appointment is ${label}`, body: `${a.time}${where}. Remember to bring a photo ID.`,
+          i18n: {
+            title: tx(daysAway === 0 ? 'donor.reminderToday' : daysAway === 1 ? 'donor.reminderTomorrow' : 'donor.reminderOn', { date: a.date }),
+            body: tx(a.location ? 'donor.bringIdAt' : 'donor.bringId', { time: a.time, place: a.location }),
+          },
           href: '/my-appointments', at: new Date(Math.min(now, Math.max(new Date(a.createdAt).getTime(), day.getTime() - 2 * DAY))),
         });
       }
@@ -111,6 +127,7 @@ async function buildFeed(user) {
     items.push({
       id: `request-${r._id}-${r.status}`, type: 'request', tone: status.tone, title: status.title,
       body: `${r.bloodType} for ${r.patientName} at ${r.hospitalName}`,
+      i18n: { title: tx(`donor.request.${r.status}`), body: tx('common.requestForAt', { type: r.bloodType, patient: r.patientName, hospital: r.hospitalName }) },
       href: '/my-requests', at: r.status === 'Fulfilled' && r.fulfilledAt ? r.fulfilledAt : r.updatedAt,
     });
   });
@@ -165,18 +182,24 @@ async function buildAdminFeed() {
     id: `request-new-${r._id}`, type: 'request', tone: URGENCY_TONE[r.urgency] || 'info',
     title: r.urgency === 'Critical' ? 'Critical blood request' : 'New blood request',
     body: `${r.bloodType} · ${units(r.unitsNeeded)} for ${r.patientName} at ${r.hospitalName}${r.urgency ? ` · ${r.urgency} urgency` : ''}`,
+    i18n: {
+      title: tx(r.urgency === 'Critical' ? 'staff.criticalRequest' : 'staff.newRequest'),
+      body: tx(r.urgency ? 'staff.requestUrgencyAt' : 'staff.requestAt', { type: r.bloodType, units: r.unitsNeeded || 1, patient: r.patientName, hospital: r.hospitalName, urgency: r.urgency }),
+    },
     href: '/dashboard/admin/requests', at: r.createdAt,
   }));
   cancelled.forEach((r) => items.push({
     id: `request-cancelled-${r._id}`, type: 'cancelled', tone: 'neutral',
     title: 'Blood request cancelled by the requester',
     body: `${r.bloodType} for ${r.patientName} at ${r.hospitalName}${r.cancellationReason ? ` — “${clip(r.cancellationReason, 80)}”` : ''}`,
+    i18n: { title: tx('staff.requestCancelled'), body: tx('common.requestForAt', { type: r.bloodType, patient: r.patientName, hospital: r.hospitalName, quote: r.cancellationReason ? clip(r.cancellationReason, 80) : '' }) },
     href: '/dashboard/admin/requests', at: r.cancelledAt,
   }));
   appointments.forEach((a) => items.push({
     id: `appointment-new-${a._id}`, type: 'appointment', tone: 'info',
     title: 'New appointment booked',
     body: `${a.fullName} · ${shortDate(a.date)}, ${a.time}${a.location ? ` at ${a.location}` : ''}`,
+    i18n: { title: tx('staff.newAppointment'), body: tx(a.location ? 'staff.bookedAt' : 'staff.booked', { name: a.fullName, date: a.date, time: a.time, place: a.location }) },
     href: '/dashboard/admin/appointments', at: a.createdAt,
   }));
   rescheduling.forEach((a) => (a.rescheduleRequests || []).forEach((r) => {
@@ -185,17 +208,20 @@ async function buildAdminFeed() {
       id: `reschedule-${r._id}`, type: 'appointment', tone: 'warning',
       title: 'Reschedule requested',
       body: `${a.fullName} · ${shortDate(r.fromDate)}, ${r.fromTime} → ${shortDate(r.toDate)}, ${r.toTime}${a.location ? ` at ${a.location}` : ''}`,
+      i18n: { title: tx('staff.rescheduleRequested'), body: tx(a.location ? 'staff.moveAt' : 'staff.move', { name: a.fullName, fromDate: r.fromDate, fromTime: r.fromTime, toDate: r.toDate, toTime: r.toTime, place: a.location }) },
       href: '/dashboard/admin/appointments', at: r.requestedAt,
     });
   }));
   messages.forEach((m) => items.push({
     id: `message-${m._id}`, type: 'message', tone: 'primary',
     title: `New message from ${m.userName}`, body: clip(m.content),
+    i18n: { title: tx('staff.messageFrom', { name: m.userName }) },
     href: '/dashboard/admin/contacts', at: m.createdAt,
   }));
   donors.forEach((d) => items.push({
     id: `donor-${d._id}`, type: 'donor', tone: 'success',
     title: 'New donor registered',
+    i18n: { title: tx('staff.newDonor') },
     body: [d.fullName, d.bloodType, d.location].filter(Boolean).join(' · '),
     href: '/dashboard/admin/donors', at: d.createdAt,
   }));
@@ -206,6 +232,7 @@ async function buildAdminFeed() {
     id: `stock-${i._id}-${i.units}`, type: 'stock', tone: 'error',
     title: i.units === 0 ? `${i.bloodType} is out of stock` : `${i.bloodType} stock is critically low`,
     body: `${i.units} of minimum ${i.minUnits} units left in the central inventory`,
+    i18n: { title: tx(i.units === 0 ? 'staff.outOfStock' : 'staff.lowStock', { type: i.bloodType }), body: tx('staff.stockLeftCentral', { count: i.units, min: i.minUnits }) },
     href: '/dashboard/admin/inventory', at: i.lastUpdated || i.updatedAt || new Date(0),
   }));
 
@@ -260,24 +287,31 @@ async function buildHospitalFeed(hospitalId) {
     id: `request-new-${r._id}`, type: 'request', tone: URGENCY_TONE[r.urgency] || 'info',
     title: r.urgency === 'Critical' ? 'Critical blood request' : 'New blood request',
     body: `${r.bloodType} · ${units(r.unitsNeeded)} for ${r.patientName}${r.urgency ? ` · ${r.urgency} urgency` : ''}`,
+    i18n: {
+      title: tx(r.urgency === 'Critical' ? 'staff.criticalRequest' : 'staff.newRequest'),
+      body: tx(r.urgency ? 'staff.requestUrgency' : 'staff.request', { type: r.bloodType, units: r.unitsNeeded || 1, patient: r.patientName, urgency: r.urgency }),
+    },
     href: `${HOSPITAL}/requests`, at: r.createdAt,
   }));
   cancelledRequests.forEach((r) => items.push({
     id: `request-cancelled-${r._id}`, type: 'cancelled', tone: 'neutral',
     title: 'Blood request cancelled by the requester',
     body: `${r.bloodType} for ${r.patientName}${r.cancellationReason ? ` — “${clip(r.cancellationReason, 80)}”` : ''}`,
+    i18n: { title: tx('staff.requestCancelled'), body: tx('common.requestFor', { type: r.bloodType, patient: r.patientName, quote: r.cancellationReason ? clip(r.cancellationReason, 80) : '' }) },
     href: `${HOSPITAL}/requests`, at: r.cancelledAt,
   }));
   booked.forEach((a) => items.push({
     id: `appointment-new-${a._id}`, type: 'appointment', tone: 'info',
     title: 'New appointment booked',
     body: `${a.fullName} (${a.bloodType}) · ${shortDate(a.date)}, ${a.time}`,
+    i18n: { title: tx('staff.newAppointment'), body: tx('staff.bookedType', { name: a.fullName, type: a.bloodType, date: a.date, time: a.time }) },
     href: `${HOSPITAL}/appointments`, at: a.createdAt,
   }));
   cancelledAppts.forEach((a) => items.push({
     id: `appointment-cancelled-${a._id}`, type: 'cancelled', tone: 'neutral',
     title: 'Donor cancelled an appointment',
     body: `${a.fullName} · ${shortDate(a.date)}, ${a.time}${a.cancellationReason ? ` — “${clip(a.cancellationReason, 80)}”` : ''}`,
+    i18n: { title: tx('staff.donorCancelled'), body: tx('staff.booked', { name: a.fullName, date: a.date, time: a.time, quote: a.cancellationReason ? clip(a.cancellationReason, 80) : '' }) },
     href: `${HOSPITAL}/appointments`, at: a.cancelledAt,
   }));
   rescheduling.forEach((a) => (a.rescheduleRequests || []).forEach((r) => {
@@ -286,6 +320,7 @@ async function buildHospitalFeed(hospitalId) {
       id: `reschedule-${r._id}`, type: 'appointment', tone: 'warning',
       title: 'Donor asked to reschedule',
       body: `${a.fullName} · ${shortDate(r.fromDate)}, ${r.fromTime} → ${shortDate(r.toDate)}, ${r.toTime}`,
+      i18n: { title: tx('staff.donorReschedule'), body: tx('staff.move', { name: a.fullName, fromDate: r.fromDate, fromTime: r.fromTime, toDate: r.toDate, toTime: r.toTime }) },
       href: `${HOSPITAL}/appointments`, at: r.requestedAt,
     });
   }));
@@ -298,6 +333,7 @@ async function buildHospitalFeed(hospitalId) {
       id: `today-${localIsoDay()}-${todays.length}-${toConfirm}`, type: 'reminder', tone: 'warning',
       title: `${todays.length} donor${todays.length === 1 ? '' : 's'} booked for today`,
       body: toConfirm ? `${toConfirm} still to confirm — check donors in as they arrive.` : 'All confirmed — check donors in as they arrive.',
+      i18n: { title: tx('staff.todayBooked', { count: todays.length }), body: toConfirm ? tx('staff.todayToConfirm', { count: toConfirm }) : tx('staff.todayAllConfirmed') },
       href: `${HOSPITAL}/appointments`, at: start,
     });
   }
@@ -306,6 +342,7 @@ async function buildHospitalFeed(hospitalId) {
     id: `stock-${i._id}-${i.units}`, type: 'stock', tone: 'error',
     title: i.units === 0 ? `${i.bloodType} is out of stock` : `${i.bloodType} stock is critically low`,
     body: `${i.units} of minimum ${i.minUnits} units left`,
+    i18n: { title: tx(i.units === 0 ? 'staff.outOfStock' : 'staff.lowStock', { type: i.bloodType }), body: tx('staff.stockLeft', { count: i.units, min: i.minUnits }) },
     href: `${HOSPITAL}/inventory`, at: i.lastUpdated || i.updatedAt || new Date(0),
   }));
 

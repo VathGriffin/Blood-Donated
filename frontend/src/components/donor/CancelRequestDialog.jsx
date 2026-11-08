@@ -1,4 +1,6 @@
 'use client';
+import { apiErrorMessage } from '@/lib/api-error';
+import { useT } from '@/i18n/I18nProvider';
 import { useRef, useState, useEffect } from 'react';
 import axios from 'axios';
 import {
@@ -18,6 +20,7 @@ import API_BASE from '@/lib/config';
  *   onBusyChange(bool)          – lets the page disable that card's own cancel controls
  */
 export default function CancelRequestDialog({ request, token, onClose, onCancelled, onChanged, onSessionExpired, onBusyChange }) {
+  const t = useT();
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -39,7 +42,7 @@ export default function CancelRequestDialog({ request, token, onClose, onCancell
       onCancelled(data);
     } catch (err) {
       if (onSessionExpired?.(err)) return;
-      const message = err.response?.data?.error || 'Could not cancel the request. Please try again.';
+      const message = apiErrorMessage(err, t('donor.rcancel.failed'));
       if (err.response?.status === 409 || err.response?.status === 404) onChanged(message);
       else setError(message);
     } finally {
@@ -58,38 +61,38 @@ export default function CancelRequestDialog({ request, token, onClose, onCancell
           bgcolor: (t) => t.custom.tones.error.bg, color: 'error.main' }}>
           <DoNotDisturbOnOutlinedIcon sx={{ fontSize: 20 }} />
         </Box>
-        Cancel Blood Request
+        {t('donor.rcancel.title')}
       </DialogTitle>
       <DialogContent sx={{ pb: 1 }}>
         <Typography id="cancel-request-text" fontSize="0.92rem" fontWeight={600}>
-          Are you sure you want to cancel this blood request?
+          {t('donor.rcancel.question')}
         </Typography>
         {request && (
           <Box sx={{ mt: 1.5, px: 1.5, py: 1.1, borderRadius: '10px', bgcolor: (t) => t.custom.surface.subtle, border: '1px solid', borderColor: 'divider' }}>
             <Typography fontSize="0.82rem" fontWeight={700}>
-              {request.bloodType} · {units} unit{units !== 1 ? 's' : ''} for {request.patientName}
+              {t('donor.rcancel.summary', { type: request.bloodType, units: t('donor.req.units', { count: units }), patient: request.patientName })}
             </Typography>
             <Typography fontSize="0.78rem" color="text.secondary">{request.hospitalName}</Typography>
           </Box>
         )}
         <Typography fontSize="0.8rem" color="text.secondary" sx={{ mt: 1.5, mb: 1 }}>
-          The hospital will no longer process it. This can’t be undone — you can submit a new request any time.
+          {t('donor.rcancel.warning')}
         </Typography>
         <Typography component="label" htmlFor="cancel-reason" sx={{ display: 'block', fontWeight: 700, fontSize: '0.82rem', mb: 0.6 }}>
-          Reason <Box component="span" sx={{ color: 'text.secondary', fontWeight: 500 }}>(optional)</Box>
+          {t('donor.rcancel.reason')} <Box component="span" sx={{ color: 'text.secondary', fontWeight: 500 }}>{t('donor.rcancel.optional')}</Box>
         </Typography>
         <TextField fullWidth multiline minRows={2} maxRows={5} size="small" id="cancel-reason"
-          placeholder="e.g. Found a donor, surgery postponed…"
+          placeholder={t('donor.rcancel.placeholder')}
           value={reason} onChange={(e) => setReason(e.target.value.slice(0, 500))}
           disabled={busy} helperText={`${reason.length}/500`}
           slotProps={{ formHelperText: { sx: { textAlign: 'right', mr: 0 } } }} />
         {error && <Alert severity="error" sx={{ mt: 1.5, borderRadius: '10px' }}>{error}</Alert>}
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2.5, pt: 1, gap: 1 }}>
-        <Button onClick={close} disabled={busy} color="inherit">Keep Request</Button>
+        <Button onClick={close} disabled={busy} color="inherit">{t('donor.rcancel.keep')}</Button>
         <Button onClick={confirm} variant="contained" disabled={busy}
           startIcon={busy ? <CircularProgress size={15} color="inherit" /> : null} sx={{ minWidth: 150 }}>
-          {busy ? 'Cancelling…' : 'Cancel Request'}
+          {busy ? t('donor.rcancel.cancelling') : t('donor.rcancel.confirm')}
         </Button>
       </DialogActions>
     </Dialog>

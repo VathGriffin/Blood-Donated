@@ -1,4 +1,5 @@
 'use client';
+import { useI18n, useT } from '@/i18n/I18nProvider';
 import Link from 'next/link';
 import {
   Alert, Avatar, Box, Button, Checkbox, Chip, CircularProgress, FormControlLabel, IconButton, MenuItem, OutlinedInput,
@@ -24,7 +25,7 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import { hospitalImageUrl, HOSPITAL_FALLBACK_IMAGE } from '@/app/(public)/appointments/_components/booking';
 import {
-  BLOOD_TYPES, COMPONENTS, MAX_AGE, MAX_REASON, MAX_UNITS, QUICK_REASONS, URGENCY, maxRequiredBy, minRequiredBy, urgencyOf,
+  BLOOD_TYPES, COMPONENTS, MAX_AGE, MAX_REASON, MAX_UNITS, QUICK_REASONS, URGENCY, componentLabel, maxRequiredBy, minRequiredBy, quickReason, urgencyOf,
 } from './formModel';
 
 const URGENCY_ICON = {
@@ -41,13 +42,14 @@ const adornSx = { color: 'text.secondary', fontSize: 20, mr: 1, flexShrink: 0 };
 // Label above the control, a required star, and the error / hint underneath. The error text
 // is tied to the control through aria-describedby (ids `${id}-error` / `${id}-hint`).
 function Field({ id, label, required, error, hint, children, sx }) {
+  const t = useT();
   return (
     <Box id={`field-${id}`} sx={{ minWidth: 0, ...sx }}>
       <Typography component="label" htmlFor={id} id={`${id}-label`}
         sx={{ display: 'block', fontWeight: 700, fontSize: '0.88rem', mb: 0.75, color: 'text.primary' }}>
         {label}
         {required && <Box component="span" aria-hidden="true" sx={{ color: 'primary.main', ml: 0.4 }}>*</Box>}
-        {!required && <Box component="span" sx={{ color: 'text.secondary', fontWeight: 500, ml: 0.5, fontSize: '0.8rem' }}>(optional)</Box>}
+        {!required && <Box component="span" sx={{ color: 'text.secondary', fontWeight: 500, ml: 0.5, fontSize: '0.8rem' }}>{t('donor.rform.optional')}</Box>}
       </Typography>
       {children}
       {error ? (
@@ -88,6 +90,7 @@ function HospitalOption({ hospital, compact }) {
 export default function RequestForm({
   form, set, errors, hospitals, hospitalsState, onRetryHospitals, accountEmail, submitting, onSubmit, banner,
 }) {
+  const { t, rich } = useI18n();
   const urgency = urgencyOf(form.urgency);
   const err = (key) => errors[key] || '';
 
@@ -112,7 +115,7 @@ export default function RequestForm({
           <AssignmentOutlinedIcon />
         </Box>
         <Typography id="request-form-title" component="h2" sx={{ fontWeight: 800, fontSize: '1.2rem', letterSpacing: '-0.01em' }}>
-          Request Information
+          {t('donor.rform.title')}
         </Typography>
       </Box>
 
@@ -121,18 +124,18 @@ export default function RequestForm({
       <Box component="form" noValidate onSubmit={onSubmit} aria-describedby="required-note"
         sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, columnGap: 2, rowGap: 2.25 }}>
         <Typography id="required-note" sx={{ gridColumn: '1 / -1', fontSize: '0.8rem', color: 'text.secondary', mt: -0.5 }}>
-          Fields marked <Box component="span" sx={{ color: 'primary.main', fontWeight: 700 }}>*</Box> are required.
+          {rich('donor.rform.required', { star: <Box component="span" sx={{ color: 'primary.main', fontWeight: 700 }}>*</Box> })}
         </Typography>
 
         {/* Hospital */}
-        <Field id="hospitalId" label="Hospital" required error={err('hospitalId')} sx={{ gridColumn: '1 / -1' }}
-          hint={hospitalsState === 'ready' && !hospitals.length ? 'No hospitals are registered on BloodLife yet.' : undefined}>
+        <Field id="hospitalId" label={t('donor.rform.hospital')} required error={err('hospitalId')} sx={{ gridColumn: '1 / -1' }}
+          hint={hospitalsState === 'ready' && !hospitals.length ? t('donor.rform.noHospitals') : undefined}>
           {hospitalsState === 'loading' ? (
             <Skeleton variant="rounded" height={68} sx={{ borderRadius: '10px' }} />
           ) : hospitalsState === 'error' ? (
             <Alert severity="error" sx={{ borderRadius: '10px' }}
-              action={<Button color="inherit" size="small" onClick={onRetryHospitals}>Retry</Button>}>
-              Couldn&apos;t load the hospital list.
+              action={<Button color="inherit" size="small" onClick={onRetryHospitals}>{t('donor.rform.retry')}</Button>}>
+              {t('donor.rform.hospitalsFailed')}
             </Alert>
           ) : (
             <Select id="hospitalId" labelId="hospitalId-label" value={form.hospitalId} displayEmpty fullWidth
@@ -142,7 +145,7 @@ export default function RequestForm({
               renderValue={(value) => {
                 const h = hospitals.find((x) => x._id === value);
                 return h ? <HospitalOption hospital={h} />
-                  : <Typography sx={{ color: 'text.secondary', fontSize: '0.92rem', py: 1.4 }}>Select a hospital</Typography>;
+                  : <Typography sx={{ color: 'text.secondary', fontSize: '0.92rem', py: 1.4 }}>{t('donor.rform.selectHospital')}</Typography>;
               }}
               MenuProps={{ slotProps: { paper: { sx: { maxHeight: 360, borderRadius: '12px' } } } }}
               sx={{ ...inputSx, '& .MuiSelect-select': { py: 1, display: 'flex' } }}>
@@ -154,15 +157,15 @@ export default function RequestForm({
         </Field>
 
         {/* Patient */}
-        <Field id="patientName" label="Patient Name" required error={err('patientName')}>
-          <OutlinedInput id="patientName" fullWidth value={form.patientName} placeholder="Full name"
+        <Field id="patientName" label={t('donor.rform.patientName')} required error={err('patientName')}>
+          <OutlinedInput id="patientName" fullWidth value={form.patientName} placeholder={t('donor.rform.fullName')}
             onChange={(e) => set('patientName', e.target.value)} error={!!err('patientName')} autoComplete="off"
             startAdornment={<PersonOutlineIcon aria-hidden="true" sx={adornSx} />}
             inputProps={{ maxLength: 100, 'aria-required': true, 'aria-invalid': !!err('patientName'), 'aria-describedby': describedBy('patientName', err('patientName')) }}
             sx={inputSx} />
         </Field>
-        <Field id="patientAge" label="Patient Age" error={err('patientAge')}>
-          <OutlinedInput id="patientAge" fullWidth value={form.patientAge} placeholder="Years"
+        <Field id="patientAge" label={t('donor.rform.patientAge')} error={err('patientAge')}>
+          <OutlinedInput id="patientAge" fullWidth value={form.patientAge} placeholder={t('donor.rform.years')}
             onChange={(e) => set('patientAge', e.target.value.replace(/\D/g, '').slice(0, 3))} error={!!err('patientAge')}
             startAdornment={<CakeOutlinedIcon aria-hidden="true" sx={adornSx} />}
             inputProps={{ inputMode: 'numeric', 'aria-invalid': !!err('patientAge'), 'aria-describedby': describedBy('patientAge', err('patientAge')), min: 0, max: MAX_AGE }}
@@ -170,34 +173,34 @@ export default function RequestForm({
         </Field>
 
         {/* Blood */}
-        <Field id="bloodType" label="Blood Type" required error={err('bloodType')}>
+        <Field id="bloodType" label={t('donor.rform.bloodType')} required error={err('bloodType')}>
           <Select id="bloodType" labelId="bloodType-label" value={form.bloodType} displayEmpty fullWidth
             onChange={(e) => set('bloodType', e.target.value)} error={!!err('bloodType')}
             SelectDisplayProps={{ 'aria-required': true, 'aria-invalid': !!err('bloodType'), 'aria-describedby': describedBy('bloodType', err('bloodType')) }}
             startAdornment={<WaterDropIcon aria-hidden="true" sx={{ ...adornSx, color: 'primary.main' }} />}
-            renderValue={(v) => v || <Box component="span" sx={{ color: 'text.secondary' }}>Select</Box>}
+            renderValue={(v) => v || <Box component="span" sx={{ color: 'text.secondary' }}>{t('donor.rform.select')}</Box>}
             sx={{ ...inputSx, fontWeight: 700 }}>
-            {BLOOD_TYPES.map((t) => <MenuItem key={t} value={t} sx={{ fontWeight: 700 }}>{t}</MenuItem>)}
+            {BLOOD_TYPES.map((bt) => <MenuItem key={bt} value={bt} sx={{ fontWeight: 700 }}>{bt}</MenuItem>)}
           </Select>
         </Field>
-        <Field id="component" label="Blood Component" required error={err('component')}>
+        <Field id="component" label={t('donor.rform.component')} required error={err('component')}>
           <Select id="component" labelId="component-label" value={form.component} fullWidth
             onChange={(e) => set('component', e.target.value)} error={!!err('component')}
             SelectDisplayProps={{ 'aria-required': true, 'aria-describedby': describedBy('component', err('component')) }}
             startAdornment={<ScienceOutlinedIcon aria-hidden="true" sx={adornSx} />}
             sx={inputSx}>
-            {COMPONENTS.map((c) => <MenuItem key={c} value={c}>{c}</MenuItem>)}
+            {COMPONENTS.map((c) => <MenuItem key={c} value={c}>{componentLabel(c)}</MenuItem>)}
           </Select>
         </Field>
 
         {/* Quantity + urgency */}
-        <Field id="unitsNeeded" label="Quantity (units)" required error={err('unitsNeeded')} hint={`1 to ${MAX_UNITS} units per request`}>
+        <Field id="unitsNeeded" label={t('donor.rform.quantity')} required error={err('unitsNeeded')} hint={t('donor.rform.unitsHint', { max: MAX_UNITS })}>
           <Box sx={{
             display: 'flex', alignItems: 'stretch', height: 44, borderRadius: '10px', border: '1px solid', overflow: 'hidden',
             borderColor: err('unitsNeeded') ? 'error.main' : 'divider', bgcolor: 'background.paper',
             '&:focus-within': { borderColor: 'primary.main', boxShadow: (t) => `0 0 0 3px ${alpha(t.palette.primary.main, 0.14)}` },
           }}>
-            <IconButton aria-label="One unit fewer" onClick={() => step(-1)} disabled={form.unitsNeeded <= 1}
+            <IconButton aria-label={t('donor.rform.fewer')} onClick={() => step(-1)} disabled={form.unitsNeeded <= 1}
               sx={{ borderRadius: 0, width: 44, borderRight: '1px solid', borderColor: 'divider' }}>
               <RemoveIcon fontSize="small" />
             </IconButton>
@@ -215,7 +218,7 @@ export default function RequestForm({
                 flex: 1, minWidth: 0, border: 0, outline: 0, textAlign: 'center', fontWeight: 700, fontSize: '0.95rem',
                 bgcolor: 'transparent', color: 'text.primary', fontFamily: 'inherit',
               }} />
-            <IconButton aria-label="One unit more" onClick={() => step(1)} disabled={form.unitsNeeded >= MAX_UNITS}
+            <IconButton aria-label={t('donor.rform.more')} onClick={() => step(1)} disabled={form.unitsNeeded >= MAX_UNITS}
               sx={{ borderRadius: 0, width: 44, borderLeft: '1px solid', borderColor: 'divider' }}>
               <AddIcon fontSize="small" />
             </IconButton>
@@ -223,20 +226,20 @@ export default function RequestForm({
               px: 1.5, display: 'flex', alignItems: 'center', borderLeft: '1px solid', borderColor: 'divider',
               color: 'text.secondary', fontSize: '0.85rem', bgcolor: (t) => t.custom.surface.subtle,
             }}>
-              units
+              {t('donor.rform.units')}
             </Box>
           </Box>
         </Field>
-        <Field id="urgency" label="Urgency Level" required error={err('urgency')} hint={urgency?.hint}>
+        <Field id="urgency" label={t('donor.rform.urgency')} required error={err('urgency')} hint={urgency?.hint}>
           <Select id="urgency" labelId="urgency-label" value={form.urgency} displayEmpty fullWidth
             onChange={(e) => set('urgency', e.target.value)} error={!!err('urgency')}
             SelectDisplayProps={{ 'aria-required': true, 'aria-invalid': !!err('urgency'), 'aria-describedby': describedBy('urgency', err('urgency'), urgency?.hint) }}
             renderValue={(v) => {
               const u = urgencyOf(v);
-              if (!u) return <Box component="span" sx={{ color: 'text.secondary' }}>Select</Box>;
+              if (!u) return <Box component="span" sx={{ color: 'text.secondary' }}>{t('donor.rform.select')}</Box>;
               return (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 700, color: (t) => t.custom.tones[u.tone].fg, '& svg': { fontSize: 20 } }}>
-                  {URGENCY_ICON[u.value]}{u.value}
+                  {URGENCY_ICON[u.value]}{u.label}
                 </Box>
               );
             }}
@@ -245,7 +248,7 @@ export default function RequestForm({
               <MenuItem key={u.value} value={u.value} sx={{ gap: 1.25, alignItems: 'flex-start', py: 1 }}>
                 <Box aria-hidden="true" sx={{ color: (t) => t.custom.tones[u.tone].fg, display: 'flex', mt: '1px', '& svg': { fontSize: 20 } }}>{URGENCY_ICON[u.value]}</Box>
                 <Box>
-                  <Typography sx={{ fontWeight: 700, fontSize: '0.9rem' }}>{u.value}</Typography>
+                  <Typography sx={{ fontWeight: 700, fontSize: '0.9rem' }}>{u.label}</Typography>
                   <Typography sx={{ fontSize: '0.76rem', color: 'text.secondary' }}>{u.hint}</Typography>
                 </Box>
               </MenuItem>
@@ -254,23 +257,23 @@ export default function RequestForm({
         </Field>
 
         {/* When + contact */}
-        <Field id="requiredBy" label="Required By" error={err('requiredBy')} hint="Date and time the patient needs the blood">
+        <Field id="requiredBy" label={t('donor.rform.requiredBy')} error={err('requiredBy')} hint={t('donor.rform.requiredByHint')}>
           <OutlinedInput id="requiredBy" type="datetime-local" fullWidth value={form.requiredBy}
             onChange={(e) => set('requiredBy', e.target.value)} error={!!err('requiredBy')}
             startAdornment={<EventOutlinedIcon aria-hidden="true" sx={adornSx} />}
             inputProps={{ min: minRequiredBy(), max: maxRequiredBy(), 'aria-invalid': !!err('requiredBy'), 'aria-describedby': describedBy('requiredBy', err('requiredBy'), 'hint') }}
             sx={{ ...inputSx, '& input': { colorScheme: 'inherit' } }} />
         </Field>
-        <Field id="contact" label="Contact Number" required error={err('contact')}>
-          <OutlinedInput id="contact" type="tel" fullWidth value={form.contact} placeholder="e.g. 012 345 678"
+        <Field id="contact" label={t('donor.rform.contact')} required error={err('contact')}>
+          <OutlinedInput id="contact" type="tel" fullWidth value={form.contact} placeholder={t('donor.rform.contactPlaceholder')}
             onChange={(e) => set('contact', e.target.value.slice(0, 20))} error={!!err('contact')} autoComplete="tel"
             startAdornment={<PhoneOutlinedIcon aria-hidden="true" sx={adornSx} />}
             inputProps={{ 'aria-required': true, 'aria-invalid': !!err('contact'), 'aria-describedby': describedBy('contact', err('contact')) }}
             sx={inputSx} />
         </Field>
 
-        <Field id="contactEmail" label="Contact Email" sx={{ gridColumn: '1 / -1' }}
-          hint="Your account email. Updates about this request are sent here and to your notifications.">
+        <Field id="contactEmail" label={t('donor.rform.email')} sx={{ gridColumn: '1 / -1' }}
+          hint={t('donor.rform.emailHint')}>
           <OutlinedInput id="contactEmail" fullWidth value={accountEmail || ''} readOnly
             startAdornment={<MailOutlineIcon aria-hidden="true" sx={adornSx} />}
             inputProps={{ 'aria-readonly': true, 'aria-describedby': 'contactEmail-hint' }}
@@ -278,10 +281,10 @@ export default function RequestForm({
         </Field>
 
         {/* Reason */}
-        <Field id="reason" label="Reason / Medical Information" required error={err('reason')} sx={{ gridColumn: '1 / -1' }}>
+        <Field id="reason" label={t('donor.rform.reason')} required error={err('reason')} sx={{ gridColumn: '1 / -1' }}>
           <Box sx={{ position: 'relative' }}>
             <OutlinedInput id="reason" fullWidth multiline minRows={4} value={form.reason}
-              placeholder="E.g. Patient needs emergency surgery. Diagnosis, ward or doctor's name if known."
+              placeholder={t('donor.rform.reasonPlaceholder')}
               onChange={(e) => set('reason', e.target.value.slice(0, MAX_REASON))} error={!!err('reason')}
               inputProps={{ maxLength: MAX_REASON, 'aria-required': true, 'aria-invalid': !!err('reason'), 'aria-describedby': `reason-count ${describedBy('reason', err('reason')) || ''}`.trim() }}
               sx={{ ...inputSx, pb: 3.5, alignItems: 'flex-start', fontSize: '0.88rem' }} />
@@ -292,9 +295,9 @@ export default function RequestForm({
               {form.reason.length}/{MAX_REASON}
             </Typography>
           </Box>
-          <Box role="group" aria-label="Add a common reason" sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mt: 1 }}>
+          <Box role="group" aria-label={t('donor.rform.commonReason')} sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mt: 1 }}>
             {QUICK_REASONS.map((r) => (
-              <Chip key={r} label={`+ ${r}`} size="small" variant="outlined" onClick={() => addReason(r)}
+              <Chip key={r} label={`+ ${quickReason(r)}`} size="small" variant="outlined" onClick={() => addReason(quickReason(r))}
                 sx={{ fontWeight: 600, fontSize: '0.75rem', borderColor: 'divider', color: 'text.secondary' }} />
             ))}
           </Box>
@@ -308,7 +311,7 @@ export default function RequestForm({
                 inputProps={{ 'aria-required': true, 'aria-invalid': !!err('confirmed'), 'aria-describedby': err('confirmed') ? 'confirmed-error' : undefined }}
                 sx={{ color: err('confirmed') ? 'error.main' : undefined }} />
             )}
-            label={<Typography sx={{ fontSize: '0.86rem' }}>I confirm that the information provided is accurate.<Box component="span" aria-hidden="true" sx={{ color: 'primary.main', ml: 0.4 }}>*</Box></Typography>}
+            label={<Typography sx={{ fontSize: '0.86rem' }}>{t('donor.rform.confirm')}<Box component="span" aria-hidden="true" sx={{ color: 'primary.main', ml: 0.4 }}>*</Box></Typography>}
             sx={{ mr: 0, alignItems: 'center' }} />
           {err('confirmed') && (
             <Typography id="confirmed-error" role="alert" sx={{ color: 'error.main', fontSize: '0.8rem', fontWeight: 600, ml: 4 }}>{err('confirmed')}</Typography>
@@ -318,12 +321,12 @@ export default function RequestForm({
         <Box sx={{ gridColumn: '1 / -1', display: 'flex', gap: 1.5, justifyContent: 'flex-end', flexDirection: { xs: 'column-reverse', sm: 'row' } }}>
           <Button component={Link} href="/my-requests" variant="outlined" color="inherit" size="large" disabled={submitting}
             sx={{ minWidth: 130, borderColor: 'divider', fontWeight: 700 }}>
-            Cancel
+            {t('donor.rform.cancel')}
           </Button>
           <Button type="submit" variant="contained" size="large" disabled={submitting} aria-busy={submitting}
             startIcon={submitting ? <CircularProgress size={18} color="inherit" /> : <SendIcon sx={{ transform: 'rotate(-30deg)' }} />}
             sx={{ minWidth: 210, fontWeight: 700, boxShadow: 'none' }}>
-            {submitting ? 'Submitting…' : 'Submit Request'}
+            {submitting ? t('donor.rform.submitting') : t('donor.rform.submit')}
           </Button>
         </Box>
       </Box>

@@ -5,13 +5,13 @@ import CodeIcon from "@mui/icons-material/Code";
 import RichText from "@/components/ui/RichText";
 import { initialsOf } from "@/lib/format";
 import FavoriteIcon from "@mui/icons-material/Favorite";
+import { useI18n } from "@/i18n/I18nProvider";
 
-const PROJECT = "Individual Graduation Project";
-
+// Texts are about.builder.* in i18n/messages/about.js. The technology list is product names.
 const badges = [
-  { icon: <SchoolIcon />, label: "Education", value: "Hanoi University of Science and Technology (HUST)" },
-  { icon: <CodeIcon />, label: "Technology", value: "Next.js · Node.js · MongoDB · AI integration" },
-  { icon: <FavoriteIcon />, label: "Mission", value: "Healthcare & Social Impact" },
+  { icon: <SchoolIcon />, label: "education", value: "educationValue" },
+  { icon: <CodeIcon />, label: "technology", raw: "Next.js · Node.js · MongoDB · AI" },
+  { icon: <FavoriteIcon />, label: "mission", value: "missionValue" },
 ];
 
 const RED = "#C91D32";
@@ -28,7 +28,7 @@ function Eyebrow({ children, id }) {
   );
 }
 
-function Portrait({ isDark, photo, name }) {
+function Portrait({ isDark, photo, name, alt }) {
   const size = { xs: 184, sm: 168, md: 224 };
   const ring = (sx) => <Box aria-hidden sx={{ position: "absolute", borderRadius: "50%", ...sx }} />;
   const tint = isDark ? "rgba(229,57,53,0.16)" : "rgba(229,57,53,0.12)";
@@ -44,7 +44,7 @@ function Portrait({ isDark, photo, name }) {
 
       <Avatar
         src={photo || undefined}
-        alt={`Portrait of ${name}, creator of BloodLife AI`}
+        alt={alt}
         sx={{
           position: "relative", width: "100%", height: "100%",
           fontSize: { xs: "3.2rem", md: "4rem" }, fontWeight: 800, letterSpacing: "0.02em", color: "#fff",
@@ -75,24 +75,22 @@ export default function CreatorProfile({ team, photo }) {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
   const heading = isDark ? "#fff" : "#172B4D";
+  const { t, rich } = useI18n();
 
   return (
     <Box component="section" id="team-section" aria-labelledby="builders-heading"
       sx={{ backgroundColor: isDark ? "#0B1220" : "#fff", py: { xs: 8, md: 11 } }}>
       <Container maxWidth="lg">
         <Box textAlign="center" mb={{ xs: 5, md: 7 }}>
-          <Box mb={1}><Eyebrow>The Builder</Eyebrow></Box>
+          <Box mb={1}><Eyebrow>{t("about.builder.eyebrow")}</Eyebrow></Box>
           <Typography id="builders-heading" component="h2" sx={{
             fontWeight: 800, fontSize: { xs: "1.85rem", sm: "2.3rem", md: "2.75rem" },
             lineHeight: 1.15, letterSpacing: "-0.02em", color: heading, mb: 2,
           }}>
-            The Builders{" "}
-            <Box component="span" sx={{ color: "primary.main" }}>Behind It</Box>
+            {rich("about.builder.title", { accent: <Box component="span" sx={{ color: "primary.main" }}>{t("about.builder.titleAccent")}</Box> })}
           </Typography>
           <Typography color="text.secondary" sx={{ maxWidth: 640, mx: "auto", lineHeight: 1.75, fontSize: { xs: "0.95rem", md: "1.05rem" } }}>
-            BloodLife AI is developed as an individual graduation project, combining modern web
-            technologies and AI to create a real-world solution for blood donation management in
-            healthcare communities.
+            {t("about.builder.lead")}
           </Typography>
         </Box>
 
@@ -117,11 +115,11 @@ export default function CreatorProfile({ team, photo }) {
             borderRight: { sm: `1px solid ${isDark ? "rgba(229,57,53,0.18)" : "#F5C6CC"}` },
             borderBottom: { xs: `1px solid ${isDark ? "rgba(229,57,53,0.18)" : "#F5C6CC"}`, sm: "none" },
           }}>
-            <Portrait isDark={isDark} photo={photo} name={team.name} />
+            <Portrait isDark={isDark} photo={photo} name={team.name} alt={t("about.builder.portraitAlt", { name: team.name })} />
           </Box>
 
           <Box sx={{ p: { xs: 3, sm: 4, md: 5 }, textAlign: { xs: "center", sm: "left" } }}>
-            <Eyebrow>Project Creator</Eyebrow>
+            <Eyebrow>{t("about.builder.creator")}</Eyebrow>
             <Typography id="creator-name" component="h3" sx={{
               fontWeight: 800, fontSize: { xs: "1.9rem", md: "2.3rem" }, lineHeight: 1.15,
               letterSpacing: "-0.015em", color: heading, mt: 0.5,
@@ -129,7 +127,7 @@ export default function CreatorProfile({ team, photo }) {
               {team.name}
             </Typography>
             <Typography sx={{ color: "primary.main", fontWeight: 600, fontSize: { xs: "1.02rem", md: "1.12rem" }, mt: 0.75 }}>
-              {PROJECT}
+              {t("about.builder.project")}
             </Typography>
             <Typography sx={{ color: isDark ? "grey.300" : "#4b5563", fontWeight: 500, fontSize: { xs: "0.95rem", md: "1.02rem" }, mt: 0.25 }}>
               {team.position}
@@ -160,10 +158,10 @@ export default function CreatorProfile({ team, photo }) {
                   </Box>
                   <Box sx={{ minWidth: 0 }}>
                     <Typography sx={{ fontSize: "0.66rem", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "primary.main", lineHeight: 1.4 }}>
-                      {b.label}
+                      {t(`about.builder.${b.label}`)}
                     </Typography>
                     <Typography sx={{ fontSize: "0.78rem", fontWeight: 600, lineHeight: 1.35, color: isDark ? "grey.100" : "#172B4D" }}>
-                      {b.value}
+                      {b.raw || t(`about.builder.${b.value}`)}
                     </Typography>
                   </Box>
                 </Box>

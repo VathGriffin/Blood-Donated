@@ -17,6 +17,8 @@ import PlaceIcon from '@mui/icons-material/Place';
 import FormatQuoteIcon from '@mui/icons-material/FormatQuote';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { uploadUrl } from '@/lib/config';
+import { formatDate } from '@/lib/format';
+import { useI18n, useT } from '@/i18n/I18nProvider';
 
 const fadeUp = keyframes`from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); }`;
 const GAP_PX = 24;
@@ -32,21 +34,23 @@ const profileKind = (badge = '') => {
 const KIND_ICON = { donor: <WaterDropIcon />, volunteer: <GroupsIcon />, partner: <LocalHospitalIcon /> };
 
 // Stats per kind. The profile's own numbers are used where the model stores them; the rest is demo copy.
-const kindStats = (kind, p) => {
+const DEMO_LAST_DONATION = new Date(2025, 2, 12);
+const kindStats = (kind, p, t) => {
+  const s = (key) => t(`home.community.stats.${key}`);
   if (kind === 'volunteer') return [
-    { icon: <CampaignIcon />, value: p.donations ?? 0, label: 'Campaigns' },
-    { icon: <GroupsIcon />, value: '120+', label: 'People Reached' },
-    { icon: <AccessTimeIcon />, value: '1 Year', label: 'Active Volunteer' },
+    { icon: <CampaignIcon />, value: p.donations ?? 0, label: s('campaigns') },
+    { icon: <GroupsIcon />, value: '120+', label: s('reached') },
+    { icon: <AccessTimeIcon />, value: s('oneYear'), label: s('activeVolunteer') },
   ];
   if (kind === 'partner') return [
-    { icon: <LocalHospitalIcon />, value: p.donations ?? 0, label: 'Hospital Requests' },
-    { icon: <WaterDropIcon />, value: p.bloodType || '—', label: 'Commonly Needed' },
-    { icon: <GroupsIcon />, value: '50+', label: 'Patients Supported' },
+    { icon: <LocalHospitalIcon />, value: p.donations ?? 0, label: s('hospitalRequests') },
+    { icon: <WaterDropIcon />, value: p.bloodType || '—', label: s('commonlyNeeded') },
+    { icon: <GroupsIcon />, value: '50+', label: s('patientsSupported') },
   ];
   return [
-    { icon: <FavoriteIcon />, value: p.donations ?? 0, label: 'Donations' },
-    { icon: <CalendarMonthIcon />, value: '12 Mar 2025', label: 'Last Donation' },
-    { icon: <WaterDropIcon />, value: p.bloodType || '—', label: 'Blood Type' },
+    { icon: <FavoriteIcon />, value: p.donations ?? 0, label: s('donations') },
+    { icon: <CalendarMonthIcon />, value: formatDate(DEMO_LAST_DONATION), label: s('lastDonation') },
+    { icon: <WaterDropIcon />, value: p.bloodType || '—', label: s('bloodType') },
   ];
 };
 
@@ -62,12 +66,18 @@ function Stat({ icon, value, label }) {
   );
 }
 
-function ProfileCard({ profile, index }) {
+function ProfileCard({ profile: given, index }) {
   const isDark = useTheme().palette.mode === 'dark';
-  const kind = profileKind(profile.badge);
+  const t = useT();
+  // A built-in sample profile gets its text in the current language; admin-added profiles are
+  // shown exactly as written.
+  const profile = given.sample
+    ? { ...given, ...Object.fromEntries(['role', 'badge', 'location', 'quote', 'bio'].map((k) => [k, t(`home.community.samples.${given.sample}.${k}`)])) }
+    : given;
+  const kind = given.kind || profileKind(profile.badge);
   const photo = uploadUrl(profile.photo);
   const line = isDark ? '#334155' : '#E2E8F0';
-  const stats = kindStats(kind, profile);
+  const stats = kindStats(kind, profile, t);
   return (
     <Box component="article" sx={{
       flex: { xs: '0 0 88%', sm: `0 0 calc((100% - ${GAP_PX}px) / 2)`, lg: `0 0 calc((100% - ${GAP_PX * 2}px) / 3)` },
@@ -79,13 +89,13 @@ function ProfileCard({ profile, index }) {
       animation: `${fadeUp} .6s ease ${index * 0.1}s both`,
       '&:hover': { transform: 'translateY(-4px)', boxShadow: '0 20px 48px rgba(229,57,53,0.16)' },
     }}>
-      <Tooltip title="Sample profile for demonstration — not a real person" arrow>
+      <Tooltip title={t('home.community.demoTooltip')} arrow>
         <Box sx={{
           position: 'absolute', top: 18, right: 18, display: 'inline-flex', alignItems: 'center', gap: 0.75,
           px: 1.5, py: 0.5, borderRadius: 999, fontSize: '0.75rem', color: '#C91D32',
           bgcolor: isDark ? 'rgba(201,29,50,0.16)' : '#FFF1F2', '& svg': { fontSize: 16 },
         }}>
-          Demo Profile <InfoOutlinedIcon />
+          {t('home.community.demo')} <InfoOutlinedIcon />
         </Box>
       </Tooltip>
 
@@ -143,6 +153,7 @@ function ProfileCard({ profile, index }) {
 
 export default function CommunitySection({ profiles }) {
   const isDark = useTheme().palette.mode === 'dark';
+  const { t, rich } = useI18n();
   const trackRef = useRef(null);
   const [scroll, setScroll] = useState({ canPrev: false, canNext: false });
 
@@ -200,20 +211,19 @@ export default function CommunitySection({ profiles }) {
       <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 1 }}>
         <Box sx={{ textAlign: 'center', mb: { xs: 5, md: 6.5 } }}>
           <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, px: 2.25, py: 0.75, borderRadius: 999, mb: 2, fontWeight: 800, fontSize: '0.78rem', letterSpacing: '0.1em', color: '#C91D32', bgcolor: isDark ? 'rgba(201,29,50,0.16)' : '#FFF1F2', '& svg': { fontSize: 18 } }}>
-            <GroupsIcon /> OUR COMMUNITY
+            <GroupsIcon /> {t('home.community.eyebrow')}
           </Box>
           <Typography id="community-title" component="h2" sx={{ fontWeight: 900, fontSize: { xs: '2.1rem', md: '3.4rem' }, letterSpacing: '-0.03em', lineHeight: 1.1 }}>
-            People Behind <Box component="span" sx={{ color: '#C91D32' }}>the Mission</Box>
+            {rich('home.community.title', { accent: <Box component="span" sx={{ color: '#C91D32' }}>{t('home.community.titleAccent')}</Box> })}
           </Typography>
           <Typography sx={{ color: 'text.secondary', mt: 2, fontSize: { xs: '1rem', md: '1.1rem' }, maxWidth: 820, mx: 'auto', lineHeight: 1.65 }}>
-            BloodLife AI is made possible by a community of blood donors, volunteers, and healthcare partners who share
-            the same goal — saving lives and building a healthier tomorrow.
+            {t('home.community.lead')}
           </Typography>
         </Box>
 
         <Box sx={{ position: 'relative' }}>
-          {scroll.canPrev && <IconButton aria-label="Previous stories" onClick={() => move(-1)} sx={arrow('left')}><ChevronLeftIcon /></IconButton>}
-          {scroll.canNext && <IconButton aria-label="Next stories" onClick={() => move(1)} sx={arrow('right')}><ChevronRightIcon /></IconButton>}
+          {scroll.canPrev && <IconButton aria-label={t('home.community.previous')} onClick={() => move(-1)} sx={arrow('left')}><ChevronLeftIcon /></IconButton>}
+          {scroll.canNext && <IconButton aria-label={t('home.community.next')} onClick={() => move(1)} sx={arrow('right')}><ChevronRightIcon /></IconButton>}
 
           <Box ref={trackRef} sx={{
             // Generous padding (cancelled by the negative margins) so the cards' glow and hover lift aren't sliced off
@@ -232,8 +242,7 @@ export default function CommunitySection({ profiles }) {
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-start', gap: 1.25, mt: { xs: 2, md: 3 }, px: 2 }}>
           <InfoOutlinedIcon aria-hidden="true" sx={{ fontSize: 20, color: 'text.secondary', mt: '1px' }} />
           <Typography sx={{ fontSize: '0.82rem', color: 'text.secondary', lineHeight: 1.6 }}>
-            <Box component="strong" sx={{ color: 'text.primary' }}>Note:</Box> The profiles above are sample/demo data used for demonstration purposes only.
-            <Box component="br" sx={{ display: { xs: 'none', md: 'block' } }} /> They do not represent real individuals or actual medical professionals/donors.
+            <Box component="strong" sx={{ color: 'text.primary' }}>{t('home.community.noteLabel')}</Box> {t('home.community.note')}
           </Typography>
         </Box>
 
@@ -243,7 +252,7 @@ export default function CommunitySection({ profiles }) {
             background: 'linear-gradient(135deg, #E63946 0%, #C91D32 100%)', boxShadow: '0 12px 30px rgba(201,29,50,0.36)', transition: 'transform .2s, box-shadow .2s',
             '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 16px 38px rgba(201,29,50,0.46)' },
           }}>
-            <GroupsIcon /> Join Our Community <ArrowForwardIcon sx={{ fontSize: 20 }} />
+            <GroupsIcon /> {t('home.community.join')} <ArrowForwardIcon sx={{ fontSize: 20 }} />
           </Box>
         </Box>
       </Container>

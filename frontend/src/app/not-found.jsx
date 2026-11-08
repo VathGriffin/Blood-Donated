@@ -1,10 +1,12 @@
 'use client';
+import { useT } from '@/i18n/I18nProvider';
 import Link from 'next/link';
 import { Box, Typography, Button, useTheme } from "@mui/material";
 import BloodtypeIcon from "@mui/icons-material/Bloodtype";
 
 const NotFound = () => {
   const theme = useTheme();
+  const t = useT();
   const isDark = theme.palette.mode === "dark";
 
   return (
@@ -25,10 +27,10 @@ const NotFound = () => {
         404
       </Typography>
       <Typography variant="h5" fontWeight={700} gutterBottom sx={{ mt: 1 }}>
-        Page Not Found
+        {t('common.notFound.title')}
       </Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 4, maxWidth: 400 }}>
-        The page you&apos;re looking for doesn&apos;t exist. It may have been moved or the link is incorrect.
+        {t('common.notFound.text')}
       </Typography>
       <Button
         variant="contained"
@@ -38,7 +40,7 @@ const NotFound = () => {
         href="/"
         sx={{ borderRadius: 3, px: 5, fontWeight: 700 }}
       >
-        Back to Home
+        {t('common.notFound.home')}
       </Button>
     </Box>
   );

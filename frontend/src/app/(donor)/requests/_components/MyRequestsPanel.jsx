@@ -1,4 +1,6 @@
 'use client';
+import { statusLabel } from '@/components/ui/StatusBadge';
+import { useT } from '@/i18n/I18nProvider';
 import { useDeferredValue, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
@@ -52,13 +54,14 @@ const BloodType = ({ type }) => (
     <WaterDropIcon aria-hidden="true" sx={{ fontSize: 15, color: 'primary.main' }} />{type}
   </Box>
 );
-const units = (n = 1) => `${n} unit${n !== 1 ? 's' : ''}`;
+const units = (t, n = 1) => t('donor.req.units', { count: n });
 
 /**
  * The signed-in donor's own requests (the API only returns those), with status tabs, search and
  * paging. Actions follow the API's rules: only a Pending request can be cancelled by its owner.
  */
 export default function MyRequestsPanel({ requests, state, onRetry, hospitalFor, onView, onCancel, busyId }) {
+  const t = useT();
   const [tab, setTab] = useState('All');
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
@@ -77,18 +80,18 @@ export default function MyRequestsPanel({ requests, state, onRetry, hospitalFor,
   const ready = state === 'ready';
 
   const menuItems = (r) => [
-    { label: 'View details', icon: <VisibilityOutlinedIcon />, onClick: () => onView(r) },
+    { label: t('donor.rhist.viewDetails'), icon: <VisibilityOutlinedIcon />, onClick: () => onView(r) },
     statusOf(r) === 'Pending' && {
-      label: 'Cancel request', icon: <DoNotDisturbOnOutlinedIcon />, danger: true, disabled: busyId === r._id, onClick: () => onCancel(r),
+      label: t('donor.rhist.cancel'), icon: <DoNotDisturbOnOutlinedIcon />, danger: true, disabled: busyId === r._id, onClick: () => onCancel(r),
     },
-    { label: 'Open in My Requests', icon: <ListAltIcon />, href: '/my-requests' },
+    { label: t('donor.rhist.openList'), icon: <ListAltIcon />, href: '/my-requests' },
   ].filter(Boolean);
 
   const viewBtn = (r) => (
     <Button size="small" variant="outlined" color="inherit" onClick={() => onView(r)} startIcon={<VisibilityOutlinedIcon />}
-      aria-label={`View request for ${r.patientName}`}
+      aria-label={t('donor.rhist.viewAria', { patient: r.patientName })}
       sx={{ borderColor: 'divider', fontWeight: 600, minWidth: 0, px: 1.5, flexShrink: 0 }}>
-      View
+      {t('donor.rhist.view')}
     </Button>
   );
 
@@ -96,31 +99,31 @@ export default function MyRequestsPanel({ requests, state, onRetry, hospitalFor,
     <Box component="section" aria-labelledby="my-requests-title" sx={{ ...panelSx, p: 0, overflow: 'hidden' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, px: { xs: 2, sm: 2.5 }, pt: { xs: 2, sm: 2.25 }, flexWrap: 'wrap' }}>
         <AssignmentOutlinedIcon aria-hidden="true" sx={{ color: 'primary.main' }} />
-        <Typography id="my-requests-title" component="h2" sx={{ fontWeight: 800, fontSize: '1.1rem', flex: 1 }}>My Blood Requests</Typography>
+        <Typography id="my-requests-title" component="h2" sx={{ fontWeight: 800, fontSize: '1.1rem', flex: 1 }}>{t('donor.rhist.title')}</Typography>
         <Box sx={{
           display: 'flex', alignItems: 'center', gap: 0.75, px: 1.25, height: 36, borderRadius: '9px', width: { xs: '100%', sm: 220 }, order: { xs: 3, sm: 0 },
           border: '1px solid', borderColor: 'divider',
           '&:focus-within': { borderColor: 'primary.main', boxShadow: (t) => `0 0 0 3px ${alpha(t.palette.primary.main, 0.14)}` },
         }}>
           <SearchIcon aria-hidden="true" sx={{ fontSize: 19, color: 'text.secondary' }} />
-          <InputBase value={query} onChange={(e) => { setQuery(e.target.value); setPage(1); }} placeholder="Search requests…" fullWidth
-            inputProps={{ 'aria-label': 'Search your requests', type: 'search' }} sx={{ fontSize: '0.85rem' }} />
-          {query && <IconButton size="small" aria-label="Clear search" onClick={() => setQuery('')}><CloseIcon sx={{ fontSize: 16 }} /></IconButton>}
+          <InputBase value={query} onChange={(e) => { setQuery(e.target.value); setPage(1); }} placeholder={t('donor.rhist.search')} fullWidth
+            inputProps={{ 'aria-label': t('donor.rhist.searchAria'), type: 'search' }} sx={{ fontSize: '0.85rem' }} />
+          {query && <IconButton size="small" aria-label={t('donor.rhist.clear')} onClick={() => setQuery('')}><CloseIcon sx={{ fontSize: 16 }} /></IconButton>}
         </Box>
-        <Button component={Link} href="/my-requests" size="small" sx={{ fontWeight: 700 }}>View All</Button>
+        <Button component={Link} href="/my-requests" size="small" sx={{ fontWeight: 700 }}>{t('donor.rhist.viewAll')}</Button>
       </Box>
 
       <Tabs value={tab} onChange={(_, v) => { setTab(v); setPage(1); }} variant="scrollable" scrollButtons={false}
-        aria-label="Filter requests by status"
+        aria-label={t('donor.rhist.filter')}
         sx={{
           px: { xs: 1, sm: 1.5 }, mt: 1, borderBottom: '1px solid', borderColor: 'divider', minHeight: 46,
           '& .MuiTab-root': { minHeight: 46, fontWeight: 600, fontSize: '0.88rem', px: 1.75, color: 'text.secondary' },
           '& .MuiTab-root.Mui-selected': { color: 'primary.main', fontWeight: 700 },
           '& .MuiTabs-indicator': { height: 3, borderRadius: '3px 3px 0 0' },
         }}>
-        {HISTORY_TABS.map((t) => (
-          <Tab key={t.value} value={t.value} id={`hist-tab-${t.value}`} aria-controls="hist-panel"
-            label={`${t.label}${ready ? ` (${counts[t.value] || 0})` : ''}`} />
+        {HISTORY_TABS.map((d) => (
+          <Tab key={d.value} value={d.value} id={`hist-tab-${d.value}`} aria-controls="hist-panel"
+            label={`${d.label}${ready ? ` (${counts[d.value] || 0})` : ''}`} />
         ))}
       </Tabs>
 
@@ -131,20 +134,20 @@ export default function MyRequestsPanel({ requests, state, onRetry, hospitalFor,
           </Box>
         ) : state === 'error' ? (
           <Alert severity="error" variant="outlined" sx={{ borderRadius: '10px', alignItems: 'center' }}
-            action={<Button color="error" size="small" onClick={onRetry}>Try again</Button>}>
-            We couldn&apos;t load your requests. Check your connection and try again.
+            action={<Button color="error" size="small" onClick={onRetry}>{t('donor.rhist.retry')}</Button>}>
+            {t('donor.rhist.loadFailed')}
           </Alert>
         ) : requests.length === 0 ? (
           <Box sx={{ py: 4, textAlign: 'center' }}>
             <AssignmentOutlinedIcon aria-hidden="true" sx={{ fontSize: 40, color: 'text.disabled' }} />
-            <Typography sx={{ fontWeight: 700, mt: 1 }}>No requests yet</Typography>
-            <Typography variant="body2" color="text.secondary">Requests you submit with the form will appear here.</Typography>
+            <Typography sx={{ fontWeight: 700, mt: 1 }}>{t('donor.rhist.none')}</Typography>
+            <Typography variant="body2" color="text.secondary">{t('donor.rhist.noneText')}</Typography>
           </Box>
         ) : shown.length === 0 ? (
           <Box sx={{ py: 4, textAlign: 'center' }}>
             <SearchOffIcon aria-hidden="true" sx={{ fontSize: 40, color: 'text.disabled' }} />
-            <Typography sx={{ fontWeight: 700, mt: 1 }}>No requests match</Typography>
-            <Button size="small" onClick={() => { setTab('All'); setQuery(''); }} sx={{ mt: 1 }}>Show all requests</Button>
+            <Typography sx={{ fontWeight: 700, mt: 1 }}>{t('donor.rhist.noMatch')}</Typography>
+            <Button size="small" onClick={() => { setTab('All'); setQuery(''); }} sx={{ mt: 1 }}>{t('donor.rhist.showAll')}</Button>
           </Box>
         ) : (
           <>
@@ -157,7 +160,7 @@ export default function MyRequestsPanel({ requests, state, onRetry, hospitalFor,
               '& tr:last-of-type td': { borderBottom: 0 },
             }}>
               <caption style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>
-                Your blood requests, {HISTORY_TABS.find((t) => t.value === tab).label.toLowerCase()}
+                {t('donor.rhist.caption', { tab: HISTORY_TABS.find((d) => d.value === tab).label })}
               </caption>
               <colgroup>
                 <col style={{ width: 34 }} /><col /><col style={{ width: 70 }} /><col style={{ width: 72 }} />
@@ -165,9 +168,9 @@ export default function MyRequestsPanel({ requests, state, onRetry, hospitalFor,
               </colgroup>
               <thead>
                 <tr>
-                  <th scope="col">#</th><th scope="col">Hospital</th><th scope="col">Blood</th><th scope="col">Quantity</th>
-                  <th scope="col">Urgency</th><th scope="col">Required By</th><th scope="col">Status</th>
-                  <th scope="col"><Box component="span" sx={{ pl: 0.5 }}>Actions</Box></th>
+                  <th scope="col">#</th><th scope="col">{t('donor.rhist.cols.hospital')}</th><th scope="col">{t('donor.rhist.cols.blood')}</th><th scope="col">{t('donor.rhist.cols.quantity')}</th>
+                  <th scope="col">{t('donor.rhist.cols.urgency')}</th><th scope="col">{t('donor.rhist.cols.requiredBy')}</th><th scope="col">{t('donor.rhist.cols.status')}</th>
+                  <th scope="col"><Box component="span" sx={{ pl: 0.5 }}>{t('donor.rhist.cols.actions')}</Box></th>
                 </tr>
               </thead>
               <tbody>
@@ -176,14 +179,14 @@ export default function MyRequestsPanel({ requests, state, onRetry, hospitalFor,
                     <td>{(current - 1) * PAGE_SIZE + i + 1}</td>
                     <td><HospitalCell request={r} hospital={hospitalFor(r)} /></td>
                     <td><BloodType type={r.bloodType} /></td>
-                    <td>{units(r.unitsNeeded)}</td>
-                    <td><Pill tone={URGENCY_TONE[r.urgency] || 'neutral'}>{r.urgency}</Pill></td>
-                    <td>{fmtDate(r.requiredBy) || <Box component="span" sx={{ color: 'text.disabled' }} title="Not specified">—</Box>}</td>
+                    <td>{units(t, r.unitsNeeded)}</td>
+                    <td><Pill tone={URGENCY_TONE[r.urgency] || 'neutral'}>{statusLabel(t, r.urgency)}</Pill></td>
+                    <td>{fmtDate(r.requiredBy) || <Box component="span" sx={{ color: 'text.disabled' }} title={t('donor.rhist.notSpecified')}>—</Box>}</td>
                     <td><StatusBadge status={statusOf(r)} /></td>
                     <td>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
                         {viewBtn(r)}
-                        <CardMenu id={`hist-${r._id}`} label={`request for ${r.patientName}`} items={menuItems(r)} />
+                        <CardMenu id={`hist-${r._id}`} label={t('donor.rhist.menuLabel', { patient: r.patientName })} items={menuItems(r)} />
                       </Box>
                     </td>
                   </tr>
@@ -201,15 +204,15 @@ export default function MyRequestsPanel({ requests, state, onRetry, hospitalFor,
                   </Box>
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1.25, mt: 1.25, fontSize: '0.84rem' }}>
                     <BloodType type={r.bloodType} />
-                    <span>{units(r.unitsNeeded)}</span>
-                    <Pill tone={URGENCY_TONE[r.urgency] || 'neutral'}>{r.urgency}</Pill>
+                    <span>{units(t, r.unitsNeeded)}</span>
+                    <Pill tone={URGENCY_TONE[r.urgency] || 'neutral'}>{statusLabel(t, r.urgency)}</Pill>
                     <Box component="span" sx={{ color: 'text.secondary' }}>
-                      {r.requiredBy ? `By ${fmtDate(r.requiredBy)}` : `Sent ${fmtDate(r.createdAt) || ''}`}
+                      {r.requiredBy ? t('donor.rhist.by', { date: fmtDate(r.requiredBy) }) : t('donor.rhist.sent', { date: fmtDate(r.createdAt) || '' })}
                     </Box>
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mt: 1 }}>
                     {viewBtn(r)}
-                    <CardMenu id={`hist-m-${r._id}`} label={`request for ${r.patientName}`} items={menuItems(r)} />
+                    <CardMenu id={`hist-m-${r._id}`} label={t('donor.rhist.menuLabel', { patient: r.patientName })} items={menuItems(r)} />
                   </Box>
                 </Box>
               ))}
@@ -218,7 +221,7 @@ export default function MyRequestsPanel({ requests, state, onRetry, hospitalFor,
             {pages > 1 && (
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1.5, flexWrap: 'wrap', gap: 1 }}>
                 <Typography sx={{ fontSize: '0.8rem', color: 'text.secondary' }} aria-live="polite">
-                  {(current - 1) * PAGE_SIZE + 1}–{Math.min(current * PAGE_SIZE, shown.length)} of {shown.length}
+                  {t('donor.rhist.range', { from: (current - 1) * PAGE_SIZE + 1, to: Math.min(current * PAGE_SIZE, shown.length), total: shown.length })}
                 </Typography>
                 <Pagination size="small" shape="rounded" color="primary" count={pages} page={current} onChange={(_, p) => setPage(p)} />
               </Box>

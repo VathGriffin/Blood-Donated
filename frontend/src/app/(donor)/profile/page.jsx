@@ -1,7 +1,7 @@
 'use client';
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Box, Typography, Paper, Chip, Button, Skeleton, Dialog, DialogTitle, DialogContent, DialogActions,
   TextField, CircularProgress, Tabs, Tab, Alert, Snackbar, InputBase, IconButton,
@@ -21,7 +21,8 @@ import WaterDropIcon from '@mui/icons-material/WaterDrop';
 import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
-import { formatDistanceToNow } from 'date-fns';
+import { useI18n, useT } from '@/i18n/I18nProvider';
+import { apiErrorMessage } from '@/lib/api-error';
 import axios from 'axios';
 import API_BASE, { uploadUrl } from '@/lib/config';
 import { initialsOf } from '@/lib/format';
@@ -77,10 +78,11 @@ function ListSkeleton({ rows = 3 }) {
 }
 
 function LoadError({ what, onRetry }) {
+  const t = useT();
   return (
     <Alert severity="error" variant="outlined" icon={<ErrorOutlineIcon />} sx={{ borderRadius: '12px', alignItems: 'center' }}
-      action={<Button color="error" size="small" onClick={onRetry}>Try again</Button>}>
-      We couldn&apos;t load your {what}. Check your connection and try again.
+      action={<Button color="error" size="small" onClick={onRetry}>{t('donor.profile.retry')}</Button>}>
+      {t(`donor.profile.loadError.${what}`)}
     </Alert>
   );
 }
@@ -88,6 +90,7 @@ function LoadError({ what, onRetry }) {
 export default function ProfilePage() {
   const router = useRouter();
   const { isAuth, user, token, updateUser, logout } = useUserAuth();
+  const { t, formatRelative } = useI18n();
 
   // A 401 means the stored session is no longer valid: sign out and go to the login page.
   // `logout` is a new function whenever the auth context re-renders (e.g. after a profile
@@ -133,10 +136,26 @@ export default function ProfilePage() {
   // (The session itself is verified by DashboardShell before this page renders, so there is
   // no separate /api/user/me check here.)
 
+  // ?tab=history opens that tab, also when already on this page (the account menu's Donation
+  // History link). ?edit=1 (its Settings link) opens Edit Profile, then drops the parameter.
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const editParam = searchParams.get('edit');
   useEffect(() => {
-    const t = new URLSearchParams(window.location.search).get('tab');
-    if (TABS.includes(t)) setTab(t);
-  }, []);
+    if (TABS.includes(tabParam)) setTab(tabParam);
+  }, [tabParam]);
+  useEffect(() => {
+    if (editParam !== '1' || !user) return;
+    setEditName(user.fullName || '');
+    setEditPhone(user.phone || '');
+    setSaveError('');
+    setEditOpen(true);
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('edit');
+      window.history.replaceState(window.history.state, '', url);
+    } catch { /* cosmetic */ }
+  }, [editParam, user]);
 
   // Each list loader numbers its runs, so a slow older response can never overwrite a newer
   // one. `quiet` refreshes in place (after a cancellation, or when the tab regains focus)
@@ -234,7 +253,7 @@ export default function ProfilePage() {
   const onCancelled = (data) => {
     setRequests((list) => list.map((r) => (r._id === data._id ? data : r)));
     setCancelTarget(null);
-    setToast({ severity: 'success', message: 'Your blood request has been cancelled.' });
+    setToast({ severity: 'success', message: t('donor.profile.cancelled') });
     loadRequests(true);
   };
   // The request changed meanwhile (approved, already cancelled, removed) — show its real state.
@@ -291,12 +310,12 @@ export default function ProfilePage() {
   const filteredHistory = useMemo(() => {
     const q = historyQ.trim().toLowerCase();
     if (!q) return history;
-    const label = { checkin: 'donated', recorded: 'donated', reported: 'previous donation reported', registered: 'registered as a donor' };
+    const label = { checkin: t('donor.profile.searchLabels.donated'), recorded: t('donor.profile.searchLabels.donated'), reported: t('donor.profile.searchLabels.reported'), registered: t('donor.profile.searchLabels.registered') };
     return history.filter((it) => [
       label[it.kind], formatDate(it.date), it.appt?.location, it.appt?.bloodType, it.entry?.location, it.entry?.notes,
       it.donor?.bloodType, it.donor?.location,
     ].some((v) => v?.toLowerCase().includes(q)));
-  }, [history, historyQ]);
+  }, [history, historyQ, t]);
 
   const filteredRequests = useMemo(() => {
     const q = reqQ.trim().toLowerCase();
@@ -323,13 +342,13 @@ export default function ProfilePage() {
     return (
       <Box sx={{ minHeight: '70vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, textAlign: 'center', px: 3 }}>
         <LockIcon sx={{ fontSize: 52, color: 'primary.main' }} />
-        <Typography variant="h5" fontWeight={700}>Sign in to view your profile</Typography>
+        <Typography variant="h5" fontWeight={700}>{t('donor.profile.signInTitle')}</Typography>
         <Typography color="text.secondary" fontSize="0.9rem">
-          Your blood requests and donor information are only visible when logged in.
+          {t('donor.profile.signInText')}
         </Typography>
         <Box display="flex" gap={2} mt={1}>
-          <Button variant="contained" component={Link} href="/login">Log In</Button>
-          <Button variant="outlined" component={Link} href="/register">Sign Up</Button>
+          <Button variant="contained" component={Link} href="/login">{t('donor.profile.logIn')}</Button>
+          <Button variant="outlined" component={Link} href="/register">{t('donor.profile.signUp')}</Button>
         </Box>
       </Box>
     );
@@ -345,12 +364,12 @@ export default function ProfilePage() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      setToast({ severity: 'error', message: 'Please choose an image file.' });
+      setToast({ severity: 'error', message: t('donor.profile.chooseImage') });
       e.target.value = '';
       return;
     }
     if (file.size > MAX_PHOTO_SIZE) {
-      setToast({ severity: 'error', message: 'Image must be under 10 MB.' });
+      setToast({ severity: 'error', message: t('donor.profile.imageSize') });
       e.target.value = '';
       return;
     }
@@ -361,9 +380,9 @@ export default function ProfilePage() {
       // Do NOT set Content-Type — axios sets it automatically with the correct multipart boundary
       const res = await axios.post(`${API_BASE}/api/user/photo`, form, authHeader());
       updateUser({ photo: res.data.photo });
-      setToast({ severity: 'success', message: 'Profile photo updated.' });
+      setToast({ severity: 'success', message: t('donor.profile.photoUpdated') });
     } catch (err) {
-      if (!sessionExpired(err)) setToast({ severity: 'error', message: err.response?.data?.message || 'Photo upload failed.' });
+      if (!sessionExpired(err)) setToast({ severity: 'error', message: apiErrorMessage(err, t('donor.profile.photoFailed')) });
     } finally {
       setPhotoLoading(false);
       e.target.value = '';
@@ -379,16 +398,16 @@ export default function ProfilePage() {
 
   const handleSaveProfile = async (e) => {
     e?.preventDefault();
-    if (!editName.trim()) { setSaveError('Name cannot be empty.'); return; }
+    if (!editName.trim()) { setSaveError(t('donor.profile.nameEmpty')); return; }
     setSaving(true);
     setSaveError('');
     try {
       const res = await axios.put(`${API_BASE}/api/user/profile`, { fullName: editName.trim(), phone: editPhone.trim() }, authHeader());
       updateUser({ fullName: res.data.fullName, phone: res.data.phone });
       setEditOpen(false);
-      setToast({ severity: 'success', message: 'Profile updated.' });
+      setToast({ severity: 'success', message: t('donor.profile.updated') });
     } catch (err) {
-      if (!sessionExpired(err)) setSaveError(err.response?.data?.message || 'Failed to save. Please try again.');
+      if (!sessionExpired(err)) setSaveError(apiErrorMessage(err, t('donor.profile.saveFailed')));
     } finally {
       setSaving(false);
     }
@@ -400,9 +419,9 @@ export default function ProfilePage() {
     try {
       const { data } = await axios.patch(`${API_BASE}/api/donors/me/availability`, { available }, authHeader());
       setDonorStatus((prev) => ({ ...prev, available: data.available }));
-      setToast({ severity: 'success', message: data.available ? 'You are now marked available to donate.' : 'You are now marked unavailable.' });
+      setToast({ severity: 'success', message: data.available ? t('donor.profile.nowAvailable') : t('donor.profile.nowUnavailable') });
     } catch (err) {
-      if (!sessionExpired(err)) setAvailError(err.response?.data?.message || 'Failed to update availability.');
+      if (!sessionExpired(err)) setAvailError(apiErrorMessage(err, t('donor.profile.availFailed')));
     } finally {
       setAvailSaving(false);
     }
@@ -428,18 +447,18 @@ export default function ProfilePage() {
   const listStatus = isReq ? reqStatus : isHistory && apptStatus === 'ready' && donorStatus === null ? 'loading' : apptStatus;
   const total = isReq ? requests.length : isHistory ? history.length : appointments.length;
   const shown = isReq ? filteredRequests.length : isHistory ? filteredHistory.length : filteredAppointments.length;
-  const [noun, nouns] = isReq ? ['request', 'requests'] : isHistory ? ['entry', 'entries'] : ['appointment', 'appointments'];
+  const listKey = isReq ? 'requests' : isHistory ? 'history' : 'appointments';
   const newHref = isReq ? '/requests' : '/appointments';
-  const newLabel = isReq ? 'New Request' : 'Book Appointment';
+  const newLabel = isReq ? t('donor.profile.newRequest') : t('donor.profile.bookAppointment');
 
   // The donor record's lastDonation is updated on check-in; fall back to the newest check-in.
   const lastDonation = donorStatus?.lastDonation || donations[0]?.checkedInAt || null;
   const registered = !!donorStatus?.found;
 
   const tabDefs = [
-    { value: 'requests', label: 'Blood Requests', count: requests.length, icon: <WaterDropIcon /> },
-    { value: 'appointments', label: 'Appointments', count: appointments.length, icon: <EventAvailableIcon /> },
-    { value: 'history', label: 'Donation History', count: history.length, icon: <BarChartIcon /> },
+    { value: 'requests', label: t('donor.profile.tabs.requests'), count: requests.length, icon: <WaterDropIcon /> },
+    { value: 'appointments', label: t('donor.profile.tabs.appointments'), count: appointments.length, icon: <EventAvailableIcon /> },
+    { value: 'history', label: t('donor.profile.tabs.history'), count: history.length, icon: <BarChartIcon /> },
   ];
 
   return (
@@ -453,24 +472,24 @@ export default function ProfilePage() {
       <Box sx={{ display: 'grid', gap: { xs: 1.5, md: 2 }, gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: '1.25fr repeat(3, 1fr)' } }}>
         <AvailabilityCard donor={donorStatus} saving={availSaving} error={availError}
           onToggle={handleToggleAvailability} onRetry={() => setDonorAttempt((n) => n + 1)} />
-        <StatCard icon={<DescriptionOutlinedIcon />} label="Total Blood Requests" loading={reqStatus === 'loading'}
+        <StatCard icon={<DescriptionOutlinedIcon />} label={t('donor.profile.stats.requests')} loading={reqStatus === 'loading'}
           value={reqStatus === 'error' ? '—' : requests.length}
-          sub={reqStatus === 'ready' ? `${reqCount('Pending')} pending • ${reqCount('Approved')} approved` : reqStatus === 'error' ? 'Couldn’t load' : undefined}
+          sub={reqStatus === 'ready' ? t('donor.profile.stats.requestsSub', { pending: reqCount('Pending'), approved: reqCount('Approved') }) : reqStatus === 'error' ? t('donor.profile.stats.loadFailed') : undefined}
           onClick={() => openTab('requests')} />
-        <StatCard icon={<CalendarMonthOutlinedIcon />} label="Upcoming Appointments" loading={apptStatus === 'loading'}
+        <StatCard icon={<CalendarMonthOutlinedIcon />} label={t('donor.profile.stats.upcoming')} loading={apptStatus === 'loading'}
           value={apptStatus === 'error' ? '—' : upcoming.length}
-          sub={apptStatus === 'ready' ? (upcoming[0] ? `Next: ${formatDate(upcoming[0].date, { day: 'numeric', month: 'short', year: 'numeric' })}` : 'None booked') : apptStatus === 'error' ? 'Couldn’t load' : undefined}
+          sub={apptStatus === 'ready' ? (upcoming[0] ? t('donor.profile.stats.next', { date: formatDate(upcoming[0].date, { day: 'numeric', month: 'short', year: 'numeric' }) }) : t('donor.profile.stats.noneBooked')) : apptStatus === 'error' ? t('donor.profile.stats.loadFailed') : undefined}
           onClick={() => openTab('appointments')} />
-        <StatCard icon={<FavoriteBorderIcon />} label="Total Donations" loading={apptStatus === 'loading'}
+        <StatCard icon={<FavoriteBorderIcon />} label={t('donor.profile.stats.donations')} loading={apptStatus === 'loading'}
           value={apptStatus === 'error' ? '—' : donationCount}
-          sub={lastDonation ? `Last donation: ${formatDistanceToNow(new Date(lastDonation), { addSuffix: true })}` : 'No donations recorded yet'}
+          sub={lastDonation ? t('donor.profile.stats.lastDonation', { when: formatRelative(lastDonation) }) : t('donor.profile.stats.noDonations')}
           onClick={() => openTab('history')} />
       </Box>
 
       {/* Tabs */}
       <Paper ref={tabsRef} elevation={0} sx={{ ...cardSx, overflow: 'hidden', scrollMarginTop: 90 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, px: { xs: 0, sm: 2.5 }, borderBottom: '1px solid', borderColor: 'divider' }}>
-          <Tabs value={tab} onChange={changeTab} aria-label="Your activity" variant="scrollable" scrollButtons={false} sx={{
+          <Tabs value={tab} onChange={changeTab} aria-label={t('donor.profile.activity')} variant="scrollable" scrollButtons={false} sx={{
             flex: 1, minWidth: 0, minHeight: 0,
             '& .MuiTab-root': {
               minHeight: { xs: 56, sm: 68 }, fontWeight: 700, fontSize: { xs: '0.86rem', sm: '1rem' }, color: 'text.secondary',
@@ -480,9 +499,9 @@ export default function ProfilePage() {
             '& .MuiTab-icon': { fontSize: 22, mr: '10px !important' },
             '& .MuiTabs-indicator': { height: 3, borderRadius: '3px 3px 0 0' },
           }}>
-            {tabDefs.map((t) => (
-              <Tab key={t.value} value={t.value} icon={t.icon} iconPosition="start" id={`tab-${t.value}`} aria-controls={`panel-${t.value}`}
-                label={<span>{t.label} ({t.count})</span>} />
+            {tabDefs.map((d) => (
+              <Tab key={d.value} value={d.value} icon={d.icon} iconPosition="start" id={`tab-${d.value}`} aria-controls={`panel-${d.value}`}
+                label={<span>{d.label} ({d.count})</span>} />
             ))}
           </Tabs>
           <Button component={Link} href={newHref} variant="contained" startIcon={<AddIcon />}
@@ -500,16 +519,16 @@ export default function ProfilePage() {
           <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center', mb: 2.5 }}>
             {isHistory ? (
               <Typography variant="body2" color="text.secondary" sx={{ flex: '1 1 260px' }}>
-                Your donor registration and every donation on record, newest first.
+                {t('donor.profile.historyLead')}
               </Typography>
             ) : (
-              <Box role="radiogroup" aria-label="Filter by status" sx={{ display: 'flex', gap: 1, overflowX: 'auto', flex: '1 1 auto', pb: 0.25, minWidth: 0 }}>
+              <Box role="radiogroup" aria-label={t('donor.profile.filterStatus')} sx={{ display: 'flex', gap: 1, overflowX: 'auto', flex: '1 1 auto', pb: 0.25, minWidth: 0 }}>
                 {filters.map((s) => {
                   const selected = activeFilter === s;
                   const count = isReq ? reqCount(s) : apptCount(s);
                   return (
                     <Chip key={s} role="radio" aria-checked={selected} clickable onClick={() => setActiveFilter(s)}
-                      label={`${s === 'All' ? 'All' : statusMeta[s].label}${listStatus === 'ready' ? ` (${count})` : ''}`}
+                      label={`${s === 'All' ? t('status.All') : statusMeta[s].label}${listStatus === 'ready' ? ` (${count})` : ''}`}
                       variant="outlined"
                       sx={{
                         flexShrink: 0, height: 38, px: 0.75, borderRadius: '999px', fontWeight: 600, fontSize: '0.86rem', borderWidth: 1.5,
@@ -531,40 +550,40 @@ export default function ProfilePage() {
             }}>
               <SearchIcon aria-hidden="true" sx={{ fontSize: 21, color: 'text.secondary' }} />
               <InputBase value={query} onChange={(e) => setQuery(e.target.value)} fullWidth sx={{ fontSize: '0.9rem' }}
-                placeholder={isReq ? 'Search patient or hospital...' : isHistory ? 'Search donations...' : 'Search center or date...'}
-                inputProps={{ 'aria-label': `Search ${nouns}`, type: 'search' }} />
+                placeholder={t(`donor.profile.search.${listKey}`)}
+                inputProps={{ 'aria-label': t(`donor.profile.search.${listKey}Aria`), type: 'search' }} />
               {query && (
-                <IconButton size="small" aria-label="Clear search" onClick={() => setQuery('')}><CloseIcon fontSize="small" /></IconButton>
+                <IconButton size="small" aria-label={t('donor.profile.search.clear')} onClick={() => setQuery('')}><CloseIcon fontSize="small" /></IconButton>
               )}
             </Box>
           </Box>
 
           {listStatus === 'ready' && total > 0 && (query || (!isHistory && activeFilter !== 'All')) && (
             <Typography variant="caption" color="text.secondary" aria-live="polite" sx={{ display: 'block', mb: 1.25 }}>
-              Showing {shown} of {total} {total !== 1 ? nouns : noun}
+              {t(`donor.profile.showing.${listKey}`, { shown, total })}
             </Typography>
           )}
 
           {listStatus === 'loading' ? <ListSkeleton rows={isReq ? 2 : 2} />
-            : listStatus === 'error' ? <LoadError what={isReq ? 'blood requests' : isHistory ? 'donation history' : 'appointments'} onRetry={() => (isReq ? loadRequests() : loadAppointments())} />
+            : listStatus === 'error' ? <LoadError what={listKey} onRetry={() => (isReq ? loadRequests() : loadAppointments())} />
             : total === 0 ? (
               <EmptyPanel
                 icon={isReq ? <BloodtypeOutlinedIcon /> : isHistory ? <WaterDropIcon /> : <EventAvailableOutlinedIcon />}
-                title={isReq ? 'No blood requests yet' : isHistory ? 'No donation history yet' : 'No appointments yet'}
-                text={isReq ? 'Requests you submit for a patient will appear here, with their status.'
+                title={t(`donor.profile.empty.${listKey}Title`)}
+                text={isReq ? t('donor.profile.empty.requestsText')
                   : isHistory ? (registered
-                    ? 'When staff check you in at a donation center, the donation appears here.'
-                    : 'Register as a donor with this account’s email and your registration will appear here, followed by each donation.')
-                  : 'Book a donation slot at a center near you. It will appear here once booked.'}
+                    ? t('donor.profile.empty.historyRegistered')
+                    : t('donor.profile.empty.historyText'))
+                  : t('donor.profile.empty.appointmentsText')}
                 action={isHistory && !registered
-                  ? <Button component={Link} href="/donate" variant="contained" startIcon={<AddIcon />}>Register as a Donor</Button>
+                  ? <Button component={Link} href="/donate" variant="contained" startIcon={<AddIcon />}>{t('donor.profile.empty.registerDonor')}</Button>
                   : <Button component={Link} href={newHref} variant="contained" startIcon={<AddIcon />}>
-                    {isReq ? 'Submit a Request' : 'Book an Appointment'}
+                    {isReq ? t('donor.profile.empty.submitRequest') : t('donor.profile.empty.bookAppointment')}
                   </Button>} />
             ) : shown === 0 ? (
-              <EmptyPanel icon={<SearchOffIcon />} title="Nothing matches"
-                text={isHistory ? 'Try another search term.' : 'Try another status or search term.'}
-                action={<Button variant="outlined" onClick={() => { if (!isHistory) setActiveFilter('All'); setQuery(''); }}>Clear filters</Button>} />
+              <EmptyPanel icon={<SearchOffIcon />} title={t('donor.profile.empty.noMatch')}
+                text={isHistory ? t('donor.profile.empty.tryAnother') : t('donor.profile.empty.tryStatus')}
+                action={<Button variant="outlined" onClick={() => { if (!isHistory) setActiveFilter('All'); setQuery(''); }}>{t('donor.profile.empty.clearFilters')}</Button>} />
             ) : (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {isReq
@@ -600,23 +619,23 @@ export default function ProfilePage() {
       {/* Edit Profile */}
       <Dialog open={editOpen} onClose={() => !saving && setEditOpen(false)} maxWidth="xs" fullWidth aria-labelledby="edit-profile-title"
         slotProps={{ paper: { component: 'form', onSubmit: handleSaveProfile, sx: { borderRadius: (t) => `${t.custom.radius.dialog}px` } } }}>
-        <DialogTitle id="edit-profile-title" sx={{ fontWeight: 800, fontSize: '1.05rem', pb: 1 }}>Edit Profile</DialogTitle>
+        <DialogTitle id="edit-profile-title" sx={{ fontWeight: 800, fontSize: '1.05rem', pb: 1 }}>{t('donor.profile.edit.title')}</DialogTitle>
         <DialogContent sx={{ pb: 1 }}>
-          <TextField label="Full Name" value={editName} onChange={(e) => setEditName(e.target.value)} fullWidth size="small"
+          <TextField label={t('donor.profile.edit.fullName')} value={editName} onChange={(e) => setEditName(e.target.value)} fullWidth size="small"
             required autoFocus autoComplete="name" sx={{ mt: 1, mb: 2 }}
             error={!!saveError && !editName.trim()} />
-          <TextField label="Phone Number" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} fullWidth size="small"
+          <TextField label={t('donor.profile.edit.phone')} value={editPhone} onChange={(e) => setEditPhone(e.target.value)} fullWidth size="small"
             type="tel" autoComplete="tel" placeholder="012 345 678" />
           <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1.5 }}>
-            Your email ({user?.email}) is your login and can&apos;t be changed here.
+            {t('donor.profile.edit.emailNote', { email: user?.email })}
           </Typography>
           {saveError && <Alert severity="error" sx={{ mt: 1.5, borderRadius: '10px' }}>{saveError}</Alert>}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
-          <Button onClick={() => setEditOpen(false)} color="inherit" disabled={saving}>Cancel</Button>
+          <Button onClick={() => setEditOpen(false)} color="inherit" disabled={saving}>{t('donor.profile.edit.cancel')}</Button>
           <Button type="submit" variant="contained" disabled={saving} sx={{ minWidth: 96 }}
             startIcon={saving ? <CircularProgress size={15} color="inherit" /> : null}>
-            {saving ? 'Saving…' : 'Save'}
+            {saving ? t('donor.profile.edit.saving') : t('donor.profile.edit.save')}
           </Button>
         </DialogActions>
       </Dialog>

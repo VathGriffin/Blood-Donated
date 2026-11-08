@@ -1,4 +1,5 @@
 'use client';
+import { useT } from '@/i18n/I18nProvider';
 import { Box, IconButton, Slide, Snackbar, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import CheckIcon from '@mui/icons-material/Check';
@@ -35,6 +36,7 @@ export function unseenDecision(appointments, alsoSkip = new Set()) {
 
 /** Toast for "Hospital approved the new date" (or declined it). */
 export default function DecisionToast({ decision, onClose }) {
+  const t = useT();
   const approved = decision?.request.status === 'Approved';
   const tone = approved ? 'success' : 'error';
   return (
@@ -57,15 +59,15 @@ export default function DecisionToast({ decision, onClose }) {
           </Box>
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography sx={{ fontWeight: 700, fontSize: '0.92rem' }}>
-              {approved ? 'Hospital Approved the New Date' : 'Hospital Declined the New Date'}
+              {approved ? t('donor.decision.approvedTitle') : t('donor.decision.declinedTitle')}
             </Typography>
             <Typography sx={{ fontSize: '0.86rem', mt: 0.25 }}>
               {approved
-                ? `Your appointment has been rescheduled to ${whenLabel(decision.request.toDate, decision.request.toTime)}.`
-                : `Your appointment stays on ${whenLabel(decision.request.fromDate, decision.request.fromTime)}.`}
+                ? t('donor.decision.approvedText', { when: whenLabel(decision.request.toDate, decision.request.toTime) })
+                : t('donor.decision.declinedText', { when: whenLabel(decision.request.fromDate, decision.request.fromTime) })}
             </Typography>
           </Box>
-          <IconButton size="small" onClick={onClose} aria-label="Dismiss" sx={{ color: 'inherit', alignSelf: 'flex-start' }}><CloseIcon fontSize="small" /></IconButton>
+          <IconButton size="small" onClick={onClose} aria-label={t('donor.decision.dismiss')} sx={{ color: 'inherit', alignSelf: 'flex-start' }}><CloseIcon fontSize="small" /></IconButton>
         </Box>
       ) : <span />}
     </Snackbar>

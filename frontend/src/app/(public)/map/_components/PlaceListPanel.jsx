@@ -1,4 +1,5 @@
 'use client';
+import { useI18n } from '@/i18n/I18nProvider';
 import { memo } from 'react';
 import {
   Box, Typography, Chip, Avatar, CircularProgress, Alert, Button, Autocomplete, TextField, InputAdornment,
@@ -21,6 +22,7 @@ const SectionLabel = ({ children }) => (
 
 // Memoised so selecting one card or moving the map doesn't re-render the whole list.
 const PlaceCard = memo(function PlaceCard({ item, isHosp, isSelected, isDark, onSelect }) {
+  const { t } = useI18n();
   const meta = TYPE_META[item.type] || TYPE_META.Hospital;
   const bloodColor = BLOOD_COLORS[item.bloodType] || RED;
   const accent = isHosp ? meta.color : bloodColor;
@@ -46,26 +48,26 @@ const PlaceCard = memo(function PlaceCard({ item, isHosp, isSelected, isDark, on
           <Typography sx={{ fontWeight: 700, fontSize: '0.9rem', lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
             {isHosp ? item.name : item.fullName}
           </Typography>
-          <Typography sx={{ fontSize: '0.78rem', color: 'text.secondary', whiteSpace: 'nowrap', pt: '1px' }}>{formatKm(item.dist)} km</Typography>
+          <Typography sx={{ fontSize: '0.78rem', color: 'text.secondary', whiteSpace: 'nowrap', pt: '1px' }}>{t('map.distance', { km: formatKm(item.dist) })}</Typography>
         </Box>
         <Typography noWrap sx={{ fontSize: '0.76rem', color: 'text.secondary', mt: 0.25, display: 'flex', alignItems: 'center', gap: 0.4 }}>
           <LocationOn sx={{ fontSize: 13, flexShrink: 0 }} />
-          {isHosp ? (item.address || 'Address not mapped yet') : item.location}
+          {isHosp ? (item.address || t('map.addressUnknown')) : item.location}
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 0.6, flexWrap: 'wrap' }}>
           {isHosp ? (
             <>
-              <Chip label={item.type} size="small" sx={{ height: 20, fontSize: '0.68rem', fontWeight: 700, bgcolor: isDark ? `${meta.color}2e` : meta.tint, color: meta.color }} />
+              <Chip label={t(`map.types.${item.type}`)} size="small" sx={{ height: 20, fontSize: '0.68rem', fontWeight: 700, bgcolor: isDark ? `${meta.color}2e` : meta.tint, color: meta.color }} />
               {isOpen247(item) && (
                 <Typography sx={{ fontSize: '0.72rem', fontWeight: 700, color: '#16A34A', display: 'flex', alignItems: 'center', gap: 0.4 }}>
-                  <FiberManualRecord sx={{ fontSize: 9 }} /> Open 24/7
+                  <FiberManualRecord sx={{ fontSize: 9 }} /> {t('map.open247')}
                 </Typography>
               )}
-              {item.emergency && !isOpen247(item) && <Typography sx={{ fontSize: '0.72rem', fontWeight: 600, color: 'text.secondary' }}>Emergency care</Typography>}
+              {item.emergency && !isOpen247(item) && <Typography sx={{ fontSize: '0.72rem', fontWeight: 600, color: 'text.secondary' }}>{t('map.emergency')}</Typography>}
             </>
           ) : (
             <Typography sx={{ fontSize: '0.72rem', fontWeight: 700, color: item.available ? '#16A34A' : 'text.disabled', display: 'flex', alignItems: 'center', gap: 0.4 }}>
-              <FiberManualRecord sx={{ fontSize: 9 }} /> {item.available ? 'Available' : 'Unavailable'}
+              <FiberManualRecord sx={{ fontSize: 9 }} /> {t(item.available ? 'map.available' : 'map.unavailable')}
             </Typography>
           )}
         </Box>
@@ -74,7 +76,6 @@ const PlaceCard = memo(function PlaceCard({ item, isHosp, isSelected, isDark, on
   );
 });
 
-const TITLES = { all: 'Nearby Places', Hospital: 'Nearby Hospitals', Clinic: 'Nearby Clinics', 'Blood Center': 'Nearby Blood Centers' };
 
 export default function PlaceListPanel({
   tab, onTab, query, onQuery, onSearch, searching,
@@ -83,6 +84,7 @@ export default function PlaceListPanel({
   items, donorTotal, status, onRetry, selectedId, onSelect, notices,
 }) {
   const isDark = useTheme().palette.mode === 'dark';
+  const { t } = useI18n();
   const isHosp = tab === 0;
   const loading = status === 'loading';
   const failed = status === 'error';
@@ -93,8 +95,8 @@ export default function PlaceListPanel({
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%', bgcolor: 'background.paper', border: '1px solid', borderColor: isDark ? '#334155' : '#E2E8F0', borderRadius: '20px', overflow: 'hidden', boxShadow: isDark ? 'none' : '0 6px 24px rgba(16,24,40,0.06)' }}>
       <Box sx={{ p: 2, pb: 1.5 }}>
         {/* Hospitals | Donors */}
-        <Box role="tablist" aria-label="What to look for" sx={{ display: 'flex', p: 0.5, borderRadius: '14px', bgcolor: isDark ? '#1C2E49' : '#F8FAFC', mb: 1.75 }}>
-          {[['Hospitals', <LocalHospital key="h" sx={{ fontSize: 18 }} />], ['Donors', <PersonSearch key="d" sx={{ fontSize: 18 }} />]].map(([label, icon], i) => (
+        <Box role="tablist" aria-label={t('map.tabs.label')} sx={{ display: 'flex', p: 0.5, borderRadius: '14px', bgcolor: isDark ? '#1C2E49' : '#F8FAFC', mb: 1.75 }}>
+          {[[t('map.tabs.hospitals'), <LocalHospital key="h" sx={{ fontSize: 18 }} />], [t('map.tabs.donors'), <PersonSearch key="d" sx={{ fontSize: 18 }} />]].map(([label, icon], i) => (
             <ButtonBase key={label} role="tab" aria-selected={tab === i} onClick={() => onTab(i)} sx={{
               flex: 1, gap: 0.75, py: 1, borderRadius: '11px', fontWeight: 700, fontSize: '0.88rem', transition: 'all .15s',
               color: tab === i ? '#fff' : 'text.secondary', bgcolor: tab === i ? '#C91D32' : 'transparent', boxShadow: tab === i ? '0 4px 12px rgba(201,29,50,0.35)' : 'none',
@@ -111,9 +113,9 @@ export default function PlaceListPanel({
             onChange={(_, value, reason) => { if (reason === 'selectOption' && value) onSearch(value); }}
             renderInput={(params) => (
               <TextField
-                {...params} placeholder="Search a city or province…" sx={fieldSx}
+                {...params} placeholder={t('map.search.placeholder')} sx={fieldSx}
                 slotProps={{
-                  htmlInput: { ...params.inputProps, 'aria-label': 'Search a city or province' },
+                  htmlInput: { ...params.inputProps, 'aria-label': t('map.search.label') },
                   input: {
                     ...params.InputProps,
                     startAdornment: <InputAdornment position="start"><SearchIcon sx={{ fontSize: 19 }} /></InputAdornment>,
@@ -123,39 +125,39 @@ export default function PlaceListPanel({
               />
             )}
           />
-          <IconButton type="submit" aria-label="Search" sx={{ width: 42, height: 40, borderRadius: '12px', flexShrink: 0, bgcolor: '#C91D32', color: '#fff', '&:hover': { bgcolor: '#A91529' } }}>
+          <IconButton type="submit" aria-label={t('map.search.button')} sx={{ width: 42, height: 40, borderRadius: '12px', flexShrink: 0, bgcolor: '#C91D32', color: '#fff', '&:hover': { bgcolor: '#A91529' } }}>
             <SearchIcon fontSize="small" />
           </IconButton>
         </Box>
 
         {/* Filters */}
-        <SectionLabel>{isHosp ? 'Filter by type' : 'Filter by blood type'}</SectionLabel>
+        <SectionLabel>{t(isHosp ? 'map.filters.byType' : 'map.filters.byBloodType')}</SectionLabel>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mb: 2 }}>
-          {isHosp ? TYPE_FILTERS.map(([value, label]) => (
-            <Chip key={value} label={label} size="small" clickable onClick={() => onHospType(value)} {...chip(hospType === value)} sx={{ fontWeight: 600, borderRadius: '999px' }} />
+          {isHosp ? TYPE_FILTERS.map(([value]) => (
+            <Chip key={value} label={value === 'all' ? t('map.types.all') : t(`map.typesPlural.${value}`)} size="small" clickable onClick={() => onHospType(value)} {...chip(hospType === value)} sx={{ fontWeight: 600, borderRadius: '999px' }} />
           )) : (
             <>
-              <Chip label="Any" size="small" clickable onClick={() => onBloodFilter('')} {...chip(!bloodFilter)} sx={{ fontWeight: 600 }} />
+              <Chip label={t('map.filters.any')} size="small" clickable onClick={() => onBloodFilter('')} {...chip(!bloodFilter)} sx={{ fontWeight: 600 }} />
               {BLOOD_TYPES.map((bt) => (
                 <Chip key={bt} label={bt} size="small" clickable onClick={() => onBloodFilter(bloodFilter === bt ? '' : bt)} {...chip(bloodFilter === bt)} sx={{ fontWeight: 700 }} />
               ))}
-              <Chip label="Available only" size="small" clickable onClick={() => onAvailableOnly(!availableOnly)}
+              <Chip label={t('map.filters.availableOnly')} size="small" clickable onClick={() => onAvailableOnly(!availableOnly)}
                 icon={<FiberManualRecord sx={{ fontSize: '10px !important', color: availableOnly ? '#fff !important' : '#16A34A !important' }} />}
                 {...chip(availableOnly, 'success')} sx={{ fontWeight: 600 }} />
             </>
           )}
         </Box>
 
-        <SectionLabel>Filter by province</SectionLabel>
+        <SectionLabel>{t('map.filters.byProvince')}</SectionLabel>
         <Select
           value={province} displayEmpty fullWidth size="small"
           onChange={(e) => onProvince(e.target.value)}
-          inputProps={{ 'aria-label': 'Filter by province' }}
+          inputProps={{ 'aria-label': t('map.filters.byProvince') }}
           startAdornment={<InputAdornment position="start"><LocationOn sx={{ fontSize: 19 }} /></InputAdornment>}
           MenuProps={{ slotProps: { paper: { sx: { maxHeight: 320 } } } }}
           sx={{ borderRadius: '12px', bgcolor: 'background.default' }}
         >
-          <MenuItem value="">All Provinces</MenuItem>
+          <MenuItem value="">{t('map.filters.allProvinces')}</MenuItem>
           {PROVINCE_NAMES.map((name) => <MenuItem key={name} value={name}>{name}</MenuItem>)}
         </Select>
       </Box>
@@ -165,13 +167,13 @@ export default function PlaceListPanel({
       {/* Results header */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2, pt: 1, pb: 0.75, borderTop: '1px solid', borderColor: 'divider' }}>
         <Typography component="h2" sx={{ fontWeight: 800, fontSize: '0.98rem' }}>
-          {isHosp ? TITLES[hospType] : 'Nearby Donors'}{!loading && !failed ? ` (${items.length})` : ''}
+          {t(`map.titles.${isHosp ? hospType : 'donors'}`)}{!loading && !failed ? ` (${items.length})` : ''}
         </Typography>
         <Select value={sort} onChange={(e) => onSort(e.target.value)} variant="standard" disableUnderline size="small"
-          inputProps={{ 'aria-label': 'Sort results' }} IconComponent={SortIcon}
+          inputProps={{ 'aria-label': t('map.sort.label') }} IconComponent={SortIcon}
           sx={{ fontSize: '0.82rem', fontWeight: 600, color: 'text.secondary', '& .MuiSelect-select': { pr: '26px !important', py: 0.25 }, '& .MuiSelect-icon': { fontSize: 18 } }}>
-          <MenuItem value="nearest">Nearest</MenuItem>
-          <MenuItem value="name">Name A–Z</MenuItem>
+          <MenuItem value="nearest">{t('map.sort.nearest')}</MenuItem>
+          <MenuItem value="name">{t('map.sort.name')}</MenuItem>
         </Select>
       </Box>
 
@@ -181,23 +183,21 @@ export default function PlaceListPanel({
 
         {failed && (
           <Alert severity="warning" sx={{ mt: 1, fontSize: '0.8rem', borderRadius: 3 }}
-            action={<Button color="inherit" size="small" onClick={onRetry}>Retry</Button>}>
-            {isHosp ? 'Couldn’t load nearby hospitals.' : 'Couldn’t load donors.'}
+            action={<Button color="inherit" size="small" onClick={onRetry}>{t('common.retry')}</Button>}>
+            {t(isHosp ? 'map.loadHospitalsError' : 'map.loadDonorsError')}
           </Alert>
         )}
 
         {!loading && !failed && items.length === 0 && (
           <Typography color="text.secondary" fontSize="0.875rem" sx={{ textAlign: 'center', py: 6 }}>
             {isHosp
-              ? (hospType === 'all' ? 'No hospitals found nearby.'
-                : hospType === 'Blood Center' ? 'No blood centers are mapped in this area on OpenStreetMap yet — try “All”.'
-                : 'No matches — try “All”.')
-              : (bloodFilter || availableOnly ? 'No donors match these filters.' : 'No donors found with a known city.')}
+              ? t(hospType === 'all' ? 'map.empty.hospitals' : hospType === 'Blood Center' ? 'map.empty.bloodCenters' : 'map.empty.noMatch')
+              : t(bloodFilter || availableOnly ? 'map.empty.donorsFiltered' : 'map.empty.donors')}
           </Typography>
         )}
 
         {!loading && !failed && !isHosp && donorTotal > items.length && (
-          <Typography color="text.secondary" fontSize="0.72rem" sx={{ px: 0.5, pb: 1 }}>Showing the nearest {items.length} of {donorTotal} donors.</Typography>
+          <Typography color="text.secondary" fontSize="0.72rem" sx={{ px: 0.5, pb: 1 }}>{t('map.nearestOf', { shown: items.length, total: donorTotal })}</Typography>
         )}
 
         {!loading && !failed && items.map((item) => (

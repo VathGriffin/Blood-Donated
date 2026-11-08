@@ -1,4 +1,5 @@
 'use client';
+import { useI18n, useT } from '@/i18n/I18nProvider';
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow, TablePagination,
@@ -30,18 +31,9 @@ const MAX_PHOTO_SIZE = 10 * 1024 * 1024; // must match Backend/src/donor/donor.r
 const PHONE_RE = /^0\d{9,10}$/;          // must match Backend/src/donor/donor.model.js
 const EMAIL_RE = /\S+@\S+\.\S+/;
 
-const AVAILABILITY = [
-  { value: "all", label: "Everyone" },
-  { value: "available", label: "Available" },
-  { value: "ready", label: "Ready to donate" },
-  { value: "unavailable", label: "Unavailable" },
-];
-const SORTS = [
-  { value: "recent", label: "Newest first" },
-  { value: "name", label: "Name (A–Z)" },
-  { value: "donations", label: "Most donations" },
-  { value: "lastDonation", label: "Recently donated" },
-];
+// Labels: adm.donors.availability.<value> and adm.donors.sorts.<value>
+const AVAILABILITY = ["all", "available", "ready", "unavailable"].map((value) => ({ value }));
+const SORTS = ["recent", "name", "donations", "lastDonation"].map((value) => ({ value }));
 
 const emptyDonor = {
   fullName: "", email: "", phone: "", bloodType: "", location: "",
@@ -63,12 +55,13 @@ const BloodChip = ({ type }) => (
 
 // "Eligible" or "In 12 days", using the same 56-day rule as the backend.
 const EligibilityBadge = ({ lastDonation, size = "small" }) => {
+  const t = useT();
   const { eligible, nextDate } = eligibilityOf(lastDonation);
   return eligible
-    ? <StatusBadge status="eligible" label="Eligible" tone="success" size={size} />
+    ? <StatusBadge status="eligible" label={t('adm.donors.eligible')} tone="success" size={size} />
     : (
-      <Tooltip title={`Eligible again on ${formatDate(nextDate)}`} arrow>
-        <span><StatusBadge status="waiting" label={`In ${daysUntil(nextDate)} days`} tone="warning" size={size} /></span>
+      <Tooltip title={t('adm.donors.eligibleAgain', { date: formatDate(nextDate) })} arrow>
+        <span><StatusBadge status="waiting" label={t('adm.donors.inDays', { count: daysUntil(nextDate) })} tone="warning" size={size} /></span>
       </Tooltip>
     );
 };
@@ -87,6 +80,7 @@ const csvCell = (v) => {
 };
 
 const ManageDonors = () => {
+  const { t, rich } = useI18n();
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -140,7 +134,7 @@ const ManageDonors = () => {
       setDonors(Array.isArray(res.data) ? res.data : []);
       setLoadError("");
     } catch (err) {
-      setLoadError(apiErrorMessage(err, "Could not load donors. Please try again."));
+      setLoadError(err);
     } finally {
       setLoading(false);
     }
@@ -217,9 +211,9 @@ const ManageDonors = () => {
     const file = e.target.files[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      setPhotoError("Only image files are allowed.");
+      setPhotoError(t('adm.donors.photoType'));
     } else if (file.size > MAX_PHOTO_SIZE) {
-      setPhotoError(`Image is too large — max ${MAX_PHOTO_SIZE / (1024 * 1024)} MB.`);
+      setPhotoError(t('adm.donors.photoSize', { max: MAX_PHOTO_SIZE / (1024 * 1024) }));
     } else {
       setPhotoError("");
       setPhotoFile(file);
@@ -239,14 +233,14 @@ const ManageDonors = () => {
 
   const validate = (d) => {
     const errs = {};
-    if (!d.fullName?.trim()) errs.fullName = "Full name is required.";
-    if (!d.email?.trim()) errs.email = "Email is required.";
-    else if (!EMAIL_RE.test(d.email)) errs.email = "Enter a valid email address.";
-    if (!d.phone?.trim()) errs.phone = "Phone number is required.";
-    else if (!PHONE_RE.test(d.phone.trim())) errs.phone = "Use 10–11 digits starting with 0, e.g. 0123456789.";
-    if (!d.bloodType) errs.bloodType = "Choose a blood type.";
-    if (!d.location?.trim()) errs.location = "Location is required.";
-    if (d.lastDonation && String(d.lastDonation).slice(0, 10) > localToday()) errs.lastDonation = "Can't be in the future.";
+    if (!d.fullName?.trim()) errs.fullName = t('adm.donors.errors.fullName');
+    if (!d.email?.trim()) errs.email = t('adm.donors.errors.email');
+    else if (!EMAIL_RE.test(d.email)) errs.email = t('adm.donors.errors.emailInvalid');
+    if (!d.phone?.trim()) errs.phone = t('adm.donors.errors.phone');
+    else if (!PHONE_RE.test(d.phone.trim())) errs.phone = t('adm.donors.errors.phoneInvalid');
+    if (!d.bloodType) errs.bloodType = t('adm.donors.errors.bloodType');
+    if (!d.location?.trim()) errs.location = t('adm.donors.errors.location');
+    if (d.lastDonation && String(d.lastDonation).slice(0, 10) > localToday()) errs.lastDonation = t('adm.donors.errors.future');
     return errs;
   };
 
@@ -281,12 +275,12 @@ const ManageDonors = () => {
       }
 
       setOpen(false);
-      setToast(isEdit ? `${body.fullName} updated.` : `${body.fullName} added as a donor.`);
+      setToast(isEdit ? t('adm.donors.toast.updated', { name: body.fullName }) : t('adm.donors.toast.added', { name: body.fullName }));
       fetchDonors();
     } catch (err) {
       setFormError(err.response?.status === 401
-        ? "Your session has expired — please sign in again."
-        : apiErrorMessage(err, "Failed to save donor."));
+        ? t('adm.donors.sessionExpired')
+        : apiErrorMessage(err, t('adm.donors.saveFailed')));
     } finally {
       setUploading(false);
       setSaving(false);
@@ -300,10 +294,10 @@ const ManageDonors = () => {
     setDonors((prev) => prev.map((d) => (d._id === donor._id ? { ...d, available: next } : d)));
     try {
       await axios.put(`${API}/${donor._id}`, { available: next }, authHeader());
-      setToast(`${donor.fullName} marked ${next ? "available" : "unavailable"}.`);
+      setToast(t(next ? 'adm.donors.toast.markedAvailable' : 'adm.donors.toast.markedUnavailable', { name: donor.fullName }));
     } catch (err) {
       setDonors((prev) => prev.map((d) => (d._id === donor._id ? { ...d, available: !next } : d)));
-      setActionError(apiErrorMessage(err, "Couldn't change availability."));
+      setActionError(apiErrorMessage(err, t('adm.donors.availFailed')));
     } finally {
       setTogglingId(null);
     }
@@ -316,12 +310,12 @@ const ManageDonors = () => {
     try {
       await axios.delete(`${API}/${confirmDelete._id}`, authHeader());
       setDonors((prev) => prev.filter((d) => d._id !== confirmDelete._id));
-      setToast(`${confirmDelete.fullName} deleted.`);
+      setToast(t('adm.donors.toast.deleted', { name: confirmDelete.fullName }));
       setConfirmDelete(null);
       setViewDonor(null);
       setActionError("");
     } catch (err) {
-      setActionError(apiErrorMessage(err, "Failed to delete donor. Please try again."));
+      setActionError(apiErrorMessage(err, t('adm.donors.deleteFailed')));
       setConfirmDelete(null);
     } finally {
       setDeleting(false);
@@ -330,9 +324,9 @@ const ManageDonors = () => {
 
   // ── Export what's currently listed ──
   const exportCsv = () => {
-    const header = ["Name", "Email", "Phone", "Blood Type", "Location", "Available", "Donations", "Last Donation", "Registered"];
+    const header = ['name', 'email', 'phone', 'bloodType', 'location', 'available', 'donations', 'lastDonation', 'registered'].map((k) => t(`adm.donors.csv.${k}`));
     const rows = filtered.map((d) => [
-      d.fullName, d.email, d.phone, d.bloodType, d.location, d.available ? "Yes" : "No",
+      d.fullName, d.email, d.phone, d.bloodType, d.location, d.available ? t('adm.donors.csv.yes') : t('adm.donors.csv.no'),
       d.donationCount || 0, d.lastDonation ? d.lastDonation.slice(0, 10) : "", d.createdAt ? d.createdAt.slice(0, 10) : "",
     ]);
     const csv = [header, ...rows].map((r) => r.map(csvCell).join(",")).join("\r\n");
@@ -354,25 +348,25 @@ const ManageDonors = () => {
       </Tooltip>
     );
     return (
-      <Box role="group" aria-label={`Actions for ${donor.fullName}`} display="flex" justifyContent="flex-end" gap={0.25}>
+      <Box role="group" aria-label={t('adm.donors.actionsFor', { name: donor.fullName })} display="flex" justifyContent="flex-end" gap={0.25}>
         {action("View details", <Visibility fontSize="small" />, "#475569", () => setViewDonor(donor))}
-        {action("Edit donor", <Edit fontSize="small" />, "#2563eb", () => openDialog(donor))}
-        {action("Delete donor", <Delete fontSize="small" />, C.primary, () => setConfirmDelete(donor))}
+        {action(t('adm.donors.editDonor'), <Edit fontSize="small" />, "#2563eb", () => openDialog(donor))}
+        {action(t('adm.donors.deleteDonor'), <Delete fontSize="small" />, C.primary, () => setConfirmDelete(donor))}
       </Box>
     );
   };
 
   const availabilitySwitch = (donor) => (
-    <Tooltip title={donor.available ? "Available — click to mark unavailable" : "Unavailable — click to mark available"} arrow>
+    <Tooltip title={donor.available ? t('adm.donors.toggleOff') : t('adm.donors.toggleOn')} arrow>
       <Switch size="small" color="success" checked={!!donor.available} disabled={togglingId === donor._id}
         onChange={() => toggleAvailable(donor)}
         sx={{ "& .MuiSwitch-switchBase:not(.Mui-checked) .MuiSwitch-thumb": { bgcolor: "#94A3B8" }, "& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track": { bgcolor: "#CBD5E1", opacity: 1 } }}
-        slotProps={{ input: { "aria-label": `${donor.fullName} is ${donor.available ? "available" : "unavailable"}` } }} />
+        slotProps={{ input: { "aria-label": t(donor.available ? 'adm.donors.isAvailable' : 'adm.donors.isUnavailable', { name: donor.fullName }) } }} />
     </Tooltip>
   );
 
   const bloodChips = (
-    <Box display="flex" gap={0.75} flexWrap="wrap" role="group" aria-label="Filter by blood type">
+    <Box display="flex" gap={0.75} flexWrap="wrap" role="group" aria-label={t('adm.donors.filterByBloodType')}>
       {["", ...BLOOD_TYPES].map((t) => {
         const active = bloodFilter === t;
         return (
@@ -400,31 +394,31 @@ const ManageDonors = () => {
   const toolbar = (
     <Box display="flex" flexDirection="column" gap={1.5}>
       <Box display="grid" gap={1.5} gridTemplateColumns={{ xs: "1fr", sm: "1fr 1fr", lg: "minmax(240px, 2fr) repeat(2, minmax(160px, 1fr)) auto" }}>
-        <TextField size="small" placeholder="Search name, email, phone, location…" value={search}
+        <TextField size="small" placeholder={t('adm.donors.searchNameEmailPhone')} value={search}
           onChange={(e) => setSearch(e.target.value)} sx={{ gridColumn: { sm: "1 / -1", lg: "auto" } }}
           slotProps={{ input: {
             startAdornment: <InputAdornment position="start"><Search fontSize="small" /></InputAdornment>,
             endAdornment: search && (
               <InputAdornment position="end">
-                <IconButton size="small" aria-label="Clear search" onClick={() => setSearch("")}><Close fontSize="small" /></IconButton>
+                <IconButton size="small" aria-label={t('adm.donors.clearSearch')} onClick={() => setSearch("")}><Close fontSize="small" /></IconButton>
               </InputAdornment>
             ),
           } }} />
         <FormControl size="small" fullWidth>
-          <InputLabel>Availability</InputLabel>
-          <Select label="Availability" value={availability} onChange={(e) => setAvailability(e.target.value)}>
-            {AVAILABILITY.map((o) => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
+          <InputLabel>{t('adm.donors.availabilityLabel')}</InputLabel>
+          <Select label={t('adm.donors.availabilityLabel')} value={availability} onChange={(e) => setAvailability(e.target.value)}>
+            {AVAILABILITY.map((o) => <MenuItem key={o.value} value={o.value}>{t(`adm.donors.availability.${o.value}`)}</MenuItem>)}
           </Select>
         </FormControl>
         <FormControl size="small" fullWidth>
-          <InputLabel>Sort by</InputLabel>
-          <Select label="Sort by" value={sort} onChange={(e) => setSort(e.target.value)}>
-            {SORTS.map((o) => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
+          <InputLabel>{t('adm.donors.sortBy')}</InputLabel>
+          <Select label={t('adm.donors.sortBy')} value={sort} onChange={(e) => setSort(e.target.value)}>
+            {SORTS.map((o) => <MenuItem key={o.value} value={o.value}>{t(`adm.donors.sorts.${o.value}`)}</MenuItem>)}
           </Select>
         </FormControl>
         <Button variant="text" color="inherit" startIcon={<FilterAltOff />} onClick={clearFilters} disabled={!filtersActive}
           sx={{ color: "text.secondary", whiteSpace: "nowrap", justifySelf: { xs: "start", lg: "auto" } }}>
-          Clear
+          {t('adm.donors.clear')}
         </Button>
       </Box>
       {bloodChips}
@@ -434,48 +428,48 @@ const ManageDonors = () => {
   const emptyState = (
     <EmptyState
       icon={filtersActive ? <FilterAltOff /> : <Bloodtype />}
-      title={filtersActive ? "No donors match your filters" : "No donors yet"}
-      description={filtersActive ? "Try a different search term or clear the filters." : "Donors who register on the site, or that you add here, will appear in this list."}
+      title={filtersActive ? t('adm.donors.noMatch') : t('adm.donors.noneYet')}
+      description={filtersActive ? t('adm.donors.tryDifferent') : t('adm.donors.emptyText')}
       action={filtersActive
-        ? <Button size="small" variant="outlined" onClick={clearFilters}>Clear filters</Button>
-        : <Button size="small" variant="contained" startIcon={<PersonAdd />} onClick={() => openDialog(emptyDonor)}>Add donor</Button>}
+        ? <Button size="small" variant="outlined" onClick={clearFilters}>{t('adm.donors.clearFilters')}</Button>
+        : <Button size="small" variant="contained" startIcon={<PersonAdd />} onClick={() => openDialog(emptyDonor)}>{t('adm.donors.addDonor')}</Button>}
     />
   );
 
   const errorState = (
-    <EmptyState icon={<WarningAmber />} title="Couldn't load donors" description={loadError}
-      action={<Button size="small" variant="contained" startIcon={<Refresh />} onClick={fetchDonors}>Try again</Button>} />
+    <EmptyState icon={<WarningAmber />} title={t('adm.donors.couldnTLoadDonors')} description={apiErrorMessage(loadError, t('adm.donors.loadFailed'))}
+      action={<Button size="small" variant="contained" startIcon={<Refresh />} onClick={fetchDonors}>{t('adm.donors.tryAgain')}</Button>} />
   );
 
   const skeletonRows = Array.from({ length: 5 });
-  const headers = ["Donor", "Blood Type", "Contact", "Donations", "Last Donation", "Available", "Actions"];
+  const headers = ["donor", "bloodType", "contact", "donations", "lastDonation", "available", "actions"];
 
   return (
     <Box sx={{ color: ink }}>
       <PageHeader
-        eyebrow="BloodLife AI · Admin"
-        title="Manage Donors"
-        subtitle="Keep donor details up to date and see who is ready to give blood."
+        eyebrow={`BloodLife AI · ${t('adm.donors.admin')}`}
+        title={t('adm.donors.manageDonors')}
+        subtitle={t('adm.donors.keepDonorDetailsUp')}
         actions={
           <>
             <Button variant="outlined" startIcon={loading ? <CircularProgress size={16} /> : <Refresh />} onClick={fetchDonors} disabled={loading}>
-              Refresh
+              {t('adm.donors.refresh')}
             </Button>
             <Button variant="outlined" startIcon={<Download />} onClick={exportCsv} disabled={loading || filtered.length === 0}>
-              Export CSV
+              {t('adm.donors.exportCsv')}
             </Button>
             <Button variant="contained" startIcon={<PersonAdd />} onClick={() => openDialog(emptyDonor)}>
-              Add Donor
+              {t('adm.donors.addDonor2')}
             </Button>
           </>
         }
       />
 
       <ResponsiveGrid min={150} gap={{ xs: 1.5, md: 2.5 }} sx={{ mb: 3 }}>
-        <StatCard label="Donors" value={stats.total} icon={<People />} tone="primary" loading={loading} hint={isPhone ? undefined : "Registered"} />
-        <StatCard label="Available" value={stats.available} icon={<CheckCircle />} tone="success" loading={loading} hint={isPhone ? undefined : "Willing to donate"} />
-        <StatCard label="Ready" value={stats.ready} icon={<EventAvailable />} tone="info" loading={loading} hint={isPhone ? undefined : "Can give blood today"} />
-        <StatCard label="Donations" value={stats.donations} icon={<VolunteerActivism />} tone="warning" loading={loading} hint={isPhone ? undefined : "Recorded so far"} />
+        <StatCard label={t('adm.donors.donors')} value={stats.total} icon={<People />} tone="primary" loading={loading} hint={isPhone ? undefined : t('adm.donors.hints.registered')} />
+        <StatCard label={t('adm.donors.available')} value={stats.available} icon={<CheckCircle />} tone="success" loading={loading} hint={isPhone ? undefined : t('adm.donors.hints.willing')} />
+        <StatCard label={t('adm.donors.ready')} value={stats.ready} icon={<EventAvailable />} tone="info" loading={loading} hint={isPhone ? undefined : t('adm.donors.hints.today')} />
+        <StatCard label={t('adm.donors.donations')} value={stats.donations} icon={<VolunteerActivism />} tone="warning" loading={loading} hint={isPhone ? undefined : t('adm.donors.hints.recorded')} />
       </ResponsiveGrid>
 
       {actionError && (
@@ -520,8 +514,8 @@ const ManageDonors = () => {
             <TableHead>
               <TableRow>
                 {headers.map((h) => (
-                  <TableCell key={h} align={h === "Donations" || h === "Available" ? "center" : h === "Actions" ? "right" : "left"}
-                    sx={{ py: 1.5, whiteSpace: "nowrap" }}>{h}</TableCell>
+                  <TableCell key={h} align={h === "donations" || h === "available" ? "center" : h === "actions" ? "right" : "left"}
+                    sx={{ py: 1.5, whiteSpace: "nowrap" }}>{t(`adm.donors.cols.${h}`)}</TableCell>
                 ))}
               </TableRow>
             </TableHead>
@@ -552,7 +546,7 @@ const ManageDonors = () => {
                   </TableCell>
                   <TableCell align="center" sx={{ fontWeight: 700 }}>{donor.donationCount || 0}</TableCell>
                   <TableCell sx={{ whiteSpace: "nowrap" }}>
-                    <Typography fontSize="0.8rem" color="text.secondary" mb={0.4}>{formatDate(donor.lastDonation, "Never")}</Typography>
+                    <Typography fontSize="0.8rem" color="text.secondary" mb={0.4}>{formatDate(donor.lastDonation, t('adm.donors.never'))}</Typography>
                     <EligibilityBadge lastDonation={donor.lastDonation} />
                   </TableCell>
                   <TableCell align="center">{availabilitySwitch(donor)}</TableCell>
@@ -571,7 +565,7 @@ const ManageDonors = () => {
             rowsPerPage={rowsPerPage}
             onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
             rowsPerPageOptions={[10, 25, 50]}
-            labelRowsPerPage={isPhone ? "Rows" : "Rows per page"}
+            labelRowsPerPage={t(isPhone ? 'ui.pagination.rows' : 'ui.pagination.rowsPerPage')}
             sx={{ borderTop: 1, borderColor: "divider", "& .MuiTablePagination-toolbar": { px: { xs: 1, md: 2 } } }}
           />
         )}
@@ -587,7 +581,7 @@ const ManageDonors = () => {
                 background: `linear-gradient(135deg, ${C.primary} 0%, ${C.dark} 100%)`, pt: 3.5, pb: 3, px: 3, position: "relative",
                 display: "flex", flexDirection: "column", alignItems: "center", gap: 1.2,
               }}>
-                <IconButton size="small" aria-label="Close" onClick={() => setViewDonor(null)}
+                <IconButton size="small" aria-label={t('adm.donors.close')} onClick={() => setViewDonor(null)}
                   sx={{ position: "absolute", top: 10, right: 10, color: "rgba(255,255,255,0.85)" }}>
                   <Close fontSize="small" />
                 </IconButton>
@@ -600,19 +594,19 @@ const ManageDonors = () => {
                   <Box component="span" sx={{ px: 1.25, height: 24, borderRadius: 999, display: "inline-flex", alignItems: "center", bgcolor: "rgba(255,255,255,0.2)", color: "#fff", fontWeight: 800, fontSize: "0.75rem" }}>
                     {viewDonor.bloodType}
                   </Box>
-                  <StatusBadge status="availability" label={viewDonor.available ? "Available" : "Unavailable"} tone={viewDonor.available ? "success" : "neutral"} size="small" />
+                  <StatusBadge status="availability" label={viewDonor.available ? t('adm.donors.availability.available') : t('adm.donors.availability.unavailable')} tone={viewDonor.available ? "success" : "neutral"} size="small" />
                   <EligibilityBadge lastDonation={viewDonor.lastDonation} />
                 </Box>
               </Box>
               <DialogContent sx={{ p: 2.5 }}>
                 <Box sx={{ border: 1, borderColor: "divider", borderRadius: 2.5, overflow: "hidden", mb: 2 }}>
                   {[
-                    { icon: <Email />, label: "Email", value: viewDonor.email, href: viewDonor.email && `mailto:${viewDonor.email}` },
-                    { icon: <Phone />, label: "Phone", value: viewDonor.phone, href: telHref(viewDonor.phone) },
-                    { icon: <LocationOn />, label: "Location", value: viewDonor.location },
-                    { icon: <VolunteerActivism />, label: "Donations", value: String(viewDonor.donationCount || 0) },
-                    { icon: <CalendarToday />, label: "Last Donation", value: formatDate(viewDonor.lastDonation, "Never") },
-                    { icon: <CalendarToday />, label: "Registered", value: formatDate(viewDonor.createdAt) },
+                    { icon: <Email />, label: t('adm.donors.rows.email'), value: viewDonor.email, href: viewDonor.email && `mailto:${viewDonor.email}` },
+                    { icon: <Phone />, label: t('adm.donors.rows.phone'), value: viewDonor.phone, href: telHref(viewDonor.phone) },
+                    { icon: <LocationOn />, label: t('adm.donors.rows.location'), value: viewDonor.location },
+                    { icon: <VolunteerActivism />, label: t('adm.donors.rows.donations'), value: String(viewDonor.donationCount || 0) },
+                    { icon: <CalendarToday />, label: t('adm.donors.rows.lastDonation'), value: formatDate(viewDonor.lastDonation, t('adm.donors.never')) },
+                    { icon: <CalendarToday />, label: t('adm.donors.rows.registered'), value: formatDate(viewDonor.createdAt) },
                   ].map((row, i, arr) => (
                     <Box key={row.label} sx={{
                       display: "flex", alignItems: "flex-start", gap: 1.5, px: 2, py: 1.3,
@@ -632,10 +626,10 @@ const ManageDonors = () => {
                 </Box>
 
                 <Typography fontSize="0.78rem" fontWeight={700} color="text.secondary" textTransform="uppercase" letterSpacing="0.06em" display="flex" alignItems="center" gap={0.75} mb={1}>
-                  <History sx={{ fontSize: 16 }} /> Donation history
+                  <History sx={{ fontSize: 16 }} /> {t('adm.donors.donationHistory')}
                 </Typography>
                 {history.length === 0 ? (
-                  <Typography variant="body2" color="text.secondary" mb={2}>No donations recorded yet.</Typography>
+                  <Typography variant="body2" color="text.secondary" mb={2}>{t('adm.donors.noDonationsRecordedYet')}</Typography>
                 ) : (
                   <Box sx={{ mb: 2, maxHeight: 200, overflowY: "auto", border: 1, borderColor: "divider", borderRadius: 2.5 }}>
                     {history.map((h, i) => (
@@ -653,8 +647,8 @@ const ManageDonors = () => {
                 )}
 
                 <Box display="flex" gap={1.5}>
-                  <Button fullWidth variant="outlined" startIcon={<Edit />} onClick={() => openDialog(viewDonor)}>Edit</Button>
-                  <Button fullWidth variant="outlined" color="error" startIcon={<Delete />} onClick={() => setConfirmDelete(viewDonor)}>Delete</Button>
+                  <Button fullWidth variant="outlined" startIcon={<Edit />} onClick={() => openDialog(viewDonor)}>{t('adm.donors.edit')}</Button>
+                  <Button fullWidth variant="outlined" color="error" startIcon={<Delete />} onClick={() => setConfirmDelete(viewDonor)}>{t('adm.donors.delete')}</Button>
                 </Box>
               </DialogContent>
             </>
@@ -668,18 +662,18 @@ const ManageDonors = () => {
           <Box sx={{ width: 40, height: 40, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "rgba(201,29,50,0.1)", color: C.primary }}>
             <Delete />
           </Box>
-          Delete this donor?
+          {t('adm.donors.deleteThisDonor')}
         </DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary">
-            <b>{confirmDelete?.fullName}</b> ({confirmDelete?.bloodType}) and their donation history will be permanently removed. This can&apos;t be undone.
+            {rich('adm.donors.deleteText', { name: <b>{confirmDelete?.fullName}</b> }, { type: confirmDelete?.bloodType })}
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5 }}>
-          <Button color="inherit" onClick={() => setConfirmDelete(null)} disabled={deleting}>Cancel</Button>
+          <Button color="inherit" onClick={() => setConfirmDelete(null)} disabled={deleting}>{t('adm.donors.cancel')}</Button>
           <Button variant="contained" color="error" onClick={handleDelete} disabled={deleting}
             startIcon={deleting ? <CircularProgress size={16} color="inherit" /> : <Delete />}>
-            Delete
+            {t('adm.donors.delete')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -687,8 +681,8 @@ const ManageDonors = () => {
       {/* Add / edit */}
       <Dialog open={open} onClose={closeDialog} maxWidth="sm" fullWidth fullScreen={isPhone}>
         <DialogTitle fontWeight={800}>
-          {selectedDonor?._id ? "Edit Donor" : "Add New Donor"}
-          <Typography variant="body2" color="text.secondary" mt={0.5}>Fields marked * are required.</Typography>
+          {selectedDonor?._id ? t('adm.donors.editTitle') : t('adm.donors.addTitle')}
+          <Typography variant="body2" color="text.secondary" mt={0.5}>{t('adm.donors.fieldsMarkedAreRequired')}</Typography>
         </DialogTitle>
         <DialogContent dividers>
           {selectedDonor && (
@@ -696,8 +690,8 @@ const ManageDonors = () => {
               <Box display="flex" flexDirection="column" alignItems="center" mb={2.5} mt={1}>
                 <Badge overlap="circular" anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
                   badgeContent={
-                    <Tooltip title="Change photo">
-                      <IconButton size="small" aria-label="Change photo" onClick={() => fileInputRef.current?.click()}
+                    <Tooltip title={t('adm.donors.changePhoto')}>
+                      <IconButton size="small" aria-label={t('adm.donors.changePhoto')} onClick={() => fileInputRef.current?.click()}
                         sx={{ bgcolor: C.primary, color: "white", width: 32, height: 32, border: "2px solid white", "&:hover": { bgcolor: C.dark } }}>
                         <CameraAlt sx={{ fontSize: 16 }} />
                       </IconButton>
@@ -712,51 +706,51 @@ const ManageDonors = () => {
                 <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handlePhotoChange} />
                 <Box display="flex" gap={1} mt={1.5}>
                   <Button size="small" variant="outlined" onClick={() => fileInputRef.current?.click()}>
-                    {photoPreview ? "Change Photo" : "Upload Photo"}
+                    {photoPreview ? t('adm.donors.changePhoto') : t('adm.donors.uploadPhoto')}
                   </Button>
                   {photoPreview && (
-                    <Button size="small" variant="outlined" color="inherit" startIcon={<DeleteOutline />} onClick={handleRemovePhoto}>Remove</Button>
+                    <Button size="small" variant="outlined" color="inherit" startIcon={<DeleteOutline />} onClick={handleRemovePhoto}>{t('adm.donors.remove')}</Button>
                   )}
                 </Box>
                 <Typography variant="caption" color={photoError ? "error" : "text.secondary"} mt={0.5}>
-                  {photoError || `JPG, PNG, WebP — max ${MAX_PHOTO_SIZE / (1024 * 1024)} MB`}
+                  {photoError || t('adm.donors.photoHint', { max: MAX_PHOTO_SIZE / (1024 * 1024) })}
                 </Typography>
               </Box>
 
               <Box display="grid" gridTemplateColumns={{ xs: "1fr", sm: "1fr 1fr" }} gap={2}>
-                <TextField label="Full Name" name="fullName" value={selectedDonor.fullName} onChange={handleEditChange} required
+                <TextField label={t('adm.donors.fullName')} name="fullName" value={selectedDonor.fullName} onChange={handleEditChange} required
                   error={!!formErrors.fullName} helperText={formErrors.fullName} sx={{ gridColumn: "1 / -1" }} />
-                <TextField label="Email" name="email" type="email" value={selectedDonor.email} onChange={handleEditChange} required
+                <TextField label={t('adm.donors.email')} name="email" type="email" value={selectedDonor.email} onChange={handleEditChange} required
                   error={!!formErrors.email} helperText={formErrors.email} />
-                <TextField label="Phone" name="phone" type="tel" value={selectedDonor.phone} onChange={handleEditChange} required
+                <TextField label={t('adm.donors.phone')} name="phone" type="tel" value={selectedDonor.phone} onChange={handleEditChange} required
                   error={!!formErrors.phone} helperText={formErrors.phone || "e.g. 0123456789"} />
                 <FormControl fullWidth required error={!!formErrors.bloodType}>
-                  <InputLabel>Blood Type</InputLabel>
-                  <Select name="bloodType" value={selectedDonor.bloodType} onChange={handleEditChange} label="Blood Type">
+                  <InputLabel>{t('adm.donors.bloodType')}</InputLabel>
+                  <Select name="bloodType" value={selectedDonor.bloodType} onChange={handleEditChange} label={t('adm.donors.bloodType')}>
                     {BLOOD_TYPES.map((t) => <MenuItem key={t} value={t}>{t}</MenuItem>)}
                   </Select>
                   {formErrors.bloodType && <Typography variant="caption" color="error" sx={{ mx: 1.75, mt: 0.5 }}>{formErrors.bloodType}</Typography>}
                 </FormControl>
-                <TextField label="Location" name="location" value={selectedDonor.location} onChange={handleEditChange} required
+                <TextField label={t('adm.donors.location')} name="location" value={selectedDonor.location} onChange={handleEditChange} required
                   error={!!formErrors.location} helperText={formErrors.location} />
-                <TextField label="Last Donation" name="lastDonation" type="date"
+                <TextField label={t('adm.donors.lastDonation')} name="lastDonation" type="date"
                   value={selectedDonor.lastDonation ? String(selectedDonor.lastDonation).slice(0, 10) : ""}
-                  onChange={handleEditChange} error={!!formErrors.lastDonation} helperText={formErrors.lastDonation || "Leave empty if never donated"}
+                  onChange={handleEditChange} error={!!formErrors.lastDonation} helperText={formErrors.lastDonation || t('adm.donors.neverHint')}
                   slotProps={{ inputLabel: { shrink: true }, htmlInput: { max: localToday() } }} />
                 <FormControlLabel sx={{ alignSelf: "center", ml: 0 }}
                   control={<Switch checked={!!selectedDonor.available} color="success"
                     onChange={(e) => setSelectedDonor((prev) => ({ ...prev, available: e.target.checked }))} />}
-                  label={selectedDonor.available ? "Available to donate" : "Not available"} />
+                  label={selectedDonor.available ? t('adm.donors.availableToDonate') : t('adm.donors.notAvailable')} />
               </Box>
               {formError && <Alert severity="error" sx={{ mt: 2 }}>{formError}</Alert>}
             </>
           )}
         </DialogContent>
         <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button onClick={closeDialog} color="inherit" disabled={saving}>Cancel</Button>
+          <Button onClick={closeDialog} color="inherit" disabled={saving}>{t('adm.donors.cancel')}</Button>
           <Button onClick={handleSave} variant="contained" disabled={saving}
             startIcon={saving ? <CircularProgress size={16} color="inherit" /> : null}>
-            {uploading ? "Uploading photo…" : saving ? "Saving…" : selectedDonor?._id ? "Save Changes" : "Add Donor"}
+            {uploading ? t('adm.donors.uploading') : saving ? t('adm.donors.saving') : selectedDonor?._id ? t('adm.donors.saveChanges') : t('adm.donors.addDonor')}
           </Button>
         </DialogActions>
       </Dialog>

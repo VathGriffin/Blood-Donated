@@ -1,4 +1,5 @@
 'use client';
+import { useI18n } from '@/i18n/I18nProvider';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { preconnect } from 'react-dom';
 import 'leaflet/dist/leaflet.css';
@@ -58,9 +59,10 @@ const TILE_FIRST_LOAD_MS = 8000;
 const PANEL_HEIGHT ='clamp(600px, calc(100vh - 200px), 780px)';
 
 function BaseLayerToggle({ value, onChange }) {
+  const { t } = useI18n();
   return (
-    <Box role="group" aria-label="Map style" sx={{ position: 'absolute', top: 12, left: 12, zIndex: 1000, display: 'flex', p: '3px', borderRadius: '12px', bgcolor: 'background.paper', boxShadow: '0 2px 10px rgba(0,0,0,0.22)' }}>
-      {[['map', 'Map'], ['satellite', 'Satellite']].map(([key, label]) => (
+    <Box role="group" aria-label={t('map.layers.label')} sx={{ position: 'absolute', top: 12, left: 12, zIndex: 1000, display: 'flex', p: '3px', borderRadius: '12px', bgcolor: 'background.paper', boxShadow: '0 2px 10px rgba(0,0,0,0.22)' }}>
+      {[['map', t('map.layers.map')], ['satellite', t('map.layers.satellite')]].map(([key, label]) => (
         <ButtonBase key={key} onClick={() => onChange(key)} aria-pressed={value === key}
           sx={{ px: 2, py: 0.85, borderRadius: '9px', fontWeight: 700, fontSize: '0.84rem', color: value === key ? '#fff' : 'text.primary', bgcolor: value === key ? '#C91D32' : 'transparent' }}>
           {label}
@@ -71,10 +73,11 @@ function BaseLayerToggle({ value, onChange }) {
 }
 
 function Legend({ isHosp }) {
+  const { t } = useI18n();
   const dot = (bg, ring) => <Box aria-hidden="true" sx={{ width: 16, height: 16, borderRadius: '50%', bgcolor: bg, border: `2px solid ${ring || '#fff'}`, boxShadow: '0 0 0 1px rgba(0,0,0,0.18)', flexShrink: 0 }} />;
   const entries = isHosp
-    ? [['Your Location', '#2563EB'], ['Hospital', TYPE_META.Hospital.color], ['Clinic', TYPE_META.Clinic.color], ['Blood Center', TYPE_META['Blood Center'].color]]
-    : [['Your Location', '#2563EB'], ['Donor', '#C91D32']];
+    ? [[t('map.legend.you'), '#2563EB'], ...['Hospital', 'Clinic', 'Blood Center'].map((type) => [t(`map.types.${type}`), TYPE_META[type].color])]
+    : [[t('map.legend.you'), '#2563EB'], [t('map.legend.donor'), '#C91D32']];
   return (
     <Box sx={{ position: 'absolute', bottom: 28, left: '50%', transform: 'translateX(-50%)', zIndex: 1000, maxWidth: 'calc(100% - 24px)', display: 'flex', flexWrap: 'wrap', justifyContent: 'center', columnGap: 2, rowGap: 0.5, px: 2, py: 1, borderRadius: '14px', bgcolor: 'background.paper', boxShadow: '0 2px 10px rgba(0,0,0,0.22)' }}>
       {entries.map(([label, color]) => (
@@ -89,6 +92,7 @@ function Legend({ isHosp }) {
 
 export default function Maps() {
   const isDark = useTheme().palette.mode === 'dark';
+  const { t, rich } = useI18n();
   const [tab, setTab] = useState(0);
   const [userPos, setUserPos] = useState(null);
   const [geoError, setGeoError] = useState(false);
@@ -312,23 +316,23 @@ export default function Maps() {
     <Box sx={{ px: 2, pb: 1, display: 'grid', gap: 0.75 }}>
       {areaCenter && (
         <Alert severity="info" icon={<LocationOn />} sx={{ py: 0.25, fontSize: '0.78rem', borderRadius: 3 }}
-          action={<Button color="inherit" size="small" onClick={() => setAreaCenter(null)} sx={{ textTransform: 'none', fontWeight: 700 }}>Reset</Button>}>
-          Showing results around the area you moved to.
+          action={<Button color="inherit" size="small" onClick={() => setAreaCenter(null)} sx={{ textTransform: 'none', fontWeight: 700 }}>{t('map.notices.reset')}</Button>}>
+          {t('map.notices.area')}
         </Alert>
       )}
       {cityLabel && !userPos && !areaCenter && (
         <Alert severity="success" icon={<LocationOn />} sx={{ py: 0.25, fontSize: '0.78rem', borderRadius: 3 }}>
-          Showing results near <strong>{cityLabel}</strong>.
+          {rich('map.notices.near', { city: <strong>{cityLabel}</strong> })}
         </Alert>
       )}
       {cityMissing && (
         <Alert severity="warning" sx={{ py: 0.25, fontSize: '0.78rem', borderRadius: 3 }}>
-          Couldn&apos;t find &ldquo;{cityMissing}&rdquo; in Cambodia — try a province or a nearby town.
+          {t('map.notices.notFound', { city: cityMissing })}
         </Alert>
       )}
       {geoError && (
         <Alert severity="info" icon={<MyLocation />} sx={{ py: 0.25, fontSize: '0.78rem', borderRadius: 3 }}>
-          Couldn&apos;t get your location — allow location access in your browser.{cityCenter ? '' : ' Showing Phnom Penh.'}
+          {t('map.notices.noLocation')}{cityCenter ? '' : ` ${t('map.notices.showingPhnomPenh')}`}
         </Alert>
       )}
     </Box>
@@ -412,7 +416,7 @@ export default function Maps() {
 
             {userPos && (
               <Marker position={userPos} icon={userIcon}>
-                <Popup><strong>Your Location</strong></Popup>
+                <Popup><strong>{t('map.legend.you')}</strong></Popup>
               </Marker>
             )}
 
@@ -428,9 +432,8 @@ export default function Maps() {
 
           {tileTrouble && (
             <Alert severity="warning" sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 1000, width: 'min(360px, calc(100% - 32px))', borderRadius: 3, boxShadow: '0 4px 16px rgba(0,0,0,0.2)' }}
-              action={<Button color="inherit" size="small" onClick={retryTiles} sx={{ fontWeight: 700 }}>Retry</Button>}>
-              The map background couldn&apos;t load. Your connection or a browser extension (ad or privacy
-              blocker) may be blocking map images. Places and pins still work.
+              action={<Button color="inherit" size="small" onClick={retryTiles} sx={{ fontWeight: 700 }}>{t('common.retry')}</Button>}>
+              {t('map.tilesFailed')}
             </Alert>
           )}
 
@@ -444,7 +447,7 @@ export default function Maps() {
                 boxShadow: '0 4px 14px rgba(0,0,0,0.3)', '&:hover': { bgcolor: '#A91529' },
               }}
             >
-              Search this area
+              {t('map.searchArea')}
             </Button>
           )}
 
@@ -458,8 +461,8 @@ export default function Maps() {
           ) : (
             <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1, p: 3, textAlign: 'center', color: 'text.secondary', bgcolor: 'background.paper', border: '1px dashed', borderColor: 'divider', borderRadius: '20px' }}>
               <TouchApp sx={{ fontSize: 40, color: '#C91D32' }} />
-              <Typography sx={{ fontWeight: 700 }}>Pick a place</Typography>
-              <Typography sx={{ fontSize: '0.85rem' }}>Choose a pin on the map or a card in the list to see its address, phone and directions.</Typography>
+              <Typography sx={{ fontWeight: 700 }}>{t('map.pick.title')}</Typography>
+              <Typography sx={{ fontSize: '0.85rem' }}>{t('map.pick.text')}</Typography>
             </Box>
           )}
         </Box>

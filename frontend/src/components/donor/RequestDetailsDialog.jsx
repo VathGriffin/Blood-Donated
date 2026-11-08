@@ -1,4 +1,8 @@
 'use client';
+import { componentLabel } from '@/app/(donor)/requests/_components/formModel';
+import { statusLabel } from '@/components/ui/StatusBadge';
+import { currentIntlLocale } from '@/i18n/config';
+import { useT } from '@/i18n/I18nProvider';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import axios from 'axios';
@@ -16,7 +20,7 @@ const fmtDateTime = (v) => {
   if (!v) return null;
   const d = new Date(v);
   return Number.isNaN(d.getTime()) ? null
-    : d.toLocaleString('en-US', { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+    : d.toLocaleString(currentIntlLocale(), { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' });
 };
 
 function Row({ label, children }) {
@@ -50,6 +54,7 @@ export default function RequestDetailsDialog({ request, token, hospitalPhone, on
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [request._id, token]);
 
+  const t = useT();
   const r = fresh || request;
   const status = r.status || 'Pending';
   const meta = REQUEST_STATUS[status] || REQUEST_STATUS.Pending;
@@ -70,12 +75,12 @@ export default function RequestDetailsDialog({ request, token, hospitalPhone, on
             {loading ? <Skeleton width={150} height={26} /> : (
               <>
                 <Pill tone={meta.tone}>{meta.label}</Pill>
-                {r.urgency && <Pill tone={URGENCY_TONE[r.urgency] || 'neutral'}>{r.urgency} urgency</Pill>}
+                {r.urgency && <Pill tone={URGENCY_TONE[r.urgency] || 'neutral'}>{t('donor.req.urgency', { level: statusLabel(t, r.urgency) })}</Pill>}
               </>
             )}
           </Box>
         </Box>
-        <IconButton onClick={onClose} aria-label="Close details" sx={{ alignSelf: 'flex-start', mt: -1, mr: -1 }}>
+        <IconButton onClick={onClose} aria-label={t('donor.rdetail.close')} sx={{ alignSelf: 'flex-start', mt: -1, mr: -1 }}>
           <CloseIcon />
         </IconButton>
       </Box>
@@ -84,48 +89,48 @@ export default function RequestDetailsDialog({ request, token, hospitalPhone, on
       <DialogContent sx={{ px: 3, py: 1 }}>
         {state === 'error' && (
           <Alert severity="warning" sx={{ my: 1.5, borderRadius: '10px' }}>
-            Couldn&apos;t load the latest version of this request. Showing what was on your profile.
+            {t('donor.rdetail.stale')}
           </Alert>
         )}
-        <Row label="Hospital">{r.hospitalName}</Row>
+        <Row label={t('donor.rdetail.hospital')}>{r.hospitalName}</Row>
         <Divider />
-        <Row label="Units needed">{units} unit{units !== 1 ? 's' : ''} of {r.bloodType}{r.component ? ` · ${r.component}` : ''}</Row>
-        {r.patientAge != null && (<><Divider /><Row label="Patient age">{r.patientAge}</Row></>)}
-        {fmtDateTime(r.requiredBy) && (<><Divider /><Row label="Required by">{fmtDateTime(r.requiredBy)}</Row></>)}
+        <Row label={t('donor.rdetail.units')}>{t('donor.rdetail.unitsOf', { units: t('donor.req.units', { count: units }), type: r.bloodType })}{r.component ? ` · ${componentLabel(r.component)}` : ''}</Row>
+        {r.patientAge != null && (<><Divider /><Row label={t('donor.rdetail.patientAge')}>{r.patientAge}</Row></>)}
+        {fmtDateTime(r.requiredBy) && (<><Divider /><Row label={t('donor.rdetail.requiredBy')}>{fmtDateTime(r.requiredBy)}</Row></>)}
         <Divider />
-        <Row label="Requested">{fmtDateTime(r.createdAt) || '—'}</Row>
-        {fmtDateTime(r.updatedAt) && r.updatedAt !== r.createdAt && (<><Divider /><Row label="Last updated">{fmtDateTime(r.updatedAt)}</Row></>)}
-        {status === 'Fulfilled' && fmtDateTime(r.fulfilledAt) && (<><Divider /><Row label="Fulfilled">{fmtDateTime(r.fulfilledAt)}</Row></>)}
+        <Row label={t('donor.rdetail.requested')}>{fmtDateTime(r.createdAt) || '—'}</Row>
+        {fmtDateTime(r.updatedAt) && r.updatedAt !== r.createdAt && (<><Divider /><Row label={t('donor.rdetail.updated')}>{fmtDateTime(r.updatedAt)}</Row></>)}
+        {status === 'Fulfilled' && fmtDateTime(r.fulfilledAt) && (<><Divider /><Row label={t('donor.rdetail.fulfilled')}>{fmtDateTime(r.fulfilledAt)}</Row></>)}
         {status === 'Cancelled' && (
           <>
             <Divider />
-            <Row label="Cancelled">{fmtDateTime(r.cancelledAt) || '—'}</Row>
-            {r.cancellationReason && (<><Divider /><Row label="Cancellation reason">{r.cancellationReason}</Row></>)}
+            <Row label={t('donor.rdetail.cancelled')}>{fmtDateTime(r.cancelledAt) || '—'}</Row>
+            {r.cancellationReason && (<><Divider /><Row label={t('donor.rdetail.cancelReason')}>{r.cancellationReason}</Row></>)}
           </>
         )}
-        {r.contact && (<><Divider /><Row label="Your contact">{r.contact}</Row></>)}
+        {r.contact && (<><Divider /><Row label={t('donor.rdetail.contact')}>{r.contact}</Row></>)}
         <Divider />
-        <Row label="Request reason">
-          {r.reason?.trim() || <Box component="span" sx={{ color: 'text.disabled', fontStyle: 'italic' }}>No additional details provided.</Box>}
+        <Row label={t('donor.rdetail.reason')}>
+          {r.reason?.trim() || <Box component="span" sx={{ color: 'text.disabled', fontStyle: 'italic' }}>{t('donor.req.noDetails')}</Box>}
         </Row>
         {status === 'Approved' && (
           <Alert severity="success" sx={{ mt: 1, mb: 1.5, borderRadius: '10px' }}>
-            Approved — the hospital is arranging the blood. It can no longer be cancelled here; contact the hospital team to change it.
+            {t('donor.rdetail.approved')}
           </Alert>
         )}
       </DialogContent>
 
       <DialogActions sx={{ px: 3, py: 2, gap: 1, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
         {tel && (
-          <Button component="a" href={tel} variant="outlined" startIcon={<HeadsetMicOutlinedIcon />}>Contact hospital</Button>
+          <Button component="a" href={tel} variant="outlined" startIcon={<HeadsetMicOutlinedIcon />}>{t('donor.rdetail.contactHospital')}</Button>
         )}
         <Button component={Link} href="/notification" variant="outlined" color="inherit" startIcon={<ChatBubbleOutlineIcon />}
           sx={{ borderColor: 'divider' }}>
-          Message team
+          {t('donor.rdetail.messageTeam')}
         </Button>
         {status === 'Pending' && !loading && (
           <Button variant="contained" color="error" startIcon={<DoNotDisturbOnOutlinedIcon />} onClick={() => { onClose(); onCancel(r); }}>
-            Cancel request
+            {t('donor.rdetail.cancel')}
           </Button>
         )}
       </DialogActions>

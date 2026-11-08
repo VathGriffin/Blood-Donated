@@ -9,7 +9,8 @@ import axios from "axios";
 import API_BASE from "@/lib/config";
 import { script } from '@/lib/fonts';
 import CreatorProfile from './_components/CreatorProfile';
-import { mergeSections, aboutImageUrl } from '@/lib/aboutContent';
+import { mergeSections, aboutImageUrl, localizedDefaults } from '@/lib/aboutContent';
+import { useI18n } from '@/i18n/I18nProvider';
 import RichText from '@/components/ui/RichText';
 import VolunteerActivismIcon from "@mui/icons-material/VolunteerActivism";
 import GroupsIcon from "@mui/icons-material/Groups";
@@ -40,6 +41,7 @@ const cardSx = (isDark) => ({
 const About = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
+  const { t, formatNumber } = useI18n();
   const [stats, setStats] = useState(null);
   // Admin-edited content; null until loaded, and the built-in text is shown meanwhile (or if it fails).
   const [about, setAbout] = useState(null);
@@ -53,7 +55,8 @@ const About = () => {
       .catch(() => { /* keep the built-in content */ });
   }, []);
 
-  const content = mergeSections(about?.sections);
+  // Built-in text in the current language; fields an admin customised are shown as written.
+  const content = mergeSections(about?.sections, localizedDefaults(t));
   const { hero, purpose, cta } = content;
   const heroImg = aboutImageUrl(about?.heroImage, "heroImage");
   const purposeImg = aboutImageUrl(about?.purposeImage, "purposeImage");
@@ -62,10 +65,10 @@ const About = () => {
 
   // Values are live counts; the labels and captions are editable.
   const statCards = [
-    { icon: <PeopleIcon />, value: stats ? stats.donors : "…" },
-    { icon: <BloodtypeIcon />, value: stats ? stats.donations : "…" },
-    { icon: <LocalHospitalIcon />, value: stats ? `${stats.hospitals}` : "…" },
-    { icon: <TaskAltIcon />, value: stats ? stats.fulfilledRequests : "…" },
+    { icon: <PeopleIcon />, value: stats ? formatNumber(stats.donors) : "…" },
+    { icon: <BloodtypeIcon />, value: stats ? formatNumber(stats.donations) : "…" },
+    { icon: <LocalHospitalIcon />, value: stats ? formatNumber(stats.hospitals) : "…" },
+    { icon: <TaskAltIcon />, value: stats ? formatNumber(stats.fulfilledRequests) : "…" },
   ].map((s, i) => ({ ...s, ...content.stats[i] }));
 
   return (
@@ -124,12 +127,12 @@ const About = () => {
                     boxShadow: "0 6px 20px rgba(201,29,50,0.4)",
                     "&:hover": { boxShadow: "0 8px 28px rgba(201,29,50,0.55)" },
                   }}>
-                  Become a Donor
+                  {t("about.becomeDonor")}
                 </Button>
                 <Button component={Link} href="#team-section" variant="outlined" color="primary" size="large"
                   startIcon={<GroupsIcon />}
                   sx={{ fontWeight: 700, px: 3.5, py: 1.3, borderRadius: 3 }}>
-                  Meet the Team
+                  {t("about.meetTeam")}
                 </Button>
               </Box>
 
@@ -154,7 +157,7 @@ const About = () => {
                 position: "relative", height: { xs: 320, md: 400 }, overflow: "hidden",
                 borderRadius: 5, boxShadow: "0 20px 50px rgba(0,0,0,0.25)",
               }}>
-                <Image src={heroImg} alt="A nurse caring for a blood donor" fill unoptimized={!!about?.heroImage}
+                <Image src={heroImg} alt={t("about.heroImageAlt")} fill unoptimized={!!about?.heroImage}
                   sizes="(max-width: 900px) 100vw, 460px" style={{ objectFit: "cover" }} priority
                 />
 
@@ -165,7 +168,7 @@ const About = () => {
                     color: "#fff", fontWeight: 800, fontSize: "1.05rem", lineHeight: 1.25,
                     textShadow: "0 2px 6px rgba(0,0,0,0.7)",
                   }}>
-                    A Brighter Cambodia Through Your Blood
+                    {t("about.overlayLeft")}
                   </Typography>
                 </Box>
 
@@ -176,7 +179,7 @@ const About = () => {
                     color: "#fff", fontWeight: 700, fontSize: "0.92rem", lineHeight: 1.25,
                     textShadow: "0 2px 6px rgba(0,0,0,0.7)",
                   }}>
-                    Donate Today, A Healthier Tomorrow
+                    {t("about.overlayRight")}
                   </Typography>
                 </Box>
 
@@ -186,7 +189,7 @@ const About = () => {
                   color: "#fff", fontSize: "1.5rem", lineHeight: 1.2,
                   transform: "rotate(-3deg)", textShadow: "0 2px 6px rgba(0,0,0,0.7)",
                 }}>
-                  Real People<br />Real Impact<br />In Cambodia ♡
+                  {t("about.handwritten.line1")}<br />{t("about.handwritten.line2")}<br />{t("about.handwritten.line3")}
                 </Typography>
               </Box>
 
@@ -197,7 +200,7 @@ const About = () => {
               }}>
                 <FormatQuoteIcon sx={{ fontSize: 30, color: "primary.main", flexShrink: 0, transform: "scaleX(-1)" }} />
                 <Typography fontWeight={800} sx={{ fontSize: "0.95rem", lineHeight: 1.3 }}>
-                  Together<br />We Save Lives
+                  {t("about.quote.line1")}<br />{t("about.quote.line2")}
                 </Typography>
               </Paper>
             </Box>
@@ -237,7 +240,7 @@ const About = () => {
               position: "relative", height: { xs: 280, md: 340 }, overflow: "hidden",
               borderRadius: 4, boxShadow: "0 16px 40px rgba(0,0,0,0.18)",
             }}>
-              <Image src={purposeImg} alt={about?.purposeImage ? "" : "Angkor Wat, Cambodia"} fill unoptimized={!!about?.purposeImage}
+              <Image src={purposeImg} alt={about?.purposeImage ? "" : t("about.purposeImageAlt")} fill unoptimized={!!about?.purposeImage}
                 sizes="(max-width: 900px) 100vw, 600px" style={{ objectFit: "cover" }}
               />
             </Box>

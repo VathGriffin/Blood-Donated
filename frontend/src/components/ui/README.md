@@ -34,12 +34,15 @@ import { PageHeader, SectionCard, StatCard, StatusBadge, TableCard, EmptyState, 
 | Component | Use for |
 |---|---|
 | `PageHeader` | Page title, subtitle, optional `icon` tile, action buttons (stacks on phones) |
+| `PageHero` | Larger page heading on a soft red wash: breadcrumb (`crumbs`), icon tile, title, subtitle, decorative `art` and `actions` (admin Blood Requests, Donor Directory) |
 | `SectionCard` | Standard white card, optional header with `icon`, title and action |
 | `StatCard` | KPI tile — `tone`: primary · success · warning · error · info · neutral, or a hex `color`. Pass `trend` (from `/api/stats/trends`) for a comparison footer and sparkline. `decorated` gives the richer KPI style (stronger tint, corner wave, larger number) used on the hospital dashboard |
 | `StatusBadge` | Any status. Colour comes from `statusTone` in the tokens, so "Pending" is the same everywhere |
 | `TableCard` | Card around a `<Table>` with header, toolbar and horizontal scroll on small screens |
 | `CardError` | Error alert with a Retry button, inside a card |
 | `BloodPill` · `RowMenu` | Blood-type pill (always brand red, even under the hospital theme) and single-link row menu for compact dashboard tables (`compactHeadCell`, `compactTableContainerSx`) |
+| `BloodTypeChip` | Soft red blood-type pill with a drop icon, for tables and cards (`size`: medium · large) |
+| `ListPagination` | Footer for a paged list: "Showing 1–10 of 24 donors", rows per page and page buttons (`page` is zero-based) |
 | `Sparkline` · `TrendChip` | Small trend line and ↑/↓ percentage pill (used by `StatCard`) |
 | `EmptyState` | Empty lists / tables / search results |
 | `ResponsiveGrid` | Auto-wrapping card grid. Use instead of MUI `<Grid>`, whose v7 API dropped `item`/`xs` |

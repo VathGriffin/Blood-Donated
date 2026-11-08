@@ -1,4 +1,5 @@
 'use client';
+import { useI18n } from '@/i18n/I18nProvider';
 import { useCallback, useState } from 'react';
 import { Box, CardMedia, Skeleton } from '@mui/material';
 import { HOSPITAL_FALLBACK_IMAGE } from './booking';
@@ -8,6 +9,7 @@ import { HOSPITAL_FALLBACK_IMAGE } from './booking';
 // Load/fail state is remembered per src (not reset in an effect): a cached photo can fire onLoad
 // before an effect runs, and resetting afterwards left it hidden behind the skeleton for good.
 export default function HospitalPhoto({ src, name, height = 130, radius = 10 }) {
+  const { t } = useI18n();
   const [loadedSrc, setLoadedSrc] = useState(null);
   const [failedSrc, setFailedSrc] = useState(null);
 
@@ -27,7 +29,7 @@ export default function HospitalPhoto({ src, name, height = 130, radius = 10 }) 
         ref={imgRef}
         component="img"
         image={hasPhoto ? src : HOSPITAL_FALLBACK_IMAGE}
-        alt={hasPhoto ? `Photo of ${name}` : ''}
+        alt={hasPhoto ? t('booking.photoAlt', { name }) : ''}
         loading="lazy"
         onLoad={() => { if (hasPhoto) setLoadedSrc(src); }}
         onError={() => { if (hasPhoto) setFailedSrc(src); }}

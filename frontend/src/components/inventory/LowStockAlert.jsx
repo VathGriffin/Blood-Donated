@@ -1,4 +1,5 @@
 'use client';
+import { useT } from '@/i18n/I18nProvider';
 import Link from 'next/link';
 import { Box, Button, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
@@ -13,15 +14,16 @@ import { STOCK, lowStockItems } from '@/lib/inventory';
  * pass `null` while it is still loading. `error` (with `onRetry`) shows a failed load.
  */
 export default function LowStockAlert({ items = [], href, limit = 5, error, onRetry, sx }) {
+  const t = useT();
   const low = lowStockItems(items || []).slice(0, limit);
   // Nothing recorded (no rows, or every row at 0): one calm empty state, not a list of red zeros.
   const noStock = items !== null && !items.some((i) => i.units > 0);
-  const columns = ['Blood Type', 'Current Stock', 'Status', ...(href ? [''] : [])];
+  const columns = [t('shared.lowStock.bloodType'), t('shared.lowStock.current'), t('shared.lowStock.status'), ...(href ? [''] : [])];
   return (
     <SectionCard
       icon={<WarningRoundedIcon />}
-      title="Low Stock Alert"
-      action={href && <Button component={Link} href={href} size="small" sx={{ fontWeight: 700 }}>View All</Button>}
+      title={t('shared.lowStock.title')}
+      action={href && <Button component={Link} href={href} size="small" sx={{ fontWeight: 700 }}>{t('shared.lowStock.viewAll')}</Button>}
       padded={false}
       sx={sx}
     >
@@ -32,11 +34,11 @@ export default function LowStockAlert({ items = [], href, limit = 5, error, onRe
           {[0, 1, 2, 3].map((i) => <Skeleton key={i} variant="rounded" height={30} />)}
         </Box>
       ) : noStock ? (
-        <EmptyState icon={<WaterDropIcon />} title="No inventory recorded" description="Alerts appear once stock levels are entered." />
+        <EmptyState icon={<WaterDropIcon />} title={t('shared.lowStock.none')} description={t('shared.lowStock.noneText')} />
       ) : low.length === 0 ? (
         <Box sx={{ textAlign: 'center', py: 4, px: 2 }}>
           <CheckCircleOutlineIcon sx={{ fontSize: 30, color: 'success.main', mb: 0.5 }} />
-          <Typography variant="body2" color="text.secondary">Every blood type is adequately stocked.</Typography>
+          <Typography variant="body2" color="text.secondary">{t('shared.lowStock.allGood')}</Typography>
         </Box>
       ) : (
         <TableContainer sx={compactTableContainerSx}>
@@ -52,7 +54,7 @@ export default function LowStockAlert({ items = [], href, limit = 5, error, onRe
                   <TableCell><BloodPill type={i.bloodType} /></TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>{i.units}</TableCell>
                   <TableCell><StatusBadge status={i.status} label={STOCK[i.status].label} size="small" dot={false} /></TableCell>
-                  {href && <TableCell align="right"><RowMenu label="Update stock" href={href} horizontal /></TableCell>}
+                  {href && <TableCell align="right"><RowMenu label={t('shared.lowStock.update')} href={href} horizontal /></TableCell>}
                 </TableRow>
               ))}
             </TableBody>

@@ -1,4 +1,7 @@
 'use client';
+import { apiErrorMessage } from '@/lib/api-error';
+import { currentIntlLocale } from '@/i18n/config';
+import { useT } from '@/i18n/I18nProvider';
 import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -33,22 +36,23 @@ const MAX_LENGTH = 2000;         // must match MAX_MESSAGE_LENGTH in Backend/src
 const NEAR_BOTTOM_PX = 120;
 
 // Starters for the composer — the donor still reads, edits and sends them.
+// Text: donor.chat.quick.<key>.{label,text}
 const QUICK_ACTIONS = [
-  { label: 'Appointment help', icon: <EventAvailableOutlinedIcon />, text: 'Hi, I need help with my appointment: ' },
-  { label: 'Blood request question', icon: <WaterDropOutlinedIcon />, text: 'Hi, I have a question about my blood request: ' },
-  { label: 'Update my profile', icon: <PersonOutlineIcon />, text: 'Hi, I need help updating my profile: ' },
+  { key: 'appointment', icon: <EventAvailableOutlinedIcon /> },
+  { key: 'request', icon: <WaterDropOutlinedIcon /> },
+  { key: 'profile', icon: <PersonOutlineIcon /> },
 ];
 
 const dayKey = (d) => new Date(d).toDateString();
-const dayLabel = (d) => {
+const dayLabel = (t, d) => {
   const date = new Date(d);
   const today = new Date();
   const yesterday = new Date(); yesterday.setDate(today.getDate() - 1);
-  if (date.toDateString() === today.toDateString()) return 'Today';
-  if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  if (date.toDateString() === today.toDateString()) return t('donor.chat.today');
+  if (date.toDateString() === yesterday.toDateString()) return t('donor.chat.yesterday');
+  return date.toLocaleDateString(currentIntlLocale(), { month: 'short', day: 'numeric', year: 'numeric' });
 };
-const timeLabel = (d) => new Date(d).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+const timeLabel = (d) => new Date(d).toLocaleTimeString(currentIntlLocale(), { hour: 'numeric', minute: '2-digit' });
 // Cheap fingerprint so a poll that brings nothing new doesn't re-render the conversation.
 const signature = (list) => list.map((m) => `${m._id}:${m.read ? 1 : 0}:${m.deleted ? 1 : 0}`).join('|');
 
@@ -84,6 +88,7 @@ function BubbleSkeletons() {
 export default function MessageAdminPage() {
   const router = useRouter();
   const { token, user, isAuth, logout } = useUserAuth();
+  const t = useT();
   const [messages, setMessages] = useState([]);
   const [status, setStatus] = useState('loading'); // 'loading' | 'ready' | 'error'
   const [content, setContent] = useState('');
@@ -185,7 +190,7 @@ export default function MessageAdminPage() {
       setContent(''); // only after the server has stored it
     } catch (err) {
       if (sessionExpired(err)) return;
-      setSendError(err.response?.data?.message || 'Your message wasn’t sent. Check your connection and try again.');
+      setSendError(apiErrorMessage(err, t('donor.chat.sendFailed')));
     } finally {
       sendingRef.current = false;
       setSending(false);
@@ -212,11 +217,11 @@ export default function MessageAdminPage() {
         lastIdRef.current = next[next.length - 1]?._id || null;
         return next;
       });
-      setToast({ severity: 'success', message: 'Message deleted.' });
+      setToast({ severity: 'success', message: t('donor.chat.deleted') });
       setToDelete(null);
     } catch (err) {
       if (sessionExpired(err)) return;
-      setToast({ severity: 'error', message: err.response?.data?.message || 'Could not delete the message.' });
+      setToast({ severity: 'error', message: apiErrorMessage(err, t('donor.chat.deleteFailed')) });
     } finally {
       setDeleting(false);
     }
@@ -234,11 +239,11 @@ export default function MessageAdminPage() {
     return (
       <Box sx={{ minHeight: '70vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', px: 2, textAlign: 'center' }}>
         <LockIcon sx={{ fontSize: 56, color: 'primary.main', mb: 2 }} />
-        <Typography variant="h5" fontWeight={700} gutterBottom>Please log in to message admin</Typography>
-        <Typography variant="body2" color="text.secondary" mb={3}>You need an account to send messages.</Typography>
+        <Typography variant="h5" fontWeight={700} gutterBottom>{t('donor.chat.signInTitle')}</Typography>
+        <Typography variant="body2" color="text.secondary" mb={3}>{t('donor.chat.signInText')}</Typography>
         <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button variant="contained" component={Link} href="/login">Log In</Button>
-          <Button variant="outlined" component={Link} href="/register">Sign Up</Button>
+          <Button variant="contained" component={Link} href="/login">{t('donor.chat.logIn')}</Button>
+          <Button variant="outlined" component={Link} href="/register">{t('donor.chat.signUp')}</Button>
         </Box>
       </Box>
     );
@@ -250,7 +255,7 @@ export default function MessageAdminPage() {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 2, md: 2.5 }, pb: 4, minWidth: 0 }}>
-      <DonorPageHero id="messages-title" icon={<ForumIcon />} title="Message Admin" subtitle="Have a question? Chat directly with our team." />
+      <DonorPageHero id="messages-title" icon={<ForumIcon />} title={t('donor.chat.title')} subtitle={t('donor.chat.subtitle')} />
 
       <Box sx={{ display: 'grid', gap: { xs: 2, md: 2.5 }, alignItems: 'start', gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'minmax(0, 1fr) 290px', lg: 'minmax(0, 1fr) 340px' } }}>
         {/* ── Chat ── */}
@@ -262,19 +267,19 @@ export default function MessageAdminPage() {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.75, px: { xs: 2, sm: 2.5 }, py: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
             <SupportAvatar size={48} />
             <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Typography id="chat-title" component="h2" sx={{ fontWeight: 800, fontSize: '1.08rem' }}>BloodLife Support</Typography>
-              <Typography variant="body2" color="text.secondary" noWrap>Answered by the BloodLife admin team · {status === 'ready' ? `${messages.length} message${messages.length !== 1 ? 's' : ''}` : '…'}</Typography>
+              <Typography id="chat-title" component="h2" sx={{ fontWeight: 800, fontSize: '1.08rem' }}>{t('donor.chat.support')}</Typography>
+              <Typography variant="body2" color="text.secondary" noWrap>{t('donor.chat.answeredBy', { count: status === 'ready' ? t('donor.chat.messages', { count: messages.length }) : '…' })}</Typography>
             </Box>
-            <CardMenu id="chat" label="the conversation" items={[
-              { label: 'Refresh messages', icon: <RefreshIcon />, onClick: () => fetchMessages() },
-              { label: 'Ask the AI Assistant', icon: <SmartToyOutlinedIcon />, href: '/assistant' },
-              { label: 'Contact page', icon: <ContactMailOutlinedIcon />, href: '/contact' },
+            <CardMenu id="chat" label={t('donor.chat.menuLabel')} items={[
+              { label: t('donor.chat.refresh'), icon: <RefreshIcon />, onClick: () => fetchMessages() },
+              { label: t('donor.chat.askAi'), icon: <SmartToyOutlinedIcon />, href: '/assistant' },
+              { label: t('donor.chat.contactPage'), icon: <ContactMailOutlinedIcon />, href: '/contact' },
             ]} />
           </Box>
 
           {/* Conversation */}
           <Box sx={{ position: 'relative', flex: 1, minHeight: 0 }}>
-            <Box ref={listRef} role="log" aria-live="polite" aria-label="Conversation with BloodLife Support" tabIndex={0}
+            <Box ref={listRef} role="log" aria-live="polite" aria-label={t('donor.chat.logAria')} tabIndex={0}
               onScroll={() => { if (isNearBottom()) setShowJump(false); }}
               sx={{
                 height: '100%', overflowY: 'auto', px: { xs: 1.5, sm: 2.5 }, py: 2, display: 'flex', flexDirection: 'column', gap: 1.75,
@@ -283,16 +288,16 @@ export default function MessageAdminPage() {
               }}>
               {/* Intro — a fixed explainer, not a message from the team */}
               <Box sx={{ alignSelf: 'center', maxWidth: 560, width: '100%', p: 2, borderRadius: '14px', border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', textAlign: 'center' }}>
-                <Typography sx={{ fontWeight: 700, fontSize: '0.95rem' }}>Welcome to BloodLife AI Support</Typography>
+                <Typography sx={{ fontWeight: 700, fontSize: '0.95rem' }}>{t('donor.chat.welcome')}</Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                  Send us a message and an admin will reply in this conversation. You can start with one of these:
+                  {t('donor.chat.welcomeText')}
                 </Typography>
                 <Box sx={{ mt: 1.5, display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: 'center' }}>
                   {QUICK_ACTIONS.map((qa) => (
-                    <Button key={qa.label} variant="outlined" size="small" startIcon={qa.icon} onClick={() => applyQuickAction(qa.text)}
+                    <Button key={qa.key} variant="outlined" size="small" startIcon={qa.icon} onClick={() => applyQuickAction(t(`donor.chat.quick.${qa.key}.text`))}
                       sx={{ borderRadius: '10px', fontWeight: 600, color: 'text.primary', borderColor: 'divider', bgcolor: 'background.paper',
                         '& .MuiButton-startIcon': { color: 'primary.main' }, '&:hover': { borderColor: 'primary.main', bgcolor: 'background.paper' } }}>
-                      {qa.label}
+                      {t(`donor.chat.quick.${qa.key}.label`)}
                     </Button>
                   ))}
                 </Box>
@@ -301,12 +306,12 @@ export default function MessageAdminPage() {
               {status === 'loading' ? <BubbleSkeletons />
                 : status === 'error' ? (
                   <Alert severity="error" variant="outlined" icon={<ErrorOutlineIcon />} sx={{ borderRadius: '12px', alignItems: 'center', bgcolor: 'background.paper' }}
-                    action={<Button color="error" size="small" onClick={() => { setStatus('loading'); fetchMessages(); }}>Try again</Button>}>
-                    We couldn&apos;t load your messages.
+                    action={<Button color="error" size="small" onClick={() => { setStatus('loading'); fetchMessages(); }}>{t('donor.chat.retry')}</Button>}>
+                    {t('donor.chat.loadFailed')}
                   </Alert>
                 ) : messages.length === 0 ? (
                   <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', mt: 2 }}>
-                    No messages yet — your conversation will appear here.
+                    {t('donor.chat.empty')}
                   </Typography>
                 ) : messages.map((m, i) => {
                   const isUser = m.sender === 'user';
@@ -314,15 +319,15 @@ export default function MessageAdminPage() {
                   return (
                     <Fragment key={m._id}>
                       {newDay && (
-                        <Box role="separator" aria-label={dayLabel(m.createdAt)} sx={{ alignSelf: 'center', px: 1.5, py: 0.4, borderRadius: '8px', fontSize: '0.78rem', fontWeight: 600, color: 'text.secondary', bgcolor: (t) => alpha(t.palette.text.primary, 0.06) }}>
+                        <Box role="separator" aria-label={dayLabel(t, m.createdAt)} sx={{ alignSelf: 'center', px: 1.5, py: 0.4, borderRadius: '8px', fontSize: '0.78rem', fontWeight: 600, color: 'text.secondary', bgcolor: (t) => alpha(t.palette.text.primary, 0.06) }}>
                           {dayLabel(m.createdAt)}
                         </Box>
                       )}
                       <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1.25, justifyContent: isUser ? 'flex-end' : 'flex-start', '&:hover .msg-delete, &:focus-within .msg-delete': { opacity: 1 } }}>
                         {!isUser && <Box sx={{ alignSelf: 'flex-start' }}><SupportAvatar size={38} /></Box>}
                         {isUser && (
-                          <Tooltip title="Delete message">
-                            <IconButton className="msg-delete" size="small" aria-label="Delete this message" onClick={() => setToDelete(m)}
+                          <Tooltip title={t('donor.chat.deleteTip')}>
+                            <IconButton className="msg-delete" size="small" aria-label={t('donor.chat.deleteAria')} onClick={() => setToDelete(m)}
                               sx={{ opacity: { xs: 1, md: 0 }, transition: 'opacity .15s', color: 'text.secondary', mb: 3, '&:hover': { color: 'error.main' } }}>
                               <DeleteOutlineIcon sx={{ fontSize: 18 }} />
                             </IconButton>
@@ -337,7 +342,7 @@ export default function MessageAdminPage() {
                           }}>
                             {m.deleted ? (
                               <Typography variant="body2" sx={{ fontSize: '0.9rem', fontStyle: 'italic', color: 'text.secondary' }}>
-                                This message was deleted
+                                {t('donor.chat.wasDeleted')}
                               </Typography>
                             ) : (
                               <Typography variant="body2" sx={{ fontSize: '0.92rem', lineHeight: 1.6, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', color: 'text.primary' }}>
@@ -348,8 +353,8 @@ export default function MessageAdminPage() {
                           <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.4, px: 0.5, justifyContent: isUser ? 'flex-end' : 'flex-start' }}>
                             <time dateTime={m.createdAt}>{timeLabel(m.createdAt)}</time>
                             {isUser && (m.read
-                              ? <><DoneAllIcon aria-hidden="true" sx={{ fontSize: 15, color: 'info.main' }} /><span>Seen</span></>
-                              : <><DoneIcon aria-hidden="true" sx={{ fontSize: 15 }} /><span>Sent</span></>)}
+                              ? <><DoneAllIcon aria-hidden="true" sx={{ fontSize: 15, color: 'info.main' }} /><span>{t('donor.chat.seen')}</span></>
+                              : <><DoneIcon aria-hidden="true" sx={{ fontSize: 15 }} /><span>{t('donor.chat.sent')}</span></>)}
                           </Typography>
                         </Box>
                         {isUser && (
@@ -365,7 +370,7 @@ export default function MessageAdminPage() {
             {showJump && (
               <Button onClick={jumpToLatest} variant="contained" size="small" endIcon={<KeyboardArrowDownIcon />}
                 sx={{ position: 'absolute', bottom: 12, left: '50%', transform: 'translateX(-50%)', borderRadius: '999px', boxShadow: (t) => t.custom.shadow.md }}>
-                New messages
+                {t('donor.chat.newMessages')}
               </Button>
             )}
           </Box>
@@ -375,7 +380,7 @@ export default function MessageAdminPage() {
             sx={{ borderTop: '1px solid', borderColor: 'divider', px: { xs: 1.5, sm: 2.5 }, py: 1.5, bgcolor: 'background.paper' }}>
             {sendError && (
               <Alert severity="error" sx={{ mb: 1.25, borderRadius: '10px', alignItems: 'center' }}
-                action={<Button color="error" size="small" onClick={send} disabled={!canSend}>Retry</Button>}>
+                action={<Button color="error" size="small" onClick={send} disabled={!canSend}>{t('donor.chat.resend')}</Button>}>
                 {sendError}
               </Alert>
             )}
@@ -386,11 +391,11 @@ export default function MessageAdminPage() {
                 '&:focus-within': { borderColor: tooLong ? 'error.main' : 'primary.main', boxShadow: (t) => `0 0 0 3px ${alpha(t.palette.primary.main, 0.14)}` },
               }}>
                 <InputBase inputRef={inputRef} value={content} onChange={(e) => { setContent(e.target.value); if (sendError) setSendError(''); }}
-                  onKeyDown={onKeyDown} placeholder="Type a message..." multiline maxRows={5} fullWidth
-                  inputProps={{ 'aria-label': 'Message to BloodLife Support', 'aria-describedby': 'composer-hint', maxLength: MAX_LENGTH + 200 }}
+                  onKeyDown={onKeyDown} placeholder={t('donor.chat.placeholder')} multiline maxRows={5} fullWidth
+                  inputProps={{ 'aria-label': t('donor.chat.inputAria'), 'aria-describedby': 'composer-hint', maxLength: MAX_LENGTH + 200 }}
                   sx={{ fontSize: '0.95rem' }} />
               </Box>
-              <IconButton type="submit" disabled={!canSend} aria-label={sending ? 'Sending message' : 'Send message'}
+              <IconButton type="submit" disabled={!canSend} aria-label={sending ? t('donor.chat.sending') : t('donor.chat.send')}
                 sx={{
                   width: 50, height: 50, flexShrink: 0, bgcolor: 'primary.main', color: '#fff', boxShadow: (t) => t.custom.shadow.sm,
                   '&:hover': { bgcolor: 'primary.dark' },
@@ -401,7 +406,7 @@ export default function MessageAdminPage() {
               </IconButton>
             </Box>
             <Typography id="composer-hint" variant="caption" sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.75, px: 0.5, color: tooLong ? 'error.main' : 'text.secondary' }}>
-              <span>Enter to send · Shift + Enter for a new line</span>
+              <span>{tooLong ? t('donor.chat.tooLong', { max: MAX_LENGTH }) : t('donor.chat.hint')}</span>
               {content.length > MAX_LENGTH - 300 && <span>{content.trim().length}/{MAX_LENGTH}</span>}
             </Typography>
           </Box>
@@ -413,10 +418,10 @@ export default function MessageAdminPage() {
 
       <Dialog open={Boolean(toDelete)} onClose={() => !deleting && setToDelete(null)} maxWidth="xs" fullWidth aria-labelledby="del-msg-title"
         slotProps={{ paper: { sx: { borderRadius: '18px' } } }}>
-        <DialogTitle id="del-msg-title" sx={{ fontWeight: 800, fontSize: '1.05rem' }}>Delete this message?</DialogTitle>
+        <DialogTitle id="del-msg-title" sx={{ fontWeight: 800, fontSize: '1.05rem' }}>{t('donor.chat.deleteTitle')}</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary">
-            It will be removed from the conversation for you and the support team. This can’t be undone.
+            {t('donor.chat.deleteText')}
           </Typography>
           {toDelete && (
             <Box sx={{ mt: 1.5, p: 1.25, borderRadius: '10px', bgcolor: (t) => t.custom.surface.subtle, fontSize: '0.88rem', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', maxHeight: 140, overflow: 'auto' }}>
@@ -425,10 +430,10 @@ export default function MessageAdminPage() {
           )}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
-          <Button color="inherit" onClick={() => setToDelete(null)} disabled={deleting}>Keep</Button>
+          <Button color="inherit" onClick={() => setToDelete(null)} disabled={deleting}>{t('donor.chat.keep')}</Button>
           <Button variant="contained" color="error" onClick={confirmDelete} disabled={deleting}
             startIcon={deleting ? <CircularProgress size={15} color="inherit" /> : <DeleteOutlineIcon />}>
-            {deleting ? 'Deleting…' : 'Delete'}
+            {deleting ? t('donor.chat.deleting') : t('donor.chat.delete')}
           </Button>
         </DialogActions>
       </Dialog>

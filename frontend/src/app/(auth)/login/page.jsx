@@ -1,4 +1,5 @@
 'use client';
+import { useI18n } from '@/i18n/I18nProvider';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
@@ -19,6 +20,7 @@ import {
 const UserLogin = () => {
   const router = useRouter();
   const { login, isAuth } = useUserAuth();
+  const { t, rich } = useI18n();
   const [form, setForm] = useState({ email: '', password: '' });
   const [remember, setRemember] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -45,7 +47,7 @@ const UserLogin = () => {
       login(data.token, data.user, { remember });
       router.push(nextPath('/'));
     } catch (err) {
-      setError(apiErrorMessage(err, 'Login failed. Please try again.'));
+      setError(apiErrorMessage(err, t('auth.login.failed')));
     } finally {
       setLoading(false);
     }
@@ -60,44 +62,44 @@ const UserLogin = () => {
         <AuthCard>
           <AuthHeading
             emblem={<DropHeart size={46} />}
-            title="Welcome Back"
-            subtitle="Login to your account"
+            title={t('auth.login.title')}
+            subtitle={t('auth.login.subtitle')}
           />
 
           <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {error && <Alert severity="error" sx={{ borderRadius: 2 }}>{error}</Alert>}
 
             <AuthField
-              hideLabel label="Email address" name="email" type="email" placeholder="Email address" autoComplete="email"
+              hideLabel label={t('auth.login.email')} name="email" type="email" placeholder={t('auth.login.email')} autoComplete="email"
               icon={<MailOutline fontSize="small" />} value={form.email} onChange={handleChange} required
             />
             <AuthField
-              hideLabel label="Password" name="password" type="password" placeholder="Password" autoComplete="current-password"
+              hideLabel label={t('auth.login.password')} name="password" type="password" placeholder={t('auth.login.password')} autoComplete="current-password"
               icon={<LockOutlined fontSize="small" />} value={form.password} onChange={handleChange} required
             />
 
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: -0.5 }}>
               <FormControlLabel
                 control={<Checkbox size="small" checked={remember} onChange={(e) => setRemember(e.target.checked)} sx={{ color: RED, '&.Mui-checked': { color: RED } }} />}
-                label={<Typography sx={{ fontSize: '0.85rem' }}>Remember me</Typography>}
+                label={<Typography sx={{ fontSize: '0.85rem' }}>{t('auth.login.remember')}</Typography>}
               />
               <Link href="/forgot-password" style={{ color: RED, fontWeight: 600, textDecoration: 'none', fontSize: '0.85rem' }}>
-                Forgot password?
+                {t('auth.login.forgot')}
               </Link>
             </Box>
 
-            <PrimaryButton loading={loading}>{loading ? 'Logging in…' : 'Login'}</PrimaryButton>
+            <PrimaryButton loading={loading}>{t(loading ? 'auth.login.submitting' : 'auth.login.submit')}</PrimaryButton>
           </Box>
 
           <SocialButtons onError={(msg) => setError(msg)} />
 
           <Typography sx={{ textAlign: 'center', mt: 3, fontSize: '0.92rem', color: 'text.secondary' }}>
-            Don&apos;t have an account? <AuthLink href={`/register${authQuery}`}>Register</AuthLink>
+            {rich('auth.login.noAccount', { link: <AuthLink href={`/register${authQuery}`}>{t('auth.login.register')}</AuthLink> })}
           </Typography>
         </AuthCard>
 
         <Typography sx={{ mt: 2.5, fontSize: '0.8rem', color: 'text.secondary', textAlign: 'center' }}>
-          Hospital staff? <AuthLink href="/hospital/login">Staff login</AuthLink>
+          {rich('auth.login.staff', { link: <AuthLink href="/hospital/login">{t('auth.login.staffLogin')}</AuthLink> })}
         </Typography>
 
         <TrustBadges />

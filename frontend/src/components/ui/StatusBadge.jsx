@@ -1,10 +1,19 @@
 'use client';
 import { Box } from '@mui/material';
+import { useT } from '@/i18n/I18nProvider';
 
 // "CheckedIn" -> "Checked in", "adequate" -> "Adequate"
 const humanize = (s) => {
   const spaced = String(s).replace(/([a-z])([A-Z])/g, '$1 $2');
   return spaced.charAt(0).toUpperCase() + spaced.slice(1).toLowerCase();
+};
+
+/** A status in the selected language (status.<value> in i18n/messages/status.js); unknown ones humanized. */
+export const statusLabel = (t, status) => {
+  if (status == null || status === '') return '';
+  const key = `status.${status}`;
+  const text = t(key);
+  return text === key ? humanize(status) : text;
 };
 
 /**
@@ -13,19 +22,20 @@ const humanize = (s) => {
  * Override with `tone` for one-offs, or `label` to change the text.
  */
 export default function StatusBadge({ status, label, tone, dot = true, size = 'medium', sx }) {
+  const t = useT();
   return (
     <Box
       component="span"
       sx={[
-        (t) => {
-          const c = t.custom.tones[tone || t.custom.statusTone[status] || 'neutral'] || t.custom.tones.neutral;
+        (theme) => {
+          const c = theme.custom.tones[tone || theme.custom.statusTone[status] || 'neutral'] || theme.custom.tones.neutral;
           return {
             display: 'inline-flex',
             alignItems: 'center',
             gap: 0.75,
             px: size === 'small' ? 1 : 1.25,
             height: size === 'small' ? 22 : 26,
-            borderRadius: `${t.custom.radius.pill}px`,
+            borderRadius: `${theme.custom.radius.pill}px`,
             bgcolor: c.bg,
             color: c.fg,
             fontSize: size === 'small' ? '0.72rem' : '0.78rem',
@@ -40,7 +50,7 @@ export default function StatusBadge({ status, label, tone, dot = true, size = 'm
         ...(Array.isArray(sx) ? sx : [sx]),
       ]}
     >
-      {label ?? humanize(status)}
+      {label ?? statusLabel(t, status)}
     </Box>
   );
 }

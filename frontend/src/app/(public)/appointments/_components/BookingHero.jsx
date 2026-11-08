@@ -1,4 +1,5 @@
 'use client';
+import { useI18n } from '@/i18n/I18nProvider';
 import { Box, Container, Typography, useTheme } from '@mui/material';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
@@ -7,16 +8,18 @@ import FavoriteIcon from '@mui/icons-material/Favorite';
 import { HeartArt } from '@/components/auth/AuthArt';
 import { C } from './booking';
 
+// booking.hero.<key> in i18n/messages/booking.js
 const POINTS = [
-  { icon: <VerifiedUserIcon />, title: 'Safe & Secure', text: 'Your data is protected' },
-  { icon: <AccessTimeIcon />, title: 'Quick & Easy', text: 'Book in minutes' },
-  { icon: <FavoriteIcon />, title: 'Make an Impact', text: 'Help patients in need' },
+  { icon: <VerifiedUserIcon />, key: 'safe' },
+  { icon: <AccessTimeIcon />, key: 'quick' },
+  { icon: <FavoriteIcon />, key: 'impact' },
 ];
 
 // Icon badge + title + supportive line, three reassurance points underneath,
 // and a heart illustration with a "Give Blood" speech bubble on wide screens.
 export default function BookingHero() {
   const isDark = useTheme().palette.mode === 'dark';
+  const { t, rich } = useI18n();
   const tile = isDark ? 'rgba(201,29,50,0.18)' : '#FFF1F2';
   return (
     <Box sx={{
@@ -41,15 +44,15 @@ export default function BookingHero() {
           </Box>
           <Box sx={{ minWidth: 0 }}>
             <Typography component="h1" sx={{ fontWeight: 800, fontSize: { xs: '1.75rem', sm: '2.2rem', md: '2.5rem' }, letterSpacing: '-0.03em', lineHeight: 1.12 }}>
-              Book Your <Box component="span" sx={{ color: C.primary }}>Donation</Box> Appointment
+              {rich('booking.hero.title', { accent: <Box component="span" sx={{ color: C.primary }}>{t('booking.hero.titleAccent')}</Box> })}
             </Typography>
             <Typography sx={{ color: 'text.secondary', mt: 0.75, fontSize: { xs: '0.98rem', md: '1.08rem' } }}>
-              Your small act of kindness can save up to 3 lives.
+              {t('booking.hero.lead')}
             </Typography>
 
             <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0, mt: 2.5, display: 'flex', flexWrap: 'wrap', gap: { xs: 1.5, sm: 2, md: 0 } }}>
-              {POINTS.map(({ icon, title, text }, i) => (
-                <Box component="li" key={title} sx={{
+              {POINTS.map(({ icon, key }, i) => (
+                <Box component="li" key={key} sx={{
                   display: 'flex', alignItems: 'center', gap: 1.25, pr: { md: 4 }, mr: { md: 4 },
                   borderRight: { md: i < POINTS.length - 1 ? `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(201,29,50,0.14)'}` : 'none' },
                 }}>
@@ -57,8 +60,8 @@ export default function BookingHero() {
                     {icon}
                   </Box>
                   <Box>
-                    <Typography sx={{ fontWeight: 700, fontSize: '0.9rem', lineHeight: 1.25 }}>{title}</Typography>
-                    <Typography sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>{text}</Typography>
+                    <Typography sx={{ fontWeight: 700, fontSize: '0.9rem', lineHeight: 1.25 }}>{t(`booking.hero.${key}.title`)}</Typography>
+                    <Typography sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>{t(`booking.hero.${key}.text`)}</Typography>
                   </Box>
                 </Box>
               ))}
@@ -77,7 +80,7 @@ export default function BookingHero() {
             boxShadow: '0 10px 30px rgba(201,29,50,0.14)', color: C.primary, fontWeight: 700, fontSize: '0.88rem', lineHeight: 1.35,
             '&::after': { content: '""', position: 'absolute', left: 30, bottom: -8, width: 16, height: 16, bgcolor: 'background.paper', transform: 'rotate(45deg)', borderRadius: '3px' },
           }}>
-            Give Blood<br />Give Hope<br />Save Lives
+            {t('booking.hero.bubble.line1')}<br />{t('booking.hero.bubble.line2')}<br />{t('booking.hero.bubble.line3')}
             <FavoriteIcon sx={{ position: 'absolute', right: -8, top: -8, fontSize: 24, color: C.primary }} />
           </Box>
           <Box sx={{ position: 'absolute', right: 10, top: -4 }}><HeartArt size={176} /></Box>

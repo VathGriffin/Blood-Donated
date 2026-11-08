@@ -1,4 +1,5 @@
 'use client';
+import { useI18n } from '@/i18n/I18nProvider';
 import Link from 'next/link';
 import { Box, Typography, Chip, Avatar, Button, IconButton, useTheme } from '@mui/material';
 import {
@@ -42,23 +43,24 @@ function ActionLink({ href, icon, title, hint }) {
 // out (never invented), and the panel links to the place's OSM page so anyone can add it.
 export default function PlaceDetails({ item, isHosp, onClose }) {
   const isDark = useTheme().palette.mode === 'dark';
+  const { t } = useI18n();
   const meta = TYPE_META[item.type] || TYPE_META.Hospital;
   const accent = isHosp ? meta.color : BLOOD_COLORS[item.bloodType] || RED;
   const name = isHosp ? item.name : item.fullName;
   const phoneHref = telHref(item.phone);
   const open24 = isHosp && isOpen247(item);
-  const facilities = isHosp ? [item.emergency && ['Emergency care', <Emergency key="e" />], item.wheelchair && ['Wheelchair accessible', <Accessible key="w" />]].filter(Boolean) : [];
+  const facilities = isHosp ? [item.emergency && [t('map.emergency'), <Emergency key="e" />], item.wheelchair && [t('map.wheelchair'), <Accessible key="w" />]].filter(Boolean) : [];
   const osm = isHosp ? osmUrl(item.id) : null;
   const hasContact = Boolean(phoneHref || item.website);
 
   return (
-    <Box component="aside" aria-label={`${name} details`} sx={{ height: '100%', overflowY: 'auto', bgcolor: 'background.paper', border: '1px solid', borderColor: isDark ? '#334155' : '#E2E8F0', borderRadius: '20px', boxShadow: isDark ? 'none' : '0 6px 24px rgba(16,24,40,0.06)' }}>
+    <Box component="aside" aria-label={t('map.details', { name })} sx={{ height: '100%', overflowY: 'auto', bgcolor: 'background.paper', border: '1px solid', borderColor: isDark ? '#334155' : '#E2E8F0', borderRadius: '20px', boxShadow: isDark ? 'none' : '0 6px 24px rgba(16,24,40,0.06)' }}>
       <Box sx={{ position: 'relative' }}>
         <Avatar variant="square" src={isHosp ? item.image || undefined : undefined} alt="" imgProps={{ referrerPolicy: 'no-referrer' }}
           sx={{ width: '100%', height: 150, borderRadius: 0, color: 'rgba(255,255,255,0.9)', background: `linear-gradient(135deg, ${accent} 0%, ${accent}b8 100%)`, '& img': { objectFit: 'cover' } }}>
           {isHosp ? <LocalHospital sx={{ fontSize: 64 }} /> : <Typography sx={{ fontSize: '3rem', fontWeight: 900 }}>{item.bloodType}</Typography>}
         </Avatar>
-        <IconButton onClick={onClose} aria-label="Close details" size="small" sx={{ position: 'absolute', top: 10, right: 10, bgcolor: 'background.paper', boxShadow: '0 2px 8px rgba(0,0,0,0.25)', '&:hover': { bgcolor: 'background.paper' } }}>
+        <IconButton onClick={onClose} aria-label={t('map.closeDetails')} size="small" sx={{ position: 'absolute', top: 10, right: 10, bgcolor: 'background.paper', boxShadow: '0 2px 8px rgba(0,0,0,0.25)', '&:hover': { bgcolor: 'background.paper' } }}>
           <Close fontSize="small" />
         </IconButton>
       </Box>
@@ -66,20 +68,20 @@ export default function PlaceDetails({ item, isHosp, onClose }) {
       <Box sx={{ p: 2.25 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
           <Typography component="h2" sx={{ fontWeight: 800, fontSize: '1.3rem', lineHeight: 1.25, letterSpacing: '-0.01em' }}>{name}</Typography>
-          {open24 && <Chip label="Open 24/7" size="small" sx={{ fontWeight: 700, bgcolor: isDark ? 'rgba(46,125,50,0.25)' : '#DCFCE7', color: '#16A34A' }} />}
+          {open24 && <Chip label={t('map.open247')} size="small" sx={{ fontWeight: 700, bgcolor: isDark ? 'rgba(46,125,50,0.25)' : '#DCFCE7', color: '#16A34A' }} />}
         </Box>
 
         <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', mt: 1, mb: 1.25 }}>
           {isHosp ? (
             <>
-              <Chip label={item.type} size="small" sx={{ fontWeight: 700, bgcolor: isDark ? `${meta.color}2e` : meta.tint, color: meta.color }} />
-              {item.ownership && <Chip label={`${item.ownership} facility`} size="small" variant="outlined" sx={{ fontWeight: 600 }} />}
+              <Chip label={t(`map.types.${item.type}`)} size="small" sx={{ fontWeight: 700, bgcolor: isDark ? `${meta.color}2e` : meta.tint, color: meta.color }} />
+              {item.ownership && <Chip label={['public', 'private'].includes(item.ownership) ? t(`map.ownership.${item.ownership}`) : t('map.ownership.other', { value: item.ownership })} size="small" variant="outlined" sx={{ fontWeight: 600 }} />}
             </>
           ) : (
             <Chip icon={<FiberManualRecord sx={{ fontSize: '10px !important', color: item.available ? '#16A34A !important' : '#94A3B8 !important' }} />}
-              label={item.available ? 'Available to donate' : 'Not available right now'} size="small" variant="outlined" sx={{ fontWeight: 600 }} />
+              label={t(item.available ? 'map.availableToDonate' : 'map.notAvailable')} size="small" variant="outlined" sx={{ fontWeight: 600 }} />
           )}
-          <Chip label={`${formatKm(item.dist)} km away`} size="small" variant="outlined" sx={{ fontWeight: 600 }} />
+          <Chip label={t('map.distanceAway', { km: formatKm(item.dist) })} size="small" variant="outlined" sx={{ fontWeight: 600 }} />
         </Box>
 
         {isHosp && item.description && (
@@ -88,11 +90,11 @@ export default function PlaceDetails({ item, isHosp, onClose }) {
 
         {isHosp ? (
           <>
-            <InfoRow icon={<LocationOn />}>{item.address || <Box component="span" sx={{ color: 'text.secondary' }}>Address not mapped yet</Box>}</InfoRow>
+            <InfoRow icon={<LocationOn />}>{item.address || <Box component="span" sx={{ color: 'text.secondary' }}>{t('map.addressUnknown')}</Box>}</InfoRow>
             {item.phone && <InfoRow icon={<Phone />}>{phoneHref ? <Box component="a" href={phoneHref} sx={{ color: 'inherit' }}>{firstPhone(item.phone)}</Box> : item.phone}</InfoRow>}
             {item.website && <InfoRow icon={<Language />}><Box component="a" href={item.website} target="_blank" rel="noopener noreferrer" sx={{ color: RED }}>{websiteHost(item.website)}</Box></InfoRow>}
             {item.hours && !open24 && <InfoRow icon={<AccessTime />}>{item.hours}</InfoRow>}
-            {item.operator && <InfoRow icon={<Apartment />}>Operated by {item.operator}</InfoRow>}
+            {item.operator && <InfoRow icon={<Apartment />}>{t('map.operatedBy', { operator: item.operator })}</InfoRow>}
             {facilities.length > 0 && (
               <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', mt: 1 }}>
                 {facilities.map(([label, icon]) => <Chip key={label} icon={icon} label={label} size="small" variant="outlined" sx={{ fontWeight: 600, '& svg': { fontSize: 16 } }} />)}
@@ -103,41 +105,41 @@ export default function PlaceDetails({ item, isHosp, onClose }) {
           <>
             <InfoRow icon={<LocationOn />}>{item.location}</InfoRow>
             {item.phone && <InfoRow icon={<Phone />}>{telHref(item.phone) ? <Box component="a" href={telHref(item.phone)} sx={{ color: 'inherit' }}>{firstPhone(item.phone)}</Box> : item.phone}</InfoRow>}
-            <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary', mt: 0.75 }}>Donors are shown by city, so the pin is approximate.</Typography>
+            <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary', mt: 0.75 }}>{t('map.donorPinNote')}</Typography>
           </>
         )}
 
         {/* Blood services: real actions on this platform, not claims about what the place offers */}
         <Box sx={{ mt: 2, p: 1.5, borderRadius: '16px', bgcolor: isDark ? 'rgba(201,29,50,0.1)' : '#F8FAFC' }}>
           <Typography sx={{ display: 'flex', alignItems: 'center', gap: 0.75, fontWeight: 800, fontSize: '0.95rem', mb: 1, color: RED }}>
-            <WaterDrop sx={{ fontSize: 20 }} /> Blood Services
+            <WaterDrop sx={{ fontSize: 20 }} /> {t('map.services.title')}
           </Typography>
           <Box sx={{ display: 'grid', gap: 1 }}>
-            <ActionLink href="/appointments" icon={<EventAvailable />} title="Book a blood donation" hint="Pick a date and time that suits you" />
-            <ActionLink href="/requests" icon={<VolunteerActivism />} title="Request blood" hint="Ask the community for the type you need" />
+            <ActionLink href="/appointments" icon={<EventAvailable />} title={t('map.services.book')} hint={t('map.services.bookHint')} />
+            <ActionLink href="/requests" icon={<VolunteerActivism />} title={t('map.services.request')} hint={t('map.services.requestHint')} />
           </Box>
         </Box>
 
         <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.25, mt: 2 }}>
           <Button variant="contained" disableElevation startIcon={<Directions />} onClick={() => openDirections(...(item.base || item.pos))}
             sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '12px', py: 1.15, bgcolor: RED, '&:hover': { bgcolor: '#A91529' } }}>
-            Get Directions
+            {t('map.directions')}
           </Button>
           {phoneHref ? (
-            <Button variant="outlined" component="a" href={phoneHref} startIcon={<Phone />} color="primary" sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '12px', py: 1.15, borderWidth: 1.5, '&:hover': { borderWidth: 1.5 } }}>Contact</Button>
+            <Button variant="outlined" component="a" href={phoneHref} startIcon={<Phone />} color="primary" sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '12px', py: 1.15, borderWidth: 1.5, '&:hover': { borderWidth: 1.5 } }}>{t('map.contact')}</Button>
           ) : item.website ? (
-            <Button variant="outlined" component="a" href={item.website} target="_blank" rel="noopener noreferrer" startIcon={<Language />} color="primary" sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '12px', py: 1.15, borderWidth: 1.5, '&:hover': { borderWidth: 1.5 } }}>Website</Button>
+            <Button variant="outlined" component="a" href={item.website} target="_blank" rel="noopener noreferrer" startIcon={<Language />} color="primary" sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '12px', py: 1.15, borderWidth: 1.5, '&:hover': { borderWidth: 1.5 } }}>{t('map.website')}</Button>
           ) : (
-            <Button variant="outlined" disabled startIcon={<Phone />} sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '12px', py: 1.15 }}>Contact</Button>
+            <Button variant="outlined" disabled startIcon={<Phone />} sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '12px', py: 1.15 }}>{t('map.contact')}</Button>
           )}
         </Box>
         {!hasContact && isHosp && (
-          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary', mt: 1 }}>No phone or website is mapped for this place yet.</Typography>
+          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary', mt: 1 }}>{t('map.noContact')}</Typography>
         )}
 
         {osm && (
           <Typography component="a" href={osm} target="_blank" rel="noopener noreferrer" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, mt: 1.5, fontSize: '0.75rem', color: 'text.secondary', textDecoration: 'none', '&:hover': { color: RED } }}>
-            Details from OpenStreetMap — view or add info <OpenInNew sx={{ fontSize: 13 }} />
+            {t('map.osm')} <OpenInNew sx={{ fontSize: 13 }} />
           </Typography>
         )}
       </Box>

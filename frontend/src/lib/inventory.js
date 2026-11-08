@@ -1,13 +1,17 @@
 import { neutral, semantic } from '@/lib/design-tokens';
+import { currentLang } from '@/i18n/config';
+import { translate } from '@/i18n/translate';
 
 export const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
 // `status` comes from the API (a virtual on the inventory model: empty / critical / low / adequate).
+// Labels follow the selected language (status.stock.<status>), read when rendered.
+const level = (key, color) => ({ color, get label() { return translate(currentLang(), `status.stock.${key}`); } });
 export const STOCK = {
-  adequate: { label: 'Adequate',     color: semantic.success.main },
-  low:      { label: 'Low',          color: semantic.warning.main },
-  critical: { label: 'Critical',     color: semantic.error.main },
-  empty:    { label: 'Out of stock', color: neutral[400] }, // grey: nothing left to colour
+  adequate: level('adequate', semantic.success.main),
+  low:      level('low', semantic.warning.main),
+  critical: level('critical', semantic.error.main),
+  empty:    level('empty', neutral[400]), // grey: nothing left to colour
 };
 
 /** One row per blood type — types the pool has no row for yet show as empty. */

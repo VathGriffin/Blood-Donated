@@ -11,6 +11,7 @@ import HelpSection from "./_components/HelpSection";
 import CommunitySection from "./_components/CommunitySection";
 import BloodSupplySection from "./_components/BloodSupplySection";
 import EligibilitySection from "./_components/EligibilitySection";
+import { useI18n } from "@/i18n/I18nProvider";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import GroupsIcon from "@mui/icons-material/Groups";
 import PeopleIcon from "@mui/icons-material/People";
@@ -31,19 +32,15 @@ import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
 // A real donation photo (donor's arm on the chair, squeezing a ball).
 const HERO_PHOTO = "https://images.unsplash.com/photo-1536856136534-bb679c52a9aa?auto=format&fit=crop";
 
+// Shown until (or unless) the admin has added profiles. Their text is translated
+// (home.community.samples.<sample>); profiles from the database are shown as written.
 const FALLBACK_PROFILES = [
-  { name: "Sophea Meas", role: "Regular Blood Donor (Demo)", initials: "SM", color: "#C91D32",
-    photo: "https://i.pravatar.cc/640?img=47", bloodType: "A+", donations: 3, badge: "Blood Donor", location: "Phnom Penh",
-    quote: "I donate blood because it can give someone else a second chance at life.",
-    bio: "A demo profile representing a typical blood donor on BloodLife AI. This donor regularly donates blood and supports local blood drives." },
-  { name: "Dara Keo", role: "Volunteer & Blood Drive Support (Demo)", initials: "DK", color: "#C91D32",
-    photo: "https://i.pravatar.cc/640?img=68", bloodType: "O-", donations: 5, badge: "Community Volunteer", location: "Kandal",
-    quote: "I believe a stronger community can save more lives through awareness and action.",
-    bio: "A demo profile representing a community volunteer who helps organize blood donation campaigns, raises awareness, and supports donors." },
-  { name: "Chan Bopha", role: "Hospital Representative (Demo)", initials: "CB", color: "#C91D32",
-    photo: "https://i.pravatar.cc/640?img=32", bloodType: "B+", donations: 2, badge: "Healthcare Partner", location: "Siem Reap",
-    quote: "Our hospital relies on the support of donors and the community to save more lives.",
-    bio: "A demo profile representing a partner hospital on BloodLife AI. Hospitals can request blood units, manage inventory, and connect with donors." },
+  { name: "Sophea Meas", sample: "donor", initials: "SM", color: "#C91D32",
+    photo: "https://i.pravatar.cc/640?img=47", bloodType: "A+", donations: 3, kind: "donor" },
+  { name: "Dara Keo", sample: "volunteer", initials: "DK", color: "#C91D32",
+    photo: "https://i.pravatar.cc/640?img=68", bloodType: "O-", donations: 5, kind: "volunteer" },
+  { name: "Chan Bopha", sample: "partner", initials: "CB", color: "#C91D32",
+    photo: "https://i.pravatar.cc/640?img=32", bloodType: "B+", donations: 2, kind: "partner" },
 ];
 
 function useCountUp(target, duration = 2000, active = false) {
@@ -63,25 +60,27 @@ function useCountUp(target, duration = 2000, active = false) {
 }
 
 
+// `key`: the card's text under home.why / home.how in i18n/messages/home.js.
 const WHY = [
-  { icon: <FavoriteIcon />,   title: "Save Lives",                 desc: "One donation can save up to 3 lives." },
-  { icon: <Diversity3Icon />, title: "Build a Healthier Community", desc: "Help sustain a stable blood supply for those in need." },
-  { icon: <WaterDropIcon />,  title: "It's Safe and Simple",       desc: "A quick, safe, and easy process." },
-  { icon: <StarIcon />,       title: "Be a Role Model",            desc: "Inspire others to make a difference." },
+  { icon: <FavoriteIcon />,   key: "saveLives" },
+  { icon: <Diversity3Icon />, key: "community" },
+  { icon: <WaterDropIcon />,  key: "safe" },
+  { icon: <StarIcon />,       key: "roleModel" },
 ];
 
 const HOW = [
-  { icon: <DescriptionIcon />,   title: "1. Register",         desc: "Create an account or walk in." },
-  { icon: <CalendarMonthIcon />, title: "2. Book Appointment", desc: "Choose a convenient date and location." },
-  { icon: <WaterDropIcon />,     title: "3. Donate Blood",     desc: "A safe and quick process — the donation itself takes about 10 minutes." },
-  { icon: <FavoriteIcon />,      title: "4. Save Lives",       desc: "Your donation helps patients in need." },
+  { icon: <DescriptionIcon />,   key: "register" },
+  { icon: <CalendarMonthIcon />, key: "book" },
+  { icon: <WaterDropIcon />,     key: "donate" },
+  { icon: <FavoriteIcon />,      key: "save" },
 ];
 
 
 // Animated number that counts up once `active` turns true.
 function CountUp({ value, active }) {
   const n = useCountUp(value, 1600, active);
-  return <>{(active ? n : 0).toLocaleString()}</>;
+  const { formatNumber } = useI18n();
+  return <>{formatNumber(active ? n : 0)}</>;
 }
 
 function SectionHeading({ title, subtitle, light }) {
@@ -111,6 +110,7 @@ export default function Home() {
   const theme = useTheme();
   const router = useRouter();
   const isDark = theme.palette.mode === "dark";
+  const { t, formatNumber } = useI18n();
   const statsRef = useRef(null);
   const [statsOn, setStatsOn] = useState(false);
   const [pub, setPub] = useState(null); // real, public totals from /api/stats/public
@@ -147,18 +147,18 @@ export default function Home() {
 
   // Hero benefits. "Growing Community" quotes the live donor count when it has loaded.
   const benefits = [
-    { icon: <VerifiedUserIcon />,    title: "Safe & Secure",      desc: "Your safety is our priority" },
-    { icon: <LocalHospitalIcon />,   title: "Trusted Hospitals",  desc: "Verified medical centers" },
-    { icon: <GroupsIcon />,          title: "Growing Community",
-      desc: pub?.donors > 0 ? `Join ${pub.donors.toLocaleString()} registered donor${pub.donors !== 1 ? "s" : ""}` : "Join our donor network" },
-    { icon: <FavoriteIcon />,        title: "Real Impact",        desc: "Help save up to 3 lives" },
+    { icon: <VerifiedUserIcon />,  title: t("home.benefits.safe.title"),      desc: t("home.benefits.safe.desc") },
+    { icon: <LocalHospitalIcon />, title: t("home.benefits.trusted.title"),   desc: t("home.benefits.trusted.desc") },
+    { icon: <GroupsIcon />,        title: t("home.benefits.community.title"),
+      desc: pub?.donors > 0 ? t("home.benefits.community.count", { count: pub.donors }) : t("home.benefits.community.desc") },
+    { icon: <FavoriteIcon />,      title: t("home.benefits.impact.title"),    desc: t("home.benefits.impact.desc") },
   ];
 
   const statItems = [
-    { icon: <PeopleIcon />,      value: pub?.donors,            label: "Registered Donors" },
-    { icon: <WaterDropIcon />,   value: pub?.donations,         label: "Total Donations" },
-    { icon: <DomainIcon />,      value: pub?.hospitals,         label: "Partner Hospitals" },
-    { icon: <Inventory2Icon />,  value: pub?.units,             label: "Units in Stock" },
+    { icon: <PeopleIcon />,      value: pub?.donors,            label: t("home.stats.donors") },
+    { icon: <WaterDropIcon />,   value: pub?.donations,         label: t("home.stats.donations") },
+    { icon: <DomainIcon />,      value: pub?.hospitals,         label: t("home.stats.hospitals") },
+    { icon: <Inventory2Icon />,  value: pub?.units,             label: t("home.stats.units") },
   ];
   const iconCircle = (size, solid) => ({
     width: size, height: size, borderRadius: "50%", flexShrink: 0,
@@ -225,9 +225,12 @@ export default function Home() {
 
         <Container maxWidth="lg" sx={{ position: "relative", zIndex: 2, pt: { xs: 4, md: 6 } }}>
           <Box sx={{ maxWidth: { md: "48%", lg: 600 } }}>
+            {/* Same height whether the live donor count has loaded or not, so the headline
+                doesn't jump down when it arrives. */}
+            <Box sx={{ minHeight: 34, mb: 2, display: "flex", alignItems: "center" }}>
             {pub?.availableDonors > 0 ? (
               <Box component={Link} href="/donors" sx={{
-                display: "inline-flex", alignItems: "center", gap: 1, mb: 2, px: 1.5, py: 0.6, borderRadius: "999px", textDecoration: "none",
+                display: "inline-flex", alignItems: "center", gap: 1, px: 1.5, py: 0.6, borderRadius: "999px", textDecoration: "none",
                 bgcolor: "background.paper", color: "text.primary", fontSize: "0.82rem", fontWeight: 600,
                 border: "1px solid", borderColor: "divider", boxShadow: (t) => t.custom.shadow.sm,
                 transition: "border-color .18s ease",
@@ -238,23 +241,24 @@ export default function Home() {
                   width: 8, height: 8, borderRadius: "50%", bgcolor: (t) => t.custom.tones.success.dot,
                   boxShadow: (t) => `0 0 0 4px ${t.custom.tones.success.bg}`,
                 }} />
-                <Box component="span">{pub.availableDonors.toLocaleString()} donor{pub.availableDonors !== 1 ? "s" : ""} available to donate now</Box>
+                <Box component="span">{t("home.hero.availableNow", { count: formatNumber(pub.availableDonors) })}</Box>
                 <ArrowForwardIcon aria-hidden="true" sx={{ fontSize: 15, color: "text.secondary" }} />
               </Box>
             ) : (
-              <Typography sx={{ fontSize: { xs: "0.78rem", md: "0.85rem" }, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "primary.main", mb: 1.5 }}>
-                A small act makes a big difference
+              <Typography sx={{ fontSize: { xs: "0.78rem", md: "0.85rem" }, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "primary.main" }}>
+                {t("home.hero.eyebrow")}
               </Typography>
             )}
+            </Box>
             <Typography component="h1" sx={{
               fontSize: { xs: "2.5rem", sm: "3.3rem", lg: "4rem" }, fontWeight: 800, lineHeight: 1.04, letterSpacing: "-0.035em",
               color: isDark ? "text.primary" : navy.dark,
             }}>
-              Donate Blood
-              <Box component="span" sx={{ display: "block", color: "primary.main" }}>Save Lives</Box>
+              {t("home.hero.title")}
+              <Box component="span" sx={{ display: "block", color: "primary.main" }}>{t("home.hero.titleAccent")}</Box>
             </Typography>
             <Typography sx={{ mt: 2, maxWidth: 480, fontSize: { xs: "1rem", md: "1.08rem" }, lineHeight: 1.65, color: "text.secondary" }}>
-              Join our community of heroes. Your blood donation can give someone a second chance at life.
+              {t("home.hero.lead")}
             </Typography>
 
             <Box sx={{ mt: 3.5, display: "flex", gap: 1.5, flexWrap: "wrap" }}>
@@ -263,18 +267,18 @@ export default function Home() {
                   px: 3, py: 1.35, fontSize: "0.95rem", fontWeight: 700, width: { xs: "100%", sm: "auto" }, borderRadius: "10px",
                   boxShadow: (t) => `0 8px 20px ${alpha(t.palette.primary.main, 0.3)}`,
                 }}>
-                Find a Donation Center
+                {t("home.hero.findCenter")}
               </Button>
               <Button component={Link} href="/appointments" variant="outlined" size="large" startIcon={<CalendarMonthIcon />}
                 sx={{ px: 3, py: 1.35, fontSize: "0.95rem", fontWeight: 700, borderWidth: 1.5, borderRadius: "10px", bgcolor: "background.paper", "&:hover": { borderWidth: 1.5 }, width: { xs: "100%", sm: "auto" } }}>
-                Book an Appointment
+                {t("home.hero.book")}
               </Button>
             </Box>
             <Typography sx={{ mt: 2, fontSize: "0.9rem", color: "text.secondary", display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
               <LocalHospitalOutlinedIcon aria-hidden="true" sx={{ fontSize: 18, color: "primary.main" }} />
-              Need blood for a patient?
+              {t("home.hero.needBlood")}
               <Box component={Link} href="/requests" sx={{ color: "primary.main", fontWeight: 700, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 0.25, "&:hover": { textDecoration: "underline" } }}>
-                Request blood <ArrowForwardIcon aria-hidden="true" sx={{ fontSize: 16 }} />
+                {t("home.hero.requestBlood")} <ArrowForwardIcon aria-hidden="true" sx={{ fontSize: 16 }} />
               </Box>
             </Typography>
           </Box>
@@ -303,7 +307,7 @@ export default function Home() {
         <Paper
           ref={statsRef}
           component="section"
-          aria-label="BloodLife in numbers"
+          aria-label={t("home.stats.label")}
           elevation={0}
           sx={{
             borderRadius: "18px", overflow: "hidden", border: "1px solid", borderColor: "divider",
@@ -344,14 +348,14 @@ export default function Home() {
       {/* ── Why Donate Blood? ──────────────────────────────────────────── */}
       <Box component="section" sx={{ py: { xs: 6, md: 9 } }}>
         <Container maxWidth="lg">
-          <SectionHeading title="Why Donate Blood?" subtitle="Your donation helps patients in emergency situations, surgeries, cancer treatments and more." />
+          <SectionHeading title={t("home.why.title")} subtitle={t("home.why.subtitle")} />
           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", lg: "repeat(4, 1fr)" }, gap: 2.5 }}>
             {WHY.map((w) => (
-              <Paper key={w.title} variant="outlined" sx={{ p: 2.5, borderRadius: "14px", display: "flex", alignItems: "center", gap: 2, boxShadow: (t) => t.custom.shadow.xs }}>
+              <Paper key={w.key} variant="outlined" sx={{ p: 2.5, borderRadius: "14px", display: "flex", alignItems: "center", gap: 2, boxShadow: (t) => t.custom.shadow.xs }}>
                 <Box sx={{ ...iconCircle(56), "& svg": { fontSize: 28 } }}>{w.icon}</Box>
                 <Box>
-                  <Typography sx={{ fontWeight: 700, fontSize: "0.95rem", lineHeight: 1.3 }}>{w.title}</Typography>
-                  <Typography sx={{ mt: 0.5, fontSize: "0.83rem", color: "text.secondary", lineHeight: 1.5 }}>{w.desc}</Typography>
+                  <Typography sx={{ fontWeight: 700, fontSize: "0.95rem", lineHeight: 1.3 }}>{t(`home.why.${w.key}.title`)}</Typography>
+                  <Typography sx={{ mt: 0.5, fontSize: "0.83rem", color: "text.secondary", lineHeight: 1.5 }}>{t(`home.why.${w.key}.desc`)}</Typography>
                 </Box>
               </Paper>
             ))}
@@ -362,14 +366,14 @@ export default function Home() {
       {/* ── How It Works ───────────────────────────────────────────────── */}
       <Box component="section" sx={{ py: { xs: 6, md: 8 }, bgcolor: (t) => t.custom.tones.primary.bg }}>
         <Container maxWidth="lg">
-          <SectionHeading title="How It Works?" subtitle="Donating blood is easy. Here's how:" />
+          <SectionHeading title={t("home.how.title")} subtitle={t("home.how.subtitle")} />
           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", lg: "repeat(4, 1fr)" }, gap: { xs: 3, lg: 4 } }}>
             {HOW.map((h, i) => (
-              <Box key={h.title} sx={{ display: "flex", alignItems: "center", gap: 2, position: "relative" }}>
+              <Box key={h.key} sx={{ display: "flex", alignItems: "center", gap: 2, position: "relative" }}>
                 <Box sx={{ ...iconCircle(66, true), "& svg": { fontSize: 30 } }}>{h.icon}</Box>
                 <Box>
-                  <Typography sx={{ fontWeight: 700, fontSize: "0.98rem", lineHeight: 1.3 }}>{h.title}</Typography>
-                  <Typography sx={{ mt: 0.5, fontSize: "0.83rem", color: "text.secondary", lineHeight: 1.5 }}>{h.desc}</Typography>
+                  <Typography sx={{ fontWeight: 700, fontSize: "0.98rem", lineHeight: 1.3 }}>{t(`home.how.${h.key}.title`)}</Typography>
+                  <Typography sx={{ mt: 0.5, fontSize: "0.83rem", color: "text.secondary", lineHeight: 1.5 }}>{t(`home.how.${h.key}.desc`)}</Typography>
                 </Box>
                 {i < HOW.length - 1 && (
                   <ArrowForwardIcon sx={{ display: { xs: "none", lg: "block" }, position: "absolute", right: -30, top: "50%", mt: "-12px", color: "text.disabled" }} />
@@ -379,11 +383,11 @@ export default function Home() {
           </Box>
           <Box sx={{ mt: { xs: 4, md: 5 }, display: "flex", justifyContent: "center", gap: 1.5, flexWrap: "wrap" }}>
             <Button component={Link} href="/appointments" variant="contained" size="large" startIcon={<CalendarMonthIcon />} sx={{ fontWeight: 700, px: 3 }}>
-              Book an Appointment
+              {t("home.how.book2")}
             </Button>
             <Button component={Link} href="/donate" variant="outlined" size="large"
               sx={{ fontWeight: 700, px: 3, borderWidth: 1.5, bgcolor: "background.paper", "&:hover": { borderWidth: 1.5 } }}>
-              Register as a Donor
+              {t("home.how.registerDonor")}
             </Button>
           </Box>
         </Container>
@@ -408,9 +412,9 @@ export default function Home() {
         <Container maxWidth="lg" sx={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 4, flexDirection: { xs: "column", md: "row" } }}>
           <Box sx={{ textAlign: { xs: "center", md: "left" } }}>
             <Typography component="h2" sx={{ fontSize: { xs: "1.6rem", md: "2rem" }, fontWeight: 800, letterSpacing: "-0.02em" }}>
-              Find a Donation Center Near You
+              {t("home.near.title")}
             </Typography>
-            <Typography sx={{ mt: 0.75, color: "rgba(255,255,255,0.82)" }}>Search for hospitals and blood donation centers in your area.</Typography>
+            <Typography sx={{ mt: 0.75, color: "rgba(255,255,255,0.82)" }}>{t("home.near.subtitle")}</Typography>
           </Box>
           <Paper
             component="form"
@@ -431,13 +435,13 @@ export default function Home() {
               renderInput={(params) => (
                 <InputBase
                   ref={params.InputProps.ref}
-                  inputProps={{ ...params.inputProps, "aria-label": "City or province" }}
-                  placeholder="Enter your city or province..."
+                  inputProps={{ ...params.inputProps, "aria-label": t("home.near.cityLabel") }}
+                  placeholder={t("home.near.placeholder")}
                   sx={{ width: "100%", color: "#172B4D", fontSize: "0.95rem" }}
                 />
               )}
             />
-            <Button type="submit" variant="contained" sx={{ px: 3.5, py: 1.1, fontWeight: 700 }}>Search</Button>
+            <Button type="submit" variant="contained" sx={{ px: 3.5, py: 1.1, fontWeight: 700 }}>{t("home.near.search")}</Button>
           </Paper>
         </Container>
       </Box>

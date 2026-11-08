@@ -1,4 +1,6 @@
 'use client';
+import { useI18n } from '@/i18n/I18nProvider';
+import { apiErrorMessage } from '@/lib/api-error';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Box, Container, Button, Alert, Typography, CircularProgress, useTheme } from '@mui/material';
@@ -24,6 +26,7 @@ const emptyForm = { centerKey: '', date: '', time: '', fullName: '', email: '', 
 
 export default function AppointmentPage() {
   const isDark = useTheme().palette.mode === 'dark';
+  const { t } = useI18n();
   const router = useRouter();
   const { user, isAuth } = useUserAuth();
 
@@ -57,12 +60,12 @@ export default function AppointmentPage() {
   const [locating, setLocating] = useState(false);
   const [locateNote, setLocateNote] = useState('');
   const locate = () => {
-    if (!navigator.geolocation) { setLocateNote('Your browser can’t share its location.'); return; }
+    if (!navigator.geolocation) { setLocateNote(t('booking.center.noGeolocation')); return; }
     setLocating(true);
     setLocateNote('');
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => { setUserPos([coords.latitude, coords.longitude]); setLocating(false); },
-      () => { setLocating(false); setLocateNote('Location access was blocked, so centers are listed alphabetically.'); },
+      () => { setLocating(false); setLocateNote(t('booking.center.blocked')); },
       { timeout: 8000, maximumAge: 5 * 60 * 1000 }
     );
   };
@@ -76,7 +79,7 @@ export default function AppointmentPage() {
     return [...centers].sort((a, b) => (distances[a.key] ?? Infinity) - (distances[b.key] ?? Infinity));
   }, [centers, distances, userPos]);
   const pickerNote = userPos && !Object.keys(distances).length && centers.length
-    ? 'Distances aren’t available for these centers yet.'
+    ? t('booking.center.noDistances')
     : locateNote;
 
   // A signed-in donor's details are filled in; their booking must use the account email.
@@ -104,16 +107,16 @@ export default function AppointmentPage() {
   const center = centers.find((c) => c.key === form.centerKey) || null;
 
   const validateSelection = () => {
-    if (!center) return 'Please select a donation center.';
-    if (!form.date) return 'Please select a date.';
-    if (!form.time) return 'Please select a time slot.';
+    if (!center) return t('booking.errors.center');
+    if (!form.date) return t('booking.errors.date');
+    if (!form.time) return t('booking.errors.time');
     return '';
   };
   const validateDetails = () => {
-    if (!form.fullName.trim()) return 'Full name is required.';
-    if (!/\S+@\S+\.\S+/.test(form.email.trim())) return 'A valid email is required.';
-    if (!form.phone.trim()) return 'Phone number is required.';
-    if (!form.bloodType) return 'Please select your blood type.';
+    if (!form.fullName.trim()) return t('booking.errors.fullName');
+    if (!/\S+@\S+\.\S+/.test(form.email.trim())) return t('booking.errors.email');
+    if (!form.phone.trim()) return t('booking.errors.phone');
+    if (!form.bloodType) return t('booking.errors.bloodType');
     return '';
   };
 
@@ -153,7 +156,7 @@ export default function AppointmentPage() {
       });
       router.push('/appointments/confirmed');
     } catch (err) {
-      setError(err.response?.data?.error || 'Booking failed. Please try again.');
+      setError(apiErrorMessage(err, t('booking.errors.failed')));
     } finally {
       setSubmitting(false);
     }
@@ -177,9 +180,9 @@ export default function AppointmentPage() {
   };
   const back = { details: 'select', review: 'details' }[screen];
   const next = {
-    select: { label: 'Next: Your Information', onClick: goToDetails },
-    details: { label: 'Next: Review & Confirm', onClick: goToReview },
-    review: { label: submitting ? 'Booking…' : 'Confirm Booking', onClick: submit },
+    select: { label: t('booking.nextDetails'), onClick: goToDetails },
+    details: { label: t('booking.nextReview'), onClick: goToReview },
+    review: { label: t(submitting ? 'booking.booking' : 'booking.confirm'), onClick: submit },
   }[screen];
 
   const cardBorder = `1px solid ${isDark ? '#334155' : C.border}`;
@@ -199,7 +202,7 @@ export default function AppointmentPage() {
           }}>
             <BookingStepper active={activeStep} />
 
-            <Box ref={mainRef} tabIndex={-1} aria-label={`Booking step ${activeStep + 1}`}
+            <Box ref={mainRef} tabIndex={-1} aria-label={t('booking.steps.current', { n: activeStep + 1 })}
               sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, minWidth: 0, outline: 'none', scrollMarginTop: { xs: 80, md: 96 } }}>
               {screen === 'select' && (
                 <>
@@ -221,11 +224,11 @@ export default function AppointmentPage() {
           </Box>
 
           {/* Right: live summary, requirements, next action. Sticky only where the screen is tall enough to show it all. */}
-          <Box component="aside" aria-label="Appointment summary" sx={{
+          <Box component="aside" aria-label={t('booking.summary.label')} sx={{
             display: 'flex', flexDirection: 'column', gap: 2.5,
             '@media (min-width: 1200px) and (min-height: 1080px)': { position: 'sticky', top: 88 },
           }}>
-            <AppointmentSummary center={center} date={form.date} time={form.time} name={donorName} role={isAuth ? 'Donor' : 'Guest'}
+            <AppointmentSummary center={center} date={form.date} time={form.time} name={donorName} role={t(isAuth ? 'booking.summary.donor' : 'booking.summary.guest')}
               bloodType={form.bloodType} onChange={center || screen !== 'select' ? () => go('select') : undefined} />
             <DonateChecklist />
 
@@ -235,7 +238,7 @@ export default function AppointmentPage() {
               <Box sx={{ display: 'flex', gap: 1.25 }}>
                 {back && (
                   <Button variant="outlined" onClick={() => go(back)} disabled={submitting} startIcon={<ArrowBackIcon />} sx={backSx}>
-                    Back
+                    {t('booking.back')}
                   </Button>
                 )}
                 <Button fullWidth variant="contained" onClick={next.onClick} disabled={submitting}
@@ -246,7 +249,7 @@ export default function AppointmentPage() {
                 </Button>
               </Box>
               <Typography sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.6, color: 'text.secondary', fontSize: '0.76rem' }}>
-                <LockOutlinedIcon sx={{ fontSize: 14 }} aria-hidden="true" /> Your information is secure and protected
+                <LockOutlinedIcon sx={{ fontSize: 14 }} aria-hidden="true" /> {t('booking.secure')}
               </Typography>
             </Box>
           </Box>

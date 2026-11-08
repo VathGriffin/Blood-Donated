@@ -1,10 +1,11 @@
 'use client';
+import { useI18n } from '@/i18n/I18nProvider';
+import LanguageSwitcher from '@/components/layout/LanguageSwitcher';
 import Link from 'next/link';
 import { useState } from 'react';
 import { Box, Typography, TextField, Button, InputAdornment, IconButton, Divider, useTheme } from '@mui/material';
 import { Visibility, VisibilityOff, ArrowBack, VerifiedUser, LocalHospital, Favorite } from '@mui/icons-material';
 import BrandLogo from '@/components/dashboard/BrandLogo';
-import { BRAND } from '@/lib/brand';
 
 export const RED = '#C91D32';
 export const RED_DARK = '#A91529';
@@ -27,13 +28,17 @@ export function AuthFrame({ children, sx }) {
 }
 
 export function AuthTopBar() {
+  const { t } = useI18n();
   return (
     <Box sx={{ position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: { xs: 2.5, md: 5 }, pt: { xs: 2.5, md: 3.5 } }}>
-      <BrandLogo href="/" caption={BRAND.tagline} onDark={false} />
-      <Button component={Link} href="/" startIcon={<ArrowBack sx={{ fontSize: 16 }} />}
-        sx={{ color: 'text.secondary', fontWeight: 600, textTransform: 'none', fontSize: '0.88rem' }}>
-        Back to Home
-      </Button>
+      <BrandLogo href="/" caption={t('common.brandTagline')} onDark={false} />
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <LanguageSwitcher labelDisplay={{ xs: 'none', sm: 'inline' }} />
+        <Button component={Link} href="/" startIcon={<ArrowBack sx={{ fontSize: 16 }} />}
+          sx={{ color: 'text.secondary', fontWeight: 600, textTransform: 'none', fontSize: '0.88rem', display: { xs: 'none', sm: 'inline-flex' } }}>
+          {t('auth.backHome')}
+        </Button>
+      </Box>
     </Box>
   );
 }
@@ -70,6 +75,7 @@ export function AuthHeading({ title, subtitle, emblem }) {
 // `acParams` lets it render an MUI Autocomplete's input (pass renderInput's params);
 // `selectProps` configures a `select` field.
 export function AuthField({ label, icon, type = 'text', hideLabel = false, endAdornment, inputProps, acParams, selectProps, sx, ...rest }) {
+  const { t } = useI18n();
   // InputLabelProps is pulled out only to drop it — the label renders above the field, not inside.
   const { InputProps: acInput, inputProps: acHtml, InputLabelProps: _ignored, ...acRest } = acParams || {};
   const isDark = useTheme().palette.mode === 'dark';
@@ -88,7 +94,7 @@ export function AuthField({ label, icon, type = 'text', hideLabel = false, endAd
           startAdornment: icon ? <InputAdornment position="start" sx={{ color: 'text.secondary' }}>{icon}</InputAdornment> : undefined,
           endAdornment: isPassword ? (
             <InputAdornment position="end">
-              <IconButton size="small" edge="end" onClick={() => setShow((v) => !v)} aria-label={show ? 'Hide password' : 'Show password'}>
+              <IconButton size="small" edge="end" onClick={() => setShow((v) => !v)} aria-label={t(show ? 'auth.hidePassword' : 'auth.showPassword')}>
                 {show ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
               </IconButton>
             </InputAdornment>
@@ -132,10 +138,11 @@ export function PrimaryButton({ children, loading, sx, ...rest }) {
   );
 }
 
-export function OrDivider({ children = 'Or continue with' }) {
+export function OrDivider({ children }) {
+  const { t } = useI18n();
   return (
     <Divider sx={{ my: 2.5, '&::before, &::after': { borderColor: 'divider' } }}>
-      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.82rem' }}>{children}</Typography>
+      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.82rem' }}>{children || t('auth.orContinue')}</Typography>
     </Divider>
   );
 }
@@ -144,24 +151,26 @@ export const AuthLink = ({ href, children }) => (
   <Link href={href} style={{ color: RED, fontWeight: 700, textDecoration: 'none' }}>{children}</Link>
 );
 
+// auth.badges.<key> in i18n/messages/auth.js
 const BADGES = [
-  { icon: <VerifiedUser />, title: 'Safe & Secure', text: 'Your safety is our priority' },
-  { icon: <LocalHospital />, title: 'Trusted Hospitals', text: 'Verified medical centers' },
-  { icon: <Favorite />, title: 'Real Impact', text: 'Help save lives' },
+  { icon: <VerifiedUser />, key: 'safe' },
+  { icon: <LocalHospital />, key: 'trusted' },
+  { icon: <Favorite />, key: 'impact' },
 ];
 
 export function TrustBadges() {
   const isDark = useTheme().palette.mode === 'dark';
+  const { t } = useI18n();
   return (
     <Box sx={{ display: 'flex', justifyContent: 'center', gap: { xs: 2, sm: 5 }, mt: 4, flexWrap: 'wrap' }}>
       {BADGES.map((b) => (
-        <Box key={b.title} sx={{ textAlign: 'center', width: { xs: 96, sm: 130 } }}>
+        <Box key={b.key} sx={{ textAlign: 'center', width: { xs: 96, sm: 130 } }}>
           <Box sx={{
             width: 46, height: 46, mx: 'auto', mb: 0.75, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
             bgcolor: isDark ? 'rgba(201,29,50,0.18)' : '#FFF1F2', color: RED,
           }}>{b.icon}</Box>
-          <Typography sx={{ fontWeight: 700, fontSize: '0.8rem' }}>{b.title}</Typography>
-          <Typography sx={{ color: 'text.secondary', fontSize: '0.7rem', lineHeight: 1.35 }}>{b.text}</Typography>
+          <Typography sx={{ fontWeight: 700, fontSize: '0.8rem' }}>{t(`auth.badges.${b.key}.title`)}</Typography>
+          <Typography sx={{ color: 'text.secondary', fontSize: '0.7rem', lineHeight: 1.35 }}>{t(`auth.badges.${b.key}.text`)}</Typography>
         </Box>
       ))}
     </Box>

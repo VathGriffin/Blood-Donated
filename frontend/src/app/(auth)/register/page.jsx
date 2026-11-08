@@ -1,4 +1,6 @@
 'use client';
+import { useI18n } from '@/i18n/I18nProvider';
+import { apiErrorMessage } from '@/lib/api-error';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
@@ -24,23 +26,21 @@ const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 const PROVINCE_NAMES = PROVINCES.map((p) => p.name);
 const PANEL_WIDTH = 300;
 
+// Labels: auth.register.<labelKey> in i18n/messages/auth.js
 const ROLES = [
-  { id: 'donor', label: 'Registration', icon: <PersonOutline fontSize="small" /> },
-  { id: 'staff', label: 'Hospital Staff', icon: <LocalHospitalOutlined fontSize="small" /> },
+  { id: 'donor', labelKey: 'donorTab', icon: <PersonOutline fontSize="small" /> },
+  { id: 'staff', labelKey: 'staffTab', icon: <LocalHospitalOutlined fontSize="small" /> },
 ];
 
 // Hospital staff accounts are provisioned by an administrator, never self-registered.
 // (There is deliberately no admin option on this public page.)
-const STAFF_NOTICE = {
-  text: 'Hospital staff accounts are created by the platform administrator for each partner hospital, so they can’t be self-registered.',
-  href: '/hospital/login',
-  cta: 'Go to Hospital Staff Login',
-};
+const STAFF_LOGIN = '/hospital/login';
 
 
 const UserSignUp = () => {
   const router = useRouter();
   const { login, isAuth } = useUserAuth();
+  const { t, rich } = useI18n();
   const [role, setRole] = useState('donor');
   const [form, setForm] = useState({
     fullName: '', dateOfBirth: '', email: '', password: '', phone: '', confirm: '', bloodType: '', location: '',
@@ -61,10 +61,10 @@ const UserSignUp = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!/\S+@\S+\.\S+/.test(form.email)) { setError('Please enter a valid email address.'); return; }
-    if (form.password.length < 6) { setError('Password must be at least 6 characters.'); return; }
-    if (form.password !== form.confirm) { setError('Passwords do not match.'); return; }
-    if (form.dateOfBirth && form.dateOfBirth > today()) { setError('Date of birth can’t be in the future.'); return; }
+    if (!/\S+@\S+\.\S+/.test(form.email)) { setError(t('auth.register.errors.email')); return; }
+    if (form.password.length < 6) { setError(t('auth.register.errors.password')); return; }
+    if (form.password !== form.confirm) { setError(t('auth.register.errors.match')); return; }
+    if (form.dateOfBirth && form.dateOfBirth > today()) { setError(t('auth.register.errors.birth')); return; }
     setLoading(true);
     try {
       // Optional fields are only sent when filled in.
@@ -77,7 +77,7 @@ const UserSignUp = () => {
       login(data.token, data.user);
       router.push(nextPath('/notification'));
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed. Please try again.');
+      setError(apiErrorMessage(err, t('auth.register.errors.failed')));
     } finally {
       setLoading(false);
     }
@@ -95,12 +95,12 @@ const UserSignUp = () => {
           <AuthCard maxWidth={680}>
             <AuthHeading
               emblem={<DropHeart size={44} />}
-              title="Create an Account"
-              subtitle="Join our community and be a hero"
+              title={t('auth.register.title')}
+              subtitle={t('auth.register.subtitle')}
             />
 
             {/* Role tabs */}
-            <Box role="tablist" aria-label="Account type" sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1.25, mb: 3 }}>
+            <Box role="tablist" aria-label={t('auth.register.accountType')} sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1.25, mb: 3 }}>
               {ROLES.map((r) => {
                 const active = role === r.id;
                 return (
@@ -113,7 +113,7 @@ const UserSignUp = () => {
                       boxShadow: active ? '0 6px 16px rgba(201,29,50,0.28)' : 'none',
                       '&:hover': { bgcolor: active ? RED_DARK : 'action.hover' },
                     }}>
-                    {r.label}
+                    {t(`auth.register.${r.labelKey}`)}
                   </Button>
                 );
               })}
@@ -121,10 +121,10 @@ const UserSignUp = () => {
 
             {role === 'staff' ? (
               <Box sx={{ textAlign: 'center', py: 3 }}>
-                <Alert severity="info" sx={{ textAlign: 'left', borderRadius: 2, mb: 3 }}>{STAFF_NOTICE.text}</Alert>
-                <Button component={Link} href={STAFF_NOTICE.href} variant="contained"
+                <Alert severity="info" sx={{ textAlign: 'left', borderRadius: 2, mb: 3 }}>{t('auth.register.staffNotice')}</Alert>
+                <Button component={Link} href={STAFF_LOGIN} variant="contained"
                   sx={{ px: 4, py: 1.2, textTransform: 'none', fontWeight: 700, borderRadius: '10px', bgcolor: RED, '&:hover': { bgcolor: RED_DARK } }}>
-                  {STAFF_NOTICE.cta}
+                  {t('auth.register.staffCta')}
                 </Button>
               </Box>
             ) : (
@@ -133,28 +133,28 @@ const UserSignUp = () => {
                   {error && <Alert severity="error" sx={{ borderRadius: 2 }}>{error}</Alert>}
 
                   <Box sx={grid}>
-                    <AuthField label="Full Name" name="fullName" placeholder="Enter your full name" autoComplete="name"
+                    <AuthField label={t('auth.register.fullName')} name="fullName" placeholder={t('auth.register.fullNamePlaceholder')} autoComplete="name"
                       icon={<PersonOutline fontSize="small" />} value={form.fullName} onChange={handleChange} required />
-                    <AuthField label="Date of Birth" name="dateOfBirth" type="date" autoComplete="bday"
+                    <AuthField label={t('auth.register.dateOfBirth')} name="dateOfBirth" type="date" autoComplete="bday"
                       icon={<CalendarMonthOutlined fontSize="small" />} value={form.dateOfBirth} onChange={handleChange}
                       inputProps={{ max: today() }} />
 
-                    <AuthField label="Email Address" name="email" type="email" placeholder="Enter your email" autoComplete="email"
+                    <AuthField label={t('auth.register.email')} name="email" type="email" placeholder={t('auth.register.emailPlaceholder')} autoComplete="email"
                       icon={<MailOutline fontSize="small" />} value={form.email} onChange={handleChange} required />
-                    <AuthField label="Password" name="password" type="password" placeholder="At least 6 characters" autoComplete="new-password"
+                    <AuthField label={t('auth.register.password')} name="password" type="password" placeholder={t('auth.register.passwordPlaceholder')} autoComplete="new-password"
                       icon={<LockOutlined fontSize="small" />} value={form.password} onChange={handleChange} required />
 
-                    <AuthField label="Phone Number" name="phone" type="tel" placeholder="Enter your phone number" autoComplete="tel"
+                    <AuthField label={t('auth.register.phone')} name="phone" type="tel" placeholder={t('auth.register.phonePlaceholder')} autoComplete="tel"
                       icon={<PhoneOutlined fontSize="small" />} value={form.phone} onChange={handleChange} />
-                    <AuthField label="Confirm Password" name="confirm" type="password" placeholder="Confirm your password" autoComplete="new-password"
+                    <AuthField label={t('auth.register.confirm')} name="confirm" type="password" placeholder={t('auth.register.confirmPlaceholder')} autoComplete="new-password"
                       icon={<LockOutlined fontSize="small" />} value={form.confirm} onChange={handleChange} required />
                   </Box>
 
                   <Box sx={{ ...grid, alignItems: 'stretch' }}>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                      <AuthField select label="Blood Type" name="bloodType" value={form.bloodType} onChange={handleChange}
+                      <AuthField select label={t('auth.register.bloodType')} name="bloodType" value={form.bloodType} onChange={handleChange}
                         icon={<WaterDropOutlined fontSize="small" />}
-                        selectProps={{ displayEmpty: true, renderValue: (v) => v || <Box component="span" sx={{ color: 'text.disabled' }}>Select your blood type</Box> }}>
+                        selectProps={{ displayEmpty: true, renderValue: (v) => v || <Box component="span" sx={{ color: 'text.disabled' }}>{t('auth.register.bloodTypePlaceholder')}</Box> }}>
                         {BLOOD_TYPES.map((bt) => <MenuItem key={bt} value={bt}>{bt}</MenuItem>)}
                       </AuthField>
 
@@ -164,25 +164,24 @@ const UserSignUp = () => {
                         inputValue={form.location}
                         onInputChange={(_, value) => set('location', value)}
                         renderInput={(params) => (
-                          <AuthField label="Location" placeholder="Enter your location" acParams={params}
+                          <AuthField label={t('auth.register.location')} placeholder={t('auth.register.locationPlaceholder')} acParams={params}
                             icon={<PlaceOutlined fontSize="small" />} />
                         )}
                       />
                     </Box>
 
-                    <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', p: 2, borderRadius: '12px', bgcolor: (t) => (t.palette.mode === 'dark' ? 'rgba(201,29,50,0.12)' : '#FFF1F2') }}>
+                    <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', p: 2, borderRadius: '12px', bgcolor: (theme) => (theme.palette.mode === 'dark' ? 'rgba(201,29,50,0.12)' : '#FFF1F2') }}>
                       <Favorite sx={{ color: RED, fontSize: 30, flexShrink: 0 }} />
                       <Box>
-                        <Typography sx={{ color: RED, fontWeight: 800, fontSize: '0.85rem' }}>Your information is safe with us</Typography>
+                        <Typography sx={{ color: RED, fontWeight: 800, fontSize: '0.85rem' }}>{t('auth.register.safeTitle')}</Typography>
                         <Typography sx={{ color: 'text.secondary', fontSize: '0.75rem', lineHeight: 1.45, mt: 0.25 }}>
-                          We protect your personal data and only use it for blood donation purposes.{' '}
-                          <Link href="/privacy" style={{ color: RED, fontWeight: 600 }}>Privacy Policy</Link>
+                          {rich('auth.register.safeText', { link: <Link href="/privacy" style={{ color: RED, fontWeight: 600 }}>{t('auth.register.privacy')}</Link> })}
                         </Typography>
                       </Box>
                     </Box>
                   </Box>
 
-                  <PrimaryButton loading={loading} sx={{ mt: 0.5 }}>{loading ? 'Creating account…' : 'Create Account'}</PrimaryButton>
+                  <PrimaryButton loading={loading} sx={{ mt: 0.5 }}>{t(loading ? 'auth.register.submitting' : 'auth.register.submit')}</PrimaryButton>
                 </Box>
 
                 <SocialButtons onError={(msg) => setError(msg)} />
@@ -190,7 +189,7 @@ const UserSignUp = () => {
             )}
 
             <Typography sx={{ textAlign: 'center', mt: 3, fontSize: '0.92rem', color: 'text.secondary' }}>
-              Already have an account? <AuthLink href={`/login${authQuery}`}>Login</AuthLink>
+              {rich('auth.register.haveAccount', { link: <AuthLink href={`/login${authQuery}`}>{t('auth.register.login')}</AuthLink> })}
             </Typography>
           </AuthCard>
         </Box>

@@ -1,4 +1,5 @@
 'use client';
+import { useT } from '@/i18n/I18nProvider';
 import { memo, useEffect, useRef, useState } from 'react';
 import {
   Box, Button, Divider, IconButton, MenuItem, Popover, Select, TextField, Tooltip, Typography, useTheme,
@@ -52,6 +53,7 @@ const Sep = () => <Divider orientation="vertical" flexItem sx={{ mx: 0.75, my: 0
  * backend enforces again before saving.
  */
 function RichTextEditor({ id, label, helper, value, onChange, max, placeholder }) {
+  const t = useT();
   const isDark = useTheme().palette.mode === 'dark';
   const lastEmitted = useRef(value);
   const [notice, setNotice] = useState('');
@@ -96,7 +98,7 @@ function RichTextEditor({ id, label, helper, value, onChange, max, placeholder }
         const current = view.state.doc.textBetween(0, view.state.doc.content.size, undefined, ' ').length;
         const selected = view.state.doc.textBetween(from, to, undefined, ' ').length;
         if (current - selected + text.length > max) {
-          setNotice(`That paste would go over the ${max.toLocaleString()}-character limit, so it wasn't added.`);
+          setNotice(t('adm.rte.pasteTooLong', { max: max.toLocaleString() }));
           return true;
         }
         setNotice('');
@@ -146,7 +148,7 @@ function RichTextEditor({ id, label, helper, value, onChange, max, placeholder }
   const applyLink = (e) => {
     e?.preventDefault();
     const href = normalizeLink(linkUrl);
-    if (!href) { setLinkError('Enter a web address (https://…) or an email address.'); return; }
+    if (!href) { setLinkError(t('adm.rte.linkError')); return; }
     const chain = editor.chain().focus().extendMarkRange('link');
     if (editor.state.selection.empty && !editor.isActive('link')) {
       chain.insertContent({ type: 'text', text: linkUrl.trim(), marks: [{ type: 'link', attrs: { href } }] }).run();
@@ -183,23 +185,23 @@ function RichTextEditor({ id, label, helper, value, onChange, max, placeholder }
         '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
       }}>
         {/* Toolbar */}
-        <Box ref={toolbarRef} role="toolbar" aria-label={`${label} formatting`} sx={{
+        <Box ref={toolbarRef} role="toolbar" aria-label={t('adm.rte.formattingAria', { label })} sx={{
           display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.25, px: 1, py: 0.75,
           borderBottom: 1, borderColor: 'divider',
         }}>
-          <ToolButton label="Bold" shortcut={`${mod}B`} active={!!s.bold} disabled={!ready} onClick={() => editor.chain().focus().toggleBold().run()}><FormatBold /></ToolButton>
-          <ToolButton label="Italic" shortcut={`${mod}I`} active={!!s.italic} disabled={!ready} onClick={() => editor.chain().focus().toggleItalic().run()}><FormatItalic /></ToolButton>
-          <ToolButton label="Underline" shortcut={`${mod}U`} active={!!s.underline} disabled={!ready} onClick={() => editor.chain().focus().toggleUnderline().run()}><FormatUnderlined /></ToolButton>
+          <ToolButton label={t('adm.rte.bold')} shortcut={`${mod}B`} active={!!s.bold} disabled={!ready} onClick={() => editor.chain().focus().toggleBold().run()}><FormatBold /></ToolButton>
+          <ToolButton label={t('adm.rte.italic')} shortcut={`${mod}I`} active={!!s.italic} disabled={!ready} onClick={() => editor.chain().focus().toggleItalic().run()}><FormatItalic /></ToolButton>
+          <ToolButton label={t('adm.rte.underline')} shortcut={`${mod}U`} active={!!s.underline} disabled={!ready} onClick={() => editor.chain().focus().toggleUnderline().run()}><FormatUnderlined /></ToolButton>
           <Sep />
-          <ToolButton label="Bulleted list" active={!!s.bullet} disabled={!ready} onClick={() => editor.chain().focus().toggleBulletList().run()}><FormatListBulleted /></ToolButton>
-          <ToolButton label="Numbered list" active={!!s.ordered} disabled={!ready} onClick={() => editor.chain().focus().toggleOrderedList().run()}><FormatListNumbered /></ToolButton>
+          <ToolButton label={t('adm.rte.bulletedList')} active={!!s.bullet} disabled={!ready} onClick={() => editor.chain().focus().toggleBulletList().run()}><FormatListBulleted /></ToolButton>
+          <ToolButton label={t('adm.rte.numberedList')} active={!!s.ordered} disabled={!ready} onClick={() => editor.chain().focus().toggleOrderedList().run()}><FormatListNumbered /></ToolButton>
           <Sep />
-          <ToolButton label={s.link ? 'Edit link' : 'Insert link'} shortcut={`${mod}K`} active={!!s.link} disabled={!ready} onClick={openLink}><InsertLink /></ToolButton>
-          {s.link && <ToolButton label="Remove link" disabled={!ready} onClick={removeLink}><LinkOff /></ToolButton>}
+          <ToolButton label={s.link ? t('adm.rte.editLink') : t('adm.rte.insertLink')} shortcut={`${mod}K`} active={!!s.link} disabled={!ready} onClick={openLink}><InsertLink /></ToolButton>
+          {s.link && <ToolButton label={t('adm.rte.removeLink')} disabled={!ready} onClick={removeLink}><LinkOff /></ToolButton>}
           <Sep />
           <Select
             size="small" value={s.block || 'p'} disabled={!ready} onChange={(e) => setBlock(e.target.value)}
-            inputProps={{ 'aria-label': 'Text style' }}
+            inputProps={{ 'aria-label': t('adm.rte.textStyle') }}
             MenuProps={{ disableAutoFocusItem: true, slotProps: { paper: { sx: { borderRadius: '10px', mt: 0.5 } } } }}
             onClose={() => setTimeout(() => editor?.commands.focus(), 0)}
             sx={{
@@ -208,13 +210,13 @@ function RichTextEditor({ id, label, helper, value, onChange, max, placeholder }
               '&.Mui-focused': { outline: `2px solid ${RED}`, outlineOffset: 1 },
             }}
           >
-            <MenuItem value="p" sx={{ fontSize: '0.9rem' }}>Normal text</MenuItem>
-            <MenuItem value="h2" sx={{ fontSize: '1.05rem', fontWeight: 800 }}>Heading 2</MenuItem>
-            <MenuItem value="h3" sx={{ fontSize: '0.95rem', fontWeight: 800 }}>Heading 3</MenuItem>
+            <MenuItem value="p" sx={{ fontSize: '0.9rem' }}>{t('adm.rte.normalText')}</MenuItem>
+            <MenuItem value="h2" sx={{ fontSize: '1.05rem', fontWeight: 800 }}>{t('adm.rte.heading2')}</MenuItem>
+            <MenuItem value="h3" sx={{ fontSize: '0.95rem', fontWeight: 800 }}>{t('adm.rte.heading3')}</MenuItem>
           </Select>
           <Box sx={{ flex: 1 }} />
-          <ToolButton label="Undo" shortcut={`${mod}Z`} disabled={!ready || !s.canUndo} onClick={() => editor.chain().focus().undo().run()}><Undo /></ToolButton>
-          <ToolButton label="Redo" shortcut={isMac ? '⇧⌘Z' : 'Ctrl+Y'} disabled={!ready || !s.canRedo} onClick={() => editor.chain().focus().redo().run()}><Redo /></ToolButton>
+          <ToolButton label={t('adm.rte.undo')} shortcut={`${mod}Z`} disabled={!ready || !s.canUndo} onClick={() => editor.chain().focus().undo().run()}><Undo /></ToolButton>
+          <ToolButton label={t('adm.rte.redo')} shortcut={isMac ? '⇧⌘Z' : 'Ctrl+Y'} disabled={!ready || !s.canRedo} onClick={() => editor.chain().focus().redo().run()}><Redo /></ToolButton>
         </Box>
 
         {/* Content */}
@@ -252,18 +254,18 @@ function RichTextEditor({ id, label, helper, value, onChange, max, placeholder }
         slotProps={{ paper: { sx: { borderRadius: '12px', p: 2, width: 340, maxWidth: 'calc(100vw - 32px)' } } }}
       >
         <Box component="form" onSubmit={applyLink} noValidate>
-          <Typography sx={{ fontWeight: 700, fontSize: '0.9rem', mb: 1 }}>{s.link ? 'Edit link' : 'Insert link'}</Typography>
+          <Typography sx={{ fontWeight: 700, fontSize: '0.9rem', mb: 1 }}>{s.link ? t('adm.rte.editLink') : t('adm.rte.insertLink')}</Typography>
           <TextField
             autoFocus fullWidth size="small" placeholder="https://example.org" value={linkUrl}
             onChange={(e) => { setLinkUrl(e.target.value); setLinkError(''); }}
-            error={!!linkError} helperText={linkError || 'Web or email address. Opens in a new tab.'}
+            error={!!linkError} helperText={linkError || t('adm.rte.linkHint')}
             slotProps={{ htmlInput: { 'aria-label': 'Link address' } }}
             sx={{ '& .MuiOutlinedInput-root': { borderRadius: '10px' } }}
           />
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 1.5 }}>
-            {s.link && <Button onClick={removeLink} color="inherit" sx={{ textTransform: 'none', mr: 'auto' }}>Remove</Button>}
-            <Button onClick={closeLink} color="inherit" sx={{ textTransform: 'none' }}>Cancel</Button>
-            <Button type="submit" variant="contained" sx={{ textTransform: 'none', fontWeight: 700, bgcolor: RED, '&:hover': { bgcolor: '#A91529' } }}>Apply</Button>
+            {s.link && <Button onClick={removeLink} color="inherit" sx={{ textTransform: 'none', mr: 'auto' }}>{t('adm.rte.remove')}</Button>}
+            <Button onClick={closeLink} color="inherit" sx={{ textTransform: 'none' }}>{t('adm.rte.cancel')}</Button>
+            <Button type="submit" variant="contained" sx={{ textTransform: 'none', fontWeight: 700, bgcolor: RED, '&:hover': { bgcolor: '#A91529' } }}>{t('adm.rte.apply')}</Button>
           </Box>
         </Box>
       </Popover>

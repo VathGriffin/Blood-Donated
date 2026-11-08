@@ -2,16 +2,14 @@
 import { useContext, useState, useEffect } from "react";
 import Link from "next/link";
 import BrandLogo from "@/components/dashboard/BrandLogo";
-import { BRAND } from "@/lib/brand";
 import { useRouter, usePathname } from "next/navigation";
 import {
   AppBar, Toolbar, Typography, IconButton, Drawer, List, ListItem, ListItemIcon, ListItemText,
-  Box, useMediaQuery, useTheme, Tooltip, Divider, Button, Avatar, Menu, MenuItem,
+  Box, useTheme, Tooltip, Divider, Button, Avatar,
 } from "@mui/material";
 import {
   Menu as MenuIcon, Close as CloseIcon, Favorite, LocalHospital, Group, ContactMail,
-  Info, SmartToy, Brightness4, Brightness7, Logout, QrCode2, Person,
-  KeyboardArrowDown,
+  Info, SmartToy, Brightness4, Brightness7, Logout, KeyboardArrowDown,
 } from "@mui/icons-material";
 import DonorNotifications from "./DonorNotifications";
 import SiteSearch from "./SiteSearch";
@@ -19,45 +17,50 @@ import { ColorModeContext } from "@/lib/ThemeContext";
 import { useUserAuth } from "@/store/UserAuthContext";
 import { uploadUrl } from "@/lib/config";
 import { navy } from "@/lib/design-tokens";
+import { ROLE_CONFIG, ROLES } from "@/lib/navigation";
+import AccountMenu from "@/components/account/AccountMenu";
+import LanguageSwitcher from "./LanguageSwitcher";
+import { useT } from "@/i18n/I18nProvider";
 
+const ACCOUNT_MENU_ID = "account-menu";
+const ACCOUNT_BUTTON_ID = "account-menu-button";
+
+// `key` is the menu name's translation key in i18n/messages/nav.js.
 const sections = [
-  { label: "Home",      path: "/" },
-  { label: "About",     path: "/about" },
-  { label: "Donate",    path: "/donate" },
-  { label: "Find a Hospital", path: "/map" },
-  { label: "Donors",    path: "/donors" },
-  { label: "Assistant", path: "/assistant" },
-  { label: "Contact",   path: "/contact" },
+  { key: "home",         path: "/" },
+  { key: "about",        path: "/about" },
+  { key: "donate",       path: "/donate" },
+  { key: "findHospital", path: "/map" },
+  { key: "donors",       path: "/donors" },
+  { key: "assistant",    path: "/assistant" },
+  { key: "contact",      path: "/contact" },
 ];
 
 const mobileIcons = {
-  Home: <Favorite sx={{ color: "#C91D32", fontSize: 20 }} />,
-  About: <Info sx={{ color: "#C91D32", fontSize: 20 }} />,
-  Donate: <Favorite sx={{ color: "#C91D32", fontSize: 20 }} />,
-  "Find a Hospital": <LocalHospital sx={{ color: "#C91D32", fontSize: 20 }} />,
-  Donors: <Group sx={{ color: "#C91D32", fontSize: 20 }} />,
-  Assistant: <SmartToy sx={{ color: "#C91D32", fontSize: 20 }} />,
-  Contact: <ContactMail sx={{ color: "#C91D32", fontSize: 20 }} />,
+  home: <Favorite sx={{ color: "#C91D32", fontSize: 20 }} />,
+  about: <Info sx={{ color: "#C91D32", fontSize: 20 }} />,
+  donate: <Favorite sx={{ color: "#C91D32", fontSize: 20 }} />,
+  findHospital: <LocalHospital sx={{ color: "#C91D32", fontSize: 20 }} />,
+  donors: <Group sx={{ color: "#C91D32", fontSize: 20 }} />,
+  assistant: <SmartToy sx={{ color: "#C91D32", fontSize: 20 }} />,
+  contact: <ContactMail sx={{ color: "#C91D32", fontSize: 20 }} />,
 };
 
 const Header = () => {
   const theme = useTheme();
   const { toggleColorMode } = useContext(ColorModeContext);
   const { isAuth, user, logout } = useUserAuth();
-  const isMobileQuery = useMediaQuery(theme.breakpoints.down("md"), { noSsr: true });
-  const [mounted, setMounted] = useState(false);
-  const isMobile = mounted && isMobileQuery;
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const [scrolled, setScrolled] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const isDark = theme.palette.mode === "dark";
-
-  useEffect(() => { setMounted(true); }, []);
+  const t = useT();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
+    onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
@@ -75,18 +78,22 @@ const Header = () => {
     router.push("/");
   };
 
-  // White header in light mode (navy in dark mode), with a thin slate rule underneath.
-  const bgColor = isDark ? "rgba(11,18,32,0.96)" : "#FFFFFF";
+  // White header in light mode (navy in dark mode), with a thin slate rule underneath. The
+  // background is opaque, so there is no backdrop blur: it would be invisible but costs a GPU
+  // blur of everything under the header on every scroll frame.
+  const bgColor = isDark ? "#0B1220" : "#FFFFFF";
   const border = isDark ? "rgba(255,255,255,0.07)" : "#E2E8F0";
   const navText = isDark ? "#E2E8F0" : navy.dark;
+  const muted = isDark ? "rgba(245,245,245,0.6)" : "#64748B";
 
+  // One layout for every screen size: CSS shows the nav links from `md` up and the menu button
+  // below it. (Choosing the layout in JavaScript instead made phones paint the desktop header
+  // first and then jump to the mobile one once the page had loaded.)
   return (
     <>
       <AppBar position="fixed" elevation={0} sx={{
         top: 0,
         backgroundColor: bgColor,
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
         borderBottom: `1px solid ${border}`,
         height: { xs: 64, md: 68 },
         justifyContent: "center",
@@ -98,172 +105,123 @@ const Header = () => {
             : "0 1px 3px rgba(16,24,40,0.05), 0 6px 18px rgba(16,24,40,0.06)"
           : "none",
       }}>
-        <Toolbar sx={{ justifyContent: "space-between", height: "100%", px: { xs: 2, md: 3 } }}>
+        <Toolbar sx={{ justifyContent: "space-between", height: "100%", px: { xs: 2, md: 3 }, gap: 1 }}>
 
           {/* ── Brand ── */}
-          <BrandLogo href="/" caption={BRAND.tagline} onDark={false} />
+          <BrandLogo href="/" caption={t("common.brandTagline")} onDark={false} />
 
-          {/* ── Desktop Nav ── */}
-          {!isMobile ? (
-            <Box sx={{ display: "flex", alignItems: "center", flex: 1, ml: 4 }}>
-              <Box sx={{ flex: 1, display: "flex", justifyContent: "center", alignItems: "center", gap: 0.25 }}>
-              {sections.map(({ label, path }) => {
-                const active = isActive(path);
-                return (
-                  <Box key={label} component={Link} href={path} aria-current={active ? "page" : undefined} sx={{
-                    position: "relative", px: { md: 1.1, lg: 1.6 }, py: 1, borderRadius: "8px", textDecoration: "none",
-                    fontSize: "0.875rem", fontWeight: active ? 700 : 600,
-                    letterSpacing: "-0.005em", whiteSpace: "nowrap",
-                    // Active page: red text with a thin red underline; others turn red on hover.
-                    color: active ? "primary.main" : navText,
-                    transition: "color 0.18s ease",
-                    "&::after": {
-                      content: '""', position: "absolute", left: { md: 9, lg: 13 }, right: { md: 9, lg: 13 }, bottom: 3,
-                      height: 2, borderRadius: 2, bgcolor: "primary.main",
-                      transform: active ? "scaleX(1)" : "scaleX(0)", opacity: active ? 1 : 0.55,
-                      transition: "transform 0.2s ease",
-                    },
-                    "&:hover": { color: "primary.main", "&::after": { transform: "scaleX(1)" } },
-                    "&:focus-visible": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: 2 },
-                    "@media (prefers-reduced-motion: reduce)": { transition: "none", "&::after": { transition: "none" } },
-                  }}>
-                    {label}
-                  </Box>
-                );
-              })}
-              </Box>
-
-              {/* Right section */}
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1, ml: 1.5 }}>
-                <SiteSearch />
-                {isAuth ? (
-                  <>
-                    <DonorNotifications />
-                    <Box component="button" type="button" onClick={handleUserMenuOpen}
-                      aria-haspopup="menu" aria-expanded={Boolean(anchorEl)} aria-label={`Account menu for ${user?.fullName || "your account"}`}
-                      sx={{
-                        display: "flex", alignItems: "center", gap: 1, ml: 0.5, pl: 0.5, pr: 0.75, py: 0.5, border: 0, borderRadius: "999px",
-                        bgcolor: "transparent", color: "text.primary", font: "inherit", cursor: "pointer", textAlign: "left",
-                        "&:hover": { bgcolor: isDark ? "rgba(255,255,255,0.06)" : "#F1F5F9" },
-                        "&:focus-visible": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: 2 },
-                      }}>
-                      <Avatar
-                        src={uploadUrl(user?.photo)}
-                        sx={{ width: 34, height: 34, bgcolor: "#C91D32", fontSize: "0.82rem", fontWeight: 700 }}
-                      >
-                        {!user?.photo && user?.fullName?.charAt(0)?.toUpperCase()}
-                      </Avatar>
-                      <Box sx={{ display: { md: "none", lg: "block" }, maxWidth: 140 }}>
-                        <Typography noWrap sx={{ fontWeight: 700, fontSize: "0.85rem", lineHeight: 1.2, color: isDark ? "#F8FAFC" : "#172B4D" }}>{user?.fullName}</Typography>
-                        <Typography sx={{ color: isDark ? "rgba(245,245,245,0.6)" : "#64748B", fontSize: "0.72rem", lineHeight: 1.2 }}>Donor</Typography>
-                      </Box>
-                      <KeyboardArrowDown sx={{ fontSize: 20, color: isDark ? "rgba(245,245,245,0.6)" : "#64748B" }} />
-                    </Box>
-                    <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleUserMenuClose}
-                      slotProps={{ paper: { sx: {
-                        borderRadius: "14px", minWidth: 190, mt: 1.2,
-                        boxShadow: "0 12px 32px rgba(16,24,40,0.12)",
-                        border: `1px solid ${isDark ? "#334155" : "#E2E8F0"}`,
-                        bgcolor: isDark ? "#17263D" : "#ffffff",
-                      }}}}>
-                      <Box sx={{ px: 2.5, py: 1.5, borderBottom: `1px solid ${isDark ? "#334155" : "#E2E8F0"}` }}>
-                        <Typography fontWeight={700} fontSize="0.88rem">{user?.fullName}</Typography>
-                        <Typography variant="caption" color="text.secondary">{user?.email}</Typography>
-                      </Box>
-                      <MenuItem onClick={() => { router.push("/profile"); handleUserMenuClose(); }}
-                        sx={{ fontSize: "0.875rem", py: 1.2 }}>
-                        <Person fontSize="small" sx={{ mr: 1.5, color: "#C91D32" }} /> My Profile
-                      </MenuItem>
-                      <MenuItem onClick={() => { router.push("/qr-card"); handleUserMenuClose(); }}
-                        sx={{ fontSize: "0.875rem", py: 1.2 }}>
-                        <QrCode2 fontSize="small" sx={{ mr: 1.5, color: "#C91D32" }} /> My QR Card
-                      </MenuItem>
-                      <Divider sx={{ borderColor: isDark ? "#334155" : "#E2E8F0" }} />
-                      <MenuItem onClick={handleLogout} sx={{ color: "error.main", fontSize: "0.875rem", py: 1.2 }}>
-                        <Logout fontSize="small" sx={{ mr: 1.5 }} /> Log Out
-                      </MenuItem>
-                    </Menu>
-                  </>
-                ) : (
-                  <>
-                    <Button component={Link} href="/login" variant="outlined" color="primary"
-                      sx={{ px: 2.75, py: 0.8, fontSize: "0.875rem", borderColor: "primary.main", borderWidth: 1.5, "&:hover": { borderWidth: 1.5, bgcolor: "action.hover" } }}>
-                      Login
-                    </Button>
-                    <Button component={Link} href="/register" variant="contained" color="primary"
-                      sx={{ px: 2.75, py: 0.8, fontSize: "0.875rem" }}>
-                      Register
-                    </Button>
-                  </>
-                )}
-
-                <Tooltip title={isDark ? "Light mode" : "Dark mode"}>
-                  <IconButton onClick={toggleColorMode} size="small"
-                    sx={{
-                      color: isDark ? "#94A3B8" : "#64748B",
-                      borderRadius: "8px", width: 34, height: 34,
-                      "&:hover": { color: "primary.main", bgcolor: isDark ? "rgba(255,255,255,0.08)" : "#FFF1F2" },
-                    }}>
-                    {isDark ? <Brightness7 sx={{ fontSize: 18 }} /> : <Brightness4 sx={{ fontSize: 18 }} />}
-                  </IconButton>
-                </Tooltip>
-              </Box>
-            </Box>
-          ) : (
-            /* ── Mobile right section ── */
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-              <SiteSearch size={36} />
-              {isAuth && <DonorNotifications size={36} />}
-              {isAuth && (
-                <Tooltip title={user?.fullName}>
-                  <IconButton onClick={handleUserMenuOpen} sx={{ p: 0.4 }}>
-                    <Avatar
-                      src={uploadUrl(user?.photo)}
-                      sx={{ width: 30, height: 30, bgcolor: "#C91D32", fontSize: "0.78rem", fontWeight: 700 }}
-                    >
-                      {!user?.photo && user?.fullName?.charAt(0)?.toUpperCase()}
-                    </Avatar>
-                  </IconButton>
-                </Tooltip>
-              )}
-              <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleUserMenuClose}
-                slotProps={{ paper: { sx: { borderRadius: "14px", minWidth: 190, mt: 1.2,
-                  boxShadow: "0 12px 32px rgba(16,24,40,0.12)",
-                  bgcolor: isDark ? "#17263D" : "#ffffff",
-                }}}}>
-                <Box sx={{ px: 2.5, py: 1.5, borderBottom: `1px solid ${isDark ? "#334155" : "#E2E8F0"}` }}>
-                  <Typography fontWeight={700} fontSize="0.88rem">{user?.fullName}</Typography>
-                  <Typography variant="caption" color="text.secondary">{user?.email}</Typography>
+          {/* ── Nav links (from 1200px; narrower screens use the menu drawer, as there is no room for
+              the links, the sign-in buttons and the language picker together in every language) ── */}
+          <Box component="nav" aria-label={t("nav.navigation", { panel: "BloodLife AI" })}
+            sx={{ flex: 1, ml: 4, display: { xs: "none", lg: "flex" }, justifyContent: "center", alignItems: "center", gap: 0.25 }}>
+            {sections.map(({ key, path }) => {
+              const active = isActive(path);
+              return (
+                <Box key={key} component={Link} href={path} aria-current={active ? "page" : undefined} sx={{
+                  position: "relative", px: { md: 1.1, lg: 1.6 }, py: 1, borderRadius: "8px", textDecoration: "none",
+                  fontSize: "0.875rem", fontWeight: active ? 700 : 600,
+                  letterSpacing: "-0.005em", whiteSpace: "nowrap",
+                  // Active page: red text with a thin red underline; others turn red on hover.
+                  color: active ? "primary.main" : navText,
+                  transition: "color 0.18s ease",
+                  "&::after": {
+                    content: '""', position: "absolute", left: { md: 9, lg: 13 }, right: { md: 9, lg: 13 }, bottom: 3,
+                    height: 2, borderRadius: 2, bgcolor: "primary.main",
+                    transform: active ? "scaleX(1)" : "scaleX(0)", opacity: active ? 1 : 0.55,
+                    transition: "transform 0.2s ease",
+                  },
+                  "&:hover": { color: "primary.main", "&::after": { transform: "scaleX(1)" } },
+                  "&:focus-visible": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: 2 },
+                  "@media (prefers-reduced-motion: reduce)": { transition: "none", "&::after": { transition: "none" } },
+                }}>
+                  {t(`nav.${key}`)}
                 </Box>
-                <MenuItem onClick={() => { router.push("/profile"); handleUserMenuClose(); setDrawerOpen(false); }}
-                  sx={{ fontSize: "0.875rem", py: 1.2 }}>
-                  <Person fontSize="small" sx={{ mr: 1.5, color: "#C91D32" }} /> My Profile
-                </MenuItem>
-                <MenuItem onClick={() => { router.push("/qr-card"); handleUserMenuClose(); setDrawerOpen(false); }}
-                  sx={{ fontSize: "0.875rem", py: 1.2 }}>
-                  <QrCode2 fontSize="small" sx={{ mr: 1.5, color: "#C91D32" }} /> My QR Card
-                </MenuItem>
-                <Divider sx={{ borderColor: isDark ? "#334155" : "#E2E8F0" }} />
-                <MenuItem onClick={handleLogout} sx={{ color: "error.main", fontSize: "0.875rem", py: 1.2 }}>
-                  <Logout fontSize="small" sx={{ mr: 1.5 }} /> Log Out
-                </MenuItem>
-              </Menu>
-              <Tooltip title={isDark ? "Light mode" : "Dark mode"}>
-                <IconButton onClick={toggleColorMode} size="small"
-                  sx={{ color: isDark ? "#94A3B8" : "#64748B" }}>
-                  {isDark ? <Brightness7 sx={{ fontSize: 18 }} /> : <Brightness4 sx={{ fontSize: 18 }} />}
-                </IconButton>
-              </Tooltip>
-              <IconButton onClick={() => setDrawerOpen(true)} aria-label="Open menu"
-                sx={{ color: navText }}>
-                <MenuIcon />
+              );
+            })}
+          </Box>
+
+          {/* ── Right section ── */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0.5, md: 1 }, ml: { md: 1.5 } }}>
+            <SiteSearch size={36} />
+            {isAuth ? (
+              <>
+                <DonorNotifications size={38} />
+                <Box component="button" type="button" onClick={handleUserMenuOpen} id={ACCOUNT_BUTTON_ID}
+                  aria-haspopup="menu" aria-expanded={Boolean(anchorEl)} aria-controls={anchorEl ? ACCOUNT_MENU_ID : undefined}
+                  aria-label={t("layout.account.menuFor", { name: user?.fullName || "" })}
+                  sx={{
+                    display: "flex", alignItems: "center", gap: 1, ml: { md: 0.5 }, p: { xs: 0.4, md: 0.5 }, pr: { md: 0.75 }, border: 0, borderRadius: "999px",
+                    bgcolor: "transparent", color: "text.primary", font: "inherit", cursor: "pointer", textAlign: "left",
+                    "&:hover": { bgcolor: isDark ? "rgba(255,255,255,0.06)" : "#F1F5F9" },
+                    "&:focus-visible": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: 2 },
+                  }}>
+                  <Avatar
+                    src={uploadUrl(user?.photo)}
+                    sx={{ width: { xs: 30, md: 34 }, height: { xs: 30, md: 34 }, bgcolor: "#C91D32", fontSize: "0.82rem", fontWeight: 700 }}
+                  >
+                    {!user?.photo && user?.fullName?.charAt(0)?.toUpperCase()}
+                  </Avatar>
+                  <Box sx={{ display: { xs: "none", lg: "block" }, maxWidth: 140 }}>
+                    <Typography noWrap sx={{ fontWeight: 700, fontSize: "0.85rem", lineHeight: 1.2, color: isDark ? "#F8FAFC" : "#172B4D" }}>{user?.fullName}</Typography>
+                    <Typography sx={{ color: muted, fontSize: "0.72rem", lineHeight: 1.2 }}>{t("common.roles.donor")}</Typography>
+                  </Box>
+                  <KeyboardArrowDown aria-hidden="true" sx={{
+                    display: { xs: "none", md: "block" }, fontSize: 20, color: muted,
+                    transform: anchorEl ? "rotate(180deg)" : "none", transition: "transform .2s ease",
+                  }} />
+                </Box>
+              </>
+            ) : (
+              // Below 1200px these two are in the drawer.
+              // Kept on one line: Khmer and Vietnamese labels are longer than English.
+              <Box sx={{ display: { xs: "none", lg: "flex" }, gap: 1, flexShrink: 0 }}>
+                <Button component={Link} href="/login" variant="outlined" color="primary"
+                  sx={{ px: { lg: 1.75, xl: 2.75 }, py: 0.8, fontSize: "0.875rem", whiteSpace: "nowrap", flexShrink: 0, borderColor: "primary.main", borderWidth: 1.5, "&:hover": { borderWidth: 1.5, bgcolor: "action.hover" } }}>
+                  {t("common.login")}
+                </Button>
+                <Button component={Link} href="/register" variant="contained" color="primary"
+                  sx={{ px: { lg: 1.75, xl: 2.75 }, py: 0.8, fontSize: "0.875rem", whiteSpace: "nowrap", flexShrink: 0 }}>
+                  {t("common.register")}
+                </Button>
+              </Box>
+            )}
+
+            {/* Phones pick the language in the drawer; from 600px it fits in the bar (code shown from md). */}
+            <Box sx={{ display: { xs: "none", sm: "flex" } }}><LanguageSwitcher labelDisplay={{ xs: "none", md: "inline" }} /></Box>
+
+            <Tooltip title={t(isDark ? "common.lightMode" : "common.darkMode")}>
+              <IconButton onClick={toggleColorMode} size="small" aria-label={t("common.toggleColorMode")}
+                sx={{
+                  color: isDark ? "#94A3B8" : "#64748B",
+                  borderRadius: "8px", width: 34, height: 34,
+                  "&:hover": { color: "primary.main", bgcolor: isDark ? "rgba(255,255,255,0.08)" : "#FFF1F2" },
+                }}>
+                {isDark ? <Brightness7 sx={{ fontSize: 18 }} /> : <Brightness4 sx={{ fontSize: 18 }} />}
               </IconButton>
-            </Box>
-          )}
+            </Tooltip>
+
+            <IconButton onClick={() => setDrawerOpen(true)} aria-label={t("common.openMenu")}
+              sx={{ display: { xs: "inline-flex", lg: "none" }, color: navText }}>
+              <MenuIcon />
+            </IconButton>
+          </Box>
         </Toolbar>
       </AppBar>
 
-      {/* ── Mobile Drawer ── */}
+      {/* One account menu for both the desktop and the mobile header. */}
+      {isAuth && user && (
+        <AccountMenu
+          id={ACCOUNT_MENU_ID}
+          labelledBy={ACCOUNT_BUTTON_ID}
+          anchorEl={anchorEl}
+          onClose={handleUserMenuClose}
+          account={{ name: user.fullName, email: user.email, photo: user.photo, role: "donor" }}
+          items={ROLE_CONFIG[ROLES.DONOR].profileLinks}
+          onLogout={handleLogout}
+        />
+      )}
+
+      {/* ── Menu drawer (below 1200px) ── */}
       <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}
         slotProps={{ paper: { sx: {
           width: 288,
@@ -273,8 +231,8 @@ const Header = () => {
 
         {/* Drawer header */}
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 2.5, py: 2.5 }}>
-          <BrandLogo href="/" caption={BRAND.tagline} onDark={false} onClick={() => setDrawerOpen(false)} />
-          <IconButton onClick={() => setDrawerOpen(false)} size="small" aria-label="Close menu"
+          <BrandLogo href="/" caption={t("common.brandTagline")} onDark={false} onClick={() => setDrawerOpen(false)} />
+          <IconButton onClick={() => setDrawerOpen(false)} size="small" aria-label={t("common.closeMenu")}
             sx={{ color: isDark ? "#94A3B8" : "#64748B" }}>
             <CloseIcon fontSize="small" />
           </IconButton>
@@ -283,8 +241,9 @@ const Header = () => {
         <Divider sx={{ borderColor: isDark ? "#334155" : "#E2E8F0" }} />
 
         <List sx={{ pt: 1.5, px: 1.5 }}>
-          {sections.map(({ label, path }) => {
+          {sections.map(({ key, path }) => {
             const active = isActive(path);
+            const label = t(`nav.${key}`);
             return (
               <Link key={label} href={path} style={{ textDecoration: "none", color: "inherit" }}
                 onClick={() => setDrawerOpen(false)}>
@@ -294,7 +253,7 @@ const Header = () => {
                   transition: "all 0.15s ease",
                   "&:hover": { backgroundColor: active ? "rgba(201,29,50,0.08)" : isDark ? "rgba(255,255,255,0.04)" : "#FFF1F2" },
                 }}>
-                  <ListItemIcon sx={{ minWidth: 36 }}>{mobileIcons[label]}</ListItemIcon>
+                  <ListItemIcon sx={{ minWidth: 36 }}>{mobileIcons[key]}</ListItemIcon>
                   <ListItemText primary={label}
                     primaryTypographyProps={{
                       fontWeight: active ? 700 : 500,
@@ -309,6 +268,9 @@ const Header = () => {
             );
           })}
         </List>
+
+        {/* Language picker for phones (the bar shows it from 600px up). */}
+        <Box sx={{ px: 2.5, pt: 1, display: "flex" }}><LanguageSwitcher /></Box>
 
         <Divider sx={{ mx: 2, my: 1.5, borderColor: isDark ? "#334155" : "#E2E8F0" }} />
 
@@ -333,17 +295,17 @@ const Header = () => {
               <Button fullWidth variant="outlined" color="error" size="small" startIcon={<Logout fontSize="small" />}
                 onClick={() => { handleLogout(); setDrawerOpen(false); }}
                 sx={{ borderRadius: "10px", textTransform: "none", fontWeight: 600 }}>
-                Log Out
+                {t("common.logout")}
               </Button>
             </Box>
           ) : (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
               <Button fullWidth variant="contained" component={Link} href="/register" onClick={() => setDrawerOpen(false)}>
-                Register
+                {t("common.register")}
               </Button>
               <Button fullWidth variant="outlined" component={Link} href="/login" onClick={() => setDrawerOpen(false)}
                 sx={{ borderWidth: 1.5, "&:hover": { borderWidth: 1.5 } }}>
-                Login
+                {t("common.login")}
               </Button>
             </Box>
           )}

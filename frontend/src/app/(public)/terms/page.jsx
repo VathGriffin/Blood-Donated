@@ -3,6 +3,13 @@ import { Box, Container, Typography, useTheme, Paper, Divider, Chip } from "@mui
 import GavelIcon from "@mui/icons-material/Gavel";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import { useI18n } from "@/i18n/I18nProvider";
+import LEGAL from "@/i18n/messages/legal";
+
+// The sections and list items, in order (their text: legal.terms.sections.* in i18n/messages/legal.js).
+const SECTIONS = LEGAL.en.terms.sections;
+const keysOf = (obj) => Object.keys(obj || {});
+const EMAIL = "support@bloodlife.kh";
 
 function Section({ title, children, isDark, border, card }) {
   return (
@@ -29,11 +36,17 @@ function Bullet({ children, warn }) {
 }
 
 export default function Terms() {
+  const { t, rich } = useI18n();
   const theme  = useTheme();
   const isDark = theme.palette.mode === "dark";
   const bg     = isDark ? "#0B1220" : "#F6F8FC";
   const card   = isDark ? "#17263D" : "#ffffff";
   const border = isDark ? "#334155" : "#E2E8F0";
+  const email = (
+    <Box component="a" href={`mailto:${EMAIL}`} sx={{ color: "#C91D32", textDecoration: "none", fontWeight: 700 }}>
+      {EMAIL}
+    </Box>
+  );
 
   return (
     <Box sx={{ bgcolor: bg, minHeight: "100vh", pt: { xs: 10, md: 12 }, pb: 10 }}>
@@ -49,101 +62,42 @@ export default function Terms() {
           }}>
             <GavelIcon sx={{ color: "white", fontSize: 30 }} />
           </Box>
-          <Typography fontWeight={900} fontSize={{ xs: "2rem", md: "2.6rem" }}
+          <Typography component="h1" fontWeight={900} fontSize={{ xs: "2rem", md: "2.6rem" }}
             letterSpacing="-0.03em" sx={{ color: isDark ? "#F8FAFC" : "#172B4D", mb: 1.5 }}>
-            Terms of Service
+            {t("legal.terms.title")}
           </Typography>
           <Typography color="text.secondary" lineHeight={1.7} maxWidth={520} mx="auto">
-            By using BloodLife you agree to these terms. Please read them carefully.
+            {t("legal.terms.lead")}
           </Typography>
-          <Chip label="Effective: August 2026" size="small" sx={{ mt: 2,
+          <Chip label={t("legal.terms.effective")} size="small" sx={{ mt: 2,
             bgcolor: isDark ? "rgba(201,29,50,0.12)" : "#fff1f2", color: "#C91D32", fontWeight: 600 }} />
         </Box>
 
-        <Section title="1. Acceptance of Terms" isDark={isDark} border={border} card={card}>
-          <Typography variant="body2" color="text.secondary" lineHeight={1.8}>
-            By accessing or using the BloodLife platform (&quot;Service&quot;), you agree to be bound by these Terms of Service and our Privacy Policy.
-            If you do not agree to these terms, please do not use the Service. These terms apply to all visitors, donors, and registered users.
-          </Typography>
-        </Section>
-
-        <Section title="2. Eligibility" isDark={isDark} border={border} card={card}>
-          <Typography variant="body2" color="text.secondary" mb={2} lineHeight={1.8}>
-            To register as a donor on BloodLife, you must meet the following criteria:
-          </Typography>
-          <Bullet>Be between 18 and 60 years of age</Bullet>
-          <Bullet>Weigh at least 45 kg</Bullet>
-          <Bullet>Not have donated blood within the past 3 months</Bullet>
-          <Bullet>Be free of active infections, certain chronic conditions, or communicable diseases</Bullet>
-          <Bullet>Provide accurate and truthful information during registration</Bullet>
-          <Typography variant="body2" color="text.secondary" mt={2} lineHeight={1.8}>
-            BloodLife reserves the right to remove any donor profile that does not meet these eligibility requirements.
-          </Typography>
-        </Section>
-
-        <Section title="3. User Responsibilities" isDark={isDark} border={border} card={card}>
-          <Bullet>Provide accurate, current, and complete information at registration and keep it updated</Bullet>
-          <Bullet>Keep your account credentials confidential and not share your password</Bullet>
-          <Bullet>Use the platform only for lawful, legitimate blood donation and request purposes</Bullet>
-          <Bullet>Not submit false blood requests or donor registrations</Bullet>
-          <Bullet>Not attempt to scrape, reverse-engineer, or abuse the platform&apos;s APIs</Bullet>
-          <Bullet warn>Misuse of the blood request system for non-medical purposes may result in permanent account suspension and legal action</Bullet>
-        </Section>
-
-        <Section title="4. Medical Disclaimer" isDark={isDark} border={border} card={card}>
-          <Box sx={{
-            p: 2, borderRadius: "10px", mb: 2,
-            bgcolor: isDark ? "rgba(217,119,6,0.1)" : "#fffbeb",
-            border: `1px solid ${isDark ? "rgba(217,119,6,0.25)" : "#fde68a"}`,
-          }}>
-            <Typography variant="body2" fontWeight={700} sx={{ color: "#B45309" }}>
-              BloodLife is not a medical provider.
-            </Typography>
-          </Box>
-          <Typography variant="body2" color="text.secondary" lineHeight={1.8}>
-            The platform facilitates connections between blood donors and patients but does not provide medical advice, diagnosis, or treatment.
-            All blood collection and transfusion procedures must be performed by qualified medical professionals at licensed facilities.
-            BloodLife is not liable for any medical outcomes resulting from blood donations or transfusions arranged through the platform.
-          </Typography>
-        </Section>
-
-        <Section title="5. Intellectual Property" isDark={isDark} border={border} card={card}>
-          <Typography variant="body2" color="text.secondary" lineHeight={1.8}>
-            All content, design, code, and trademarks on the BloodLife platform are the intellectual property of the development team
-            at Hanoi University of Science and Technology (HUST). You may not copy, modify, distribute, or use any part of the platform
-            without prior written permission, except as expressly permitted by these terms.
-          </Typography>
-        </Section>
-
-        <Section title="6. Limitation of Liability" isDark={isDark} border={border} card={card}>
-          <Bullet warn>BloodLife provides the platform &quot;as is&quot; without warranty of any kind</Bullet>
-          <Bullet warn>We are not liable for any direct, indirect, or consequential damages arising from use of the Service</Bullet>
-          <Bullet warn>We do not guarantee continuous, uninterrupted availability of the platform</Bullet>
-          <Bullet warn>We are not responsible for the accuracy of donor or patient information submitted by users</Bullet>
-        </Section>
-
-        <Section title="7. Termination" isDark={isDark} border={border} card={card}>
-          <Typography variant="body2" color="text.secondary" lineHeight={1.8}>
-            We reserve the right to suspend or terminate your account at any time if you violate these terms.
-            You may delete your account at any time through your profile settings or by contacting us.
-            Upon termination, your personal data will be deleted in accordance with our Privacy Policy.
-          </Typography>
-        </Section>
-
-        <Section title="8. Changes to Terms" isDark={isDark} border={border} card={card}>
-          <Typography variant="body2" color="text.secondary" lineHeight={1.8}>
-            We may update these Terms of Service from time to time. We will notify registered users of material changes via email.
-            Continued use of the platform after changes are posted constitutes acceptance of the updated terms.
-            The &quot;Last updated&quot; date at the top of this page will reflect any revisions.
-          </Typography>
-        </Section>
-
-        <Section title="9. Governing Law" isDark={isDark} border={border} card={card}>
-          <Typography variant="body2" color="text.secondary" lineHeight={1.8}>
-            These terms are governed by the laws of the Kingdom of Cambodia. Any disputes arising from the use of BloodLife
-            shall be resolved in the competent courts of Phnom Penh, Cambodia.
-          </Typography>
-        </Section>
+        {Object.entries(SECTIONS).map(([id, sec]) => {
+          const k = `legal.terms.sections.${id}`;
+          const hasList = !!(sec.items || sec.warnings);
+          return (
+            <Section key={id} title={t(`${k}.title`)} isDark={isDark} border={border} card={card}>
+              {sec.notice && (
+                <Box sx={{
+                  p: 2, borderRadius: "10px", mb: 2,
+                  bgcolor: isDark ? "rgba(217,119,6,0.1)" : "#fffbeb",
+                  border: `1px solid ${isDark ? "rgba(217,119,6,0.25)" : "#fde68a"}`,
+                }}>
+                  <Typography variant="body2" fontWeight={700} sx={{ color: "#B45309" }}>{t(`${k}.notice`)}</Typography>
+                </Box>
+              )}
+              {sec.text && (
+                <Typography variant="body2" color="text.secondary" mb={hasList ? 2 : 0} lineHeight={1.8}>{t(`${k}.text`)}</Typography>
+              )}
+              {keysOf(sec.items).map((i) => <Bullet key={i}>{t(`${k}.items.${i}`)}</Bullet>)}
+              {keysOf(sec.warnings).map((i) => <Bullet key={`w${i}`} warn>{t(`${k}.warnings.${i}`)}</Bullet>)}
+              {sec.after && (
+                <Typography variant="body2" color="text.secondary" mt={2} lineHeight={1.8}>{t(`${k}.after`)}</Typography>
+              )}
+            </Section>
+          );
+        })}
 
         <Paper elevation={0} sx={{
           p: 3, borderRadius: "16px", textAlign: "center",
@@ -151,11 +105,7 @@ export default function Terms() {
           bgcolor: isDark ? "rgba(201,29,50,0.06)" : "#FFF1F2",
         }}>
           <Typography variant="body2" color="text.secondary" lineHeight={1.8}>
-            Questions about these terms? Contact us at{" "}
-            <Box component="a" href="mailto:support@bloodlife.kh"
-              sx={{ color: "#C91D32", textDecoration: "none", fontWeight: 700 }}>
-              support@bloodlife.kh
-            </Box>
+            {rich("legal.terms.questions", { email })}
           </Typography>
         </Paper>
 

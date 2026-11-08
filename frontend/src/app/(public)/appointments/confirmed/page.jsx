@@ -5,15 +5,14 @@ import { Box, Container, Typography, Button, Paper, useTheme } from "@mui/materi
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import HomeIcon from "@mui/icons-material/Home";
+import { useT } from "@/i18n/I18nProvider";
 
-const steps = [
-  "You will receive a confirmation email with your appointment details.",
-  "Arrive 10 minutes early and bring a valid ID on the day.",
-  "Drink plenty of water and have a light meal before donating.",
-];
+// booking.confirmed.steps.<key> in i18n/messages/booking.js
+const steps = ["email", "arrive", "prepare"];
 
 const AppointmentConfirmed = () => {
   const theme = useTheme();
+  const t = useT();
   const isDark = theme.palette.mode === "dark";
   const [visible, setVisible] = useState(false);
 
@@ -76,26 +75,26 @@ const AppointmentConfirmed = () => {
               <CheckCircleIcon sx={{ fontSize: 56, color: "white" }} />
             </Box>
             <Typography variant="h4" fontWeight={800} color="white" gutterBottom>
-              Appointment Booked!
+              {t("booking.confirmed.title")}
             </Typography>
             <Typography
               variant="body1"
               sx={{ color: "rgba(255,255,255,0.85)", maxWidth: 360, mx: "auto", lineHeight: 1.6 }}
             >
-              Thank you for scheduling your blood donation. You&apos;re helping save lives!
+              {t("booking.confirmed.lead")}
             </Typography>
           </Box>
 
           {/* Body */}
           <Box sx={{ p: { xs: 3, sm: 5 } }}>
             <Typography variant="subtitle1" fontWeight={700} color="primary.main" sx={{ mb: 2 }}>
-              What to expect next
+              {t("booking.confirmed.nextTitle")}
             </Typography>
 
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mb: 4 }}>
               {steps.map((step, i) => (
                 <Box
-                  key={i}
+                  key={step}
                   sx={{
                     display: "flex",
                     alignItems: "flex-start",
@@ -123,7 +122,7 @@ const AppointmentConfirmed = () => {
                     {i + 1}
                   </Box>
                   <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.7, pt: 0.4 }}>
-                    {step}
+                    {t(`booking.confirmed.steps.${step}`)}
                   </Typography>
                 </Box>
               ))}
@@ -146,7 +145,7 @@ const AppointmentConfirmed = () => {
                   "&:hover": { boxShadow: "0 6px 20px rgba(201,29,50,0.5)" },
                 }}
               >
-                Book Another
+                {t("booking.confirmed.another")}
               </Button>
               <Button
                 variant="outlined"
@@ -157,7 +156,7 @@ const AppointmentConfirmed = () => {
                 startIcon={<HomeIcon />}
                 sx={{ flex: 1, fontWeight: 700, borderRadius: 3, py: 1.3 }}
               >
-                Go Home
+                {t("booking.confirmed.home")}
               </Button>
             </Box>
           </Box>

@@ -9,7 +9,7 @@ const { computeEligibility } = require('../common/eligibility');
 const { createImageUpload } = require('../common/upload');
 const { sendError } = require('../common/middleware/error-handler');
 const { verifySessionToken } = require('../common/session');
-const { liveUpload } = require('../common/live-upload');
+const { liveUpload, liveUploadChecker } = require('../common/live-upload');
 
 const PUBLIC_FIELDS = 'fullName bloodType location available photo donationCount lastDonation createdAt';
 const isStaff = (req) => ['admin', 'hospital_staff'].includes(req.auth?.role);
@@ -58,7 +58,9 @@ router.get('/', optionalAuth, async (req, res) => {
   try {
     const query = Donor.find().sort({ createdAt: -1 });
     if (!isStaff(req)) query.select(PUBLIC_FIELDS);
-    res.json((await query.lean()).map((d) => ({ ...d, photo: liveUpload(d.photo) })));
+    const donors = await query.lean();
+    const livePhoto = await liveUploadChecker(donors.map((d) => d.photo));
+    res.json(donors.map((d) => ({ ...d, photo: livePhoto(d.photo) })));
   } catch (err) {
     sendError(res, err, req);
   }

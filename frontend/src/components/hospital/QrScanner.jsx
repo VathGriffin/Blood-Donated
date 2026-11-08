@@ -1,4 +1,5 @@
 'use client';
+import { useT } from '@/i18n/I18nProvider';
 import { useEffect, useRef, useState } from 'react';
 import { Box, Typography, Alert, CircularProgress } from '@mui/material';
 import { CameraAlt } from '@mui/icons-material';
@@ -6,6 +7,7 @@ import { CameraAlt } from '@mui/icons-material';
 const SCANNER_ELEMENT_ID = 'donor-qr-scanner';
 
 export default function QrScanner({ onDecode }) {
+  const t = useT();
   const scannerRef = useRef(null);
   const [error, setError] = useState('');
   const [starting, setStarting] = useState(true);
@@ -27,7 +29,7 @@ export default function QrScanner({ onDecode }) {
         () => { /* per-frame decode failures are expected while aiming — ignore */ }
       ).then(() => setStarting(false)).catch((err) => {
         setStarting(false);
-        setError('Could not access the camera. Check browser permissions and try again.');
+        setError('camera');
         console.error('QR scanner start failed:', err);
       });
     });
@@ -43,7 +45,7 @@ export default function QrScanner({ onDecode }) {
   return (
     <Box>
       {error ? (
-        <Alert severity="error" sx={{ borderRadius: 2, mb: 2 }}>{error}</Alert>
+        <Alert severity="error" sx={{ borderRadius: 2, mb: 2 }}>{t('shared.scanner.camera')}</Alert>
       ) : (
         <Box sx={{ position: 'relative', borderRadius: 3, overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
           {starting && (
@@ -52,7 +54,7 @@ export default function QrScanner({ onDecode }) {
               justifyContent: 'center', gap: 1, bgcolor: 'background.paper', zIndex: 1,
             }}>
               <CircularProgress size={28} color="info" />
-              <Typography fontSize="0.8rem" color="text.secondary">Starting camera…</Typography>
+              <Typography fontSize="0.8rem" color="text.secondary">{t('shared.scanner.starting')}</Typography>
             </Box>
           )}
           <div id={SCANNER_ELEMENT_ID} style={{ width: '100%' }} />
@@ -60,7 +62,7 @@ export default function QrScanner({ onDecode }) {
       )}
       <Box display="flex" alignItems="center" gap={0.8} mt={1.5} color="text.secondary">
         <CameraAlt sx={{ fontSize: 16 }} />
-        <Typography fontSize="0.78rem">Point the camera at a donor&apos;s QR card.</Typography>
+        <Typography fontSize="0.78rem">{t('shared.scanner.point')}</Typography>
       </Box>
     </Box>
   );

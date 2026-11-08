@@ -1,4 +1,5 @@
 'use client';
+import { useI18n } from '@/i18n/I18nProvider';
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import L from 'leaflet';
 import { Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
@@ -142,6 +143,7 @@ export function MapCenterReporter({ onChange }) {
 // Locate-me and zoom buttons, stacked at the top-right like a native maps app.
 export function MapControls({ onLocate, locating, located }) {
   const map = useMap();
+  const { t } = useI18n();
   const shield = useCallback((el) => {
     if (!el) return;
     L.DomEvent.disableClickPropagation(el);
@@ -153,17 +155,17 @@ export function MapControls({ onLocate, locating, located }) {
   };
   return (
     <Box ref={shield} sx={{ position: 'absolute', top: 12, right: 12, zIndex: 1000, display: 'flex', flexDirection: 'column', gap: 1 }}>
-      <Tooltip title="Use my location" placement="left">
+      <Tooltip title={t('map.controls.locate')} placement="left">
         <span>
-          <IconButton onClick={onLocate} disabled={locating} aria-label="Use my location" sx={{ ...button, color: located ? '#2563EB' : '#A91529' }}>
+          <IconButton onClick={onLocate} disabled={locating} aria-label={t('map.controls.locate')} sx={{ ...button, color: located ? '#2563EB' : '#A91529' }}>
             {locating ? <CircularProgress color="primary" size={20} /> : <MyLocation fontSize="small" />}
           </IconButton>
         </span>
       </Tooltip>
       <Box sx={{ display: 'flex', flexDirection: 'column', borderRadius: '12px', overflow: 'hidden', bgcolor: 'background.paper', boxShadow: '0 2px 10px rgba(0,0,0,0.22)' }}>
-        <IconButton aria-label="Zoom in" onClick={() => map.zoomIn()} sx={{ ...button, boxShadow: 'none', borderRadius: 0 }}><Add fontSize="small" /></IconButton>
+        <IconButton aria-label={t('map.controls.zoomIn')} onClick={() => map.zoomIn()} sx={{ ...button, boxShadow: 'none', borderRadius: 0 }}><Add fontSize="small" /></IconButton>
         <Box sx={{ height: '1px', bgcolor: 'divider' }} />
-        <IconButton aria-label="Zoom out" onClick={() => map.zoomOut()} sx={{ ...button, boxShadow: 'none', borderRadius: 0 }}><Remove fontSize="small" /></IconButton>
+        <IconButton aria-label={t('map.controls.zoomOut')} onClick={() => map.zoomOut()} sx={{ ...button, boxShadow: 'none', borderRadius: 0 }}><Remove fontSize="small" /></IconButton>
       </Box>
     </Box>
   );
@@ -174,6 +176,7 @@ export function MapControls({ onLocate, locating, located }) {
 // MUI trees here would be built for every marker even though only one is ever open.
 // (Popups are always white, so colours are fixed rather than theme-driven.)
 function PopupBody({ item, isHosp }) {
+  const { t } = useI18n();
   const muted = { fontSize: 12, color: '#666', margin: '2px 0 0' };
   const meta = TYPE_META[item.type];
   return (
@@ -181,7 +184,7 @@ function PopupBody({ item, isHosp }) {
       <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 2 }}>{isHosp ? item.name : item.fullName}</div>
       {isHosp ? (
         <>
-          <span style={{ display: 'inline-block', marginTop: 2, padding: '1px 8px', borderRadius: 9, fontSize: 11, fontWeight: 600, background: meta?.tint, color: meta?.color }}>{item.type}</span>
+          <span style={{ display: 'inline-block', marginTop: 2, padding: '1px 8px', borderRadius: 9, fontSize: 11, fontWeight: 600, background: meta?.tint, color: meta?.color }}>{t(`map.types.${item.type}`)}</span>
           {item.address && <p style={muted}>{item.address}</p>}
         </>
       ) : (
@@ -190,13 +193,13 @@ function PopupBody({ item, isHosp }) {
           <p style={muted}>{item.location}</p>
         </>
       )}
-      <p style={muted}>{formatKm(item.dist)} km away</p>
+      <p style={muted}>{t('map.distanceAway', { km: formatKm(item.dist) })}</p>
       {item.phone && (telHref(item.phone)
         ? <p style={{ ...muted, color: '#333' }}>📞 <a href={telHref(item.phone)} style={{ color: '#333' }}>{firstPhone(item.phone)}</a></p>
         : <p style={{ ...muted, color: '#333' }}>📞 {item.phone}</p>)}
       <a href={directionsUrl(...(item.base || item.pos))} target="_blank" rel="noopener noreferrer"
         style={{ display: 'inline-block', marginTop: 8, fontSize: 12, fontWeight: 700, color: '#A91529', textDecoration: 'none' }}>
-        ➜ Get Directions
+        ➜ {t('map.directions')}
       </a>
     </div>
   );

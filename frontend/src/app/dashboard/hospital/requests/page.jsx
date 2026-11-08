@@ -1,4 +1,8 @@
 'use client';
+import { componentLabel } from '@/app/(donor)/requests/_components/formModel';
+import { statusLabel } from '@/components/ui/StatusBadge';
+import { apiErrorMessage } from '@/lib/api-error';
+import { useT } from '@/i18n/I18nProvider';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert, Box, Button, CircularProgress, Stack, Tab, Table, TableBody, TableCell, TableHead,
@@ -13,39 +17,34 @@ import API_BASE from '@/lib/config';
 import { PageHeader, SectionCard, StatusBadge, TableCard, EmptyState } from '@/components/ui';
 import { formatDate, formatDateTime, shortRequestId } from '@/lib/format';
 
-const TABS = [
-  { key: 'All', label: 'All Requests' },
-  { key: 'Pending', label: 'Pending' },
-  { key: 'Approved', label: 'Approved' },
-  { key: 'Fulfilled', label: 'Fulfilled' },
-  { key: 'Rejected', label: 'Rejected' },
-  { key: 'Cancelled', label: 'Cancelled' },
-];
+// Labels: hosp.reqs.tabs.<key>
+const TABS = ['All', 'Pending', 'Approved', 'Fulfilled', 'Rejected', 'Cancelled'].map((key) => ({ key }));
 
 
 // Steps a request moves through. Only two timestamps exist in the data (submitted =
 // createdAt, fulfilled = fulfilledAt), so the others show a state, not an invented time.
-function timelineFor(r) {
+function timelineFor(t, r) {
+  const s = (key, vars) => t(`hosp.reqs.timeline.${key}`, vars);
   if (r.status === 'Cancelled') {
     return [
-      { label: 'Submitted', state: 'done', note: formatDateTime(r.createdAt) },
-      { label: 'Cancelled', state: 'error', note: r.cancelledAt ? `By the requester · ${formatDateTime(r.cancelledAt)}` : 'By the requester' },
+      { label: s('submitted'), state: 'done', note: formatDateTime(r.createdAt) },
+      { label: s('cancelled'), state: 'error', note: r.cancelledAt ? s('byRequesterAt', { date: formatDateTime(r.cancelledAt) }) : s('byRequester') },
     ];
   }
   if (r.status === 'Rejected') {
     return [
-      { label: 'Submitted', state: 'done', note: formatDateTime(r.createdAt) },
-      { label: 'Rejected', state: 'error', note: 'Request declined' },
+      { label: s('submitted'), state: 'done', note: formatDateTime(r.createdAt) },
+      { label: s('rejected'), state: 'error', note: s('declined') },
     ];
   }
   const rank = { Pending: 1, Approved: 2, Fulfilled: 3 }[r.status] ?? 1;
   return [
-    { label: 'Submitted', state: 'done', note: formatDateTime(r.createdAt) },
-    { label: 'Approved', state: rank >= 2 ? 'done' : 'current', note: rank >= 2 ? 'Approved' : 'Awaiting review' },
+    { label: s('submitted'), state: 'done', note: formatDateTime(r.createdAt) },
+    { label: s('approved'), state: rank >= 2 ? 'done' : 'current', note: rank >= 2 ? s('approved') : s('awaitingReview') },
     {
-      label: 'Fulfilled',
+      label: s('fulfilled'),
       state: rank >= 3 ? 'done' : rank === 2 ? 'current' : 'todo',
-      note: rank >= 3 ? (r.fulfilledAt ? formatDateTime(r.fulfilledAt) : 'Completed') : rank === 2 ? 'Ready to fulfil' : 'Not yet',
+      note: rank >= 3 ? (r.fulfilledAt ? formatDateTime(r.fulfilledAt) : s('completed')) : rank === 2 ? s('ready') : s('notYet'),
     },
   ];
 }
@@ -59,7 +58,8 @@ function StepDot({ state }) {
 }
 
 function RequestTimeline({ request }) {
-  const steps = timelineFor(request);
+  const t = useT();
+  const steps = timelineFor(t, request);
   return (
     <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 2, sm: 0 } }}>
       {steps.map((s, i) => (
@@ -85,8 +85,12 @@ function RequestTimeline({ request }) {
   );
 }
 
+// Marks a failed list load; the alert shows it in the current language.
+const LOAD_FAILED = 'load-failed';
+
 export default function HospitalRequests() {
   const { staff, token } = useAuth();
+  const t = useT();
   const [requests, setRequests] = useState(null);
   const [error, setError] = useState('');
   const [busyId, setBusyId] = useState(null);
@@ -97,7 +101,7 @@ export default function HospitalRequests() {
     if (!staff?.hospitalId) return;
     axios.get(`${API_BASE}/api/requests?hospital=${staff.hospitalId}`, { headers: { Authorization: `Bearer ${token}` } })
       .then((res) => setRequests([...res.data].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))))
-      .catch(() => setError('Failed to load requests.'));
+      .catch(() => setError(LOAD_FAILED));
   }, [staff, token]);
 
   useEffect(() => { load(); }, [load]);
@@ -114,7 +118,7 @@ export default function HospitalRequests() {
       }
       load();
     } catch (err) {
-      setError(err.response?.data?.error || `Failed to ${action.toLowerCase()} request.`);
+      setError(apiErrorMessage(err, t(`hosp.reqs.actionFailed.${action}`)));
     } finally {
       setBusyId(null);
     }
@@ -131,8 +135,8 @@ export default function HospitalRequests() {
 
   return (
     <Box>
-      <PageHeader title="Blood Request Management" subtitle="Review, approve and fulfil blood requests for your hospital" />
-      {error && <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError('')}>{error}</Alert>}
+      <PageHeader title={t('hosp.reqs.bloodRequestManagement')} subtitle={t('hosp.reqs.reviewApproveAndFulfil')} />
+      {error && <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError('')}>{error === LOAD_FAILED ? t('hosp.reqs.loadFailed') : error}</Alert>}
 
       {!requests && !error ? <CircularProgress size={28} /> : requests && (
         <>
@@ -140,15 +144,15 @@ export default function HospitalRequests() {
             minWidth={760}
             toolbar={
               <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto" sx={{ minHeight: 40, mx: -1 }}>
-                {TABS.map((t) => <Tab key={t.key} value={t.key} label={`${t.label} (${counts[t.key] || 0})`} sx={{ minHeight: 40 }} />)}
+                {TABS.map((d) => <Tab key={d.key} value={d.key} label={`${t(`hosp.reqs.tabs.${d.key}`)} (${counts[d.key] || 0})`} sx={{ minHeight: 40 }} />)}
               </Tabs>
             }
           >
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  {['ID', 'Patient', 'Blood Type', 'Units', 'Urgency', 'Needed By', 'Status', 'Requested Date'].map((h) => <TableCell key={h}>{h}</TableCell>)}
-                  <TableCell align="right">Actions</TableCell>
+                  {['id', 'patient', 'bloodType', 'units', 'urgency', 'neededBy', 'status', 'requested'].map((h) => <TableCell key={h}>{t(`hosp.reqs.cols.${h}`)}</TableCell>)}
+                  <TableCell align="right">{t('hosp.reqs.actions')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -157,8 +161,8 @@ export default function HospitalRequests() {
                     <TableCell colSpan={9}>
                       <EmptyState
                         icon={<DescriptionIcon />}
-                        title={tab === 'All' ? 'No requests yet' : `No ${tab.toLowerCase()} requests`}
-                        description={tab === 'All' ? 'Requests assigned to your hospital will appear here.' : undefined}
+                        title={tab === 'All' ? t('hosp.reqs.noneYet') : t('hosp.reqs.noneStatus', { status: statusLabel(t, tab) })}
+                        description={tab === 'All' ? t('hosp.reqs.noneText') : undefined}
                       />
                     </TableCell>
                   </TableRow>
@@ -177,13 +181,13 @@ export default function HospitalRequests() {
                       <Stack direction="row" spacing={1} justifyContent="flex-end">
                         {r.status === 'Pending' && (
                           <>
-                            <Button size="small" variant="outlined" color="success" disabled={busyId === r._id} onClick={() => act(r._id, 'Approved')}>Approve</Button>
-                            <Button size="small" variant="outlined" color="error" disabled={busyId === r._id} onClick={() => act(r._id, 'Rejected')}>Reject</Button>
+                            <Button size="small" variant="outlined" color="success" disabled={busyId === r._id} onClick={() => act(r._id, 'Approved')}>{t('hosp.reqs.approve')}</Button>
+                            <Button size="small" variant="outlined" color="error" disabled={busyId === r._id} onClick={() => act(r._id, 'Rejected')}>{t('hosp.reqs.reject')}</Button>
                           </>
                         )}
                         {r.status === 'Approved' && (
                           <Button size="small" variant="contained" disabled={busyId === r._id} onClick={() => act(r._id, 'Fulfilled')}>
-                            {busyId === r._id ? <CircularProgress size={16} color="inherit" /> : 'Fulfill'}
+                            {busyId === r._id ? <CircularProgress size={16} color="inherit" /> : t('hosp.reqs.fulfill')}
                           </Button>
                         )}
                       </Stack>
@@ -197,12 +201,12 @@ export default function HospitalRequests() {
           {selected && (
             <SectionCard
               sx={{ mt: { xs: 2, md: 3 } }}
-              title={`Request Status Timeline (${shortRequestId(selected._id)})`}
+              title={t('hosp.reqs.timelineTitle', { id: shortRequestId(selected._id) })}
               subtitle={[
-                selected.patientAge != null ? `${selected.patientName} (age ${selected.patientAge})` : selected.patientName,
-                `${selected.unitsNeeded} unit${selected.unitsNeeded === 1 ? '' : 's'} of ${selected.bloodType}${selected.component ? ` ${selected.component.toLowerCase()}` : ''}`,
-                selected.requiredBy && `needed by ${formatDateTime(selected.requiredBy)}`,
-                selected.contact && `contact ${selected.contact}`,
+                selected.patientAge != null ? t('hosp.reqs.patientAge', { name: selected.patientName, age: selected.patientAge }) : selected.patientName,
+                `${t('hosp.reqs.unitsOf', { units: t('hosp.reqs.units', { count: selected.unitsNeeded }), type: selected.bloodType })}${selected.component ? ` · ${componentLabel(selected.component)}` : ''}`,
+                selected.requiredBy && t('hosp.reqs.neededBy', { date: formatDateTime(selected.requiredBy) }),
+                selected.contact && t('hosp.reqs.contact', { contact: selected.contact }),
               ].filter(Boolean).join(' · ')}
             >
               <RequestTimeline request={selected} />

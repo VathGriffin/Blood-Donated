@@ -9,6 +9,7 @@ import MenuBookIcon from '@mui/icons-material/MenuBook';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import MonitorHeartIcon from '@mui/icons-material/MonitorHeart';
 import DropHeart from '@/components/auth/DropHeart';
+import { useI18n, useT } from '@/i18n/I18nProvider';
 
 const fadeUp = keyframes`from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: translateY(0); }`;
 
@@ -74,16 +75,20 @@ function BookArt() {
   );
 }
 
+// `key`: the card's text under home.help in i18n/messages/home.js.
 const SERVICES = [
-  { title: 'Donate Blood', desc: 'Schedule an appointment at a nearby center and donate in under an hour.', href: '/donate', icon: <WaterDropIcon />, Art: BloodBagArt },
-  { title: 'Request Blood', desc: 'Submit an urgent request for a patient who needs blood now.', href: '/requests', icon: <MedicalServicesIcon />, Art: ClipboardArt, featured: true },
-  { title: 'Volunteer', desc: 'Join our network of volunteers and help run donation drives.', href: '/about#team-section', icon: <GroupsIcon />, Art: PeopleArt },
-  { title: 'Learn More', desc: 'Explore eligibility, blood types, and the impact of your donation.', href: '/about', icon: <MenuBookIcon />, Art: BookArt },
+  { key: 'donate', href: '/donate', icon: <WaterDropIcon />, Art: BloodBagArt },
+  { key: 'request', href: '/requests', icon: <MedicalServicesIcon />, Art: ClipboardArt, featured: true },
+  { key: 'volunteer', href: '/about#team-section', icon: <GroupsIcon />, Art: PeopleArt },
+  { key: 'learn', href: '/about', icon: <MenuBookIcon />, Art: BookArt },
 ];
 
 function ServiceCard({ service, index }) {
   const isDark = useTheme().palette.mode === 'dark';
-  const { title, desc, href, icon, Art, featured } = service;
+  const t = useT();
+  const { key, href, icon, Art, featured } = service;
+  const title = t(`home.help.${key}.title`);
+  const desc = t(`home.help.${key}.desc`);
   return (
     <Box
       component={Link}
@@ -121,7 +126,7 @@ function ServiceCard({ service, index }) {
         <Typography sx={{ fontSize: '0.92rem', lineHeight: 1.65, maxWidth: 240, color: featured ? 'rgba(255,255,255,0.88)' : 'text.secondary', mb: 2.25 }}>{desc}</Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, fontWeight: 700, fontSize: '0.92rem', color: featured ? '#fff' : '#C91D32' }}>
-            Get started <ArrowForwardIcon className="cta-arrow" sx={{ fontSize: 17, transition: 'transform .22s ease' }} />
+            {t('home.help.getStarted')} <ArrowForwardIcon className="cta-arrow" sx={{ fontSize: 17, transition: 'transform .22s ease' }} />
           </Box>
           {featured && (
             <Box aria-hidden="true" sx={{ width: 44, height: 44, borderRadius: '50%', border: '1.5px solid rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -136,6 +141,7 @@ function ServiceCard({ service, index }) {
 
 export default function HelpSection() {
   const isDark = useTheme().palette.mode === 'dark';
+  const { t, rich } = useI18n();
   return (
     <Box component="section" aria-labelledby="help-title" sx={{
       position: 'relative', overflow: 'hidden', py: { xs: 8, md: 11 },
@@ -149,18 +155,18 @@ export default function HelpSection() {
       <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
         <Box sx={{ textAlign: 'center', mb: { xs: 5, md: 6.5 } }}>
           <Box sx={{ display: 'inline-block', px: 2.25, py: 0.75, borderRadius: 999, mb: 2, fontWeight: 800, fontSize: '0.72rem', letterSpacing: '0.14em', color: '#C91D32', bgcolor: isDark ? 'rgba(201,29,50,0.16)' : '#FFF1F2' }}>
-            OUR SERVICES
+            {t('home.help.eyebrow')}
           </Box>
           <Typography id="help-title" component="h2" sx={{ fontWeight: 900, fontSize: { xs: '2.1rem', md: '2.9rem' }, letterSpacing: '-0.03em', lineHeight: 1.1 }}>
-            How Can We <Box component="span" sx={{ color: '#C91D32' }}>Help?</Box>
+            {rich('home.help.title', { accent: <Box component="span" sx={{ color: '#C91D32' }}>{t('home.help.titleAccent')}</Box> })}
           </Typography>
           <Typography sx={{ color: 'text.secondary', mt: 1.5, fontSize: '1.05rem' }}>
-            Choose what you need and we&apos;ll guide you through every step.
+            {t('home.help.lead')}
           </Typography>
         </Box>
 
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: 'repeat(4, 1fr)' }, gap: 3, alignItems: 'stretch' }}>
-          {SERVICES.map((service, i) => <ServiceCard key={service.title} service={service} index={i} />)}
+          {SERVICES.map((service, i) => <ServiceCard key={service.key} service={service} index={i} />)}
         </Box>
 
         {/* Closing banner: points at the community stories further down the page */}
@@ -173,8 +179,8 @@ export default function HelpSection() {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.25, minWidth: 0 }}>
             <MonitorHeartIcon sx={{ fontSize: 58, color: '#C91D32', flexShrink: 0 }} />
             <Box>
-              <Typography sx={{ fontWeight: 800, fontSize: { xs: '1.05rem', md: '1.2rem' } }}>Together, We Can Save More Lives</Typography>
-              <Typography sx={{ color: 'text.secondary', fontSize: '0.92rem' }}>Your support helps patients, families, and communities in need.</Typography>
+              <Typography sx={{ fontWeight: 800, fontSize: { xs: '1.05rem', md: '1.2rem' } }}>{t('home.help.bannerTitle')}</Typography>
+              <Typography sx={{ color: 'text.secondary', fontSize: '0.92rem' }}>{t('home.help.bannerText')}</Typography>
             </Box>
           </Box>
           <Box component="a" href="#stories" sx={{
@@ -182,7 +188,7 @@ export default function HelpSection() {
             background: 'linear-gradient(135deg, #E63946 0%, #C91D32 100%)', boxShadow: '0 8px 22px rgba(201,29,50,0.35)', whiteSpace: 'nowrap',
             '&:hover': { boxShadow: '0 10px 28px rgba(201,29,50,0.48)' },
           }}>
-            See Real Stories <ArrowForwardIcon sx={{ fontSize: 18 }} />
+            {t('home.help.stories')} <ArrowForwardIcon sx={{ fontSize: 18 }} />
           </Box>
         </Box>
       </Container>

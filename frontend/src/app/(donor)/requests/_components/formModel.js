@@ -1,5 +1,10 @@
 import { BLOOD_TYPES } from '@/lib/inventory';
 import { isPhone } from '@/lib/validation';
+import { currentIntlLocale, currentLang } from '@/i18n/config';
+import { translate } from '@/i18n/translate';
+
+// Text read when rendered, in the selected language (donor.form.* in i18n/messages/donor.js).
+const tr = (key, vars) => translate(currentLang(), key, vars);
 
 // Limits and choices — these must match Backend/src/requests (model + POST validation).
 export const MAX_UNITS = 10;
@@ -9,16 +14,20 @@ const MAX_REQUIRED_BY_DAYS = 365;
 export const COMPONENTS = ['Whole Blood', 'Red Blood Cells', 'Plasma', 'Platelets'];
 export { BLOOD_TYPES };
 
-export const URGENCY = [
-  { value: 'Critical', tone: 'error', hint: 'Life-threatening — needed immediately' },
-  { value: 'High', tone: 'warning', hint: 'Surgery or treatment within 24 hours' },
-  { value: 'Medium', tone: 'info', hint: 'Planned procedure within a few days' },
-  { value: 'Low', tone: 'success', hint: 'Routine or stock top-up' },
-];
+const urgency = (value, tone) => ({
+  value, tone,
+  get label() { return tr(`status.${value}`); },
+  get hint() { return tr(`donor.form.urgencyHint.${value}`); },
+});
+export const URGENCY = [urgency('Critical', 'error'), urgency('High', 'warning'), urgency('Medium', 'info'), urgency('Low', 'success')];
 export const urgencyOf = (value) => URGENCY.find((u) => u.value === value);
 
 // One tap fills in a common reason; the requester can still add details after it.
-export const QUICK_REASONS = ['Surgery', 'Accident / trauma', 'Childbirth', 'Anemia', 'Cancer treatment', 'Thalassemia', 'Dengue'];
+// Keys of donor.form.quick; the chip fills in the text in the selected language.
+export const QUICK_REASONS = ['surgery', 'accident', 'childbirth', 'anemia', 'cancer', 'thalassemia', 'dengue'];
+export const quickReason = (key) => tr(`donor.form.quick.${key}`);
+/** A blood component ("Whole Blood") in the selected language; the API value stays English. */
+export const componentLabel = (c) => tr(`status.component.${c}`);
 
 export const EMPTY_FORM = {
   hospitalId: '', patientName: '', patientAge: '', bloodType: '', component: 'Whole Blood', unitsNeeded: 1,
@@ -65,33 +74,34 @@ export const maxRequiredBy = () => toLocalInput(new Date(Date.now() + MAX_REQUIR
 // Field errors in page order, so the first one is where the page scrolls to.
 export function validate(form, hospitals) {
   const errors = {};
+  const e = (key, vars) => tr(`donor.form.errors.${key}`, vars);
   // `hospitals` is null until the list has loaded: a hospital id from a saved draft can't be
   // checked (or submitted) before then.
-  if (!form.hospitalId) errors.hospitalId = 'Choose the hospital.';
-  else if (!hospitals) errors.hospitalId = 'The hospital list has not loaded yet. Try again in a moment.';
-  else if (!hospitals.some((h) => h._id === form.hospitalId)) errors.hospitalId = 'That hospital is no longer listed. Choose another.';
-  if (!form.patientName.trim()) errors.patientName = "Enter the patient's name.";
-  else if (form.patientName.trim().length > 100) errors.patientName = 'Use at most 100 characters.';
+  if (!form.hospitalId) errors.hospitalId = e('hospital');
+  else if (!hospitals) errors.hospitalId = e('hospitalLoading');
+  else if (!hospitals.some((h) => h._id === form.hospitalId)) errors.hospitalId = e('hospitalGone');
+  if (!form.patientName.trim()) errors.patientName = e('patientName');
+  else if (form.patientName.trim().length > 100) errors.patientName = e('patientNameLong');
   if (form.patientAge !== '') {
     const age = Number(form.patientAge);
-    if (!Number.isInteger(age) || age < 0 || age > MAX_AGE) errors.patientAge = `Enter an age from 0 to ${MAX_AGE}.`;
+    if (!Number.isInteger(age) || age < 0 || age > MAX_AGE) errors.patientAge = e('age', { max: MAX_AGE });
   }
-  if (!form.bloodType) errors.bloodType = "Choose the patient's blood type.";
-  if (!COMPONENTS.includes(form.component)) errors.component = 'Choose a blood component.';
+  if (!form.bloodType) errors.bloodType = e('bloodType');
+  if (!COMPONENTS.includes(form.component)) errors.component = e('component');
   if (!Number.isInteger(form.unitsNeeded) || form.unitsNeeded < 1 || form.unitsNeeded > MAX_UNITS)
-    errors.unitsNeeded = `Choose 1 to ${MAX_UNITS} units.`;
-  if (!form.urgency) errors.urgency = 'Choose how urgent this is.';
+    errors.unitsNeeded = e('units', { max: MAX_UNITS });
+  if (!form.urgency) errors.urgency = e('urgency');
   if (form.requiredBy) {
     const t = new Date(form.requiredBy).getTime();
-    if (Number.isNaN(t)) errors.requiredBy = 'Enter a valid date and time.';
-    else if (t < Date.now() - 60_000) errors.requiredBy = 'This date and time has already passed.';
-    else if (t > Date.now() + MAX_REQUIRED_BY_DAYS * 86400000) errors.requiredBy = 'Choose a date within the next year.';
+    if (Number.isNaN(t)) errors.requiredBy = e('date');
+    else if (t < Date.now() - 60_000) errors.requiredBy = e('datePast');
+    else if (t > Date.now() + MAX_REQUIRED_BY_DAYS * 86400000) errors.requiredBy = e('dateFar');
   }
-  if (!form.contact.trim()) errors.contact = 'Enter a phone number the hospital can call.';
-  else if (!isPhone(form.contact)) errors.contact = 'Enter a valid phone number (8–15 digits).';
-  if (!form.reason.trim()) errors.reason = 'Tell the hospital why the blood is needed.';
-  else if (form.reason.length > MAX_REASON) errors.reason = `Use at most ${MAX_REASON} characters.`;
-  if (!form.confirmed) errors.confirmed = 'Please confirm the information is accurate.';
+  if (!form.contact.trim()) errors.contact = e('contact');
+  else if (!isPhone(form.contact)) errors.contact = e('contactInvalid');
+  if (!form.reason.trim()) errors.reason = e('reason');
+  else if (form.reason.length > MAX_REASON) errors.reason = e('reasonLong', { max: MAX_REASON });
+  if (!form.confirmed) errors.confirmed = e('confirmed');
   return errors;
 }
 
@@ -113,19 +123,15 @@ export const toPayload = (form, hospital) => ({
 // ── Request history ──
 // Tabs map onto the API's statuses; "Completed" is the Fulfilled status. Cancelled requests
 // appear under All.
-export const HISTORY_TABS = [
-  { value: 'All', label: 'All' },
-  { value: 'Pending', label: 'Pending' },
-  { value: 'Approved', label: 'Approved' },
-  { value: 'Rejected', label: 'Rejected' },
-  { value: 'Fulfilled', label: 'Completed' },
-];
+const tab = (value) => ({ value, get label() { return tr(`donor.form.tabs.${value}`); } });
+export const HISTORY_TABS = [tab('All'), tab('Pending'), tab('Approved'), tab('Rejected'), tab('Fulfilled')];
+const meta = (tone, value) => ({ tone, get label() { return tr(`donor.form.tabs.${value}`); } });
 export const STATUS_META = {
-  Pending: { tone: 'warning', label: 'Pending' },
-  Approved: { tone: 'success', label: 'Approved' },
-  Rejected: { tone: 'error', label: 'Rejected' },
-  Fulfilled: { tone: 'info', label: 'Completed' },
-  Cancelled: { tone: 'neutral', label: 'Cancelled' },
+  Pending: meta('warning', 'Pending'),
+  Approved: meta('success', 'Approved'),
+  Rejected: meta('error', 'Rejected'),
+  Fulfilled: meta('info', 'Fulfilled'),
+  Cancelled: meta('neutral', 'Cancelled'),
 };
 export const statusOf = (r) => r.status || 'Pending';
 
@@ -133,7 +139,7 @@ export const fmtDate = (v, withTime = false) => {
   if (!v) return null;
   const d = new Date(v);
   if (Number.isNaN(d.getTime())) return null;
-  return d.toLocaleString('en-GB', withTime
+  return d.toLocaleString(currentIntlLocale(), withTime
     ? { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }
     : { day: 'numeric', month: 'short', year: 'numeric' });
 };

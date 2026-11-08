@@ -13,6 +13,8 @@ import QrCode2Icon from '@mui/icons-material/QrCode2';
 import EventAvailableIcon from '@mui/icons-material/EventAvailable';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
+import WaterDropOutlinedIcon from '@mui/icons-material/WaterDropOutlined';
+import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 
 /**
  * Dashboard roles. These are the front-end names; the API's role strings are
@@ -29,9 +31,10 @@ export const fromApiRole = (apiRole) => API_ROLE[apiRole] || null;
 
 // The menu is a flat list per role (no section headings), matching the design.
 // Only routes that exist are listed. `section` titles are optional and unused for now.
+// `labelKey` is a translation key (i18n/messages/nav.js); show it with t(item.labelKey).
 export const ROLE_CONFIG = {
   [ROLES.ADMIN]: {
-    label: 'Admin Panel',
+    labelKey: 'nav.adminPanel',
     backToWebsite: true,
     homePath: '/dashboard/admin',
     loginPath: '/admin/login',
@@ -39,23 +42,23 @@ export const ROLE_CONFIG = {
     sections: [
       {
         items: [
-          { label: 'Dashboard',       href: '/dashboard/admin',              icon: DashboardIcon, exact: true },
-          { label: 'Donors',          href: '/dashboard/admin/donors',       icon: PeopleAltIcon },
-          { label: 'Hospitals',       href: '/dashboard/admin/hospitals',    icon: DomainIcon },
-          { label: 'Blood Inventory', href: '/dashboard/admin/inventory',    icon: WaterDropIcon },
-          { label: 'Blood Requests',  href: '/dashboard/admin/requests',     icon: DescriptionIcon },
-          { label: 'Appointments',    href: '/dashboard/admin/appointments', icon: CalendarMonthIcon },
-          { label: 'Analytics',       href: '/dashboard/admin/analytics',    icon: AssessmentIcon },
-          { label: 'Messages',        href: '/dashboard/admin/contacts',     icon: ChatIcon },
-          { label: 'Settings',        href: '/dashboard/admin/settings',     icon: SettingsIcon },
+          { labelKey: 'nav.dashboard',       href: '/dashboard/admin',              icon: DashboardIcon, exact: true },
+          { labelKey: 'nav.donors',          href: '/dashboard/admin/donors',       icon: PeopleAltIcon },
+          { labelKey: 'nav.hospitals',       href: '/dashboard/admin/hospitals',    icon: DomainIcon },
+          { labelKey: 'nav.bloodInventory', href: '/dashboard/admin/inventory',    icon: WaterDropIcon },
+          { labelKey: 'nav.bloodRequests',  href: '/dashboard/admin/requests',     icon: DescriptionIcon },
+          { labelKey: 'nav.appointments',    href: '/dashboard/admin/appointments', icon: CalendarMonthIcon },
+          { labelKey: 'nav.analytics',       href: '/dashboard/admin/analytics',    icon: AssessmentIcon },
+          { labelKey: 'nav.messages',        href: '/dashboard/admin/contacts',     icon: ChatIcon },
+          { labelKey: 'nav.settings',        href: '/dashboard/admin/settings',     icon: SettingsIcon },
         ],
       },
     ],
-    profileLinks: [{ label: 'Settings', href: '/dashboard/admin/settings', icon: SettingsIcon }],
+    profileLinks: [{ labelKey: 'nav.settings', href: '/dashboard/admin/settings', icon: SettingsIcon }],
   },
 
   [ROLES.HOSPITAL_STAFF]: {
-    label: 'Hospital Panel',
+    labelKey: 'nav.hospitalPanel',
     backToWebsite: true,
     homePath: '/dashboard/hospital',
     loginPath: '/hospital/login',
@@ -63,20 +66,20 @@ export const ROLE_CONFIG = {
     sections: [
       {
         items: [
-          { label: 'Dashboard',       href: '/dashboard/hospital',              icon: DashboardIcon, exact: true },
-          { label: 'Blood Inventory', href: '/dashboard/hospital/inventory',    icon: WaterDropIcon },
-          { label: 'Blood Requests',  href: '/dashboard/hospital/requests',     icon: DescriptionIcon },
-          { label: 'Appointments',    href: '/dashboard/hospital/appointments', icon: CalendarMonthIcon },
-          { label: 'Scan QR',         href: '/dashboard/hospital/scan',         icon: QrCodeScannerIcon },
-          { label: 'My Profile',      href: '/dashboard/hospital/profile',      icon: PersonIcon },
+          { labelKey: 'nav.dashboard',       href: '/dashboard/hospital',              icon: DashboardIcon, exact: true },
+          { labelKey: 'nav.bloodInventory', href: '/dashboard/hospital/inventory',    icon: WaterDropIcon },
+          { labelKey: 'nav.bloodRequests',  href: '/dashboard/hospital/requests',     icon: DescriptionIcon },
+          { labelKey: 'nav.appointments',    href: '/dashboard/hospital/appointments', icon: CalendarMonthIcon },
+          { labelKey: 'nav.scanQr',         href: '/dashboard/hospital/scan',         icon: QrCodeScannerIcon },
+          { labelKey: 'nav.myProfile',      href: '/dashboard/hospital/profile',      icon: PersonIcon },
         ],
       },
     ],
-    profileLinks: [{ label: 'My Profile', href: '/dashboard/hospital/profile', icon: PersonIcon }],
+    profileLinks: [{ labelKey: 'nav.myProfile', href: '/dashboard/hospital/profile', icon: PersonIcon }],
   },
 
   [ROLES.DONOR]: {
-    label: 'Donor Portal',
+    labelKey: 'nav.donorPortal',
     backToWebsite: true,
     homePath: '/profile',
     loginPath: '/login',
@@ -88,19 +91,24 @@ export const ROLE_CONFIG = {
         // than one row for the same page. Blood Requests covers the donor's list (/my-requests)
         // and the Request Blood form (/requests); "Book Appointment" leads to the public booking page.
         items: [
-          { label: 'My Profile',       href: '/profile',      icon: PersonIcon, exact: true },
-          { label: 'My QR Card',       href: '/qr-card',      icon: QrCode2Icon },
-          { label: 'My Appointments',  href: '/my-appointments', icon: EventAvailableIcon },
-          { label: 'Blood Requests',   href: '/my-requests',  icon: DescriptionIcon, alsoActive: ['/requests'] },
-          { label: 'Donor Directory',  href: '/donors',       icon: PeopleAltIcon },
-          { label: 'Notifications',    href: '/notification', icon: NotificationsIcon, badge: true },
-          { label: 'Chat with AI',     href: '/assistant',    icon: SmartToyOutlinedIcon },
+          { labelKey: 'nav.myProfile',       href: '/profile',      icon: PersonIcon, exact: true },
+          { labelKey: 'nav.myQrCard',       href: '/qr-card',      icon: QrCode2Icon },
+          { labelKey: 'nav.myAppointments',  href: '/my-appointments', icon: EventAvailableIcon },
+          { labelKey: 'nav.bloodRequests',   href: '/my-requests',  icon: DescriptionIcon, alsoActive: ['/requests'] },
+          { labelKey: 'nav.donorDirectory',  href: '/donor-directory', icon: PeopleAltIcon },
+          { labelKey: 'nav.notifications',    href: '/notification', icon: NotificationsIcon, badge: true },
+          { labelKey: 'nav.chatWithAi',     href: '/ai-chat',      icon: SmartToyOutlinedIcon },
         ],
       },
     ],
+    // The account menu (top bar and public header). `divider` draws a line above the item.
+    // Donation History is a tab of My Profile; Settings opens its Edit Profile dialog.
     profileLinks: [
-      { label: 'My Profile', href: '/profile', icon: PersonIcon },
-      { label: 'My QR Card', href: '/qr-card', icon: QrCode2Icon },
+      { labelKey: 'nav.myProfile',       href: '/profile',             icon: PersonIcon },
+      { labelKey: 'nav.myQrCard',       href: '/qr-card',             icon: QrCode2Icon },
+      { labelKey: 'nav.myAppointments',  href: '/my-appointments',     icon: CalendarMonthIcon },
+      { labelKey: 'nav.donationHistory', href: '/profile?tab=history', icon: WaterDropOutlinedIcon },
+      { labelKey: 'nav.settings',         href: '/profile?edit=1',      icon: SettingsOutlinedIcon, divider: true },
     ],
   },
 };

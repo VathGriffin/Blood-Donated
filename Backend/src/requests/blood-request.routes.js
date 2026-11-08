@@ -267,7 +267,38 @@ router.patch('/:id/fulfill', requireRole('admin', 'hospital_staff'), async (req,
   }
 });
 
-router.put('/:id', requireRole('admin', 'hospital_staff'), async (req, res) => {
+// An edit sends only the fields it changes, so each rule is optional, but a field that is sent
+// follows the same limits as a new request. Status rules are checked in the handler below.
+const validateEdit = [
+  body('patientName').optional().isString().withMessage('Patient name must be text').bail()
+    .trim().notEmpty().withMessage('Patient name is required')
+    .isLength({ max: 100 }).withMessage('Patient name must be at most 100 characters'),
+  body('hospitalName').optional().isString().withMessage('Hospital name must be text').bail()
+    .trim().notEmpty().withMessage('Hospital name is required')
+    .isLength({ max: 150 }).withMessage('Hospital name is too long'),
+  body('patientAge').optional({ values: 'null' })
+    .isInt({ min: 0, max: 120 }).withMessage('Patient age must be a whole number from 0 to 120').toInt(),
+  body('bloodType').optional().isIn(BLOOD_TYPES).withMessage('Invalid blood type'),
+  body('component').optional().isIn(BLOOD_COMPONENTS).withMessage('Invalid blood component'),
+  body('unitsNeeded').optional().isInt({ min: 1, max: 10 }).withMessage('Units needed must be between 1 and 10').toInt(),
+  body('urgency').optional().isIn(['Low', 'Medium', 'High', 'Critical']).withMessage('Invalid urgency level'),
+  body('requiredBy').optional({ values: 'null' }).isISO8601().withMessage('Required-by date is not a valid date'),
+  body('reason').optional().isString().withMessage('Reason must be text').bail()
+    .trim().notEmpty().withMessage('Reason is required')
+    .isLength({ max: 1000 }).withMessage('Reason must be at most 1000 characters'),
+  body('contact').optional({ values: 'null' }).isString().withMessage('Contact must be text')
+    .trim().isLength({ max: 100 }).withMessage('Contact must be at most 100 characters'),
+  // A photo is set only by uploading one (POST /:id/photo). Here it can only be removed: a path
+  // typed in here would let the next upload delete some other file in the uploads folder.
+  body('photo').optional().custom((value) => {
+    if (value !== null) throw new Error('Upload a new photo instead of setting its path');
+    return true;
+  }),
+];
+
+router.put('/:id', requireRole('admin', 'hospital_staff'), validateEdit, async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) return res.status(400).json({ message: errors.array()[0].msg, error: errors.array()[0].msg });
   try {
     const request = await BloodRequest.findById(req.params.id);
     if (!request) return res.status(404).json({ error: 'Request not found' });

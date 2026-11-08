@@ -120,9 +120,11 @@ export const statusTone = {
 };
 
 // ── Type ─────────────────────────────────────────────────────────────────────
-// `--font-inter` is set on <html> by next/font in app/layout.jsx. Naming "Inter"
-// alone would miss it: next/font serves the face under a generated family name.
-export const fontFamily = 'var(--font-inter), "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+// The `--font-*` variables are set on <html> by next/font in app/layout.jsx. Naming "Inter"
+// alone would miss them: next/font serves each face under a generated family name.
+// The Vietnamese and Khmer files hold only those letters, so they come first: the browser takes
+// each character from the first font that has it, and everything else falls through to Inter.
+export const fontFamily = 'var(--font-inter-vi), var(--font-khmer), var(--font-inter), "Inter", "Noto Sans Khmer", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 
 export const fontWeight = { regular: 400, medium: 500, semibold: 600, bold: 700, extrabold: 800 };
 

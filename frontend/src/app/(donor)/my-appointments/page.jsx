@@ -1,4 +1,7 @@
 'use client';
+import { translate } from '@/i18n/translate';
+import { currentLang } from '@/i18n/config';
+import { useT } from '@/i18n/I18nProvider';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -23,12 +26,15 @@ import CancelDialog from './_components/CancelDialog';
 import DecisionToast, { markDecisionSeen, unseenDecision } from './_components/DecisionToast';
 import { categoryOf, openRequest, sortAppointments } from './_components/appointments';
 
-const TABS = [
-  { value: 'upcoming', label: 'Upcoming', empty: 'No upcoming appointments', hint: 'Book a donation slot at a center near you.' },
-  { value: 'completed', label: 'Completed', empty: 'No completed donations yet', hint: 'Appointments you checked in for appear here.' },
-  { value: 'cancelled', label: 'Cancelled', empty: 'No cancelled appointments', hint: 'Cancelled bookings appear here.' },
-  { value: 'missed', label: 'Missed', empty: 'No missed appointments', hint: '' },
-];
+// Text: donor.myappt.tabs.<value>.{label,empty,hint}
+const tabText = (value, field) => translate(currentLang(), `donor.myappt.tabs.${value}.${field}`);
+const tabDef = (value, withHint = true) => ({
+  value,
+  get label() { return tabText(value, 'label'); },
+  get empty() { return tabText(value, 'empty'); },
+  get hint() { return withHint ? tabText(value, 'hint') : ''; },
+});
+const TABS = [tabDef('upcoming'), tabDef('completed'), tabDef('cancelled'), tabDef('missed', false)];
 
 const setTabParam = (value) => {
   try {
@@ -64,6 +70,7 @@ function CardSkeleton() {
 export default function MyAppointmentsPage() {
   const router = useRouter();
   const { isAuth, user, token, logout } = useUserAuth();
+  const t = useT();
 
   const [appointments, setAppointments] = useState([]);
   const [status, setStatus] = useState('loading'); // 'loading' | 'ready' | 'error'
@@ -174,10 +181,10 @@ export default function MyAppointmentsPage() {
       const { data } = await axios.delete(`${API_BASE}/api/appointments/${appt._id}/reschedule-requests/${request._id}`,
         { headers: { Authorization: `Bearer ${token}` } });
       replace(data);
-      setToast({ severity: 'success', text: 'Your reschedule request was withdrawn. Your appointment is unchanged.' });
+      setToast({ severity: 'success', text: t('donor.myappt.withdrawn') });
     } catch (err) {
       if (!sessionExpired(err)) {
-        setToast({ severity: 'error', text: apiErrorMessage(err, 'We couldn’t withdraw the request. Please try again.') });
+        setToast({ severity: 'error', text: apiErrorMessage(err, t('donor.myappt.withdrawFailed')) });
         load(true);
       }
     } finally {
@@ -191,33 +198,33 @@ export default function MyAppointmentsPage() {
       gridTemplateColumns: { xs: 'minmax(0, 1fr)', lg: 'minmax(0, 1fr) 340px', xl: 'minmax(0, 1fr) 370px' },
     }}>
       <Box sx={{ minWidth: 0 }}>
-        <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} aria-label="Breadcrumb" sx={{ fontSize: '0.88rem', mb: 1.5 }}>
-          <Box component={Link} href="/profile" sx={{ color: 'text.secondary', textDecoration: 'none', '&:hover': { color: 'text.primary' } }}>Donor Portal</Box>
-          <Typography color="text.primary" sx={{ fontSize: 'inherit', fontWeight: 500 }} aria-current="page">My Appointments</Typography>
+        <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} aria-label={t('donor.myappt.breadcrumb')} sx={{ fontSize: '0.88rem', mb: 1.5 }}>
+          <Box component={Link} href="/profile" sx={{ color: 'text.secondary', textDecoration: 'none', '&:hover': { color: 'text.primary' } }}>{t('donor.myappt.portal')}</Box>
+          <Typography color="text.primary" sx={{ fontSize: 'inherit', fontWeight: 500 }} aria-current="page">{t('donor.myappt.title')}</Typography>
         </Breadcrumbs>
 
         <Box sx={{ display: 'flex', alignItems: { xs: 'flex-start', sm: 'center' }, justifyContent: 'space-between', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
           <Box>
             <Typography component="h1" sx={{ fontWeight: 800, fontSize: { xs: '1.75rem', md: '2.1rem' }, letterSpacing: '-0.02em', lineHeight: 1.15 }}>
-              My Appointments
+              {t('donor.myappt.title')}
             </Typography>
-            <Typography color="text.secondary" sx={{ mt: 0.5, fontSize: '1rem' }}>Manage your blood donation appointments</Typography>
+            <Typography color="text.secondary" sx={{ mt: 0.5, fontSize: '1rem' }}>{t('donor.myappt2.lead')}</Typography>
           </Box>
           <Button component={Link} href="/appointments" variant="contained" startIcon={<AddIcon />}
             sx={{ height: 46, px: 2.75, flexShrink: 0, fontSize: '0.95rem', width: { xs: '100%', sm: 'auto' } }}>
-            Book New Appointment
+            {t('donor.myappt.bookNew')}
           </Button>
         </Box>
 
-        <Tabs value={tab} onChange={(_, v) => changeTab(v)} aria-label="Appointment groups" variant="scrollable" scrollButtons={false}
+        <Tabs value={tab} onChange={(_, v) => changeTab(v)} aria-label={t('donor.myappt2.groups')} variant="scrollable" scrollButtons={false}
           sx={{
             mt: 2.5, mb: 2.5, borderBottom: '1px solid', borderColor: 'divider',
             '& .MuiTab-root': { minHeight: 52, px: { xs: 1.5, sm: 2 }, mr: { sm: 1 }, fontSize: '1rem', fontWeight: 500, color: 'text.secondary' },
             '& .MuiTab-root.Mui-selected': { color: 'primary.main', fontWeight: 700 },
           }}>
-          {tabs.map((t) => (
-            <Tab key={t.value} value={t.value} id={`appt-tab-${t.value}`} aria-controls="appt-panel"
-              label={`${t.label}${status === 'ready' ? ` (${counts[t.value]})` : ''}`} />
+          {tabs.map((d) => (
+            <Tab key={d.value} value={d.value} id={`appt-tab-${d.value}`} aria-controls="appt-panel"
+              label={`${d.label}${status === 'ready' ? ` (${counts[d.value]})` : ''}`} />
           ))}
         </Tabs>
 
@@ -227,14 +234,14 @@ export default function MyAppointmentsPage() {
             <><CardSkeleton /><CardSkeleton /></>
           ) : status === 'error' ? (
             <Alert severity="error" variant="outlined" icon={<ErrorOutlineIcon />} sx={{ alignItems: 'center' }}
-              action={<Button color="error" size="small" onClick={() => load()}>Try again</Button>}>
-              We couldn&apos;t load your appointments. Check your connection and try again.
+              action={<Button color="error" size="small" onClick={() => load()}>{t('donor.myappt2.retry')}</Button>}>
+              {t('donor.myappt.loadFailed')}
             </Alert>
           ) : shown.length === 0 ? (
             <Paper elevation={0} sx={{ borderRadius: '16px', border: '1px solid', borderColor: 'divider' }}>
               <EmptyPanel icon={<EventAvailableOutlinedIcon />} title={tabDef.empty} text={tabDef.hint}
                 action={tab === 'upcoming' && (
-                  <Button component={Link} href="/appointments" variant="contained" startIcon={<AddIcon />}>Book Appointment</Button>
+                  <Button component={Link} href="/appointments" variant="contained" startIcon={<AddIcon />}>{t('donor.myappt2.book')}</Button>
                 )} />
             </Paper>
           ) : (
@@ -271,7 +278,7 @@ export default function MyAppointmentsPage() {
           onDone={(data) => {
             replace(data);
             setCancelling(null);
-            setToast({ severity: 'success', text: 'Your appointment has been cancelled.' });
+            setToast({ severity: 'success', text: t('donor.myappt.cancelledToast') });
           }} />
       )}
       {submitted && <SubmittedDialog mode={submitted.mode} request={submitted.request} onClose={() => setSubmitted(null)} />}
