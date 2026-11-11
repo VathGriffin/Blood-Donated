@@ -30,6 +30,13 @@ export const navy = {
   light:'#245481',
 };
 
+// Text on the light pink hero (homepage benefits row). Both keep AA contrast on #FFF1F2 and on
+// the darker pink waves: heading ≈ 13:1, body ≈ 5:1.
+export const heroText = {
+  heading: '#142B4D', // dark navy
+  body:    '#52647D', // dark slate
+};
+
 // Brand gradients, used by buttons, banners and sidebars.
 export const gradients = {
   primary: `linear-gradient(135deg, ${brand.primaryLight} 0%, ${brand.primary} 100%)`,
@@ -147,6 +154,8 @@ export const motion = {
   press: `.1s ease-out`,    // button press
   theme: `.25s ease`,       // light/dark cross-fade
   page:  `.32s ${easing}`,  // page enter
+  reveal: `.6s ${easing}`,  // content fading in on scroll (components/motion/Reveal)
+  easing,                   // the curve alone, for custom durations
 };
 
 // ── Elevation ────────────────────────────────────────────────────────────────

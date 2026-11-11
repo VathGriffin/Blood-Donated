@@ -3,7 +3,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from 'next/navigation';
-import { navy } from '@/lib/design-tokens';
+import { navy, heroText, fontWeight } from '@/lib/design-tokens';
 import { Container, Box, Typography, Button, useTheme, Paper, InputBase, Autocomplete, alpha } from "@mui/material";
 import API_BASE from "@/lib/config";
 import { PROVINCES } from "@/lib/places";
@@ -11,6 +11,7 @@ import HelpSection from "./_components/HelpSection";
 import CommunitySection from "./_components/CommunitySection";
 import BloodSupplySection from "./_components/BloodSupplySection";
 import EligibilitySection from "./_components/EligibilitySection";
+import Reveal from "@/components/motion/Reveal";
 import { useI18n } from "@/i18n/I18nProvider";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import GroupsIcon from "@mui/icons-material/Groups";
@@ -43,18 +44,23 @@ const FALLBACK_PROFILES = [
     photo: "https://i.pravatar.cc/640?img=32", bloodType: "B+", donations: 2, kind: "partner" },
 ];
 
+// Counts 0 → target with an ease-out curve, so the number slows down as it lands.
 function useCountUp(target, duration = 2000, active = false) {
   const [count, setCount] = useState(0);
   useEffect(() => {
     if (!active) return;
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) { setCount(target); return; }
     let start = null;
+    let frame;
     const tick = (ts) => {
-      if (!start) start = ts;
+      if (start === null) start = ts;
       const p = Math.min((ts - start) / duration, 1);
-      setCount(Math.floor(p * target));
-      if (p < 1) requestAnimationFrame(tick);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setCount(p < 1 ? Math.floor(eased * target) : target);
+      if (p < 1) frame = requestAnimationFrame(tick);
     };
-    requestAnimationFrame(tick);
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
   }, [target, duration, active]);
   return count;
 }
@@ -85,14 +91,14 @@ function CountUp({ value, active }) {
 
 function SectionHeading({ title, subtitle, light }) {
   return (
-    <Box sx={{ textAlign: "center", mb: { xs: 4, md: 5 } }}>
+    <Reveal sx={{ textAlign: "center", mb: { xs: 4, md: 5 } }}>
       <Typography component="h2" sx={{ fontSize: { xs: "1.6rem", md: "2rem" }, fontWeight: 800, letterSpacing: "-0.02em", color: light ? "#fff" : "text.primary" }}>
         {title}
       </Typography>
       {subtitle && (
         <Typography sx={{ mt: 0.75, color: light ? "rgba(255,255,255,0.8)" : "text.secondary", maxWidth: 640, mx: "auto" }}>{subtitle}</Typography>
       )}
-    </Box>
+    </Reveal>
   );
 }
 
@@ -283,18 +289,26 @@ export default function Home() {
             </Typography>
           </Box>
 
-          {/* Benefits: one row on wide screens, two-by-two below. */}
+          {/* Benefits: one column on phones, two-by-two from tablets up. On desktop the grid stays
+              in the copy column so it never runs onto the photo (Khmer text is longer than English). */}
           <Box component="ul" sx={{
             listStyle: "none", p: 0, m: 0, mt: { xs: 4, md: 4.5 },
-            display: "grid", gridTemplateColumns: { xs: "1fr 1fr", lg: "repeat(4, auto)" }, justifyContent: "start",
-            columnGap: { xs: 2, lg: 3.5 }, rowGap: 2, maxWidth: { md: "48%", lg: "none" },
+            display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
+            columnGap: { sm: 3 }, rowGap: { xs: 2, md: 2.5 }, maxWidth: { md: "48%", lg: 600 },
           }}>
             {benefits.map((b) => (
-              <Box component="li" key={b.title} sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0 }}>
-                <Box aria-hidden sx={{ color: "primary.main", display: "flex", flexShrink: 0, "& svg": { fontSize: 32 } }}>{b.icon}</Box>
-                <Box sx={{ minWidth: 0 }}>
-                  <Typography sx={{ fontSize: "0.85rem", fontWeight: 700, lineHeight: 1.3, color: isDark ? "text.primary" : navy.dark }}>{b.title}</Typography>
-                  <Typography sx={{ fontSize: "0.75rem", color: "text.secondary", lineHeight: 1.35 }}>{b.desc}</Typography>
+              <Box component="li" key={b.title} sx={{ display: "flex", alignItems: "flex-start", gap: 1.5, minWidth: 0 }}>
+                <Box aria-hidden sx={{ color: "primary.main", display: "flex", flexShrink: 0, mt: 0.25, "& svg": { fontSize: 32 } }}>{b.icon}</Box>
+                {/* Khmer gets line-height 1.6 from the global rule in I18nProvider. */}
+                <Box sx={{ minWidth: 0, overflowWrap: "break-word" }}>
+                  <Typography sx={{
+                    fontSize: { xs: "0.95rem", md: "1rem" }, fontWeight: fontWeight.extrabold, lineHeight: 1.45,
+                    color: isDark ? "text.primary" : heroText.heading,
+                  }}>{b.title}</Typography>
+                  <Typography sx={{
+                    mt: 0.25, fontSize: { xs: "0.875rem", md: "0.95rem" }, fontWeight: fontWeight.medium, lineHeight: 1.6,
+                    color: isDark ? "text.secondary" : heroText.body,
+                  }}>{b.desc}</Typography>
                 </Box>
               </Box>
             ))}
@@ -335,7 +349,7 @@ export default function Home() {
                 <Typography sx={{ fontSize: { xs: "1.4rem", md: "1.8rem" }, fontWeight: 800, lineHeight: 1.1, letterSpacing: "-0.02em", color: "primary.main" }}>
                   {s.value == null ? "—" : <CountUp value={s.value} active={statsOn} />}
                 </Typography>
-                <Typography sx={{ fontSize: { xs: "0.76rem", sm: "0.85rem" }, color: "text.secondary" }}>{s.label}</Typography>
+                <Typography sx={{ fontSize: { xs: "0.875rem", sm: "0.9rem" }, fontWeight: fontWeight.medium, lineHeight: 1.5, color: "text.secondary" }}>{s.label}</Typography>
               </Box>
             </Box>
           ))}
@@ -350,14 +364,20 @@ export default function Home() {
         <Container maxWidth="lg">
           <SectionHeading title={t("home.why.title")} subtitle={t("home.why.subtitle")} />
           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", lg: "repeat(4, 1fr)" }, gap: 2.5 }}>
-            {WHY.map((w) => (
-              <Paper key={w.key} variant="outlined" sx={{ p: 2.5, borderRadius: "14px", display: "flex", alignItems: "center", gap: 2, boxShadow: (t) => t.custom.shadow.xs }}>
+            {WHY.map((w, i) => (
+              <Reveal key={w.key} delay={i * 80} sx={{ display: "flex" }}>
+              <Paper variant="outlined" sx={{
+                flex: 1, p: 2.5, borderRadius: "14px", display: "flex", alignItems: "center", gap: 2, boxShadow: (t) => t.custom.shadow.xs,
+                transition: (t) => `transform ${t.custom.motion.base}, box-shadow ${t.custom.motion.base}, border-color ${t.custom.motion.base}`,
+                "@media (hover: hover)": { "&:hover": { transform: "translateY(-3px)", borderColor: "primary.light", boxShadow: (t) => t.custom.shadow.md } },
+              }}>
                 <Box sx={{ ...iconCircle(56), "& svg": { fontSize: 28 } }}>{w.icon}</Box>
                 <Box>
                   <Typography sx={{ fontWeight: 700, fontSize: "0.95rem", lineHeight: 1.3 }}>{t(`home.why.${w.key}.title`)}</Typography>
                   <Typography sx={{ mt: 0.5, fontSize: "0.83rem", color: "text.secondary", lineHeight: 1.5 }}>{t(`home.why.${w.key}.desc`)}</Typography>
                 </Box>
               </Paper>
+              </Reveal>
             ))}
           </Box>
         </Container>
@@ -369,8 +389,11 @@ export default function Home() {
           <SectionHeading title={t("home.how.title")} subtitle={t("home.how.subtitle")} />
           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", lg: "repeat(4, 1fr)" }, gap: { xs: 3, lg: 4 } }}>
             {HOW.map((h, i) => (
-              <Box key={h.key} sx={{ display: "flex", alignItems: "center", gap: 2, position: "relative" }}>
-                <Box sx={{ ...iconCircle(66, true), "& svg": { fontSize: 30 } }}>{h.icon}</Box>
+              <Reveal key={h.key} delay={i * 100} sx={{
+                display: "flex", alignItems: "center", gap: 2, position: "relative",
+                "@media (hover: hover)": { "&:hover .how-icon": { transform: "scale(1.07)" } },
+              }}>
+                <Box className="how-icon" sx={{ ...iconCircle(66, true), "& svg": { fontSize: 30 }, transition: (t) => `transform ${t.custom.motion.base}` }}>{h.icon}</Box>
                 <Box>
                   <Typography sx={{ fontWeight: 700, fontSize: "0.98rem", lineHeight: 1.3 }}>{t(`home.how.${h.key}.title`)}</Typography>
                   <Typography sx={{ mt: 0.5, fontSize: "0.83rem", color: "text.secondary", lineHeight: 1.5 }}>{t(`home.how.${h.key}.desc`)}</Typography>
@@ -378,7 +401,7 @@ export default function Home() {
                 {i < HOW.length - 1 && (
                   <ArrowForwardIcon sx={{ display: { xs: "none", lg: "block" }, position: "absolute", right: -30, top: "50%", mt: "-12px", color: "text.disabled" }} />
                 )}
-              </Box>
+              </Reveal>
             ))}
           </Box>
           <Box sx={{ mt: { xs: 4, md: 5 }, display: "flex", justifyContent: "center", gap: 1.5, flexWrap: "wrap" }}>
@@ -394,7 +417,7 @@ export default function Home() {
       </Box>
 
       {/* ── Can I donate? ──────────────────────────────────────────────── */}
-      <EligibilitySection />
+      <Reveal><EligibilitySection /></Reveal>
 
       {/* ── Find a Donation Center Near You ────────────────────────────── */}
       <Box
@@ -447,10 +470,10 @@ export default function Home() {
       </Box>
 
       {/* ── How Can We Help? ───────────────────────────────────────────── */}
-      <HelpSection />
+      <Reveal><HelpSection /></Reveal>
 
       {/* ── Community profiles ("People Behind the Mission") ─────────────── */}
-      <CommunitySection profiles={profiles} />
+      <Reveal><CommunitySection profiles={profiles} /></Reveal>
 
     </Box>
   );

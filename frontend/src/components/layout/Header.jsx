@@ -250,7 +250,7 @@ const Header = () => {
                 <ListItem sx={{
                   backgroundColor: active ? "rgba(201,29,50,0.08)" : "transparent",
                   borderRadius: "10px", mb: 0.5, py: 1, px: 1.5,
-                  transition: "all 0.15s ease",
+                  transition: "background-color 0.15s ease",
                   "&:hover": { backgroundColor: active ? "rgba(201,29,50,0.08)" : isDark ? "rgba(255,255,255,0.04)" : "#FFF1F2" },
                 }}>
                   <ListItemIcon sx={{ minWidth: 36 }}>{mobileIcons[key]}</ListItemIcon>
